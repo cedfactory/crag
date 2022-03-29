@@ -2,17 +2,6 @@ import pytest
 from src import rtdp_tv
 
 class TestRTDP:
-    def test_rtdp_tv_next_complete(self, mocker):
-        
-        # context
-        rtdptv = rtdp_tv.RTDPTradingView()
-
-        # action
-        selection = rtdptv.next()
-
-        # expectation
-        assert(isinstance(selection, list))
-    
     def test_rtdp_tv_next(self, mocker):
         
         # context
