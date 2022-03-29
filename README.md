@@ -1,7 +1,7 @@
 crag
 =
 
-[![Build](https://github.com/cedfactory/crag/actions/workflows/deploy.yml/badge.svg)](https://github.com/cedfactory/crag/actions)
+[![Build](https://github.com/cedfactory/crag/actions/workflows/build.yml/badge.svg)](https://github.com/cedfactory/crag/actions)
 [![codecov](https://codecov.io/gh/cedfactory/crag/branch/main/graph/badge.svg)](https://codecov.io/gh/cedfactory/crag)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=cedfactory_crag&metric=alert_status)](https://sonarcloud.io/dashboard?id=cedfactory_crag)
 [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=cedfactory_crag&metric=bugs)](https://sonarcloud.io/dashboard?id=cedfactory_crag)
