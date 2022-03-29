@@ -1,0 +1,12 @@
+httplib2==0.11.3
+lxml==4.6.2
+plotly==4.14.3
+pandas==1.2.2
+rich==10.6.0
+urllib3==1.26.8
+ccxt==1.74.95
+joblib==1.0.1
+parse==1.19.0
+pytest==6.2.2
+pytest-cov==2.12.1
+reportlab==3.6.5
