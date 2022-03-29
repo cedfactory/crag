@@ -14,11 +14,14 @@ class RTDPTradingView(rtdp.RealTimeDataProvider):
         load_dotenv()
         self.fdp_url = os.getenv("FDP_URL")
 
-    def next(self):
+    def _fetch_data(self):
         request = urllib.request.Request(self.fdp_url+'portfolio')
         request.add_header("User-Agent", "cheese")
         response = urllib.request.urlopen(request).read()
+        return response
 
+    def next(self):
+        response = self._fetch_data()
         data_json = json.loads(response)
         if data_json["status"] != "ok":
             print(data_json["reason"])
