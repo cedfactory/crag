@@ -10,3 +10,4 @@ parse==1.19.0
 pytest==6.2.2
 pytest-cov==2.12.1
 reportlab==3.6.5
+python-dotenv==0.19.2
