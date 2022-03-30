@@ -73,7 +73,7 @@ class RTDPTradingView(rtdp.RealTimeDataProvider):
     def get_current_data(self):
         return self.current_data
 
-    def record(self, n_records, outfile="RTDPTradingView_record.csv"):
+    def record(self, n_records, interval, outfile="RTDPTradingView_record.csv"):
         f = open(outfile, "w")
         f.write("Date;Symbols\n")
         f.close()
@@ -97,4 +97,4 @@ class RTDPTradingView(rtdp.RealTimeDataProvider):
             f.close()
 
             n_records = n_records - 1
-            time.sleep(6)
+            time.sleep(interval)
