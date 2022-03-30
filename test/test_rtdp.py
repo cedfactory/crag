@@ -10,11 +10,16 @@ class TestRTDP:
         mocker.patch.object(mock_rtdp_tv, "_fetch_data", return_value=response)
 
         # action
-        selection = mock_rtdp_tv.next()
+        df_data_from_next = mock_rtdp_tv.next()
+        selection_from_next = df_data_from_next['symbol'].to_list()
+
+        df_data_from_get_current_data = mock_rtdp_tv.get_current_data()
+        selection_from_get_current_data = df_data_from_get_current_data['symbol'].to_list()
 
         # expectation
         expected_selection = ['GAL/USD', 'AAVE/USD', 'SKL/USD', 'CHZ/USD', 'CONV/USD', '1INCH/USD', 'BILI/USD', 'RUNE/USD', 'SNX/USD', 'CRV/USD', 'JOE/USD', 'CITY/USD', 'SOL/USD', 'AVAX/USD', 'BAR/USD', 'STSOL/USD', 'PROM/USD', 'SQ/USD', 'MAPS/USD', 'MSOL/USD']
-        assert(selection == expected_selection)
+        assert(selection_from_next == expected_selection)
+        assert(selection_from_get_current_data == expected_selection)
     
     def test_rtdp_tv_next_ko(self, mocker):
         
@@ -24,8 +29,8 @@ class TestRTDP:
         mocker.patch.object(mock_rtdp_tv, "_fetch_data", return_value=response)
 
         # action
-        selection = mock_rtdp_tv.next()
+        df_data = mock_rtdp_tv.next()
 
         # expectation
-        assert(len(selection) == 0)
+        assert(df_data is None)
     

@@ -9,3 +9,7 @@ class RealTimeDataProvider(metaclass = ABCMeta):
     @abstractmethod
     def next(self):
         pass
+
+    @abstractmethod
+    def get_current_data(self):
+        pass
