@@ -33,11 +33,11 @@ class RTDPTradingView(rtdp.RealTimeDataProvider):
                 line_count = 0
                 for row in csv_reader:
                     if line_count == 0:
-                        print(f'Column names are {", ".join(row)}')
+                        print("[RTDPTradingView] Column names are {}".format(", ".join(row)))
                     else:
                         self.data.append(row[1])
                     line_count += 1
-                print('Processed {} lines'.format(line_count-1))
+                print('[RTDPTradingView] Processed {} lines'.format(line_count-1))
             self.current_position = -1
 
     def _fetch_data(self):
@@ -53,7 +53,7 @@ class RTDPTradingView(rtdp.RealTimeDataProvider):
         if self.infile != None:
             self.current_position = self.current_position + 1
             if self.current_position >= len(self.data):
-                print("no more data")
+                print("[RTDPTradingView.next] no more data")
                 self.current_data = None
             else:
                 self.current_data = self.data[self.current_position]
@@ -61,7 +61,7 @@ class RTDPTradingView(rtdp.RealTimeDataProvider):
             response = self._fetch_data()
             data_json = json.loads(response)
             if data_json["status"] != "ok":
-                print(data_json["reason"])
+                print("[RTDPTradingView.next] error while fetching data : {}".format(data_json["reason"]))
                 self.current_data = None
             else:
                 self.current_data = data_json["result"]["symbols"]
@@ -82,12 +82,6 @@ class RTDPTradingView(rtdp.RealTimeDataProvider):
             data_json = json.loads(response)
             if data_json["status"] == "ko":
                 continue
-
-            df_portfolio = pd.read_json(data_json["result"]["symbols"])
-            print(df_portfolio)
-            print(df_portfolio.columns.to_list())
-            selection = df_portfolio['symbol'].to_list()
-            print(selection)
 
             now = datetime.now()
             now_string = now.strftime("%d/%m/%Y %H:%M:%S")
