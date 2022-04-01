@@ -1,58 +1,50 @@
 import pytest
+import pandas as pd
 import os
+import json
 from src import rtdp_tv
 
 class TestRTDP:
-    response = '{"elapsed_time":"0:00:03.581386","result":{"status":"ok","symbols":"{\\"symbol\\":{\\"0\\":\\"GAL\\\\/USD\\",\\"1\\":\\"AAVE\\\\/USD\\",\\"2\\":\\"SKL\\\\/USD\\",\\"3\\":\\"CHZ\\\\/USD\\",\\"4\\":\\"CONV\\\\/USD\\",\\"5\\":\\"1INCH\\\\/USD\\",\\"6\\":\\"BILI\\\\/USD\\",\\"7\\":\\"RUNE\\\\/USD\\",\\"8\\":\\"SNX\\\\/USD\\",\\"9\\":\\"CRV\\\\/USD\\",\\"10\\":\\"JOE\\\\/USD\\",\\"11\\":\\"CITY\\\\/USD\\",\\"12\\":\\"SOL\\\\/USD\\",\\"13\\":\\"AVAX\\\\/USD\\",\\"14\\":\\"BAR\\\\/USD\\",\\"15\\":\\"STSOL\\\\/USD\\",\\"16\\":\\"PROM\\\\/USD\\",\\"17\\":\\"SQ\\\\/USD\\",\\"18\\":\\"MAPS\\\\/USD\\",\\"19\\":\\"MSOL\\\\/USD\\"},\\"change1h\\":{\\"0\\":23.6842105263,\\"1\\":10.9326169198,\\"2\\":6.5445026178,\\"3\\":6.5140764798,\\"4\\":3.825136612,\\"5\\":2.9719800406,\\"6\\":2.7331738982,\\"7\\":2.2191803551,\\"8\\":2.1256123163,\\"9\\":1.8638925011,\\"10\\":1.82727866,\\"11\\":1.7421035493,\\"12\\":1.5266501941,\\"13\\":1.469840732,\\"14\\":1.411233418,\\"15\\":1.3972484953,\\"16\\":1.2569130216,\\"17\\":1.2127697521,\\"18\\":1.1219512195,\\"19\\":1.0398981324},\\"rank_change1h\\":{\\"0\\":0,\\"1\\":1,\\"2\\":2,\\"3\\":3,\\"4\\":5,\\"5\\":7,\\"6\\":8,\\"7\\":9,\\"8\\":10,\\"9\\":13,\\"10\\":15,\\"11\\":18,\\"12\\":23,\\"13\\":25,\\"14\\":26,\\"15\\":27,\\"16\\":33,\\"17\\":34,\\"18\\":39,\\"19\\":44},\\"change24h\\":{\\"0\\":40.0059577003,\\"1\\":18.5851600047,\\"2\\":17.0212765957,\\"3\\":11.4162655553,\\"4\\":11.9842829077,\\"5\\":4.4670672007,\\"6\\":5.4347826087,\\"7\\":16.8911867944,\\"8\\":4.7179119204,\\"9\\":5.7863640626,\\"10\\":11.3463368221,\\"11\\":6.9301848049,\\"12\\":4.5338906051,\\"13\\":5.2729879533,\\"14\\":4.4173205464,\\"15\\":4.2661361627,\\"16\\":4.0289256198,\\"17\\":8.0540746382,\\"18\\":8.8855817211,\\"19\\":4.270696452},\\"rank_change24h\\":{\\"0\\":1,\\"1\\":5,\\"2\\":7,\\"3\\":11,\\"4\\":10,\\"5\\":41,\\"6\\":30,\\"7\\":8,\\"8\\":35,\\"9\\":26,\\"10\\":13,\\"11\\":22,\\"12\\":38,\\"13\\":31,\\"14\\":43,\\"15\\":46,\\"16\\":48,\\"17\\":21,\\"18\\":19,\\"19\\":45},\\"RECOMMENDATION_15m\\":{\\"0\\":\\"STRONG_BUY\\",\\"1\\":\\"STRONG_BUY\\",\\"2\\":\\"BUY\\",\\"3\\":\\"BUY\\",\\"4\\":\\"BUY\\",\\"5\\":\\"BUY\\",\\"6\\":\\"BUY\\",\\"7\\":\\"BUY\\",\\"8\\":\\"STRONG_BUY\\",\\"9\\":\\"BUY\\",\\"10\\":\\"STRONG_BUY\\",\\"11\\":\\"BUY\\",\\"12\\":\\"STRONG_BUY\\",\\"13\\":\\"STRONG_BUY\\",\\"14\\":\\"BUY\\",\\"15\\":\\"STRONG_BUY\\",\\"16\\":\\"BUY\\",\\"17\\":\\"BUY\\",\\"18\\":\\"BUY\\",\\"19\\":\\"STRONG_BUY\\"},\\"RECOMMENDATION_30m\\":{\\"0\\":\\"STRONG_BUY\\",\\"1\\":\\"STRONG_BUY\\",\\"2\\":\\"STRONG_BUY\\",\\"3\\":\\"BUY\\",\\"4\\":\\"STRONG_BUY\\",\\"5\\":\\"STRONG_BUY\\",\\"6\\":\\"STRONG_BUY\\",\\"7\\":\\"BUY\\",\\"8\\":\\"STRONG_BUY\\",\\"9\\":\\"STRONG_BUY\\",\\"10\\":\\"BUY\\",\\"11\\":\\"STRONG_BUY\\",\\"12\\":\\"STRONG_BUY\\",\\"13\\":\\"STRONG_BUY\\",\\"14\\":\\"BUY\\",\\"15\\":\\"STRONG_BUY\\",\\"16\\":\\"BUY\\",\\"17\\":\\"STRONG_BUY\\",\\"18\\":\\"STRONG_BUY\\",\\"19\\":\\"STRONG_BUY\\"},\\"RECOMMENDATION_1h\\":{\\"0\\":\\"STRONG_BUY\\",\\"1\\":\\"STRONG_BUY\\",\\"2\\":\\"STRONG_BUY\\",\\"3\\":\\"STRONG_BUY\\",\\"4\\":\\"STRONG_BUY\\",\\"5\\":\\"STRONG_BUY\\",\\"6\\":\\"STRONG_BUY\\",\\"7\\":\\"STRONG_BUY\\",\\"8\\":\\"STRONG_BUY\\",\\"9\\":\\"STRONG_BUY\\",\\"10\\":\\"BUY\\",\\"11\\":\\"STRONG_BUY\\",\\"12\\":\\"STRONG_BUY\\",\\"13\\":\\"STRONG_BUY\\",\\"14\\":\\"STRONG_BUY\\",\\"15\\":\\"STRONG_BUY\\",\\"16\\":\\"STRONG_BUY\\",\\"17\\":\\"STRONG_BUY\\",\\"18\\":\\"STRONG_BUY\\",\\"19\\":\\"STRONG_BUY\\"}}"},"status":"ok"}'
+    response = '{"portfolio": "{\\\"symbol\\\":{\\\"0\\\":\\\"GOG\\/USD\\\",\\\"1\\\":\\\"SNX\\/USD\\\"},\\\"change1h\\\":{\\\"0\\\":21.8831410495,\\\"1\\\":7.3734667983},\\\"rank_change1h\\\":{\\\"0\\\":0,\\\"1\\\":1},\\\"change24h\\\":{\\\"0\\\":47.855530474,\\\"1\\\":9.4882116159},\\\"rank_change24h\\\":{\\\"0\\\":1,\\\"1\\\":17},\\\"RECOMMENDATION_30m\\\":{\\\"0\\\":\\\"STRONG_BUY\\\",\\\"1\\\":\\\"STRONG_BUY\\\"},\\\"RECOMMENDATION_15m\\\":{\\\"0\\\":\\\"STRONG_BUY\\\",\\\"1\\\":\\\"STRONG_BUY\\\"},\\\"RECOMMENDATION_1m\\\":{\\\"0\\\":\\\"BUY\\\",\\\"1\\\":\\\"BUY\\\"},\\\"buy_1m\\\":{\\\"0\\\":57,\\\"1\\\":53},\\\"sell_1m\\\":{\\\"0\\\":15,\\\"1\\\":11},\\\"neutral_1m\\\":{\\\"0\\\":26,\\\"1\\\":34},\\\"RECOMMENDATION_1h\\\":{\\\"0\\\":\\\"STRONG_BUY\\\",\\\"1\\\":\\\"STRONG_BUY\\\"},\\\"RECOMMENDATION_2h\\\":{\\\"0\\\":\\\"STRONG_BUY\\\",\\\"1\\\":\\\"STRONG_BUY\\\"},\\\"buy_2h\\\":{\\\"0\\\":69,\\\"1\\\":61},\\\"sell_2h\\\":{\\\"0\\\":0,\\\"1\\\":0},\\\"neutral_2h\\\":{\\\"0\\\":30,\\\"1\\\":38},\\\"RECOMMENDATION_5m\\\":{\\\"0\\\":\\\"STRONG_BUY\\\",\\\"1\\\":\\\"STRONG_BUY\\\"},\\\"buy_5m\\\":{\\\"0\\\":65,\\\"1\\\":61},\\\"sell_5m\\\":{\\\"0\\\":7,\\\"1\\\":3},\\\"neutral_5m\\\":{\\\"0\\\":26,\\\"1\\\":34},\\\"RECOMMENDATION_4h\\\":{\\\"0\\\":\\\"STRONG_BUY\\\",\\\"1\\\":\\\"STRONG_BUY\\\"},\\\"buy_4h\\\":{\\\"0\\\":65,\\\"1\\\":65},\\\"sell_4h\\\":{\\\"0\\\":0,\\\"1\\\":0},\\\"neutral_4h\\\":{\\\"0\\\":34,\\\"1\\\":34}}", "symbols": {"GOG_USD": {"info": {"ask": 0.82, "askVolume": null, "average": null, "baseVolume": null, "bid": 0.81825, "bidVolume": null, "change": 0.39127087093862817, "close": 0.81875, "datetime": "2022-04-01T17:14:44.816Z", "high": null, "info": {"ask": "0.82", "baseCurrency": "GOG", "bid": "0.81825", "change1h": "0.21883141049497581", "change24h": "0.4778880866425993", "changeBod": "0.365721434528774", "enabled": true, "highLeverageFeeExempt": true, "largeOrderThreshold": "500.0", "last": "0.81875", "minProvideSize": "1.0", "name": "GOG/USD", "postOnly": false, "price": "0.81875", "priceHigh24h": "0.82125", "priceIncrement": "0.00025", "priceLow24h": "0.55325", "quoteCurrency": "USD", "quoteVolume24h": "185615.90775", "restricted": false, "sizeIncrement": "1.0", "type": "spot", "underlying": null, "volumeUsd24h": "185615.90775"}, "last": 0.81875, "low": null, "open": 0.4274791290613718, "percentage": 47.78880866425993, "previousClose": null, "quoteVolume": 185615.90775, "symbol": "GOG/USD", "timestamp": 1648833284816, "vwap": null}, "status": "ok"}, "SNX_USD": {"info": {"ask": 7.609, "askVolume": null, "average": null, "baseVolume": null, "bid": 7.593, "bidVolume": null, "change": 0.7083657274295572, "close": 7.604, "datetime": "2022-04-01T17:14:45.204Z", "high": null, "info": {"ask": "7.609", "baseCurrency": "SNX", "bid": "7.593", "change1h": "0.07211843496651392", "change24h": "0.09315698677400805", "changeBod": "0.10893976957853288", "enabled": true, "highLeverageFeeExempt": true, "largeOrderThreshold": "500.0", "last": "7.604", "minProvideSize": "0.1", "name": "SNX/USD", "postOnly": false, "price": "7.604", "priceHigh24h": "7.6845", "priceIncrement": "0.0005", "priceLow24h": "6.636", "quoteCurrency": "USD", "quoteVolume24h": "5174560.9909", "restricted": false, "sizeIncrement": "0.1", "type": "spot", "underlying": null, "volumeUsd24h": "5174560.9909"}, "last": 7.604, "low": null, "open": 6.895634272570443, "percentage": 9.315698677400805, "previousClose": null, "quoteVolume": 5174560.9909, "symbol": "SNX/USD", "timestamp": 1648833285204, "vwap": null}, "status": "ok"}}}'
 
     def test_rtdp_tv_next(self, mocker):
         
         # context
         mock_rtdp_tv = rtdp_tv.RTDPTradingView()
-        mocker.patch.object(mock_rtdp_tv, "_fetch_data", return_value=self.response)
+        mocker.patch.object(mock_rtdp_tv, "_fetch_data", return_value=json.loads(self.response))
 
         # action
-        df_data_from_next = mock_rtdp_tv.next()
-        selection_from_next = df_data_from_next['symbol'].to_list()
+        data_from_next = mock_rtdp_tv.next()
+        df_portfolio_from_next = pd.read_json(data_from_next["portfolio"])
+        selection_from_next = df_portfolio_from_next['symbol'].to_list()
 
-        df_data_from_get_current_data = mock_rtdp_tv.get_current_data()
-        selection_from_get_current_data = df_data_from_get_current_data['symbol'].to_list()
+        data_from_get_current_data = mock_rtdp_tv.get_current_data()
+        df_portfolio_from_get_current_data = pd.read_json(data_from_get_current_data["portfolio"])
+        selection_from_get_current_data = df_portfolio_from_get_current_data['symbol'].to_list()
 
         # expectation
-        expected_selection = ['GAL/USD', 'AAVE/USD', 'SKL/USD', 'CHZ/USD', 'CONV/USD', '1INCH/USD', 'BILI/USD', 'RUNE/USD', 'SNX/USD', 'CRV/USD', 'JOE/USD', 'CITY/USD', 'SOL/USD', 'AVAX/USD', 'BAR/USD', 'STSOL/USD', 'PROM/USD', 'SQ/USD', 'MAPS/USD', 'MSOL/USD']
+        expected_selection = ['GOG/USD', 'SNX/USD']
         assert(selection_from_next == expected_selection)
         assert(selection_from_get_current_data == expected_selection)
-    
-    def test_rtdp_tv_next_ko(self, mocker):
-        
-        # context
-        mock_rtdp_tv = rtdp_tv.RTDPTradingView()
-        response = '{"elapsed_time":"0:00:03.581386","result":{},"status":"ko","reason":"problem when fetching data"}'
-        mocker.patch.object(mock_rtdp_tv, "_fetch_data", return_value=response)
 
-        # action
-        df_data = mock_rtdp_tv.next()
-
-        # expectation
-        assert(df_data is None)
-    
     def test_rtdp_tv_record(self, mocker):
         
         # context
         mock_rtdp_tv = rtdp_tv.RTDPTradingView()
-        mocker.patch.object(mock_rtdp_tv, "_fetch_data", return_value=self.response)
+        mocker.patch.object(mock_rtdp_tv, "_fetch_data", return_value=json.loads(self.response))
 
         # action 1 : record history
-        filename = "history.csv"
+        filename = "test_history.csv"
         mock_rtdp_tv.record(1, 1, filename)
 
         # action 2 : read history
         params = {'infile':filename}
         rtdp_tv2 = rtdp_tv.RTDPTradingView(params)
 
-        df_data = rtdp_tv2.next()
+        data = rtdp_tv2.next()
+        df_data = pd.read_json(data["portfolio"])
         selection = df_data['symbol'].to_list()
-        expected_selection = ['GAL/USD', 'AAVE/USD', 'SKL/USD', 'CHZ/USD', 'CONV/USD', '1INCH/USD', 'BILI/USD', 'RUNE/USD', 'SNX/USD', 'CRV/USD', 'JOE/USD', 'CITY/USD', 'SOL/USD', 'AVAX/USD', 'BAR/USD', 'STSOL/USD', 'PROM/USD', 'SQ/USD', 'MAPS/USD', 'MSOL/USD']
+        expected_selection = ['GOG/USD', 'SNX/USD']
         assert(selection == expected_selection)
 
         # cleaning
