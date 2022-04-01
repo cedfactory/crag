@@ -1,19 +1,25 @@
 from src import rtdp_tv
+from src import crag
 import pandas as pd
 
 if __name__ == '__main__':
     print('CRAG')
 
+
     params = {'infile':'history.csv'}
-    rtdp_tv = rtdp_tv.RTDPTradingView(params)
-    #rtdp_tv.record(1, 1, "history.csv")
+    rtdp = rtdp_tv.RTDPTradingView(params)
+    #rtdp.record(3, 1, "history.csv")
     #exit(0)
     #selection = rtdp_tv.next()
     #print(selection)
 
+    bot = crag.Crag(rtdp)
+    bot.run()
+    exit(0)
+
     for i in range(5):
-        rtdp_tv.next()
-        json_data = rtdp_tv.get_current_data()
+        rtdp.next()
+        json_data = rtdp.get_current_data()
         if json_data is None:
             continue
         df_portfolio = pd.read_json(json_data["portfolio"])
