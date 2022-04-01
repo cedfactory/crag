@@ -33,12 +33,12 @@ class RTDPTradingView(rtdp.RealTimeDataProvider):
                 line_count = 0
                 for row in csv_reader:
                     if line_count == 0:
-                        print(f'Column names are {", ".join(row)}')
+                        print("[RTDPTradingView] Column names are {}".format(", ".join(row)))
                     else:
                         data = json.loads(row[1])
                         self.data.append(data)
                     line_count += 1
-                print('Processed {} lines'.format(line_count-1))
+                print('[RTDPTradingView] Processed {} lines'.format(line_count-1))
             self.current_position = -1
 
     def _fetch_data(self):
