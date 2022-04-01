@@ -10,7 +10,6 @@ class Crag:
         while not done:
             done = not self.step()
             time.sleep(interval)
-            break # TO REMOVE
         
     def step(self):
         print("[Crag] new step...")
