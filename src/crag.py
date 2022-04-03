@@ -5,9 +5,16 @@ class Crag:
     def __init__(self, rtdp, params = None):
         self.rtdp = rtdp
 
+        self.log = {}
+        self.current_step = -1
+
     def run(self, interval=1):
         done = False
         while not done:
+            # log
+            self.current_step = self.current_step + 1
+            self.log[self.current_step] = {}
+
             done = not self.step()
             time.sleep(interval)
         
@@ -53,6 +60,9 @@ class Crag:
 
         lst_symbols_to_buy = df_portfolio['symbol'].tolist()
         print(lst_symbols_to_buy)
+
+        # log
+        self.log[self.current_step]["lst_symbols_to_buy"] = lst_symbols_to_buy
 
         # get the price for each symbol
         for symbol in lst_symbols_to_buy:
