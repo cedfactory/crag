@@ -1,21 +1,14 @@
 import pandas as pd
-import urllib
-import urllib.request
 import json
-import os
 import time
 import csv
 from datetime import datetime
-from dotenv import load_dotenv
 
-from . import rtdp
+from . import rtdp,utils
 
 class RTDPTradingView(rtdp.RealTimeDataProvider):
     def __init__(self, params = None):
         super().__init__(params)
-
-        load_dotenv()
-        self.fdp_url = os.getenv("FDP_URL")
 
         self.recommendations = ["STRONG_BUY", "BUY"]
         self.intervals = ["1m", "5m", "15m","30m","1h","2h","4h"]
@@ -45,11 +38,8 @@ class RTDPTradingView(rtdp.RealTimeDataProvider):
         # get the portfolio
         recommendations = ','.join(self.recommendations)
         intervals = ','.join(self.intervals)
-        url = self.fdp_url+'portfolio?screener=crypto&exchange=ftx&recommendations='+recommendations+'&intervals='+intervals
-        request = urllib.request.Request(url)
-        request.add_header("User-Agent", "cheese")
-        response = urllib.request.urlopen(request).read()
-        response_json = json.loads(response)
+        url = 'portfolio?screener=crypto&exchange=ftx&recommendations='+recommendations+'&intervals='+intervals
+        response_json = utils.fdp_request(url)
         if response_json["status"] != "ok":
             print(response_json["reason"])
             return None
@@ -61,11 +51,8 @@ class RTDPTradingView(rtdp.RealTimeDataProvider):
         str_symbols = ','.join(symbols)
         str_symbols = str_symbols.replace("/", "_")
         
-        url = self.fdp_url+'symbol?screener=crypto&exchange=ftx&symbols='+str_symbols
-        request = urllib.request.Request(url)
-        request.add_header("User-Agent", "cheese")
-        response = urllib.request.urlopen(request).read()
-        response_json = json.loads(response)
+        url = 'symbol?screener=crypto&exchange=ftx&symbols='+str_symbols
+        response_json = utils.fdp_request(url)
         if response_json["status"] != "ok":
             print(response_json["reason"])
             return None
