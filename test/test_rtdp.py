@@ -50,3 +50,29 @@ class TestRTDP:
 
         # cleaning
         os.remove(filename)
+
+    def test_rtdp_tv_next_response_recommendations_ko(self, mocker):
+        response_recommendations = {'elapsed_time': '0:00:02.537734', 'status': 'ko', 'reason': 'no reason', 'result': {}}
+
+        # context
+        my_rtdp_tv = rtdp_tv.RTDPTradingView()
+        mocker.patch('src.utils.fdp_request', side_effect=[response_recommendations, self.response_symbol])
+
+        # action
+        data_from_next = my_rtdp_tv.next()
+
+        # expectation
+        assert(data_from_next is None)
+
+    def test_rtdp_tv_next_response_symbol_ko(self, mocker):
+        response_symbol = {'elapsed_time': '0:00:02.537734', 'status': 'ko', 'reason': 'no reason', 'result': {'status': 'ko', 'reason': 'no reason', 'symbols': {}}}
+
+        # context
+        my_rtdp_tv = rtdp_tv.RTDPTradingView()
+        mocker.patch('src.utils.fdp_request', side_effect=[self.response_reco, response_symbol])
+
+        # action
+        data_from_next = my_rtdp_tv.next()
+
+        # expectation
+        assert(data_from_next is None)
