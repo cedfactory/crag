@@ -14,6 +14,11 @@ class Crag:
         self.log = {}
         self.current_step = -1
 
+        self.current_trades = []
+
+        self.stop_loss = -10   # %
+        self.get_profit = 30   # %
+
     def run(self, interval=1):
         done = False
         while not done:
@@ -83,16 +88,47 @@ class Crag:
 
         cash = self.broker.get_cash()
 
-        # create trades
+        # sell stuffs
+        for i, current_trade in reversed(list(enumerate(self.current_trades))):
+            sell_trade = trade.Trade()
+            sell_trade.type = "SELL"
+            sell_trade.symbol = current_trade.symbol
+            key = sell_trade.symbol.replace('/', '_')
+            if key not in self.rtdp.current_data["symbols"]:
+                continue
+            sell_trade.symbol_price = self.rtdp.current_data["symbols"][key]["info"]["info"]["price"]
+            sell_trade.symbol_price = float(sell_trade.symbol_price)
+            sell_trade.size = current_trade.size
+            sell_trade.net_price = sell_trade.size * sell_trade.symbol_price
+            sell_trade.commission = sell_trade.net_price * self.broker.get_commission(sell_trade.symbol)
+            sell_trade.gross_price = sell_trade.net_price + sell_trade.commission
+
+            roi = float(sell_trade.gross_price - current_trade.gross_price)
+            sell_trade.stimulus = ""
+            if (roi >= 0 and 100.0 * roi / sell_trade.gross_price >= self.get_profit):
+                sell_trade.stimulus = "GET_PROFIT"
+            if (roi < 0 and 100.0 * roi / sell_trade.gross_price <= self.stop_loss):
+                sell_trade.stimulus = "STOP_LOSS"
+
+            if sell_trade.stimulus != "":
+                done = self.broker.execute_trade()
+                if done:
+                    cash = cash + sell_trade.gross_price
+                    trades.append(sell_trade)
+                    self.current_trades.append(sell_trade)
+
+        # buy stuffs
         trades = []
         for symbol in self.log[self.current_step]["lst_symbols_to_buy"]:
             current_trade = trade.Trade()
+            current_trade.type = "BUY"
+            current_trade.stimulus = ""
             current_trade.symbol = symbol
             current_trade.symbol_price = self.rtdp.current_data["symbols"][symbol.replace('/', '_')]["info"]["info"]["price"]
             current_trade.symbol_price = float(current_trade.symbol_price)
             current_trade.size = cash/100
             current_trade.net_price = current_trade.size * current_trade.symbol_price
-            current_trade.commission = current_trade.net_price * 0.04
+            current_trade.commission = current_trade.net_price * self.broker.get_commission(current_trade.symbol)
             current_trade.gross_price = current_trade.net_price + current_trade.commission
             current_trade.profit_loss = -current_trade.commission
             if current_trade.gross_price <= cash:
@@ -100,8 +136,9 @@ class Crag:
                 if done:
                     cash = cash - current_trade.gross_price
                     trades.append(current_trade)
+                    self.current_trades.append(current_trade)
 
         self.add_to_log("trades", trades)
 
     def execute_trade(self, trade):
-        self.broker.execute_trade(trade)
+        return self.broker.execute_trade(trade)

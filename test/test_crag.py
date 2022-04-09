@@ -11,6 +11,7 @@ class TestCrag:
         rtdp = rtdp_tv.RTDPTradingView(params)
 
         broker_simulation = broker.BrokerSimulation()
+        broker_simulation.initialize({"cash":100})
         params = {'rtdp':rtdp, 'broker':broker_simulation}
         bot = crag.Crag(params)
         bot.run()

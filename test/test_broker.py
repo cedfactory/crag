@@ -28,6 +28,8 @@ class TestBrokerSimulation:
 
     def generate_trade(self):
         fake_trade = trade.Trade()
+        fake_trade.type = "BUY"
+        fake_trade.stimulus= ""
         fake_trade.symbol = "ETH/USD"
         fake_trade.symbol_price = 1
         fake_trade.size = 2
@@ -74,8 +76,8 @@ class TestBrokerSimulation:
         broker_simulation.export_history(history_file_generated)
 
         # expectations
-        lines=[ ["id", "time", "symbol", "symbol_price", "size", "net_price", "commission", "gross_price"],
-                ["ETH/USD", "1", "2", "2", "0.08", "2.08"] ]
+        lines=[ ["id", "time", "type", "stimulus", "symbol", "symbol_price", "size", "net_price", "commission", "gross_price"],
+                ["BUY", "", "ETH/USD", "1", "2", "2", "0.08", "2.08"] ]
         with open(history_file_generated) as csvfile:
             csvreader = csv.reader(csvfile, delimiter=';')
             header = next(csvreader)

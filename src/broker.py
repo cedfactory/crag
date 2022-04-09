@@ -41,10 +41,14 @@ class BrokerSimulation(Broker):
 
     def execute_trade(self, trade):
         print("execute trade {}".format(trade.id))
-        if self.cash < trade.gross_price:
-            return False
-        self.cash = self.cash - trade.gross_price
+        if trade.type == "BUY":
+            if self.cash < trade.gross_price:
+                return False
+            self.cash = self.cash - trade.gross_price
+        elif trade.type == "SELL":
+            self.cash = self.cash + trade.gross_price
         self.trades.append(trade)
+        
         return True
 
     def export_history(self, target):

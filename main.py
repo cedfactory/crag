@@ -19,6 +19,7 @@ if __name__ == '__main__':
     bot = crag.Crag(params)
     bot.run()
     bot.export_history("broker_history.csv")
+    print(bot.broker.get_cash())
     exit(0)
 
     for i in range(5):
