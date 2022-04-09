@@ -87,6 +87,7 @@ class Crag:
         print("[Crag.trade]")
 
         cash = self.broker.get_cash()
+        trades = []
 
         # sell stuffs
         for i, current_trade in reversed(list(enumerate(self.current_trades))):
@@ -118,7 +119,6 @@ class Crag:
                     self.current_trades.append(sell_trade)
 
         # buy stuffs
-        trades = []
         for symbol in self.log[self.current_step]["lst_symbols_to_buy"]:
             current_trade = trade.Trade()
             current_trade.type = "BUY"
