@@ -1,5 +1,4 @@
 from abc import ABCMeta, abstractmethod
-import pandas as pd
 
 class RealTimeDataProvider(metaclass = ABCMeta):
     

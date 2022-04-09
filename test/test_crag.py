@@ -2,7 +2,7 @@ import pytest
 import pandas as pd
 import os
 import json
-from src import rtdp_tv,crag
+from src import rtdp_tv,crag,broker
 
 class TestCrag:
 
@@ -10,7 +10,9 @@ class TestCrag:
         params = {'infile':'./test/data/history.csv'}
         rtdp = rtdp_tv.RTDPTradingView(params)
 
-        bot = crag.Crag(rtdp)
+        broker_simulation = broker.BrokerSimulation()
+        params = {'rtdp':rtdp, 'broker':broker_simulation}
+        bot = crag.Crag(params)
         bot.run()
 
         expected_lst_symbols_to_buy = {

@@ -1,5 +1,4 @@
-from src import rtdp_tv
-from src import crag
+from src import rtdp_tv,broker,crag
 import pandas as pd
 
 if __name__ == '__main__':
@@ -13,8 +12,13 @@ if __name__ == '__main__':
     #selection = rtdp_tv.next()
     #print(selection)
 
-    bot = crag.Crag(rtdp)
+    broker = broker.BrokerSimulation()
+    broker.initialize({'cash':100})
+
+    params = {'rtdp':rtdp, 'broker':broker}
+    bot = crag.Crag(params)
     bot.run()
+    bot.export_history("broker_history.csv")
     exit(0)
 
     for i in range(5):

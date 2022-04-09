@@ -8,15 +8,25 @@ class Trade:
         self.id = Trade.id
         Trade.id = Trade.id + 1
         self.time = datetime.now()
-    
+
     def dump(self):
         print("{} : {} for {}".format(self.id, self.symbol, self.net_price))
 
+    def get_csv_header(self):
+        return ["id", "time", "symbol", "symbol_price", "size", "net_price", "commission", "gross_price"]
+
+    def get_csv_row(self):
+        return [self.id, self.time, self.symbol, self.symbol_price, self.size, self.net_price, self.commission, self.gross_price]
+
 
 class Crag:
-    def __init__(self, rtdp, params = None):
-        self.rtdp = rtdp
-        self.cash = 100
+    def __init__(self, params = None):
+
+        self.rtdp = None
+        self.broker = None
+        if params:
+            self.rtdp = params.get("rtdp", self.rtdp)
+            self.broker = params.get("broker", self.broker)
 
         self.log = {}
         self.current_step = -1
@@ -51,14 +61,17 @@ class Crag:
             self.log[self.current_step] = {}
         self.log[self.current_step][key] = value
 
-    def dump_log(self):
-        for key, value in self.log.items():
+    def export_history(self, target=None):
+        '''for key, value in self.log.items():
             print(key)
             if "lst_symbols_to_buy" in value:
                 print(value["lst_symbols_to_buy"])
             if "trades" in value:
                 for trade in value["trades"]:
                     trade.dump()
+        '''
+
+        self.broker.export_history(target)
 
 
     def manage_current_data(self):
@@ -95,6 +108,8 @@ class Crag:
     def trade(self):
         print("[Crag.trade]")
 
+        cash = self.broker.get_cash()
+
         # create trades
         trades = []
         for symbol in self.log[self.current_step]["lst_symbols_to_buy"]:
@@ -102,11 +117,18 @@ class Crag:
             trade.symbol = symbol
             trade.symbol_price = self.rtdp.current_data["symbols"][symbol.replace('/', '_')]["info"]["info"]["price"]
             trade.symbol_price = float(trade.symbol_price)
-            trade.size = self.cash/100
+            trade.size = cash/100
             trade.net_price = trade.size * trade.symbol_price
             trade.commission = trade.net_price * 0.04
             trade.gross_price = trade.net_price + trade.commission
             trade.profit_loss = -trade.commission
-            trades.append(trade)
+            if trade.gross_price <= cash:
+                done = self.execute_trade(trade)
+                if done:
+                    cash = cash - trade.gross_price
+                    trades.append(trade)
+
         self.add_to_log("trades", trades)
 
+    def execute_trade(self, trade):
+        self.broker.execute_trade(trade)
