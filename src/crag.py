@@ -45,17 +45,7 @@ class Crag:
         self.log[self.current_step][key] = value
 
     def export_history(self, target=None):
-        '''for key, value in self.log.items():
-            print(key)
-            if "lst_symbols_to_buy" in value:
-                print(value["lst_symbols_to_buy"])
-            if "trades" in value:
-                for trade in value["trades"]:
-                    trade.dump()
-        '''
-
         self.broker.export_history(target)
-
 
     def manage_current_data(self):
         print("[Crag.manage_current_data]")
