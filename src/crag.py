@@ -1,23 +1,6 @@
 import time
 import pandas as pd
-from datetime import datetime
-
-class Trade:
-    id = 0
-    def __init__(self):
-        self.id = Trade.id
-        Trade.id = Trade.id + 1
-        self.time = datetime.now()
-
-    def dump(self):
-        print("{} : {} for {}".format(self.id, self.symbol, self.net_price))
-
-    def get_csv_header(self):
-        return ["id", "time", "symbol", "symbol_price", "size", "net_price", "commission", "gross_price"]
-
-    def get_csv_row(self):
-        return [self.id, self.time, self.symbol, self.symbol_price, self.size, self.net_price, self.commission, self.gross_price]
-
+from . import trade
 
 class Crag:
     def __init__(self, params = None):
@@ -113,20 +96,20 @@ class Crag:
         # create trades
         trades = []
         for symbol in self.log[self.current_step]["lst_symbols_to_buy"]:
-            trade = Trade()
-            trade.symbol = symbol
-            trade.symbol_price = self.rtdp.current_data["symbols"][symbol.replace('/', '_')]["info"]["info"]["price"]
-            trade.symbol_price = float(trade.symbol_price)
-            trade.size = cash/100
-            trade.net_price = trade.size * trade.symbol_price
-            trade.commission = trade.net_price * 0.04
-            trade.gross_price = trade.net_price + trade.commission
-            trade.profit_loss = -trade.commission
-            if trade.gross_price <= cash:
-                done = self.execute_trade(trade)
+            current_trade = trade.Trade()
+            current_trade.symbol = symbol
+            current_trade.symbol_price = self.rtdp.current_data["symbols"][symbol.replace('/', '_')]["info"]["info"]["price"]
+            current_trade.symbol_price = float(current_trade.symbol_price)
+            current_trade.size = cash/100
+            current_trade.net_price = current_trade.size * current_trade.symbol_price
+            current_trade.commission = current_trade.net_price * 0.04
+            current_trade.gross_price = current_trade.net_price + current_trade.commission
+            current_trade.profit_loss = -current_trade.commission
+            if current_trade.gross_price <= cash:
+                done = self.execute_trade(current_trade)
                 if done:
-                    cash = cash - trade.gross_price
-                    trades.append(trade)
+                    cash = cash - current_trade.gross_price
+                    trades.append(current_trade)
 
         self.add_to_log("trades", trades)
 

@@ -50,7 +50,7 @@ class BrokerSimulation(Broker):
     def export_history(self, target):
         if target.endswith(".csv"):
             with open(target, 'w') as f:
-                writer = csv.writer(f)
+                writer = csv.writer(f, delimiter=';')
                 writer.writerow(self.trades[0].get_csv_header())
                 for trade in self.trades:
                     writer.writerow(trade.get_csv_row())
