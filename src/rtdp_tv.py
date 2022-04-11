@@ -18,6 +18,8 @@ class RTDPTradingView(rtdp.RealTimeDataProvider):
             self.intervals = params.get("intervals", self.intervals)
             self.infile = params.get("infile", self.infile)
 
+        self.symbols = []
+        
         # read input file
         if self.infile != None:
             self.data = []
@@ -82,7 +84,6 @@ class RTDPTradingView(rtdp.RealTimeDataProvider):
         f = open(outfile, "w")
         f.write("Date;Data\n")
         f.close()
-        self.symbols = []
         while n_records > 0:
             json_data = self._fetch_data()
             if json_data is None:
