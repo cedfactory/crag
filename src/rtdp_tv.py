@@ -48,9 +48,10 @@ class RTDPTradingView(rtdp.RealTimeDataProvider):
         # get info for symbols in the portfolio
         df_portfolio = pd.read_json(portfolio_json)
         symbols = df_portfolio["symbol"].to_list()
-        str_symbols = ','.join(symbols)
+        self.symbols = self.symbols + list(set(symbols) - set(self.symbols))
+        str_symbols = ','.join(self.symbols)
         str_symbols = str_symbols.replace("/", "_")
-        
+
         url = 'symbol?screener=crypto&exchange=ftx&symbols='+str_symbols
         response_json = utils.fdp_request(url)
         if response_json["status"] != "ok":
@@ -81,6 +82,7 @@ class RTDPTradingView(rtdp.RealTimeDataProvider):
         f = open(outfile, "w")
         f.write("Date;Data\n")
         f.close()
+        self.symbols = []
         while n_records > 0:
             json_data = self._fetch_data()
             if json_data is None:
