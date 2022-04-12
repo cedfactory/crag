@@ -9,7 +9,13 @@ class Trade:
         self.time = datetime.now()
 
     def dump(self):
-        print("{} : {} for {}".format(self.id, self.symbol, self.net_price))
+        print("-> trade {}:".format(self.id))
+        print("   {} {} ({})".format(self.type, self.symbol, self.stimulus))
+        print("   symbol price : {}".format(self.symbol_price))
+        print("   size : {}".format(self.size))
+        print("   net price : {}".format(self.net_price))
+        print("   commission : {}".format(self.commission))
+        print("   gross price : {}".format(self.gross_price))
 
     def get_csv_header(self):
         return ["id", "time", "type", "stimulus", "symbol", "symbol_price", "size", "net_price", "commission", "gross_price"]
