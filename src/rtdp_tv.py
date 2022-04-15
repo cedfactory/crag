@@ -99,3 +99,19 @@ class RTDPTradingView(rtdp.RealTimeDataProvider):
 
             n_records = n_records - 1
             time.sleep(interval)
+
+    def export(self):
+        for data in self.data:
+            json_portfolio = data["portfolio"]
+                
+            # get info for symbols in the portfolio
+            df_portfolio = pd.read_json(json_portfolio)
+            symbols = df_portfolio["symbol"].to_list()
+            print(symbols)
+            for symbol in symbols:
+                symbol_renamed = symbol.replace('/', '_')
+                if symbol_renamed not in data["symbols"]:
+                    print("[rtdp_tv::export] symbol {} not found".format(symbol))
+                    continue
+                symbol_price = float(data["symbols"][symbol_renamed]["info"]["info"]["price"])
+                print("   {} {:.2f}".format(symbol, symbol_price))
