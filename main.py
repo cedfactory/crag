@@ -14,13 +14,13 @@ def crag_record(csvfile):
     rtdp.record(20, 1, csvfile)
 
 def crag_run(botname):
-    params = {'infile':'history.csv'}
+    params = {'infile':'history2.csv'}
     rtdp = rtdp_tv.RTDPTradingView(params)
 
-    broker = broker.BrokerSimulation()
-    broker.initialize({'cash':100})
+    broker_simu = broker.BrokerSimulation()
+    broker_simu.initialize({'cash':100})
 
-    params = {'rtdp':rtdp, 'broker':broker}
+    params = {'rtdp':rtdp, 'broker':broker_simu}
     bot = crag.Crag(params)
     bot.run()
     bot.export_history("broker_history.csv")
