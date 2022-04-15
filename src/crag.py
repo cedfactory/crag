@@ -11,19 +11,20 @@ class Crag:
             self.rtdp = params.get("rtdp", self.rtdp)
             self.broker = params.get("broker", self.broker)
 
-        self.log = {}
+        self.log = []
         self.current_step = -1
 
         self.current_trades = []
 
-        self.stop_loss = -1  # %
-        self.get_profit = .05   # %
+        self.stop_loss = -10  # %
+        self.get_profit = .1   # %
 
     def run(self, interval=1):
         done = False
         while not done:
             # log
             self.current_step = self.current_step + 1
+            self.log.append({})
 
             done = not self.step()
             time.sleep(interval)
@@ -45,8 +46,6 @@ class Crag:
         return True
 
     def add_to_log(self, key, value):
-        if self.current_step not in self.log:
-            self.log[self.current_step] = {}
         self.log[self.current_step][key] = value
 
     def export_history(self, target=None):
@@ -109,9 +108,11 @@ class Crag:
             sell_trade.gross_price = sell_trade.net_price + sell_trade.commission
 
             roi = sell_trade.net_price - current_trade.gross_price
-            if (roi >= 0 and 100.0 * roi / sell_trade.gross_price >= self.get_profit):
+            #print("roi = {:.2f}     ({:.2f} -> {:.2f})".format(roi*100., current_trade.symbol_price, sell_trade.symbol_price))
+
+            if (100.0 * roi / sell_trade.gross_price >= self.get_profit):
                 sell_trade.stimulus = "GET_PROFIT"
-            if (roi < 0 and 100.0 * roi / sell_trade.gross_price <= self.stop_loss):
+            if (100.0 * roi / sell_trade.gross_price <= self.stop_loss):
                 sell_trade.stimulus = "STOP_LOSS"
 
             if sell_trade.stimulus != "":
@@ -121,7 +122,7 @@ class Crag:
                     cash = cash + sell_trade.gross_price
                     trades.append(sell_trade)
                     self.current_trades.append(sell_trade)
-                    print("{} ({}) {} {:.2f} roi={:.2f}".format(sell_trade.type, sell_trade.stimulus, sell_trade.symbol, sell_trade.gross_price, roi))
+                    print("{} ({}) {} {:.2f} roi={:.2f}".format(sell_trade.type, sell_trade.stimulus, sell_trade.symbol, sell_trade.gross_price, 100.*roi))
 
         # buy stuffs
         for symbol in self.log[self.current_step]["lst_symbols_to_buy"]:
@@ -136,7 +137,7 @@ class Crag:
             current_trade.commission = current_trade.net_price * self.broker.get_commission(current_trade.symbol)
             current_trade.gross_price = current_trade.net_price + current_trade.commission
             current_trade.profit_loss = -current_trade.commission
-
+            #current_trade.dump()
             if current_trade.gross_price <= cash:
                 done = self.broker.execute_trade(current_trade)
                 if done:
