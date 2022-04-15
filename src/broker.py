@@ -40,7 +40,6 @@ class BrokerSimulation(Broker):
         return 0.07
 
     def execute_trade(self, trade):
-        print("execute trade {}".format(trade.id))
         if trade.type == "BUY":
             if self.cash < trade.gross_price:
                 return False
