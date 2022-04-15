@@ -61,3 +61,14 @@ class BrokerSimulation(Broker):
                 f.close()
         else:
             print(self.trades)
+
+    def export_status(self):
+        print("Status :")
+        print("cash : {:.2f}".format(self.cash))
+        total = self.cash
+        for current_trade in self.trades:
+            if current_trade.type == "BUY":
+                symbol_value = current_trade.net_price - current_trade.net_price * self.get_commission(current_trade.symbol)
+                print("{} : {:.2f}".format(current_trade.symbol, symbol_value))
+                total += symbol_value
+        print("Total : {:.2f}".format(total))
