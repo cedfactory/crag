@@ -16,8 +16,8 @@ class Crag:
 
         self.current_trades = []
 
-        self.stop_loss = -10   # %
-        self.get_profit = .02   # %
+        self.stop_loss = -1  # %
+        self.get_profit = .05   # %
 
     def run(self, interval=1):
         done = False
@@ -36,10 +36,10 @@ class Crag:
         if df_current_data is None:
             return False
 
-        #
+        # manage current data
         self.manage_current_data()
 
-        #
+        # execute trading
         self.trade()
 
         return True
@@ -90,29 +90,27 @@ class Crag:
         trades = []
 
         # sell stuffs
-        for i, current_trade in reversed(list(enumerate(self.current_trades))):
-            if current_trade.type == "SELL" or current_trade.type.startswith("SOLD"):
+        for current_trade in self.current_trades:
+            if current_trade.type != "BUY":
                 continue
 
             sell_trade = trade.Trade()
             sell_trade.type = "SELL"
+            sell_trade.stimulus = ""
             sell_trade.symbol = current_trade.symbol
             key = sell_trade.symbol.replace('/', '_')
             if key not in self.rtdp.current_data["symbols"]:
+                print("[Crag::trade] symbol {} not found".format(key))
                 continue
-            sell_trade.symbol_price = self.rtdp.current_data["symbols"][key]["info"]["info"]["price"]
-            sell_trade.symbol_price = float(sell_trade.symbol_price)
+            sell_trade.symbol_price = float(self.rtdp.current_data["symbols"][key]["info"]["info"]["price"])
             sell_trade.size = current_trade.size
             sell_trade.net_price = sell_trade.size * sell_trade.symbol_price
             sell_trade.commission = sell_trade.net_price * self.broker.get_commission(sell_trade.symbol)
-            sell_trade.gross_price = sell_trade.net_price - sell_trade.commission
+            sell_trade.gross_price = sell_trade.net_price + sell_trade.commission
 
-            roi = float(sell_trade.gross_price - current_trade.gross_price)
-            sell_trade.stimulus = ""
+            roi = sell_trade.net_price - current_trade.gross_price
             if (roi >= 0 and 100.0 * roi / sell_trade.gross_price >= self.get_profit):
                 sell_trade.stimulus = "GET_PROFIT"
-                current_trade.dump()
-                sell_trade.dump()
             if (roi < 0 and 100.0 * roi / sell_trade.gross_price <= self.stop_loss):
                 sell_trade.stimulus = "STOP_LOSS"
 
@@ -123,6 +121,7 @@ class Crag:
                     cash = cash + sell_trade.gross_price
                     trades.append(sell_trade)
                     self.current_trades.append(sell_trade)
+                    print("{} ({}) {} {:.2f} roi={:.2f}".format(sell_trade.type, sell_trade.stimulus, sell_trade.symbol, sell_trade.gross_price, roi))
 
         # buy stuffs
         for symbol in self.log[self.current_step]["lst_symbols_to_buy"]:
@@ -137,15 +136,18 @@ class Crag:
             current_trade.commission = current_trade.net_price * self.broker.get_commission(current_trade.symbol)
             current_trade.gross_price = current_trade.net_price + current_trade.commission
             current_trade.profit_loss = -current_trade.commission
-            #current_trade.dump()
+
             if current_trade.gross_price <= cash:
-                done = self.execute_trade(current_trade)
+                done = self.broker.execute_trade(current_trade)
                 if done:
                     cash = cash - current_trade.gross_price
                     trades.append(current_trade)
                     self.current_trades.append(current_trade)
+                    print("{} {} {:.2f}".format(current_trade.type, current_trade.symbol, current_trade.gross_price))
 
         self.add_to_log("trades", trades)
 
-    def execute_trade(self, trade):
-        return self.broker.execute_trade(trade)
+    def export_status(self):
+        return self.broker.export_status()
+
+
