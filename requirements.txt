@@ -12,3 +12,5 @@ pytest-mock==3.7.0
 pytest-cov==2.12.1
 reportlab==3.6.5
 python-dotenv==0.19.2
+matplotlib==3.3.4
+reportlab==3.6.5
