@@ -4,6 +4,19 @@ import time
 import csv
 from datetime import datetime
 
+# exports
+import matplotlib.pyplot as plt
+from reportlab.lib import utils as reportlab_utils
+from reportlab.platypus import SimpleDocTemplate
+from reportlab.platypus import Paragraph,Table,TableStyle,Image,PageBreak
+from reportlab.lib.styles import getSampleStyleSheet,ParagraphStyle
+cm = 2.54
+def get_image(path, width=70*cm):
+    img = reportlab_utils.ImageReader(path)
+    iw, ih = img.getSize()
+    aspect = ih / float(iw)
+    return Image(path, width=width, height=(width * aspect))
+
 from . import rtdp,utils
 
 class RTDPTradingView(rtdp.RealTimeDataProvider):
@@ -101,6 +114,8 @@ class RTDPTradingView(rtdp.RealTimeDataProvider):
             time.sleep(interval)
 
     def export(self):
+        # prices evolution
+        prices = {}
         for data in self.data:
             json_portfolio = data["portfolio"]
                 
@@ -109,9 +124,35 @@ class RTDPTradingView(rtdp.RealTimeDataProvider):
             symbols = df_portfolio["symbol"].to_list()
             print(symbols)
             for symbol in symbols:
+                if symbol not in prices.keys():
+                    prices[symbol] = []
                 symbol_renamed = symbol.replace('/', '_')
                 if symbol_renamed not in data["symbols"]:
                     print("[rtdp_tv::export] symbol {} not found".format(symbol))
                     continue
                 symbol_price = float(data["symbols"][symbol_renamed]["info"]["info"]["price"])
                 print("   {} {:.2f}".format(symbol, symbol_price))
+                prices[symbol].append(symbol_price)
+
+        for symbol in prices:
+            print("{} : {}".format(symbol, prices[symbol]))
+            fig = plt.figure(figsize=(10, 10))
+            fig.add_subplot(111)
+            plt.plot(range(0,len(prices[symbol])), prices[symbol])
+            plt.title(symbol)
+            fig.savefig(symbol.replace('/', '_')+".png")
+
+        doc = SimpleDocTemplate("report.pdf", rightMargin=0, leftMargin=0, topMargin=0.3 * cm, bottomMargin=0)
+        styles = getSampleStyleSheet()
+        
+        elements = []
+
+        # header
+        elements.append(Paragraph("Crag report", styles['Heading1']))
+
+        for symbol in prices:
+            elements.append(Paragraph(symbol, styles['Heading2']))
+            elements.append(get_image(symbol.replace('/', '_')+".png"))
+            elements.append(PageBreak()) # break
+            
+        doc.build(elements)
