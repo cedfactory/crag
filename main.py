@@ -1,4 +1,4 @@
-from src import rtdp_tv,broker,crag
+from src import rtdp_tv,broker,broker_ftx,crag
 import pandas as pd
 
 _usage_str = """
@@ -14,8 +14,10 @@ def crag_record(csvfile):
     rtdp.record(20, 1, csvfile)
 
 def crag_run(botname):
-    params = {'infile':'history2.csv'}
+    params = {'infile':'history.csv'}
     rtdp = rtdp_tv.RTDPTradingView(params)
+    rtdp.export()
+    return
 
     broker_simu = broker.BrokerSimulation()
     broker_simu.initialize({'cash':100})
@@ -24,7 +26,19 @@ def crag_run(botname):
     bot = crag.Crag(params)
     bot.run()
     bot.export_history("broker_history.csv")
-    print(bot.broker.get_cash())
+    bot.export_status()
+
+def crag_ftx():
+    my_broker_ftx = broker_ftx.BrokerFTX()
+    my_broker_ftx.initialize({})
+
+    print("### balance ###")
+    balance = my_broker_ftx.get_balance()
+    print(balance)
+
+    print("### positions ###")
+    positions = my_broker_ftx.get_positions()
+    print(positions)
 
 if __name__ == '__main__':
     import sys
@@ -36,6 +50,8 @@ if __name__ == '__main__':
             if len(sys.argv) == 3:
                 botname = sys.argv[2]
             crag_run(botname)
+        elif len(sys.argv) >= 2 and (sys.argv[1] == "--ftx"):
+            crag_ftx()
         else:
             _usage()
     else:
