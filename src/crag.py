@@ -110,9 +110,11 @@ class Crag:
             roi = sell_trade.net_price - current_trade.gross_price
             #print("roi = {:.2f}     ({:.2f} -> {:.2f})".format(roi*100., current_trade.symbol_price, sell_trade.symbol_price))
 
-            if (100.0 * roi / sell_trade.gross_price >= self.get_profit):
+            if sell_trade.symbol not in self.log[self.current_step]["lst_symbols_to_buy"]:
+                sell_trade.stimulus = "STOP_UP"
+            elif 100.0 * roi / sell_trade.gross_price >= self.get_profit:
                 sell_trade.stimulus = "GET_PROFIT"
-            if (100.0 * roi / sell_trade.gross_price <= self.stop_loss):
+            elif 100.0 * roi / sell_trade.gross_price <= self.stop_loss:
                 sell_trade.stimulus = "STOP_LOSS"
 
             if sell_trade.stimulus != "":
