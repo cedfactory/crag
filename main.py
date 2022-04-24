@@ -13,10 +13,11 @@ def crag_record(csvfile):
     rtdp = rtdp_tv.RTDPTradingView()
     rtdp.record(20, 1, csvfile)
 
-def crag_run(botname):
-    params = {'infile':'history.csv'}
+def crag_run(history):
+    params = {}
+    if history != "":
+        params['infile'] = history
     rtdp = rtdp_tv.RTDPTradingView(params)
-    rtdp.export()
 
     broker_simu = broker.BrokerSimulation()
     broker_simu.initialize({'cash':100})
@@ -46,10 +47,10 @@ if __name__ == '__main__':
             csvfile = sys.argv[2]
             crag_record(csvfile)
         elif len(sys.argv) >= 2 and (sys.argv[1] == "--run"):
-            botname = ""
+            history = ""
             if len(sys.argv) == 3:
-                botname = sys.argv[2]
-            crag_run(botname)
+                history = sys.argv[2]
+            crag_run(history)
         elif len(sys.argv) >= 2 and (sys.argv[1] == "--ftx"):
             crag_ftx()
         else:
