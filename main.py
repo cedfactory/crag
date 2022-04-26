@@ -30,7 +30,8 @@ def crag_run(history):
 
 def crag_ftx():
     my_broker_ftx = broker_ftx.BrokerFTX()
-    my_broker_ftx.initialize({})
+    authentificated = my_broker_ftx.initialize({})
+    print("authentification : {}".format(authentificated))
 
     print("### balance ###")
     balance = my_broker_ftx.get_balance()
