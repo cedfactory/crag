@@ -1,4 +1,4 @@
-from src import rtdp_tv,broker,broker_ftx,crag
+from src import rtdp_tv,broker,broker_ftx,crag,trade
 import pandas as pd
 
 _usage_str = """
@@ -40,6 +40,18 @@ def crag_ftx():
     print("### positions ###")
     positions = my_broker_ftx.get_positions()
     print(positions)
+
+    '''
+    # test to buy
+    print("### create order ###")
+    buy_trade = trade.Trade()
+    buy_trade.type = "BUY"
+    buy_trade.symbol = "BTC/USD"
+    buy_trade.net_price = 0.0005
+    result = my_broker_ftx.execute_trade(buy_trade)
+    print(result)
+    '''
+
 
 if __name__ == '__main__':
     import sys
