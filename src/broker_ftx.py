@@ -37,18 +37,24 @@ class BrokerFTX(broker.Broker):
 
     @authentication_required
     def get_balance(self):
+        result = {}
         if self.ftx_exchange:
-            balance = self.ftx_exchange.fetch_balance()
-            print(balance)
-            return balance["info"]["result"][0]["free"]
-        return 0.
+            try:
+                balance = self.ftx_exchange.fetch_balance()
+                result = {coin['coin']:float(coin['total']) for coin in balance["info"]["result"] if coin['total'] != "0.0"}
+            except BaseException as err:
+                print("[BrokerFTX::get_balance] An error occured : {}".format(err))
+        return result
     
     @authentication_required
     def get_positions(self):
+        result = []
         if self.ftx_exchange:
-            positions = self.ftx_exchange.fetch_positions()
-            return positions
-        return []
+            try:
+                result = self.ftx_exchange.fetch_positions()
+            except BaseException as err:
+                print("[BrokerFTX::get_positions] An error occured : {}".format(err))
+        return result
        
     @authentication_required
     def get_commission(self, symbol):
