@@ -41,6 +41,9 @@ def crag_ftx():
     positions = my_broker_ftx.get_positions()
     print(positions)
 
+    print("### my trades ###")
+    my_broker_ftx.export_history()
+
     '''
     # test to buy
     print("### create order ###")

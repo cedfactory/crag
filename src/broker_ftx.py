@@ -41,6 +41,7 @@ class BrokerFTX(broker.Broker):
         if self.ftx_exchange:
             try:
                 balance = self.ftx_exchange.fetch_balance()
+                print(balance)
                 result = {coin['coin']:float(coin['total']) for coin in balance["info"]["result"] if coin['total'] != "0.0"}
             except BaseException as err:
                 print("[BrokerFTX::get_balance] An error occured : {}".format(err))
@@ -82,10 +83,18 @@ class BrokerFTX(broker.Broker):
         return False
 
     @authentication_required
-    def export_history(self, target):
+    def export_history(self, target=""):
         my_trades = self.ftx_exchange.fetch_my_trades()
-        print(my_trades)
-        pass
+        for my_trade in my_trades:
+            datetime = my_trade['datetime']
+            symbol = my_trade['symbol']
+            side = my_trade['side']
+            price = my_trade['price']
+            amount = my_trade['amount']
+            cost = my_trade['cost']
+            fee_cost = my_trade['fee']['cost']
+            fee_rate = my_trade['fee']['rate']
+            print("{};{};{};{};{};{};{};{}".format(datetime,symbol,side,price,amount,cost,fee_cost,fee_rate))
 
     def export_status(self):
         pass
