@@ -35,7 +35,7 @@ class RTStrTradingView(rtstr.RealTimeStrategy):
             df_portfolio["sum_" + action] = df_portfolio.loc[:, columns].sum(axis=1)
 
         # CEDE for Debug
-        FOR_RAPID_TEST = True
+        FOR_RAPID_TEST = False
         if FOR_RAPID_TEST:
             out_condition = 1
         else:
@@ -73,13 +73,6 @@ class RTStrTradingView(rtstr.RealTimeStrategy):
         delta_duration = sell_trade.time - current_trade.time
         holding_hours = int(delta_duration / datetime.timedelta(hours=1))
 
-        if holding_hours >= 6:
-            holding_hours_coef = 4
-        if holding_hours >= 3:
-            holding_hours_coef = 2
-        if holding_hours <= 1:
-            holding_hours_coef = 1
-
         # sell_trade.roi = sell_trade.net_price - current_trade.gross_price
         sell_trade.roi = sell_trade.net_price - current_trade.gross_price - sell_trade.selling_fee
 
@@ -90,8 +83,11 @@ class RTStrTradingView(rtstr.RealTimeStrategy):
                 sell_trade.stimulus = "GET_PROFIT"
             elif df_rtctrl["roi_%"][symbol] <= self.SL:
                 sell_trade.stimulus = "STOP_LOSS"
-            elif (sell_trade.roi > 0.2) & (holding_hours > 8):
-                sell_trade.stimulus = "GET_PROFIT_TIMER"
-
+            elif df_rtctrl["recommendation"][symbol] == 'STRONG_SELL':
+                sell_trade.stimulus = "RECOMMENDATION_STRONG_SELL"
+            elif (sell_trade.roi > 0.0) & (df_rtctrl["recommendation"][symbol] == 'SELL'):
+                sell_trade.stimulus = "RECOMMENDATION_SELL"
+            elif (sell_trade.roi > 0.0) & (holding_hours > 12):
+                sell_trade.stimulus = "TIMER"
 
         return sell_trade

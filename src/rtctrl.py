@@ -3,12 +3,15 @@ import requests
 from datetime import datetime
 from . import trade
 
+from tradingview_ta import TA_Handler, Interval, Exchange
+
 # Class to real time control the strategy behaviours
 class rtctrl():
     def __init__(self):
         self.df_rtctrl = pd.DataFrame(columns=self.get_df_header())
         self.df_rtctrl_tracking = pd.DataFrame(columns=self.get_df_header_tracking())
         self.symbol = []
+        self.recommendation = []
         self.time = 0
         self.actual_price = 0
         self.size = 0
@@ -21,11 +24,13 @@ class rtctrl():
         self.wallet_cash = 0
         self.wallet_value = 0
         self.wallet_percent = 0
+        self.screener_type = "crypto"
+        self.exchange = "ftx"
         self.print_tracking = True
         self.record_tracking = True
 
     def get_df_header(self):
-        return ["symbol", "time", "actual_price", "size", "fees", "buying_gross_price", "actual_net_price", "roi_$", "roi_%", "portfolio_value", "cash","wallet_value", "wallet_%"]
+        return ["symbol", "time", "actual_price", "size", "fees", "buying_gross_price", "actual_net_price", "roi_$", "roi_%", "portfolio_value", "cash","wallet_value", "wallet_%", "recommendation"]
 
     def get_df_header_tracking(self):
         return ["time", " roi%", "cash", "portfolio", "wallet", "asset%"]
@@ -82,7 +87,23 @@ class rtctrl():
             list_asset_gross_price.append(symbol_gross_price)
         return list_asset_gross_price
 
+    def get_tradingview_recommendation(self, list_symbol, interval):
+        list_asset_recommendation = []
+        for symbol in list_symbol:
+            symbol_tv = symbol.replace("/", "")
 
+            data_handler = TA_Handler(
+                symbol=symbol_tv,
+                screener=self.screener_type,
+                exchange=self.exchange,
+                interval=interval,
+            )
+            try:
+                tradingview_summary = data_handler.get_analysis().summary
+                list_asset_recommendation.append(tradingview_summary['RECOMMENDATION'])
+            except:
+                list_asset_recommendation.append("")
+        return list_asset_recommendation
 
     def update_rtctrl(self, list_of_current_trades, wallet_cash):
         if len(list_of_current_trades) == 0:
@@ -97,6 +118,7 @@ class rtctrl():
         self.fees = self.get_list_of_asset_fees(list_of_current_trades)
         self.buying_gross_price = self.get_list_of_asset_gross_price(list_of_current_trades)
         self.wallet_cash = wallet_cash
+        self.recommendation = self.get_tradingview_recommendation(self.symbol, '1d')
 
         self.df_rtctrl['symbol'] = self.symbol
         self.df_rtctrl['time'] = self.time
@@ -113,6 +135,7 @@ class rtctrl():
         self.df_rtctrl['wallet_value'] = self.df_rtctrl['portfolio_value'].sum() + self.df_rtctrl['cash']
         self.wallet_value = self.df_rtctrl['wallet_value'][0]
         self.df_rtctrl['wallet_%'] = 100 * self.df_rtctrl['portfolio_value'] / self.df_rtctrl['wallet_value']
+        self.df_rtctrl['recommendation'] = self.recommendation
 
         return
 

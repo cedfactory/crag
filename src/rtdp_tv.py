@@ -25,8 +25,9 @@ class RTDPTradingView(rtdp.RealTimeDataProvider):
 
         self.recommendations = ["STRONG_BUY","BUY"]
         # self.recommendations = ["STRONG_BUY"]
-        self.intervals = ["1m", "5m", "15m","30m","1h","2h","4h"]
-        # self.intervals = ["1h", "2h", "4h"]
+        self.intervals = ["15m", "30m", "1h", "2h", "4h", "1d"]
+        # self.intervals = ["1m", "5m", "15m","30m","1h","2h","4h"]
+
         self.infile = None
         if params:
             self.recommendations = params.get("recommendations", self.recommendations)
