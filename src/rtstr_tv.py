@@ -95,6 +95,3 @@ class RTStrTradingView(rtstr.RealTimeStrategy):
 
 
         return sell_trade
-
-    def get_crypto_holding_list(self):
-        pass
