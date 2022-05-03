@@ -45,21 +45,23 @@ class BrokerSimulation(Broker):
                 return False
             self.cash = self.cash - trade.gross_price
         elif trade.type == "SELL":
-            self.cash = self.cash + trade.gross_price
+            # self.cash = self.cash + trade.gross_price
+            self.cash = self.cash + trade.net_price - trade.selling_fee
         self.trades.append(trade)
         
         return True
 
     def export_history(self, target):
-        if target.endswith(".csv"):
-            with open(target, 'w') as f:
-                writer = csv.writer(f, delimiter=';')
-                writer.writerow(self.trades[0].get_csv_header())
-                for trade in self.trades:
-                    writer.writerow(trade.get_csv_row())
-                f.close()
-        else:
-            print(self.trades)
+        if len(self.trades) > 0:
+            if target.endswith(".csv"):
+                with open(target, 'w', newline='') as f:
+                    writer = csv.writer(f, delimiter=',')
+                    writer.writerow(self.trades[0].get_csv_header())
+                    for trade in self.trades:
+                        writer.writerow(trade.get_csv_row())
+                    f.close()
+            else:
+                print(self.trades)
 
     def export_status(self):
         print("Status :")
