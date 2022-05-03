@@ -8,7 +8,7 @@ class rtctrl():
     def __init__(self):
         self.df_rtctrl = pd.DataFrame(columns=self.get_df_header())
         self.df_rtctrl_tracking = pd.DataFrame(columns=self.get_df_header_tracking())
-        self.symbol = 0
+        self.symbol = []
         self.time = 0
         self.actual_price = 0
         self.size = 0
