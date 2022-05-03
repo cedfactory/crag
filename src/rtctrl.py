@@ -135,4 +135,5 @@ class rtctrl():
                                          self.df_rtctrl['wallet_%'].sum()]], columns=self.get_df_header_tracking())
 
             self.df_rtctrl_tracking = pd.concat([self.df_rtctrl_tracking, df_new_line])
+            self.df_rtctrl_tracking.reset_index(inplace=True, drop=True)
             self.df_rtctrl_tracking.to_csv("wallet_tracking_records.csv")
