@@ -14,8 +14,11 @@ class RTStrTradingView(rtstr.RealTimeStrategy):
     def __init__(self, params=None):
         super().__init__(params)
 
-        self.SL = - 3 * 0.07    # Stop Loss %
-        self.TP = -0.07 + 0.07 * 3   # Take Profit %
+        self.SL = -0.2    # Stop Loss %
+        self.TP = 0.2   # Take Profit %
+        self.TimerSL = -0.1    # Stop Loss %
+        self.TimerTP = 0.1   # Take Profit %
+        self.Timer = 12
         self.SPLIT = 10  # Asset Split Overall Percent Size
 
     def get_crypto_buying_list(self, current_data, df_rtctrl):
@@ -89,9 +92,13 @@ class RTStrTradingView(rtstr.RealTimeStrategy):
                 sell_trade.stimulus = "RECOMMENDATION_SELL"
             elif (sell_trade.roi < -0.1) & (df_rtctrl["recommendation"][symbol] == 'SELL'):
                 sell_trade.stimulus = "RECOMMENDATION_SELL"
-            elif (sell_trade.roi > 0.1) & (holding_hours > 12):
+            elif (sell_trade.roi > 0.0) & (df_rtctrl["recommendation"][symbol] == 'STRONG_SELL'):
+                sell_trade.stimulus = "RECOMMENDATION_SELL"
+            elif (sell_trade.roi < -0.1) & (df_rtctrl["recommendation"][symbol] == 'STRONG_SELL'):
+                sell_trade.stimulus = "RECOMMENDATION_SELL"
+            elif (sell_trade.roi > self.TimerTP) & (holding_hours > self.Timer):
                 sell_trade.stimulus = "TIMER"
-            elif (sell_trade.roi < -0.1) & (holding_hours > 12):
+            elif (sell_trade.roi < self.TimerSL) & (holding_hours > self.Timer):
                 sell_trade.stimulus = "TIMER"
 
         return sell_trade

@@ -142,21 +142,27 @@ class rtctrl():
 
     def display_summary_info(self):
         if self.print_tracking:
-            print(self.time,
-                  " - roi%: ", self.df_rtctrl['roi_$%'].sum() / self.df_rtctrl['buying_gross_price'].sum(),
-                  " cash: ", self.wallet_cash,
-                  " portfolio: ", self.df_rtctrl['actual_net_price'].sum(),
-                  " wallet: ", self.wallet_value,
-                  " asset%:", self.df_rtctrl['wallet_%'].sum())
+            try:
+                print(self.time,
+                      " roi%: ", self.df_rtctrl['roi_$'].sum() / self.df_rtctrl['buying_gross_price'].sum(),
+                      " cash: ", self.wallet_cash,
+                      " portfolio: ", self.df_rtctrl['actual_net_price'].sum(),
+                      " wallet: ", self.wallet_value,
+                      " asset%: ", self.df_rtctrl['wallet_%'].sum())
+            except:
+                pass
 
         if self.record_tracking:
-            df_new_line = pd.DataFrame([[self.time,
-                                         self.df_rtctrl['roi_%'].sum(),
-                                         self.wallet_cash,
-                                         self.df_rtctrl['actual_net_price'].sum(),
-                                         self.wallet_value,
-                                         self.df_rtctrl['wallet_%'].sum()]], columns=self.get_df_header_tracking())
+            try:
+                df_new_line = pd.DataFrame([[self.time,
+                                             self.df_rtctrl['roi_$'].sum() / self.df_rtctrl['buying_gross_price'].sum(),
+                                             self.wallet_cash,
+                                             self.df_rtctrl['actual_net_price'].sum(),
+                                             self.wallet_value,
+                                             self.df_rtctrl['wallet_%'].sum()]], columns=self.get_df_header_tracking())
 
-            self.df_rtctrl_tracking = pd.concat([self.df_rtctrl_tracking, df_new_line])
-            self.df_rtctrl_tracking.reset_index(inplace=True, drop=True)
-            self.df_rtctrl_tracking.to_csv("wallet_tracking_records.csv")
+                self.df_rtctrl_tracking = pd.concat([self.df_rtctrl_tracking, df_new_line])
+                self.df_rtctrl_tracking.reset_index(inplace=True, drop=True)
+                self.df_rtctrl_tracking.to_csv("wallet_tracking_records.csv")
+            except:
+                pass
