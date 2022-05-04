@@ -143,7 +143,7 @@ class rtctrl():
     def display_summary_info(self):
         if self.print_tracking:
             print(self.time,
-                  " - roi%: ", self.df_rtctrl['roi_%'].sum(),
+                  " - roi%: ", self.df_rtctrl['roi_$%'].sum() / self.df_rtctrl['buying_gross_price'].sum(),
                   " cash: ", self.wallet_cash,
                   " portfolio: ", self.df_rtctrl['actual_net_price'].sum(),
                   " wallet: ", self.wallet_value,

@@ -87,7 +87,11 @@ class RTStrTradingView(rtstr.RealTimeStrategy):
                 sell_trade.stimulus = "RECOMMENDATION_STRONG_SELL"
             elif (sell_trade.roi > 0.0) & (df_rtctrl["recommendation"][symbol] == 'SELL'):
                 sell_trade.stimulus = "RECOMMENDATION_SELL"
-            elif (sell_trade.roi > 0.0) & (holding_hours > 12):
+            elif (sell_trade.roi < -0.1) & (df_rtctrl["recommendation"][symbol] == 'SELL'):
+                sell_trade.stimulus = "RECOMMENDATION_SELL"
+            elif (sell_trade.roi > 0.1) & (holding_hours > 12):
+                sell_trade.stimulus = "TIMER"
+            elif (sell_trade.roi < -0.1) & (holding_hours > 12):
                 sell_trade.stimulus = "TIMER"
 
         return sell_trade
