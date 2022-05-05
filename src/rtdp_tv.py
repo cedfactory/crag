@@ -1,5 +1,6 @@
 import pandas as pd
 import json
+import os
 import time
 import csv
 from datetime import datetime
@@ -7,10 +8,14 @@ from datetime import datetime
 # exports
 import matplotlib.pyplot as plt
 from reportlab.lib import utils as reportlab_utils
+from reportlab.lib.pagesizes import A4,inch
+from reportlab.lib.enums import TA_LEFT, TA_RIGHT, TA_CENTER
 from reportlab.platypus import SimpleDocTemplate
 from reportlab.platypus import Paragraph,Table,TableStyle,Image,PageBreak
 from reportlab.lib.styles import getSampleStyleSheet,ParagraphStyle
-cm = 2.54
+from reportlab.graphics.shapes import Drawing,Line
+from reportlab.lib.units import cm
+
 def get_image(path, width=70*cm):
     img = reportlab_utils.ImageReader(path)
     iw, ih = img.getSize()
@@ -113,7 +118,7 @@ class RTDPTradingView(rtdp.RealTimeDataProvider):
             n_records = n_records - 1
             time.sleep(interval)
 
-    def export(self):
+    def export(self, filename):
         # prices evolution
         prices = {}
         for data in self.data:
@@ -142,17 +147,38 @@ class RTDPTradingView(rtdp.RealTimeDataProvider):
             plt.title(symbol)
             fig.savefig(symbol.replace('/', '_')+".png")
 
-        doc = SimpleDocTemplate("report.pdf", rightMargin=0, leftMargin=0, topMargin=0.3 * cm, bottomMargin=0)
+        doc = SimpleDocTemplate(filename, pagesize=A4, rightMargin=0, leftMargin=0, topMargin=0.3 * cm, bottomMargin=0)
         styles = getSampleStyleSheet()
         
         elements = []
 
         # header
-        elements.append(Paragraph("Crag report", styles['Heading1']))
 
+        style_title = ParagraphStyle(name='right', parent=styles['Heading1'], alignment=TA_CENTER)
+
+        elements.append(Paragraph("Crag report", style_title))
+
+        img = get_image('crag.png', width=cm)
+        img.hAlign = 'CENTER'
+        elements.append(img)
+
+        d = Drawing(590, 1)
+        line = Line(0, 0, 583, 0)
+        line.strokeWidth = 2
+        d.add(line)
+        elements.append(d)
+
+
+        images_to_delete = []
         for symbol in prices:
             elements.append(Paragraph(symbol, styles['Heading2']))
-            elements.append(get_image(symbol.replace('/', '_')+".png"))
+            pngfilename = symbol.replace('/', '_')+".png"
+            images_to_delete.append(pngfilename)
+            elements.append(get_image(pngfilename, width=7.*cm))
             elements.append(PageBreak()) # break
-            
+
         doc.build(elements)
+
+        for image_to_delete in images_to_delete:
+            os.remove(image_to_delete)
+            
