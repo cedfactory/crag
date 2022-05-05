@@ -16,8 +16,8 @@ class RTStrTradingView(rtstr.RealTimeStrategy):
 
         self.SL = -0.2    # Stop Loss %
         self.TP = 0.2   # Take Profit %
-        self.TimerSL = -0.1    # Stop Loss %
-        self.TimerTP = 0.1   # Take Profit %
+        self.TimerSL = self.SL/2    # Stop Loss %
+        self.TimerTP = self.TP/2    # Take Profit %
         self.Timer = 12
         self.SPLIT = 10  # Asset Split Overall Percent Size
 
@@ -88,17 +88,11 @@ class RTStrTradingView(rtstr.RealTimeStrategy):
                 sell_trade.stimulus = "STOP_LOSS"
             elif df_rtctrl["recommendation"][symbol] == 'STRONG_SELL':
                 sell_trade.stimulus = "RECOMMENDATION_STRONG_SELL"
-            elif (sell_trade.roi > 0.0) & (df_rtctrl["recommendation"][symbol] == 'SELL'):
-                sell_trade.stimulus = "RECOMMENDATION_SELL"
-            elif (sell_trade.roi < -0.1) & (df_rtctrl["recommendation"][symbol] == 'SELL'):
-                sell_trade.stimulus = "RECOMMENDATION_SELL"
-            elif (sell_trade.roi > 0.0) & (df_rtctrl["recommendation"][symbol] == 'STRONG_SELL'):
-                sell_trade.stimulus = "RECOMMENDATION_SELL"
-            elif (sell_trade.roi < -0.1) & (df_rtctrl["recommendation"][symbol] == 'STRONG_SELL'):
+            elif df_rtctrl["recommendation"][symbol] == 'STRONG_SELL':
                 sell_trade.stimulus = "RECOMMENDATION_SELL"
             elif (sell_trade.roi > self.TimerTP) & (holding_hours > self.Timer):
-                sell_trade.stimulus = "TIMER"
+                sell_trade.stimulus = "TIMER_PROFIT"
             elif (sell_trade.roi < self.TimerSL) & (holding_hours > self.Timer):
-                sell_trade.stimulus = "TIMER"
+                sell_trade.stimulus = "TIMER_LOST"
 
         return sell_trade
