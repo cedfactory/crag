@@ -1,4 +1,4 @@
-from src import rtdp_tv,broker,broker_ftx,crag,trade
+from src import rtdp_tv,broker,broker_ftx,crag,trade,rtstr_tv
 import pandas as pd
 
 _usage_str = """
@@ -19,10 +19,12 @@ def crag_run(history):
         params['infile'] = history
     rtdp = rtdp_tv.RTDPTradingView(params)
 
+    rtstr = rtstr_tv.RTStrTradingView()
+
     broker_simu = broker.BrokerSimulation()
     broker_simu.initialize({'cash':100})
 
-    params = {'rtdp':rtdp, 'broker':broker_simu}
+    params = {'rtdp':rtdp, 'broker':broker_simu, 'rtstr':rtstr}
     bot = crag.Crag(params)
     bot.run()
     bot.export_history("broker_history.csv")

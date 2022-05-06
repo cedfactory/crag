@@ -1,23 +1,32 @@
 import time
 import pandas as pd
 from . import trade
+from . import rtctrl
 
 class Crag:
     def __init__(self, params = None):
 
         self.rtdp = None
         self.broker = None
+        self.rtstr = None
         if params:
             self.rtdp = params.get("rtdp", self.rtdp)
             self.broker = params.get("broker", self.broker)
+            self.rtstr = params.get("rtstr", self.rtstr)
+
+        self.rtctrl = rtctrl.rtctrl()
 
         self.log = []
         self.current_step = -1
 
         self.current_trades = []
 
-        self.stop_loss = -10  # %
-        self.get_profit = .1   # %
+        self.cash = 0
+        self.portfolio_value = 0
+        self.wallet_value = 0
+
+        self.static_size = True
+        self.size = 1
 
     def run(self, interval=1):
         done = False
@@ -28,7 +37,8 @@ class Crag:
 
             done = not self.step()
             time.sleep(interval)
-        
+            self.export_history("broker_history.csv")
+
     def step(self):
         print("[Crag] new step...")
 
@@ -55,28 +65,7 @@ class Crag:
         print("[Crag.manage_current_data]")
 
         current_data = self.rtdp.get_current_data()
-
-        df_portfolio = pd.read_json(current_data["portfolio"])
-
-        # remove unused columns
-        unused_columns = [column for column in df_portfolio.columns if column.startswith('RECOMMENDATION_')]
-        unused_columns.extend(["rank_change1h", "rank_change24h"])
-        df_portfolio.drop(unused_columns, axis=1, inplace=True)
-
-        # sum all the buy, neutral & sell values
-        for action in ["buy", "neutral", "sell"]:
-            columns = [column for column in df_portfolio.columns if column.startswith(action+"_")]
-            df_portfolio["sum_"+action]=df_portfolio.loc[:,columns].sum(axis=1)
-        
-        # compute a score based on TDView and 24h & 1h trends
-        df_portfolio['score'] = df_portfolio['sum_buy'] + 1*df_portfolio['change24h'] + 1*df_portfolio['change1h'] - 2 * df_portfolio['sum_sell'] - df_portfolio['sum_neutral']
-        df_portfolio.sort_values(by=['score'], ascending=False, inplace=True)
-
-        # get rid of lower scores
-        df_portfolio.drop(df_portfolio[df_portfolio.score <= 0].index, inplace=True)
-
-        lst_symbols_to_buy = df_portfolio['symbol'].tolist()
-        #print(lst_symbols_to_buy)
+        lst_symbols_to_buy = self.rtstr.get_crypto_buying_list(current_data, self.rtctrl.df_rtctrl.copy())
 
         # log
         self.add_to_log("lst_symbols_to_buy", lst_symbols_to_buy)
@@ -84,8 +73,7 @@ class Crag:
 
     def trade(self):
         print("[Crag.trade]")
-
-        cash = self.broker.get_cash()
+        self.cash = self.broker.get_cash()
         trades = []
 
         # sell stuffs
@@ -95,6 +83,9 @@ class Crag:
 
             sell_trade = trade.Trade()
             sell_trade.type = "SELL"
+            sell_trade.sell_id = current_trade.id
+            sell_trade.buying_price = current_trade.buying_price
+            sell_trade.buying_time = current_trade.time
             sell_trade.stimulus = ""
             sell_trade.symbol = current_trade.symbol
             key = sell_trade.symbol.replace('/', '_')
@@ -104,53 +95,79 @@ class Crag:
             sell_trade.symbol_price = float(self.rtdp.current_data["symbols"][key]["info"]["info"]["price"])
             sell_trade.size = current_trade.size
             sell_trade.net_price = sell_trade.size * sell_trade.symbol_price
-            sell_trade.commission = sell_trade.net_price * self.broker.get_commission(sell_trade.symbol)
-            sell_trade.gross_price = sell_trade.net_price + sell_trade.commission
+            sell_trade.buying_fee = current_trade.buying_fee
+            sell_trade.selling_fee = sell_trade.net_price * self.broker.get_commission(sell_trade.symbol)
 
-            roi = sell_trade.net_price - current_trade.gross_price
-            #print("roi = {:.2f}     ({:.2f} -> {:.2f})".format(roi*100., current_trade.symbol_price, sell_trade.symbol_price))
+            sell_trade.gross_price = sell_trade.net_price + sell_trade.buying_fee + sell_trade.selling_fee
+            # sell_trade.gross_price = sell_trade.net_price + sell_trade.buying_fee
 
-            if sell_trade.symbol not in self.log[self.current_step]["lst_symbols_to_buy"]:
-                sell_trade.stimulus = "STOP_UP"
-            elif 100.0 * roi / sell_trade.gross_price >= self.get_profit:
-                sell_trade.stimulus = "GET_PROFIT"
-            elif 100.0 * roi / sell_trade.gross_price <= self.stop_loss:
-                sell_trade.stimulus = "STOP_LOSS"
+            sell_trade = self.rtstr.get_crypto_selling_list(current_trade, sell_trade, self.log[self.current_step]["lst_symbols_to_buy"], self.rtctrl.df_rtctrl.copy())
 
             if sell_trade.stimulus != "":
                 done = self.broker.execute_trade(sell_trade)
                 if done:
-                    current_trade.type = "SOLD_FOR_"+sell_trade.stimulus
-                    cash = cash + sell_trade.gross_price
+                    current_trade.type = "SOLD"
+                    sell_trade.stimulus = "SOLD_FOR_"+sell_trade.stimulus
+                    self.cash = self.broker.get_cash()
+                    # self.cash = cash + sell_trade.net_price    # CEDE to be verified
+                    sell_trade.cash = self.cash
+
+                    self.portfolio_value = self.portfolio_value - sell_trade.net_price
+                    self.wallet_value = self.portfolio_value + self.cash
+
+                    sell_trade.portfolio_value = self.portfolio_value
+                    sell_trade.wallet_value = self.wallet_value
+
                     trades.append(sell_trade)
                     self.current_trades.append(sell_trade)
-                    print("{} ({}) {} {:.2f} roi={:.2f}".format(sell_trade.type, sell_trade.stimulus, sell_trade.symbol, sell_trade.gross_price, 100.*roi))
+                    print("{} ({}) {} {:.2f} roi={:.2f}".format(sell_trade.type, sell_trade.stimulus, sell_trade.symbol, sell_trade.gross_price, sell_trade.roi))
 
         # buy stuffs
         for symbol in self.log[self.current_step]["lst_symbols_to_buy"]:
             current_trade = trade.Trade()
             current_trade.type = "BUY"
+            current_trade.sell_id = ""
             current_trade.stimulus = ""
+            current_trade.roi = ""
+            current_trade.buying_time = ""
+            current_trade.selling_fee = ""
             current_trade.symbol = symbol
             current_trade.symbol_price = self.rtdp.current_data["symbols"][symbol.replace('/', '_')]["info"]["info"]["price"]
             current_trade.symbol_price = float(current_trade.symbol_price)
-            current_trade.size = (cash / 100) / current_trade.symbol_price
+            current_trade.buying_price = current_trade.symbol_price
+            current_trade.size = self.get_trade_asset_size(current_trade.symbol_price)
             current_trade.net_price = current_trade.size * current_trade.symbol_price
-            current_trade.commission = current_trade.net_price * self.broker.get_commission(current_trade.symbol)
-            current_trade.gross_price = current_trade.net_price + current_trade.commission
-            current_trade.profit_loss = -current_trade.commission
+            current_trade.buying_fee = current_trade.net_price * self.broker.get_commission(current_trade.symbol)
+            current_trade.gross_price = current_trade.net_price + current_trade.buying_fee
+            current_trade.profit_loss = -current_trade.buying_fee
             #current_trade.dump()
-            if current_trade.gross_price <= cash:
+            if current_trade.gross_price <= self.cash:
                 done = self.broker.execute_trade(current_trade)
                 if done:
-                    cash = cash - current_trade.gross_price
+                    self.cash = self.broker.get_cash()
+                    current_trade.cash = self.cash
+                    self.portfolio_value = self.portfolio_value + current_trade.net_price
+                    self.wallet_value = self.portfolio_value + self.cash
+                    current_trade.portfolio_value = self.portfolio_value
+                    current_trade.wallet_value = self.wallet_value
+
                     trades.append(current_trade)
                     self.current_trades.append(current_trade)
+
                     print("{} {} {:.2f}".format(current_trade.type, current_trade.symbol, current_trade.gross_price))
 
+        self.rtctrl.update_rtctrl(self.current_trades, self.broker.get_cash())
+        self.rtctrl.display_summary_info()
         self.add_to_log("trades", trades)
 
     def export_status(self):
         return self.broker.export_status()
+
+    def get_trade_asset_size(self, symbol_price):
+        if self.static_size:
+            return self.size / symbol_price
+        else:
+            return (self.cash / 100) / symbol_price
+
 
 
