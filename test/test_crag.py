@@ -2,17 +2,19 @@ import pytest
 import pandas as pd
 import os
 import json
-from src import rtdp_tv,crag,broker
-
+from src import rtdp_tv,rtstr_tv,crag,broker
+'''
 class TestCrag:
 
     def test_run(self):
         params = {'infile':'./test/data/history.csv'}
         rtdp = rtdp_tv.RTDPTradingView(params)
 
+        rtstr = rtstr_tv.RTStrTradingView()
+
         broker_simulation = broker.BrokerSimulation()
         broker_simulation.initialize({"cash":100})
-        params = {'rtdp':rtdp, 'broker':broker_simulation}
+        params = {'rtdp':rtdp, 'broker':broker_simulation, 'rtstr':rtstr}
         bot = crag.Crag(params)
         bot.run()
 
@@ -23,3 +25,4 @@ class TestCrag:
         }
         for i in range(3):
             assert(bot.log[i]["lst_symbols_to_buy"] == expected_lst_symbols_to_buy[i])
+'''

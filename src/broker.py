@@ -55,7 +55,7 @@ class BrokerSimulation(Broker):
         if len(self.trades) > 0:
             if target.endswith(".csv"):
                 with open(target, 'w', newline='') as f:
-                    writer = csv.writer(f, delimiter=',')
+                    writer = csv.writer(f, delimiter=';')
                     writer.writerow(self.trades[0].get_csv_header())
                     for trade in self.trades:
                         writer.writerow(trade.get_csv_row())
