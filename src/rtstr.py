@@ -7,9 +7,13 @@ class RealTimeStrategy(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def get_crypto_buying_list(self, current_data, df_rtctrl):
+    def get_crypto_buying_list(self, current_data):
         pass
 
     @abstractmethod
-    def get_crypto_selling_list(self, current_trade, sell_trade, df_rtctrl):
+    def get_crypto_selling_list(self, current_trade, sell_trade):
+        pass
+
+    @abstractmethod
+    def end_of_trading(self, current_trades, broker_cash):
         pass

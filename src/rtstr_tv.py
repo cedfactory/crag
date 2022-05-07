@@ -14,6 +14,8 @@ class RTStrTradingView(rtstr.RealTimeStrategy):
     def __init__(self, params=None):
         super().__init__(params)
 
+        self.rtctrl = rtctrl.rtctrl()
+
         self.SL = -0.2    # Stop Loss %
         self.TP = 0.2   # Take Profit %
         self.TimerSL = self.SL/2    # Stop Loss %
@@ -21,7 +23,7 @@ class RTStrTradingView(rtstr.RealTimeStrategy):
         self.Timer = 12
         self.SPLIT = 10  # Asset Split Overall Percent Size
 
-    def get_crypto_buying_list(self, current_data, df_rtctrl):
+    def get_crypto_buying_list(self, current_data):
         # INPUT: df data received from fdp
         # OUTPUT: buying list
 
@@ -57,6 +59,7 @@ class RTStrTradingView(rtstr.RealTimeStrategy):
 
         lst_symbols_to_buy = df_portfolio['symbol'].tolist()
 
+        df_rtctrl = self.rtctrl.df_rtctrl.copy()
         if len(df_rtctrl) > 0:
             lst_symbol = []
             df_rtctrl.set_index('symbol', inplace=True)
@@ -71,7 +74,7 @@ class RTStrTradingView(rtstr.RealTimeStrategy):
         return lst_symbols_to_buy
 
 
-    def get_crypto_selling_list(self, current_trade, sell_trade, df_rtctrl):
+    def get_crypto_selling_list(self, current_trade, sell_trade):
 
         delta_duration = sell_trade.time - current_trade.time
         holding_hours = int(delta_duration / datetime.timedelta(hours=1))
@@ -79,6 +82,7 @@ class RTStrTradingView(rtstr.RealTimeStrategy):
         # sell_trade.roi = sell_trade.net_price - current_trade.gross_price
         sell_trade.roi = sell_trade.net_price - current_trade.gross_price - sell_trade.selling_fee
 
+        df_rtctrl = self.rtctrl.df_rtctrl.copy()
         if len(df_rtctrl) > 0:
             df_rtctrl.set_index('symbol', inplace=True)
             symbol = sell_trade.symbol
@@ -96,3 +100,8 @@ class RTStrTradingView(rtstr.RealTimeStrategy):
                 sell_trade.stimulus = "TIMER_LOST"
 
         return sell_trade
+
+
+    def end_of_trading(self, current_trades, broker_cash):
+        self.rtctrl.update_rtctrl(current_trades, broker_cash)
+        self.rtctrl.display_summary_info()

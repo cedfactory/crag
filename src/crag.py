@@ -1,7 +1,6 @@
 import time
 import pandas as pd
 from . import trade
-from . import rtctrl
 
 class Crag:
     def __init__(self, params = None):
@@ -13,8 +12,6 @@ class Crag:
             self.rtdp = params.get("rtdp", self.rtdp)
             self.broker = params.get("broker", self.broker)
             self.rtstr = params.get("rtstr", self.rtstr)
-
-        self.rtctrl = rtctrl.rtctrl()
 
         self.log = []
         self.current_step = -1
@@ -65,7 +62,7 @@ class Crag:
         print("[Crag.manage_current_data]")
 
         current_data = self.rtdp.get_current_data()
-        lst_symbols_to_buy = self.rtstr.get_crypto_buying_list(current_data, self.rtctrl.df_rtctrl.copy())
+        lst_symbols_to_buy = self.rtstr.get_crypto_buying_list(current_data)
 
         # log
         self.add_to_log("lst_symbols_to_buy", lst_symbols_to_buy)
@@ -101,7 +98,7 @@ class Crag:
             sell_trade.gross_price = sell_trade.net_price + sell_trade.buying_fee + sell_trade.selling_fee
             # sell_trade.gross_price = sell_trade.net_price + sell_trade.buying_fee
 
-            sell_trade = self.rtstr.get_crypto_selling_list(current_trade, sell_trade, self.rtctrl.df_rtctrl.copy())
+            sell_trade = self.rtstr.get_crypto_selling_list(current_trade, sell_trade)
 
             if sell_trade.stimulus != "":
                 done = self.broker.execute_trade(sell_trade)
@@ -156,8 +153,7 @@ class Crag:
 
                     print("{} {} {:.2f}".format(current_trade.type, current_trade.symbol, current_trade.gross_price))
 
-        self.rtctrl.update_rtctrl(self.current_trades, self.broker.get_cash())
-        self.rtctrl.display_summary_info()
+        self.rtstr.end_of_trading(self.current_trades, self.broker.get_cash())
         self.add_to_log("trades", trades)
 
     def export_status(self):
