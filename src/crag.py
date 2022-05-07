@@ -101,7 +101,7 @@ class Crag:
             sell_trade.gross_price = sell_trade.net_price + sell_trade.buying_fee + sell_trade.selling_fee
             # sell_trade.gross_price = sell_trade.net_price + sell_trade.buying_fee
 
-            sell_trade = self.rtstr.get_crypto_selling_list(current_trade, sell_trade, self.log[self.current_step]["lst_symbols_to_buy"], self.rtctrl.df_rtctrl.copy())
+            sell_trade = self.rtstr.get_crypto_selling_list(current_trade, sell_trade, self.rtctrl.df_rtctrl.copy())
 
             if sell_trade.stimulus != "":
                 done = self.broker.execute_trade(sell_trade)
