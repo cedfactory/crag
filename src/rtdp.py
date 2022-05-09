@@ -33,6 +33,7 @@ default_symbols = [
         "SOL/USD",
         "AVAX/USD"
     ]
+default_symbols = ["BTC/USD"] # TODO waiting for fix in fdp
 default_features = ["open", "close", "high", "low", "volume"]
 
 class DataDescription():
@@ -53,10 +54,20 @@ class RealTimeDataProvider():
         print(params)
 
     def next(self, data_description):
-        url = "history?exchange=ftx&symbol=ETH_EUR&start=01_01_2022"
+        symbols = ','.join(data_description.symbols)
+        print(symbols)
+        symbols = symbols.replace('/','_')
+        print(symbols)
+        url = "history?exchange=ftx&symbol="+symbols+"&start=01_05_2022"
+        print(url)
         response_json = utils.fdp_request(url)
-        df = pd.read_json(response_json["result"]["ETH_EUR"]["info"])
-        return df
+        print(response_json)
+        result = {}
+        for symbol in data_description.symbols:
+            symbol = symbol.replace('/','_')
+            result[symbol] = pd.read_json(response_json["result"][symbol]["info"])
+        print(result)
+        return result
 
 class MyRealTimeDataProvider(IRealTimeDataProvider):
     def __init__(self, params = None):
