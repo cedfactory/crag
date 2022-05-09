@@ -122,7 +122,7 @@ class Crag:
             current_trade.buying_time = ""
             current_trade.selling_fee = ""
             current_trade.symbol = symbol
-            current_trade.symbol_price = self.rtdp.current_data["symbols"][symbol.replace('/', '_')]["info"]["info"]["price"]
+            current_trade.symbol_price = self.rtstr.rtctrl.df_rtctrl_symbol_price['price'][symbol]
             current_trade.symbol_price = float(current_trade.symbol_price)
             current_trade.buying_price = current_trade.symbol_price
             current_trade.size = df_buying_symbols[symbol]["size"]

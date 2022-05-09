@@ -48,7 +48,7 @@ class IRealTimeDataProvider(metaclass = ABCMeta):
     def next(self, data_description):
         pass
 
-class RealTimeDataProvider(IRealTimeDataProvider):
+class RealTimeDataProvider():
     def __init__(self, params = None):
         print(params)
 

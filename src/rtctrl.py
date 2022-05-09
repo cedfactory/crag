@@ -10,6 +10,7 @@ class rtctrl():
     def __init__(self):
         self.df_rtctrl = pd.DataFrame(columns=self.get_df_header())
         self.df_rtctrl_tracking = pd.DataFrame(columns=self.get_df_header_tracking())
+        self.df_rtctrl_symbol_price = pd.DataFrame(columns=self.get_df_header_symbol_price())
         self.symbol = []
         self.recommendation = []
         self.time = 0
@@ -34,6 +35,9 @@ class rtctrl():
 
     def get_df_header_tracking(self):
         return ["time", " roi%", "cash", "portfolio", "wallet", "asset%"]
+
+    def get_df_header_symbol_price(self):
+        return ["symbol", "price"]
 
     def get_price_Direct_FTX(self, symbol):
         endpoint_url = 'https://ftx.com/api/markets'
@@ -104,6 +108,12 @@ class rtctrl():
             except:
                 list_asset_recommendation.append("")
         return list_asset_recommendation
+
+    def update_rtctrl_price(self, list_symbols):
+        self.df_rtctrl_symbol_price['symbol'] = list_symbols
+        self.df_rtctrl_symbol_price.set_index('symbol', inplace=True)
+        for symbol in list_symbols:
+            self.df_rtctrl_symbol_price['price'][symbol] = self.get_price_Direct_FTX(symbol)
 
     def update_rtctrl(self, list_of_current_trades, wallet_cash):
         if len(list_of_current_trades) == 0:

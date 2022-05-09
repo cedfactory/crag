@@ -26,6 +26,8 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
     def get_data_description(self):
         ds = rtdp.DataDescription()
         ds.features.append("sma10")
+
+        self.rtctrl.update_rtctrl_price(ds.symbols)
         return ds
 
     def set_current_data(self, current_data):
