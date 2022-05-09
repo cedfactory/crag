@@ -113,6 +113,7 @@ class Crag:
 
         # buy symbols
         df_buying_symbols = self.rtstr.get_df_buying_symbols()
+        df_buying_symbols.set_index('symbol', inplace=True)
         for symbol in df_buying_symbols.index.to_list():
             current_trade = trade.Trade()
             current_trade.type = "BUY"
@@ -125,7 +126,7 @@ class Crag:
             current_trade.symbol_price = self.rtstr.rtctrl.df_rtctrl_symbol_price['price'][symbol]
             current_trade.symbol_price = float(current_trade.symbol_price)
             current_trade.buying_price = current_trade.symbol_price
-            current_trade.size = df_buying_symbols[symbol]["size"]
+            current_trade.size = df_buying_symbols["size"][symbol]
             current_trade.net_price = current_trade.size * current_trade.symbol_price
             current_trade.buying_fee = current_trade.net_price * self.broker.get_commission(current_trade.symbol)
             current_trade.gross_price = current_trade.net_price + current_trade.buying_fee
