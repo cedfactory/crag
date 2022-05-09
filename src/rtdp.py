@@ -55,18 +55,13 @@ class RealTimeDataProvider():
 
     def next(self, data_description):
         symbols = ','.join(data_description.symbols)
-        print(symbols)
         symbols = symbols.replace('/','_')
-        print(symbols)
         url = "history?exchange=ftx&symbol="+symbols+"&start=01_05_2022"
-        print(url)
         response_json = utils.fdp_request(url)
-        print(response_json)
         result = {}
         for symbol in data_description.symbols:
-            symbol = symbol.replace('/','_')
-            result[symbol] = pd.read_json(response_json["result"][symbol]["info"])
-        print(result)
+            formatted_symbol = symbol.replace('/','_')
+            result[symbol] = pd.read_json(response_json["result"][formatted_symbol]["info"])
         return result
 
 class MyRealTimeDataProvider(IRealTimeDataProvider):
