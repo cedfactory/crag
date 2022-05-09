@@ -74,18 +74,13 @@ class RTStrTradingView(rtstr.RealTimeStrategy):
         return lst_symbols_to_buy
 
 
-    def get_crypto_selling_list(self, current_trade, sell_trade):
-
-        delta_duration = sell_trade.time - current_trade.time
-        holding_hours = int(delta_duration / datetime.timedelta(hours=1))
-
-        # sell_trade.roi = sell_trade.net_price - current_trade.gross_price
-        sell_trade.roi = sell_trade.net_price - current_trade.gross_price - sell_trade.selling_fee
-
-        df_rtctrl = self.rtctrl.df_rtctrl.copy()
+    def get_crypto_selling_list(self, sell_trade):
         if len(df_rtctrl) > 0:
-            df_rtctrl.set_index('symbol', inplace=True)
             symbol = sell_trade.symbol
+        
+            df_rtctrl = self.rtctrl.df_rtctrl.copy()
+            df_rtctrl.set_index('symbol', inplace=True)
+            sell_trade.roi = df_rtctrl["roi_%"][symbol]
             if df_rtctrl["roi_%"][symbol] >= self.TP:
                 sell_trade.stimulus = "GET_PROFIT"
             elif df_rtctrl["roi_%"][symbol] <= self.SL:
@@ -94,14 +89,10 @@ class RTStrTradingView(rtstr.RealTimeStrategy):
                 sell_trade.stimulus = "RECOMMENDATION_STRONG_SELL"
             elif df_rtctrl["recommendation"][symbol] == 'SELL':
                 sell_trade.stimulus = "RECOMMENDATION_SELL"
-            elif (sell_trade.roi > self.TimerTP) & (holding_hours > self.Timer):
-                sell_trade.stimulus = "TIMER_PROFIT"
-            elif (sell_trade.roi < self.TimerSL) & (holding_hours > self.Timer):
-                sell_trade.stimulus = "TIMER_LOST"
 
         return sell_trade
 
 
-    def end_of_trading(self, current_trades, broker_cash):
+    def update(self, current_trades, broker_cash):
         self.rtctrl.update_rtctrl(current_trades, broker_cash)
         self.rtctrl.display_summary_info()

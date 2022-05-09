@@ -39,13 +39,15 @@ class Crag:
     def step(self):
         print("[Crag] new step...")
 
-        # get current data
-        df_current_data = self.rtdp.next()
+        # update all the data
+        self.rtstr.update(self.current_trades, self.broker.get_cash())
+
+        ds = self.rtstr.get_data_description()
+        df_current_data = self.rtdp.next(ds)
         if df_current_data is None:
             return False
 
-        # manage current data
-        self.manage_current_data()
+        self.rtstr.set_current_data(df_current_data)
 
         # execute trading
         self.trade()
@@ -73,40 +75,30 @@ class Crag:
         self.cash = self.broker.get_cash()
         trades = []
 
-        # sell stuffs
+        # sell symbols
+        lst_symbols = [current_trade.symbol for current_trade in self.current_trades if current_trade.type == "BUY"]
+        lst_symbols = list(set(lst_symbols))
+        df_selling_symbols = self.rtstr.get_df_selling_symbols(lst_symbols)
         for current_trade in self.current_trades:
-            if current_trade.type != "BUY":
-                continue
+            if current_trade.type == "BUY" and df_selling_symbols[symbol]["stimulus"] != "HOLD":
+                sell_trade = trade.Trade()
+                sell_trade.type = "SELL"
+                sell_trade.sell_id = current_trade.id
+                sell_trade.buying_price = current_trade.buying_price
+                sell_trade.buying_time = current_trade.time
+                sell_trade.symbol = current_trade.symbol
+                sell_trade.symbol_price = float(self.rtstr.get_price_symbol(sell_trade.symbol))
+                sell_trade.size = current_trade.size
+                sell_trade.net_price = sell_trade.size * sell_trade.symbol_price
+                sell_trade.buying_fee = current_trade.buying_fee
+                sell_trade.selling_fee = sell_trade.net_price * self.broker.get_commission(sell_trade.symbol)
+                sell_trade.gross_price = sell_trade.net_price + sell_trade.buying_fee + sell_trade.selling_fee
+                sell_trade.roi = (sell_trade.gross_price - sell_trade.net_price) / sell_trade.net_price
 
-            sell_trade = trade.Trade()
-            sell_trade.type = "SELL"
-            sell_trade.sell_id = current_trade.id
-            sell_trade.buying_price = current_trade.buying_price
-            sell_trade.buying_time = current_trade.time
-            sell_trade.stimulus = ""
-            sell_trade.symbol = current_trade.symbol
-            key = sell_trade.symbol.replace('/', '_')
-            if key not in self.rtdp.current_data["symbols"]:
-                print("[Crag::trade] symbol {} not found".format(key))
-                continue
-            sell_trade.symbol_price = float(self.rtdp.current_data["symbols"][key]["info"]["info"]["price"])
-            sell_trade.size = current_trade.size
-            sell_trade.net_price = sell_trade.size * sell_trade.symbol_price
-            sell_trade.buying_fee = current_trade.buying_fee
-            sell_trade.selling_fee = sell_trade.net_price * self.broker.get_commission(sell_trade.symbol)
-
-            sell_trade.gross_price = sell_trade.net_price + sell_trade.buying_fee + sell_trade.selling_fee
-            # sell_trade.gross_price = sell_trade.net_price + sell_trade.buying_fee
-
-            sell_trade = self.rtstr.get_crypto_selling_list(current_trade, sell_trade)
-
-            if sell_trade.stimulus != "":
                 done = self.broker.execute_trade(sell_trade)
                 if done:
                     current_trade.type = "SOLD"
-                    sell_trade.stimulus = "SOLD_FOR_"+sell_trade.stimulus
                     self.cash = self.broker.get_cash()
-                    # self.cash = cash + sell_trade.net_price    # CEDE to be verified
                     sell_trade.cash = self.cash
 
                     self.portfolio_value = self.portfolio_value - sell_trade.net_price
@@ -119,8 +111,9 @@ class Crag:
                     self.current_trades.append(sell_trade)
                     print("{} ({}) {} {:.2f} roi={:.2f}".format(sell_trade.type, sell_trade.stimulus, sell_trade.symbol, sell_trade.gross_price, sell_trade.roi))
 
-        # buy stuffs
-        for symbol in self.log[self.current_step]["lst_symbols_to_buy"]:
+        # buy symbols
+        df_buying_symbols = self.rtstr.get_df_buying_symbols()
+        for symbol in df_buying_symbols.index.to_list():
             current_trade = trade.Trade()
             current_trade.type = "BUY"
             current_trade.sell_id = ""
@@ -132,7 +125,7 @@ class Crag:
             current_trade.symbol_price = self.rtdp.current_data["symbols"][symbol.replace('/', '_')]["info"]["info"]["price"]
             current_trade.symbol_price = float(current_trade.symbol_price)
             current_trade.buying_price = current_trade.symbol_price
-            current_trade.size = self.get_trade_asset_size(current_trade.symbol_price)
+            current_trade.size = df_buying_symbols[symbol]["size"]
             current_trade.net_price = current_trade.size * current_trade.symbol_price
             current_trade.buying_fee = current_trade.net_price * self.broker.get_commission(current_trade.symbol)
             current_trade.gross_price = current_trade.net_price + current_trade.buying_fee
@@ -153,7 +146,6 @@ class Crag:
 
                     print("{} {} {:.2f}".format(current_trade.type, current_trade.symbol, current_trade.gross_price))
 
-        self.rtstr.end_of_trading(self.current_trades, self.broker.get_cash())
         self.add_to_log("trades", trades)
 
     def export_status(self):
