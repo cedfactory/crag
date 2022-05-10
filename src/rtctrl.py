@@ -1,7 +1,6 @@
 import pandas as pd
 import requests
 from datetime import datetime
-from . import trade
 
 # Class to real time control the strategy behaviours
 class rtctrl():
@@ -9,12 +8,9 @@ class rtctrl():
         self.df_rtctrl = pd.DataFrame(columns=self.get_df_header())
         self.df_rtctrl_tracking = pd.DataFrame(columns=self.get_df_header_tracking())
         self.df_rtctrl_symbol_price = pd.DataFrame(columns=self.get_df_header_symbol_price())
-        self.symbol = []
+        self.symbols = []
         self.time = datetime.now()
         self.actual_price = 0
-        self.size = 0
-        self.fees = 0
-        self.buying_gross_price = 0
         self.actual_net_price = 0
         self.roi_value = 0
         self.roi_percent = 0
@@ -50,18 +46,18 @@ class rtctrl():
 
     def get_list_of_actual_prices(self):
         list_actual_prices = []
-        for symbol in self.symbol:
+        for symbol in self.symbols:
             list_actual_prices.append(self.get_price_Direct_FTX(symbol))
         return list_actual_prices
 
     def get_list_of_asset_size(self, list_of_current_trades):
-        return [sum(current_trade.size for current_trade in list_of_current_trades if current_trade.type == "BUY" and current_trade.symbol == symbol) for symbol in self.symbol]
+        return [sum(current_trade.size for current_trade in list_of_current_trades if current_trade.type == "BUY" and current_trade.symbol == symbol) for symbol in self.symbols]
 
     def get_list_of_asset_fees(self, list_of_current_trades):
-        return [sum(current_trade.buying_fee for current_trade in list_of_current_trades if current_trade.type == "BUY" and current_trade.symbol == symbol) for symbol in self.symbol]
+        return [sum(current_trade.buying_fee for current_trade in list_of_current_trades if current_trade.type == "BUY" and current_trade.symbol == symbol) for symbol in self.symbols]
 
     def get_list_of_asset_gross_price(self, list_of_current_trades):
-        return [sum(current_trade.gross_price for current_trade in list_of_current_trades if current_trade.type == "BUY" and current_trade.symbol == symbol) for symbol in self.symbol]
+        return [sum(current_trade.gross_price for current_trade in list_of_current_trades if current_trade.type == "BUY" and current_trade.symbol == symbol) for symbol in self.symbols]
 
     def update_rtctrl_price(self, list_symbols):
         self.df_rtctrl_symbol_price['symbol'] = list_symbols
@@ -75,20 +71,17 @@ class rtctrl():
 
         self.df_rtctrl = pd.DataFrame(columns=self.get_df_header())
 
-        self.symbol = self.get_list_of_traded_symbols(list_of_current_trades)
+        self.symbols = self.get_list_of_traded_symbols(list_of_current_trades)
         self.time = datetime.now()
         self.actual_price = self.get_list_of_actual_prices()
-        self.size = self.get_list_of_asset_size(list_of_current_trades)
-        self.fees = self.get_list_of_asset_fees(list_of_current_trades)
-        self.buying_gross_price = self.get_list_of_asset_gross_price(list_of_current_trades)
         self.wallet_cash = wallet_cash
 
-        self.df_rtctrl['symbol'] = self.symbol
+        self.df_rtctrl['symbol'] = self.symbols
         self.df_rtctrl['time'] = self.time
         self.df_rtctrl['actual_price'] = self.actual_price
-        self.df_rtctrl['size'] = self.size
-        self.df_rtctrl['fees'] = self.fees
-        self.df_rtctrl['buying_gross_price'] = self.buying_gross_price
+        self.df_rtctrl['size'] = self.get_list_of_asset_size(list_of_current_trades)
+        self.df_rtctrl['fees'] = self.get_list_of_asset_fees(list_of_current_trades)
+        self.df_rtctrl['buying_gross_price'] = self.get_list_of_asset_gross_price(list_of_current_trades)
 
         self.df_rtctrl['actual_net_price'] = self.df_rtctrl['size'] * self.df_rtctrl['actual_price']
         self.df_rtctrl['roi_$'] = self.df_rtctrl['actual_net_price'] - self.df_rtctrl['buying_gross_price']
@@ -120,4 +113,3 @@ class rtctrl():
                 self.df_rtctrl_tracking.to_csv("wallet_tracking_records.csv")
             except:
                 pass
-            
