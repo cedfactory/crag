@@ -10,7 +10,7 @@ class rtctrl():
         self.df_rtctrl_tracking = pd.DataFrame(columns=self.get_df_header_tracking())
         self.df_rtctrl_symbol_price = pd.DataFrame(columns=self.get_df_header_symbol_price())
         self.symbol = []
-        self.time = 0
+        self.time = datetime.now()
         self.actual_price = 0
         self.size = 0
         self.fees = 0
@@ -99,32 +99,25 @@ class rtctrl():
         self.wallet_value = self.df_rtctrl['wallet_value'][0]
         self.df_rtctrl['wallet_%'] = 100 * self.df_rtctrl['portfolio_value'] / self.df_rtctrl['wallet_value']
 
-        return
-
-
     def display_summary_info(self):
+        roi_percent = 0
+        if self.df_rtctrl['buying_gross_price'].sum() != 0:
+            roi_percent = 100*self.df_rtctrl['roi_$'].sum() / self.df_rtctrl['buying_gross_price'].sum()
+        wallet_cash = self.wallet_cash
+        portfolio = self.df_rtctrl['actual_net_price'].sum()
+        wallet_value = self.wallet_value
+        asset_percent = self.df_rtctrl['wallet_%'].sum()
         if self.print_tracking:
-            try:
-                print(self.time,
-                      " roi%: ", self.df_rtctrl['roi_$'].sum() / self.df_rtctrl['buying_gross_price'].sum(),
-                      " cash: ", self.wallet_cash,
-                      " portfolio: ", self.df_rtctrl['actual_net_price'].sum(),
-                      " wallet: ", self.wallet_value,
-                      " asset%: ", self.df_rtctrl['wallet_%'].sum())
-            except:
-                pass
+            print(self.df_rtctrl)
+            print("{} roi: {:.2f}% cash: {:.2f} portfolio: {:.2f} wallet: {:.2f} asset: {:.2f}%".format(self.time, roi_percent, wallet_cash, portfolio, wallet_value, asset_percent))
 
         if self.record_tracking:
             try:
-                df_new_line = pd.DataFrame([[self.time,
-                                             self.df_rtctrl['roi_$'].sum() / self.df_rtctrl['buying_gross_price'].sum(),
-                                             self.wallet_cash,
-                                             self.df_rtctrl['actual_net_price'].sum(),
-                                             self.wallet_value,
-                                             self.df_rtctrl['wallet_%'].sum()]], columns=self.get_df_header_tracking())
+                df_new_line = pd.DataFrame([[self.time, roi_percent, wallet_cash, portfolio, wallet_value, asset_percent]], columns=self.get_df_header_tracking())
 
                 self.df_rtctrl_tracking = pd.concat([self.df_rtctrl_tracking, df_new_line])
                 self.df_rtctrl_tracking.reset_index(inplace=True, drop=True)
                 self.df_rtctrl_tracking.to_csv("wallet_tracking_records.csv")
             except:
                 pass
+            
