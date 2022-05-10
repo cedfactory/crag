@@ -75,7 +75,7 @@ class RTStrTradingView(rtstr.RealTimeStrategy):
 
 
     def get_crypto_selling_list(self, sell_trade):
-        if len(df_rtctrl) > 0:
+        if len(self.rtctrl.df_rtctrl) > 0:
             symbol = sell_trade.symbol
         
             df_rtctrl = self.rtctrl.df_rtctrl.copy()
