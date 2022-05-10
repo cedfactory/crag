@@ -3,8 +3,6 @@ import requests
 from datetime import datetime
 from . import trade
 
-from tradingview_ta import TA_Handler, Interval, Exchange
-
 # Class to real time control the strategy behaviours
 class rtctrl():
     def __init__(self):
@@ -12,7 +10,6 @@ class rtctrl():
         self.df_rtctrl_tracking = pd.DataFrame(columns=self.get_df_header_tracking())
         self.df_rtctrl_symbol_price = pd.DataFrame(columns=self.get_df_header_symbol_price())
         self.symbol = []
-        self.recommendation = []
         self.time = 0
         self.actual_price = 0
         self.size = 0
@@ -31,7 +28,7 @@ class rtctrl():
         self.record_tracking = True
 
     def get_df_header(self):
-        return ["symbol", "time", "actual_price", "size", "fees", "buying_gross_price", "actual_net_price", "roi_$", "roi_%", "portfolio_value", "cash","wallet_value", "wallet_%", "recommendation"]
+        return ["symbol", "time", "actual_price", "size", "fees", "buying_gross_price", "actual_net_price", "roi_$", "roi_%", "portfolio_value", "cash","wallet_value", "wallet_%"]
 
     def get_df_header_tracking(self):
         return ["time", " roi%", "cash", "portfolio", "wallet", "asset%"]
@@ -48,11 +45,7 @@ class rtctrl():
         return df['result']['price']
 
     def get_list_of_traded_symbols(self, list_of_current_trades):
-        list_symbols = []
-        for current_trade in list_of_current_trades:
-            if current_trade.type == "BUY":
-                symbol = current_trade.symbol
-                list_symbols.append(symbol)
+        list_symbols = [trade.symbol for trade in list_of_current_trades if trade.type == "BUY"]
         return list(set(list_symbols))
 
     def get_list_of_actual_prices(self):
@@ -62,52 +55,13 @@ class rtctrl():
         return list_actual_prices
 
     def get_list_of_asset_size(self, list_of_current_trades):
-        list_asset_size = []
-        for symbol in self.symbol:
-            symbol_size = 0
-            for current_trade in list_of_current_trades:
-                if (current_trade.type == "BUY") & (current_trade.symbol == symbol):
-                    symbol_size = symbol_size + current_trade.size
-            list_asset_size.append(symbol_size)
-        return list_asset_size
+        return [sum(current_trade.size for current_trade in list_of_current_trades if current_trade.type == "BUY" and current_trade.symbol == symbol) for symbol in self.symbol]
 
     def get_list_of_asset_fees(self, list_of_current_trades):
-        list_asset_fees = []
-        for symbol in self.symbol:
-            symbol_fees = 0
-            for current_trade in list_of_current_trades:
-                if (current_trade.type == "BUY") & (current_trade.symbol == symbol):
-                    symbol_fees = symbol_fees + current_trade.buying_fee
-            list_asset_fees.append(symbol_fees)
-        return list_asset_fees
+        return [sum(current_trade.buying_fee for current_trade in list_of_current_trades if current_trade.type == "BUY" and current_trade.symbol == symbol) for symbol in self.symbol]
 
     def get_list_of_asset_gross_price(self, list_of_current_trades):
-        list_asset_gross_price = []
-        for symbol in self.symbol:
-            symbol_gross_price = 0
-            for current_trade in list_of_current_trades:
-                if (current_trade.type == "BUY") & (current_trade.symbol == symbol):
-                    symbol_gross_price = symbol_gross_price + current_trade.gross_price
-            list_asset_gross_price.append(symbol_gross_price)
-        return list_asset_gross_price
-
-    def get_tradingview_recommendation(self, list_symbol, interval):
-        list_asset_recommendation = []
-        for symbol in list_symbol:
-            symbol_tv = symbol.replace("/", "")
-
-            data_handler = TA_Handler(
-                symbol=symbol_tv,
-                screener=self.screener_type,
-                exchange=self.exchange,
-                interval=interval,
-            )
-            try:
-                tradingview_summary = data_handler.get_analysis().summary
-                list_asset_recommendation.append(tradingview_summary['RECOMMENDATION'])
-            except:
-                list_asset_recommendation.append("")
-        return list_asset_recommendation
+        return [sum(current_trade.gross_price for current_trade in list_of_current_trades if current_trade.type == "BUY" and current_trade.symbol == symbol) for symbol in self.symbol]
 
     def update_rtctrl_price(self, list_symbols):
         self.df_rtctrl_symbol_price['symbol'] = list_symbols
@@ -128,7 +82,6 @@ class rtctrl():
         self.fees = self.get_list_of_asset_fees(list_of_current_trades)
         self.buying_gross_price = self.get_list_of_asset_gross_price(list_of_current_trades)
         self.wallet_cash = wallet_cash
-        self.recommendation = self.get_tradingview_recommendation(self.symbol, '1d')
 
         self.df_rtctrl['symbol'] = self.symbol
         self.df_rtctrl['time'] = self.time
@@ -145,7 +98,6 @@ class rtctrl():
         self.df_rtctrl['wallet_value'] = self.df_rtctrl['portfolio_value'].sum() + self.df_rtctrl['cash']
         self.wallet_value = self.df_rtctrl['wallet_value'][0]
         self.df_rtctrl['wallet_%'] = 100 * self.df_rtctrl['portfolio_value'] / self.df_rtctrl['wallet_value']
-        self.df_rtctrl['recommendation'] = self.recommendation
 
         return
 
