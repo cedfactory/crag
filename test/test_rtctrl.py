@@ -40,7 +40,7 @@ class TestRTCTRL:
         # context
         current_trades = self.get_current_trades_for_get_functions()
         ctrl = rtctrl.rtctrl()
-        ctrl.symbol = ['symbol2', 'symbol3']
+        ctrl.symbols = ['symbol2', 'symbol3']
 
         # action
         lst_of_asset_size = ctrl.get_list_of_asset_size(current_trades)
@@ -53,7 +53,7 @@ class TestRTCTRL:
         # context
         current_trades = self.get_current_trades_for_get_functions()
         ctrl = rtctrl.rtctrl()
-        ctrl.symbol = ['symbol2', 'symbol3']
+        ctrl.symbols = ['symbol2', 'symbol3']
 
         # action
         lst_of_asset_size = ctrl.get_list_of_asset_fees(current_trades)
@@ -66,7 +66,7 @@ class TestRTCTRL:
         # context
         current_trades = self.get_current_trades_for_get_functions()
         ctrl = rtctrl.rtctrl()
-        ctrl.symbol = ['symbol2', 'symbol3']
+        ctrl.symbols = ['symbol2', 'symbol3']
 
         # action
         lst_of_asset_size = ctrl.get_list_of_asset_gross_price(current_trades)
