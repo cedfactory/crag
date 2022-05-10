@@ -74,3 +74,24 @@ class TestRTCTRL:
         # expectations
         expected_lst_of_asset_size = [50, 40]
         assert(lst_of_asset_size == expected_lst_of_asset_size)
+
+    def test_update(self, mocker):
+        # context
+        current_trades = self.get_current_trades_for_get_functions()
+        ctrl = rtctrl.rtctrl()
+        def get_list_of_actual_prices():
+            return [1, 1]
+        mocker.patch.object(ctrl, "get_list_of_actual_prices", get_list_of_actual_prices)
+
+        # action
+        ctrl.update_rtctrl(current_trades, 100)
+
+        # expectations
+        df = ctrl.df_rtctrl
+        df.set_index("symbol", inplace=True)
+        df.sort_index(inplace=True) # be sure the order of the rows if "symbol2", "symbol3"
+        assert(df['size'].to_list() == [5, 4])
+        assert(df['fees'].to_list()== [.5, .4])
+        assert(df['buying_gross_price'].to_list() == [50, 40])
+        assert(ctrl.wallet_cash == 100)
+        
