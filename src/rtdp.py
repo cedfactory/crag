@@ -33,7 +33,6 @@ default_symbols = [
         "SOL/USD",
         "AVAX/USD"
     ]
-default_symbols = ["BTC/USD"] # TODO waiting for fix in fdp
 default_features = ["open", "close", "high", "low", "volume"]
 
 class DataDescription():
