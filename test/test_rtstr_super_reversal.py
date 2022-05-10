@@ -20,11 +20,6 @@ class TestRTSTRSuperReversal:
         # context
         strategy = rtstr_super_reversal.StrategySuperReversal()
 
-        # temporary...
-        def get_list_of_actual_prices():
-            return [1, 1]
-        mocker.patch.object(strategy.rtctrl, "get_list_of_actual_prices", get_list_of_actual_prices)
-
         # action
         ds = strategy.get_data_description()
 
