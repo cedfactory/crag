@@ -35,7 +35,7 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
 
     def get_df_buying_symbols(self):
         df = pd.DataFrame(columns = ['symbol', 'size'])
-        for symbol in self.df_current_data.keys():
+        for symbol in self.df_current_data.index.values.tolist():
             df_row = pd.DataFrame(data={"symbol":[symbol], "size":[1]})
             df = pd.concat((df, df_row), axis = 0)
         return df
