@@ -80,7 +80,7 @@ class Crag:
         lst_symbols = list(set(lst_symbols))
         df_selling_symbols = self.rtstr.get_df_selling_symbols(lst_symbols)
         for current_trade in self.current_trades:
-            if current_trade.type == "BUY" and df_selling_symbols[symbol]["stimulus"] != "HOLD":
+            if current_trade.type == "BUY" and df_selling_symbols[current_trade.symbol]["stimulus"] != "HOLD":
                 sell_trade = trade.Trade()
                 sell_trade.type = "SELL"
                 sell_trade.sell_id = current_trade.id
