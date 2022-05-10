@@ -14,4 +14,3 @@ reportlab==3.6.5
 python-dotenv==0.19.2
 matplotlib==3.3.4
 reportlab==3.6.5
-tradingview-ta==3.2.10
