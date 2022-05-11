@@ -57,11 +57,27 @@ class RealTimeDataProvider():
         symbols = symbols.replace('/','_')
         url = "history?exchange=ftx&symbol="+symbols+"&start=01_05_2022"
         response_json = utils.fdp_request(url)
-        result = {}
+
+        columns = ['symbol'].extend(data_description.features)
+        df_result = pd.DataFrame(columns=columns)
         for symbol in data_description.symbols:
             formatted_symbol = symbol.replace('/','_')
-            result[symbol] = pd.read_json(response_json["result"][formatted_symbol]["info"])
-        return result
+            df = pd.read_json(response_json["result"][formatted_symbol]["info"])
+            columns = list(df.columns)
+
+            row = {'symbol':symbol}
+            for feature in data_description.features:
+                if feature not in columns:
+                    return None
+                row[feature] = [df[feature].iloc[-1]]
+
+            df_row = pd.DataFrame(data=row)
+            df_result = pd.concat((df_result, df_row), axis = 0)
+
+        df_result.set_index("symbol", inplace=True)
+
+        return df_result
+
 
 class MyRealTimeDataProvider(IRealTimeDataProvider):
     def __init__(self, params = None):
