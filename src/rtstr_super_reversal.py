@@ -41,7 +41,7 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
         return df
 
     def get_df_selling_symbols(self, lst_symbols):
-        df = pd.DataFrame(columns = ['symbol', 'size'])
+        df = pd.DataFrame(columns = ['symbol', 'stimulus'])
         return df
 
     def update(self, current_trades, broker_cash):
