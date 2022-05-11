@@ -43,11 +43,11 @@ class Crag:
         self.rtstr.update(self.current_trades, self.broker.get_cash())
 
         ds = self.rtstr.get_data_description()
-        df_current_data = self.rtdp.next(ds)
-        if df_current_data is None:
+        current_data = self.rtdp.next(ds)
+        if current_data is None:
             return False
 
-        self.rtstr.set_current_data(df_current_data)
+        self.rtstr.set_current_data(current_data)
 
         # execute trading
         self.trade()
