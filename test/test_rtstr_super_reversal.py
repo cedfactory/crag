@@ -53,4 +53,4 @@ class TestRTSTRSuperReversal:
 
         # expectations
         assert(isinstance(df, pd.DataFrame))
-        assert(df.columns.to_list() == ['symbol', 'size'])
+        assert(df.columns.to_list() == ['symbol', 'stimulus'])
