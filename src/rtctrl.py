@@ -1,5 +1,4 @@
 import pandas as pd
-import requests
 from datetime import datetime
 
 # Class to real time control the strategy behaviours
@@ -7,7 +6,6 @@ class rtctrl():
     def __init__(self):
         self.df_rtctrl = pd.DataFrame(columns=self.get_df_header())
         self.df_rtctrl_tracking = pd.DataFrame(columns=self.get_df_header_tracking())
-        self.df_rtctrl_symbol_price = pd.DataFrame(columns=self.get_df_header_symbol_price())
         self.symbols = []
         self.time = datetime.now()
         self.actual_price = 0
@@ -29,17 +27,6 @@ class rtctrl():
     def get_df_header_tracking(self):
         return ["time", " roi%", "cash", "portfolio", "wallet", "asset%"]
 
-    def get_df_header_symbol_price(self):
-        return ["symbol", "price"]
-
-    def get_price_Direct_FTX(self, symbol):
-        endpoint_url = 'https://ftx.com/api/markets'
-
-        request_url = f'{endpoint_url}/{symbol}'
-        df = pd.DataFrame(requests.get(request_url).json())
-
-        return df['result']['price']
-
     def get_list_of_traded_symbols(self, list_of_current_trades):
         list_symbols = [trade.symbol for trade in list_of_current_trades if trade.type == "BUY"]
         return list(set(list_symbols))
@@ -58,12 +45,6 @@ class rtctrl():
 
     def get_list_of_asset_gross_price(self, list_of_current_trades):
         return [sum(current_trade.gross_price for current_trade in list_of_current_trades if current_trade.type == "BUY" and current_trade.symbol == symbol) for symbol in self.symbols]
-
-    def update_rtctrl_price(self, list_symbols):
-        self.df_rtctrl_symbol_price['symbol'] = list_symbols
-        self.df_rtctrl_symbol_price.set_index('symbol', inplace=True)
-        for symbol in list_symbols:
-            self.df_rtctrl_symbol_price['price'][symbol] = self.get_price_Direct_FTX(symbol)
 
     def update_rtctrl(self, list_of_current_trades, wallet_cash):
         if len(list_of_current_trades) == 0:
