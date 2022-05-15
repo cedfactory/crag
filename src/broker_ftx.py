@@ -73,7 +73,7 @@ class BrokerFTX(broker.Broker):
     @authentication_required
     def execute_trade(self, trade):
         if self.simulation:
-            return
+            return True
 
         print("!!!!!!! EXECUTE THE TRADE !!!!!!!")
         if self.ftx_exchange:
