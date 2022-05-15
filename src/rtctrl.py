@@ -1,4 +1,5 @@
 import pandas as pd
+import requests
 from datetime import datetime
 
 # Class to real time control the strategy behaviours
@@ -31,12 +32,6 @@ class rtctrl():
         list_symbols = [trade.symbol for trade in list_of_current_trades if trade.type == "BUY"]
         return list(set(list_symbols))
 
-    def get_list_of_actual_prices(self):
-        list_actual_prices = []
-        for symbol in self.symbols:
-            list_actual_prices.append(self.get_price_Direct_FTX(symbol))
-        return list_actual_prices
-
     def get_list_of_asset_size(self, list_of_current_trades):
         return [sum(current_trade.size for current_trade in list_of_current_trades if current_trade.type == "BUY" and current_trade.symbol == symbol) for symbol in self.symbols]
 
@@ -46,7 +41,7 @@ class rtctrl():
     def get_list_of_asset_gross_price(self, list_of_current_trades):
         return [sum(current_trade.gross_price for current_trade in list_of_current_trades if current_trade.type == "BUY" and current_trade.symbol == symbol) for symbol in self.symbols]
 
-    def update_rtctrl(self, list_of_current_trades, wallet_cash):
+    def update_rtctrl(self, list_of_current_trades, wallet_cash, prices_symbols):
         if len(list_of_current_trades) == 0:
             return
 
@@ -54,7 +49,8 @@ class rtctrl():
 
         self.symbols = self.get_list_of_traded_symbols(list_of_current_trades)
         self.time = datetime.now()
-        self.actual_price = self.get_list_of_actual_prices()
+        actual_prices = [prices_symbols[symbol] for symbol in self.symbols]
+        self.actual_price = actual_prices
         self.wallet_cash = wallet_cash
 
         self.df_rtctrl['symbol'] = self.symbols

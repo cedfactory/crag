@@ -13,6 +13,11 @@ class BrokerFTX(broker.Broker):
         super().__init__(params)
 
         self.trades = []
+        self.simulation = False
+        if params:
+            self.simulation = params.get("simulation", self.simulation)
+            
+        print(self.simulation)
 
     def initialize(self, params):
         load_dotenv()
@@ -57,12 +62,20 @@ class BrokerFTX(broker.Broker):
                 print("[BrokerFTX::get_positions] An error occured : {}".format(err))
         return result
        
+    def get_value(self, symbol):
+        ticker = self.ftx_exchange.fetch_ticker(symbol)
+        return ticker["close"]
+
     @authentication_required
     def get_commission(self, symbol):
         return 0.07
 
     @authentication_required
     def execute_trade(self, trade):
+        if self.simulation:
+            return
+
+        print("!!!!!!! EXECUTE THE TRADE !!!!!!!")
         if self.ftx_exchange:
             side = ""
             if trade.type == "SELL":

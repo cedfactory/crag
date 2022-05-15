@@ -93,6 +93,6 @@ class RTStrTradingView(rtstr.RealTimeStrategy):
         return sell_trade
 
 
-    def update(self, current_trades, broker_cash):
+    def update(self, current_trades, broker_cash, prices_symbols):
         self.rtctrl.update_rtctrl(current_trades, broker_cash)
         self.rtctrl.display_summary_info()

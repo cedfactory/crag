@@ -50,7 +50,7 @@ class IRealTimeDataProvider(metaclass = ABCMeta):
 
 class RealTimeDataProvider():
     def __init__(self, params = None):
-        print(params)
+        pass
 
     def next(self, data_description):
         symbols = ','.join(data_description.symbols)
@@ -81,7 +81,7 @@ class RealTimeDataProvider():
 
 class MyRealTimeDataProvider(IRealTimeDataProvider):
     def __init__(self, params = None):
-        print(params)
+        pass
 
     def next(self, data_description):
         url = "history?exchange=ftx&symbol=ETH_EUR&start=01_01_2022"

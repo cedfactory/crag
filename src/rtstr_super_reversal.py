@@ -43,9 +43,10 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
         df = pd.DataFrame(columns = ['symbol', 'stimulus'])
         return df
 
-    def update(self, current_trades, broker_cash):
-        self.rtctrl.update_rtctrl(current_trades, broker_cash)
+    def update(self, current_trades, broker_cash, prices_symbols):
+        self.rtctrl.update_rtctrl(current_trades, broker_cash, prices_symbols)
         self.rtctrl.display_summary_info()
 
     def get_price_symbol(self, symbol):
         return self.df_current_data.loc[symbol]["close"]
+        

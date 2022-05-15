@@ -79,12 +79,10 @@ class TestRTCTRL:
         # context
         current_trades = self.get_current_trades_for_get_functions()
         ctrl = rtctrl.rtctrl()
-        def get_list_of_actual_prices():
-            return [1, 1]
-        mocker.patch.object(ctrl, "get_list_of_actual_prices", get_list_of_actual_prices)
 
         # action
-        ctrl.update_rtctrl(current_trades, 100)
+        prices_symbols = {'symbol1': 0.01, 'symbol2': 0.02, 'symbol3': 0.03, 'symbol4': 0.04}
+        ctrl.update_rtctrl(current_trades, 100, prices_symbols)
 
         # expectations
         df = ctrl.df_rtctrl

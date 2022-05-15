@@ -40,9 +40,10 @@ class Crag:
         print("[Crag] new step...")
 
         # update all the data
-        self.rtstr.update(self.current_trades, self.broker.get_cash())
-
         ds = self.rtstr.get_data_description()
+        prices_symbols = {symbol:self.broker.get_value(symbol) for symbol in ds.symbols}
+        self.rtstr.update(self.current_trades, self.broker.get_cash(), prices_symbols)
+
         current_data = self.rtdp.next(ds)
         if current_data is None:
             return False

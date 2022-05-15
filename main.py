@@ -25,7 +25,7 @@ def crag_run(strategy_name, history):
         print("💥 missing known strategy ({})".format(strategy_name))
         return
 
-    broker_simu = broker.BrokerSimulation()
+    broker_simu = broker_ftx.BrokerFTX({'simulation':True})
     broker_simu.initialize({'cash':100})
 
     params = {'rtdp':my_rtdp, 'broker':broker_simu, 'rtstr':strategy_super_reversal}

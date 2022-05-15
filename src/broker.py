@@ -14,6 +14,10 @@ class Broker(metaclass = ABCMeta):
         return self.cash
 
     @abstractmethod
+    def get_value(self, symbol):
+        pass
+
+    @abstractmethod
     def get_commission(self, symbol):
         pass
 
@@ -35,6 +39,9 @@ class BrokerSimulation(Broker):
     def initialize(self, params):
         if params:
             self.cash = params.get("cash", self.cash)
+
+    def get_value(self, symbol):
+        return 1.0
 
     def get_commission(self, symbol):
         return 0.07
