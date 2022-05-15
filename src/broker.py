@@ -1,5 +1,7 @@
 from abc import ABCMeta, abstractmethod
 import csv
+import requests
+import pandas as pd
 
 class Broker(metaclass = ABCMeta):
     
@@ -41,7 +43,10 @@ class BrokerSimulation(Broker):
             self.cash = params.get("cash", self.cash)
 
     def get_value(self, symbol):
-        return 1.0
+        endpoint_url = 'https://ftx.com/api/markets'
+        request_url = f'{endpoint_url}/{symbol}'
+        df = pd.DataFrame(requests.get(request_url).json())
+        return df['result']['price']
 
     def get_commission(self, symbol):
         return 0.07
