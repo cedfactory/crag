@@ -41,6 +41,10 @@ class BrokerFTX(broker.Broker):
         return wrapped
 
     @authentication_required
+    def get_cash(self):
+        return 100 # todo : get the real cash
+
+    @authentication_required
     def get_balance(self):
         result = {}
         if self.ftx_exchange:
