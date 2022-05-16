@@ -34,7 +34,7 @@ class Crag:
 
             done = not self.step()
             time.sleep(interval)
-            self.export_history("broker_history.csv")
+            #self.export_history("broker_history.csv")
 
     def step(self):
         print("[Crag] new step...")
@@ -128,6 +128,7 @@ class Crag:
             current_trade.buying_price = current_trade.symbol_price
             current_trade.size = df_buying_symbols["size"][symbol]
             current_trade.net_price = current_trade.size * current_trade.symbol_price
+            current_trade.commission = self.broker.get_commission(current_trade.symbol)
             current_trade.buying_fee = current_trade.net_price * self.broker.get_commission(current_trade.symbol)
             current_trade.gross_price = current_trade.net_price + current_trade.buying_fee
             current_trade.profit_loss = -current_trade.buying_fee
