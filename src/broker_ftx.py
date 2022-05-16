@@ -95,19 +95,30 @@ class BrokerFTX(broker.Broker):
             return True
         return False
 
+    def _format_row(self, current_trade):
+        datetime = current_trade['datetime']
+        symbol = current_trade['symbol']
+        side = current_trade['side']
+        price = current_trade['price']
+        amount = current_trade['amount']
+        cost = current_trade['cost']
+        fee_cost = current_trade['fee']['cost']
+        fee_rate = current_trade['fee']['rate']
+        return "{};{};{};{};{};{};{};{}".format(datetime,symbol,side,price,amount,cost,fee_cost,fee_rate)
+
     @authentication_required
-    def export_history(self, target=""):
+    def export_history(self, target=None):
         my_trades = self.ftx_exchange.fetch_my_trades()
-        for my_trade in my_trades:
-            datetime = my_trade['datetime']
-            symbol = my_trade['symbol']
-            side = my_trade['side']
-            price = my_trade['price']
-            amount = my_trade['amount']
-            cost = my_trade['cost']
-            fee_cost = my_trade['fee']['cost']
-            fee_rate = my_trade['fee']['rate']
-            print("{};{};{};{};{};{};{};{}".format(datetime,symbol,side,price,amount,cost,fee_cost,fee_rate))
+        if len(my_trades) > 0:
+            if target and target.endswith(".csv"):
+                with open(target, 'w', newline='') as f:
+                    f.write("datetime;symbol;side;price;amount;cost;fee_cost;fee_rate\n")
+                    for current_trade in my_trades:
+                        f.write(self._format_row(current_trade)+'\n')
+                    f.close()
+            else:
+                for current_trade in my_trades:
+                    print(self._format_row(current_trade))
 
     def export_status(self):
         pass
