@@ -189,8 +189,10 @@ class RealTimeDataProvider():
 
 class SimRealTimeDataProvider(IRealTimeDataProvider):
     def __init__(self, params = None):
-
-        self.input = params.get("input", None)
+        self.input = "./data/"
+        if params:
+            self.input = params.get("input", self.input)
+    
         if self.input == None:
             return
 
@@ -215,8 +217,8 @@ class SimRealTimeDataProvider(IRealTimeDataProvider):
         for symbol in data_description.symbols:
             df_symbol = self.data[symbol]
             df = df_symbol[start_in_df:end_in_df]
-            
-            df = add_features(df, data_description.features)
+
+            df = add_features(df.copy(), data_description.features)
             
             columns = list(df.columns)
             row = {'symbol':symbol}
@@ -232,7 +234,7 @@ class SimRealTimeDataProvider(IRealTimeDataProvider):
 
         return df_result
 
-    def get_value(self):
+    def get_value(self, symbol):
         return 10
 
     def record(self, data_description):

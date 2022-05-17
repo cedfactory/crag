@@ -15,10 +15,12 @@ def crag_record():
     sim_rtdp.record(ds)
 
 def crag_simulation():
-    sim_rtdp = rtdp.SimRealTimeDataProvider({"input":"./data/"})
-    ds = rtdp.DataDescription()
-    df = sim_rtdp.next(ds)
-    print(df.head())
+    strategy_super_reversal = rtstr_super_reversal.StrategySuperReversal()
+    simu_broker = broker.SimBroker()
+    params = {'broker':simu_broker, 'rtstr':strategy_super_reversal}
+    bot = crag.Crag(params)
+    bot.run()
+
 
 def crag_run(strategy_name, history):
     params = {}
