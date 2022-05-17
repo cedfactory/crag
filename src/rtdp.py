@@ -196,6 +196,7 @@ class SimRealTimeDataProvider(IRealTimeDataProvider):
         if self.input == None:
             return
 
+        self.offset = 0
         self.data = {}
         files = os.listdir(self.input)
         for file in files:
@@ -206,20 +207,30 @@ class SimRealTimeDataProvider(IRealTimeDataProvider):
 
         self.current_position = -1
 
+    def _get_offset(self, features):
+        # get the offset from the maximal period found among the features
+        offset = 0
+        for feature_name in features:
+            if features[feature_name] and "period" in features[feature_name] and features[feature_name]["period"] > offset:
+                offset = features[feature_name]["period"]
+        return offset
+
     def next(self, data_description):
-        offset = 20 # todo : deduce this value from maximal period found in data_description
+        self.offset = self._get_offset(data_description.features)
         self.current_position = self.current_position + 1
         start_in_df = self.current_position
-        end_in_df = self.current_position + offset
+        end_in_df = self.current_position + self.offset
 
         columns = ['symbol'].extend(["open", "high", "low", "close", "volume"])
+        features = data_description.features
+        features["close"] = None # to have the symbol price
         df_result = pd.DataFrame(columns=['symbol'])
         for symbol in data_description.symbols:
             df_symbol = self.data[symbol]
-            df = df_symbol[start_in_df:end_in_df]
+            df = df_symbol[start_in_df:end_in_df+1] # select from start_in_df until end_in_df included
             df = df.reset_index()
 
-            df = add_features(df.copy(), data_description.features)
+            df = add_features(df.copy(), features)
             
             columns = list(df.columns)
             row = {'symbol':symbol}
@@ -236,7 +247,12 @@ class SimRealTimeDataProvider(IRealTimeDataProvider):
         return df_result
 
     def get_value(self, symbol):
-        return 10
+        if not symbol in self.data:
+            return -1
+        df_symbol = self.data[symbol]
+        irow = self.current_position + self.offset
+        value = df_symbol.iloc[irow]['close']
+        return value
 
     def record(self, data_description):
         symbols = ','.join(data_description.symbols)
