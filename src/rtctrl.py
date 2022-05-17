@@ -42,6 +42,7 @@ class rtctrl():
         return [sum(current_trade.gross_price for current_trade in list_of_current_trades if current_trade.type == "BUY" and current_trade.symbol == symbol) for symbol in self.symbols]
 
     def update_rtctrl(self, list_of_current_trades, wallet_cash, prices_symbols):
+        self.prices_symbols = prices_symbols
         if len(list_of_current_trades) == 0:
             return
 
@@ -70,6 +71,7 @@ class rtctrl():
         self.df_rtctrl['wallet_%'] = 100 * self.df_rtctrl['portfolio_value'] / self.df_rtctrl['wallet_value']
 
     def display_summary_info(self):
+        return
         roi_percent = 0
         if self.df_rtctrl['buying_gross_price'].sum() != 0:
             roi_percent = 100*self.df_rtctrl['roi_$'].sum() / self.df_rtctrl['buying_gross_price'].sum()
