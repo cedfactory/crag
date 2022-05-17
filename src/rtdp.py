@@ -215,11 +215,22 @@ class SimRealTimeDataProvider(IRealTimeDataProvider):
                 offset = features[feature_name]["period"]
         return offset
 
+    def _check_range_in_dataframes(self, end_in_df):
+        for symbol in self.data:
+            df = self.data[symbol]
+            print(len(df.index), " ",  end_in_df)
+            if end_in_df+1 > len(df.index):
+                return False
+        return True
+
     def next(self, data_description):
         self.offset = self._get_offset(data_description.features)
         self.current_position = self.current_position + 1
         start_in_df = self.current_position
         end_in_df = self.current_position + self.offset
+
+        if not self._check_range_in_dataframes(end_in_df):
+            return None
 
         columns = ['symbol'].extend(["open", "high", "low", "close", "volume"])
         features = data_description.features
