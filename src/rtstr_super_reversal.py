@@ -25,7 +25,10 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
 
     def get_data_description(self):
         ds = rtdp.DataDescription()
-        ds.features.append("sma10")
+        ds.symbols = ds.symbols[:2]
+        ds.features = { "ema_short" : {"feature": "ema", "period": 5},
+                        "ema_long" : {"feature": "ema", "period": 400},
+                        "super_trend_direction" : {"feature": "super_trend"}}
 
         return ds
 
@@ -46,7 +49,3 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
     def update(self, current_trades, broker_cash, prices_symbols):
         self.rtctrl.update_rtctrl(current_trades, broker_cash, prices_symbols)
         self.rtctrl.display_summary_info()
-
-    def get_price_symbol(self, symbol):
-        return self.df_current_data.loc[symbol]["close"]
-        

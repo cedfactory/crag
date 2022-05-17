@@ -21,7 +21,3 @@ class RealTimeStrategy(metaclass=ABCMeta):
     @abstractmethod
     def update(self, current_trades, broker_cash, prices_symbols):
         pass
-
-    @abstractmethod
-    def get_price_symbol(self, symbol):
-        pass
