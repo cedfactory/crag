@@ -3,7 +3,7 @@
 - externaliser la stratégie (d'achat et de vente)
 '''
 
-from . import broker
+from . import broker,rtdp
 import ccxt
 from dotenv import load_dotenv
 import os
@@ -12,13 +12,12 @@ class BrokerFTX(broker.Broker):
     def __init__(self, params = None):
         super().__init__(params)
 
+        self.rtdp = rtdp.RealTimeDataProvider(params)
         self.trades = []
         self.simulation = False
         if params:
             self.simulation = params.get("simulation", self.simulation)
-            
-        print(self.simulation)
-
+         
     def initialize(self, params):
         load_dotenv()
         ftx_api_key = os.getenv("FTX_API_KEY")
@@ -29,6 +28,12 @@ class BrokerFTX(broker.Broker):
             })
         self.authenficated = self.ftx_exchange is not None
         return self.authenficated
+
+    def get_current_data(self):
+        return self.rtdp.get_current_data()
+
+    def next(self, data_description):
+        return self.rtdp.next(data_description)
 
     def authentication_required(fn):
         """decoration for methods that require authentification"""

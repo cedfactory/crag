@@ -12,6 +12,12 @@ class Broker(metaclass = ABCMeta):
     def initialize(self, params):
         pass
 
+    def get_current_data(self):
+        return None
+
+    def next(self, data_description):
+        return None
+
     def get_cash(self):
         return self.cash
 
@@ -32,21 +38,25 @@ class Broker(metaclass = ABCMeta):
         pass
 
 
-class BrokerSimulation(Broker):
+class SimBroker(Broker):
     def __init__(self, params = None):
         super().__init__(params)
 
+        self.rtdp = rtdp.SimRealTimeDataProvider(params)
         self.trades = []
 
     def initialize(self, params):
         if params:
             self.cash = params.get("cash", self.cash)
 
+    def get_current_data(self):
+        return self.rtdp.get_current_data()
+
+    def next(self, data_description):
+        return self.rtdp.next(data_description)
+
     def get_value(self, symbol):
-        endpoint_url = 'https://ftx.com/api/markets'
-        request_url = f'{endpoint_url}/{symbol}'
-        df = pd.DataFrame(requests.get(request_url).json())
-        return df['result']['price']
+        return self.rtdp.get_value(symbol)
 
     def get_commission(self, symbol):
         return 0.07
@@ -57,7 +67,6 @@ class BrokerSimulation(Broker):
                 return False
             self.cash = self.cash - trade.gross_price
         elif trade.type == "SELL":
-            # self.cash = self.cash + trade.gross_price
             self.cash = self.cash + trade.net_price - trade.selling_fee
         self.trades.append(trade)
         

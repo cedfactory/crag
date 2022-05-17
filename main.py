@@ -9,15 +9,21 @@ Options:
 def _usage():
     print(_usage_str)
 
-def crag_record(csvfile):
-    rtdp = rtdp_tv.RTDPTradingView()
-    rtdp.record(20, 1, csvfile)
+def crag_record():
+    sim_rtdp = rtdp.SimRealTimeDataProvider()
+    ds = rtdp.DataDescription()
+    sim_rtdp.record(ds)
+
+def crag_simulation():
+    sim_rtdp = rtdp.SimRealTimeDataProvider({"input":"./data/"})
+    ds = rtdp.DataDescription()
+    df = sim_rtdp.next(ds)
+    print(df.head())
 
 def crag_run(strategy_name, history):
     params = {}
     if history != "":
         params['infile'] = history
-    my_rtdp = rtdp.RealTimeDataProvider(params)
 
     if strategy_name == "super_reversal":
         strategy_super_reversal = rtstr_super_reversal.StrategySuperReversal()
@@ -28,7 +34,7 @@ def crag_run(strategy_name, history):
     broker_simu = broker_ftx.BrokerFTX({'simulation':True})
     broker_simu.initialize({'cash':100})
 
-    params = {'rtdp':my_rtdp, 'broker':broker_simu, 'rtstr':strategy_super_reversal}
+    params = {'broker':broker_simu, 'rtstr':strategy_super_reversal}
     bot = crag.Crag(params)
     bot.run()
     bot.export_history("broker_history.csv")
@@ -65,9 +71,10 @@ def crag_ftx():
 if __name__ == '__main__':
     import sys
     if len(sys.argv) >= 2:
-        if len(sys.argv) == 3 and (sys.argv[1] == "--record"):
-            csvfile = sys.argv[2]
-            crag_record(csvfile)
+        if len(sys.argv) == 2 and (sys.argv[1] == "--record"):
+            crag_record()
+        elif len(sys.argv) == 2 and (sys.argv[1] == "--simulation"):
+            crag_simulation()
         elif len(sys.argv) >= 2 and (sys.argv[1] == "--run"):
             strategy_name = ""
             if len(sys.argv) >= 3:

@@ -5,11 +5,9 @@ from . import trade
 class Crag:
     def __init__(self, params = None):
 
-        self.rtdp = None
         self.broker = None
         self.rtstr = None
         if params:
-            self.rtdp = params.get("rtdp", self.rtdp)
             self.broker = params.get("broker", self.broker)
             self.rtstr = params.get("rtstr", self.rtstr)
 
@@ -44,7 +42,8 @@ class Crag:
         prices_symbols = {symbol:self.broker.get_value(symbol) for symbol in ds.symbols}
         self.rtstr.update(self.current_trades, self.broker.get_cash(), prices_symbols)
 
-        current_data = self.rtdp.next(ds)
+        current_data = self.broker.next(ds)
+        print(current_data)
         if current_data is None:
             return False
 
@@ -60,16 +59,6 @@ class Crag:
 
     def export_history(self, target=None):
         self.broker.export_history(target)
-
-    def manage_current_data(self):
-        print("[Crag.manage_current_data]")
-
-        current_data = self.rtdp.get_current_data()
-        lst_symbols_to_buy = self.rtstr.get_crypto_buying_list(current_data)
-
-        # log
-        self.add_to_log("lst_symbols_to_buy", lst_symbols_to_buy)
-
 
     def trade(self):
         print("[Crag.trade]")

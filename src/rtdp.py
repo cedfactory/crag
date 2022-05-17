@@ -1,7 +1,9 @@
 from . import utils
 import pandas as pd
 from abc import ABCMeta, abstractmethod
-
+import csv
+import json
+import os
 
 from finta import TA # temporary before fdp
 import numpy as np
@@ -146,6 +148,10 @@ class IRealTimeDataProvider(metaclass = ABCMeta):
     def next(self, data_description):
         pass
 
+    @abstractmethod
+    def get_value(self, symbol):
+        pass
+
 class RealTimeDataProvider():
     def __init__(self, params = None):
         pass
@@ -177,13 +183,65 @@ class RealTimeDataProvider():
 
         return df_result
 
+    def get_value(self, symbol):
+        return None
 
-class MyRealTimeDataProvider(IRealTimeDataProvider):
+
+class SimRealTimeDataProvider(IRealTimeDataProvider):
     def __init__(self, params = None):
-        pass
+
+        self.input = params.get("input", None)
+        if self.input == None:
+            return
+
+        self.data = {}
+        files = os.listdir(self.input)
+        for file in files:
+            strs = file.split('.')
+            symbol = strs[0].replace("_", "/")
+            if symbol in default_symbols and strs[1] == "csv":
+                self.data[symbol] = pd.read_csv(self.input+"/"+file, sep=";")
+
+        self.current_position = -1
 
     def next(self, data_description):
-        url = "history?exchange=ftx&symbol=ETH_EUR&start=01_01_2022"
+        offset = 20 # todo : deduce this value from maximal period found in data_description
+        self.current_position = self.current_position + 1
+        start_in_df = self.current_position
+        end_in_df = self.current_position + offset
+
+        columns = ['symbol'].extend(["open", "high", "low", "close", "volume"])
+        df_result = pd.DataFrame(columns=['symbol'])
+        for symbol in data_description.symbols:
+            df_symbol = self.data[symbol]
+            df = df_symbol[start_in_df:end_in_df]
+            
+            df = add_features(df, data_description.features)
+            
+            columns = list(df.columns)
+            row = {'symbol':symbol}
+            for feature in data_description.features:
+                if feature not in columns:
+                    return None
+                row[feature] = [df[feature].iloc[-1]]
+
+            df_row = pd.DataFrame(data=row)
+            df_result = pd.concat((df_result, df_row), axis = 0)
+
+        df_result.set_index("symbol", inplace=True)
+
+        return df_result
+
+    def get_value(self):
+        return 10
+
+    def record(self, data_description):
+        symbols = ','.join(data_description.symbols)
+        symbols = symbols.replace('/','_')
+        url = "history?exchange=ftx&symbol="+symbols+"&start=01_04_2022"+"&interval=1h"+"&length=400"
         response_json = utils.fdp_request(url)
-        df = pd.read_json(response_json["result"]["ETH_EUR"]["info"])
-        return df
+        for symbol in data_description.symbols:
+            formatted_symbol = symbol.replace('/','_')
+            df = pd.read_json(response_json["result"][formatted_symbol]["info"])
+            df.to_csv("./data/"+formatted_symbol+".csv", sep=";")
+
