@@ -153,7 +153,7 @@ class RealTimeDataProvider():
     def next(self, data_description):
         symbols = ','.join(data_description.symbols)
         symbols = symbols.replace('/','_')
-        url = "history?exchange=ftx&symbol="+symbols+"&start=01_05_2022"
+        url = "history?exchange=ftx&symbol="+symbols+"&start=01_05_2022"+"&interval=1h"+"&length=500"
         response_json = utils.fdp_request(url)
 
         columns = ['symbol'].extend(["open", "high", "low", "close", "volume"])
