@@ -217,6 +217,7 @@ class SimRealTimeDataProvider(IRealTimeDataProvider):
         for symbol in data_description.symbols:
             df_symbol = self.data[symbol]
             df = df_symbol[start_in_df:end_in_df]
+            df = df.reset_index()
 
             df = add_features(df.copy(), data_description.features)
             
