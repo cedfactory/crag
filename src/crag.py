@@ -35,7 +35,7 @@ class Crag:
             #self.export_history("broker_history.csv")
 
     def step(self):
-        print("[Crag] new step...")
+        print("⌛ [Crag]")
 
         # update all the data
         ds = self.rtstr.get_data_description()
@@ -69,6 +69,8 @@ class Crag:
         lst_symbols = [current_trade.symbol for current_trade in self.current_trades if current_trade.type == "BUY"]
         lst_symbols = list(set(lst_symbols))
         df_selling_symbols = self.rtstr.get_df_selling_symbols(lst_symbols)
+        print("👎")
+        print(df_selling_symbols)
         for current_trade in self.current_trades:
             if current_trade.type == "BUY" and current_trade.symbol in df_selling_symbols and df_selling_symbols[current_trade.symbol]["stimulus"] != "HOLD":
                 sell_trade = trade.Trade()
@@ -103,6 +105,8 @@ class Crag:
 
         # buy symbols
         df_buying_symbols = self.rtstr.get_df_buying_symbols()
+        print("👍")
+        print(df_buying_symbols)
         df_buying_symbols.set_index('symbol', inplace=True)
         for symbol in df_buying_symbols.index.to_list():
             current_trade = trade.Trade()

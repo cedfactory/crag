@@ -218,7 +218,6 @@ class SimRealTimeDataProvider(IRealTimeDataProvider):
     def _check_range_in_dataframes(self, end_in_df):
         for symbol in self.data:
             df = self.data[symbol]
-            print(len(df.index), " ",  end_in_df)
             if end_in_df+1 > len(df.index):
                 return False
         return True
