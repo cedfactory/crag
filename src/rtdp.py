@@ -174,7 +174,6 @@ class RealTimeDataProvider():
             df_result = pd.concat((df_result, df_row), axis = 0)
 
         df_result.set_index("symbol", inplace=True)
-        print(df_result)
 
         return df_result
 
