@@ -26,7 +26,8 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
     def get_data_description(self):
         ds = rtdp.DataDescription()
         ds.symbols = ds.symbols[:2]
-        ds.features = { "ema_short" : {"feature": "ema", "period": 5},
+        ds.features = { "low" : None,
+                        "ema_short" : {"feature": "ema", "period": 5},
                         "ema_long" : {"feature": "ema", "period": 400},
                         "super_trend_direction" : {"feature": "super_trend"}}
 
@@ -36,13 +37,25 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
         self.df_current_data = current_data
 
     def get_df_buying_symbols(self):
-        df = pd.DataFrame(columns = ['symbol', 'size'])
-        for symbol in self.df_current_data.index.values.tolist():
-            df_row = pd.DataFrame(data={"symbol":[symbol], "size":[1]})
-            df = pd.concat((df, df_row), axis = 0)
-        return df
+        df_result = pd.DataFrame(columns = ['symbol', 'size'])
+        for symbol in self.df_current_data.index.to_list():
+            if (self.df_current_data['ema_short'][symbol] >= self.df_current_data['ema_long'][symbol]
+                and self.df_current_data['super_trend_direction'] == True
+                and self.df_current_data['ema_short'] > self.df_current_data['low']):
+                    df_row = pd.DataFrame(data={"symbol":[symbol], "size":[-1]})
+                    df_result = pd.concat((df_result, df_row), axis = 0)
+        print(df_result)
+        return df_result
 
     def get_df_selling_symbols(self, lst_symbols):
+        '''
+        df.loc[
+            ((df['n1_ema_short'] <= df['n1_ema_long'])
+            | (df['n1_super_trend_direction'] == False))
+            & (df['n1_ema_short'] < df['high'])
+            , "close_long_limit"
+        ] = True
+        '''
         df = pd.DataFrame(columns = ['symbol', 'stimulus'])
         return df
 
