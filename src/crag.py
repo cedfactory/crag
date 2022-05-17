@@ -88,7 +88,7 @@ class Crag:
                 sell_trade.buying_price = current_trade.buying_price
                 sell_trade.buying_time = current_trade.time
                 sell_trade.symbol = current_trade.symbol
-                sell_trade.symbol_price = float(self.rtstr.get_price_symbol(sell_trade.symbol))
+                sell_trade.symbol_price = self.broker.get_value(symbol)
                 sell_trade.size = current_trade.size
                 sell_trade.net_price = sell_trade.size * sell_trade.symbol_price
                 sell_trade.buying_fee = current_trade.buying_fee
@@ -124,7 +124,7 @@ class Crag:
             current_trade.buying_time = ""
             current_trade.selling_fee = ""
             current_trade.symbol = symbol
-            current_trade.symbol_price = self.rtstr.get_price_symbol(symbol)
+            current_trade.symbol_price = self.broker.get_value(symbol)
             current_trade.buying_price = current_trade.symbol_price
             current_trade.size = df_buying_symbols["size"][symbol]
             current_trade.net_price = current_trade.size * current_trade.symbol_price
