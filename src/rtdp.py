@@ -270,5 +270,7 @@ class SimRealTimeDataProvider(IRealTimeDataProvider):
         for symbol in data_description.symbols:
             formatted_symbol = symbol.replace('/','_')
             df = pd.read_json(response_json["result"][formatted_symbol]["info"])
+            if not os.path.exists("./data/"):
+                os.makedirs("./data/")
             df.to_csv("./data/"+formatted_symbol+".csv", sep=";")
 
