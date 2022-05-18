@@ -162,8 +162,7 @@ class RealTimeDataProvider():
         url = "history?exchange=ftx&symbol="+symbols+"&start=01_05_2022"+"&interval=1h"+"&length=500"
         response_json = utils.fdp_request(url)
 
-        columns = ['symbol'].extend(["open", "high", "low", "close", "volume"])
-        df_result = pd.DataFrame(columns=columns)
+        df_result = pd.DataFrame(columns=['symbol'])
         for symbol in data_description.symbols:
             formatted_symbol = symbol.replace('/','_')
             df = pd.read_json(response_json["result"][formatted_symbol]["info"])
@@ -231,7 +230,6 @@ class SimRealTimeDataProvider(IRealTimeDataProvider):
         if not self._check_range_in_dataframes(end_in_df):
             return None
 
-        columns = ['symbol'].extend(["open", "high", "low", "close", "volume"])
         features = data_description.features
         features["close"] = None # to have the symbol price
         df_result = pd.DataFrame(columns=['symbol'])
