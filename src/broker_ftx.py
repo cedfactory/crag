@@ -47,7 +47,16 @@ class BrokerFTX(broker.Broker):
 
     @authentication_required
     def get_cash(self):
-        return 100 # todo : get the real cash
+        # get free USD
+        result = 0
+        if self.ftx_exchange:
+            try:
+                balance = self.ftx_exchange.fetch_balance()
+                if 'USD' in balance:
+                    result = float(balance['USD']['free'])
+            except BaseException as err:
+                print("[BrokerFTX::get_balance] An error occured : {}".format(err))
+        return result
 
     @authentication_required
     def get_balance(self):
