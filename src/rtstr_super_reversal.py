@@ -25,7 +25,7 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
 
     def get_data_description(self):
         ds = rtdp.DataDescription()
-        ds.symbols = ds.symbols[:2]
+        #ds.symbols = ds.symbols[:2]
         ds.features = { "low" : None,
                         "high" : None,
                         "ema_short" : {"feature": "ema", "period": 5},
