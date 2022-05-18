@@ -79,7 +79,7 @@ class Crag:
                 sell_trade.buying_price = current_trade.buying_price
                 sell_trade.buying_time = current_trade.time
                 sell_trade.symbol = current_trade.symbol
-                sell_trade.symbol_price = self.broker.get_value(symbol)
+                sell_trade.symbol_price = self.broker.get_value(current_trade.symbol)
                 sell_trade.size = current_trade.size
                 sell_trade.net_price = sell_trade.size * sell_trade.symbol_price
                 sell_trade.buying_fee = current_trade.buying_fee
