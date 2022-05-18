@@ -193,7 +193,7 @@ class SimRealTimeDataProvider(IRealTimeDataProvider):
         if params:
             self.input = params.get("input", self.input)
     
-        if self.input == None:
+        if self.input == None or not os.path.exists(self.input):
             return
 
         self.offset = 0
