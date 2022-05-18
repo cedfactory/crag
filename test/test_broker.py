@@ -3,11 +3,11 @@ import os
 import csv
 from src import broker,trade
 
-class TestBrokerSimulation:
+class TestSimBroker:
 
     def test_initialize(self):
         # context
-        broker_simulation = broker.BrokerSimulation()
+        broker_simulation = broker.SimBroker()
         assert(broker_simulation.get_cash() == 0)
 
         # action
@@ -18,7 +18,7 @@ class TestBrokerSimulation:
 
     def test_get_commission(self):
         # context
-        broker_simulation = broker.BrokerSimulation()
+        broker_simulation = broker.SimBroker()
 
         # action
         commission = broker_simulation.get_commission("FAKE")
@@ -49,7 +49,7 @@ class TestBrokerSimulation:
 
     def test_execute_trade_ok(self):
         # context
-        broker_simulation = broker.BrokerSimulation()
+        broker_simulation = broker.SimBroker()
         broker_simulation.initialize({'cash':3})
         fake_trade = self.generate_trade()
 
@@ -62,7 +62,7 @@ class TestBrokerSimulation:
 
     def test_execute_trade_ko(self):
         # context
-        broker_simulation = broker.BrokerSimulation()
+        broker_simulation = broker.SimBroker()
         broker_simulation.initialize({'cash':2})
         fake_trade = self.generate_trade()
 
@@ -75,7 +75,7 @@ class TestBrokerSimulation:
 
     def test_export_history(self):
         # context
-        broker_simulation = broker.BrokerSimulation()
+        broker_simulation = broker.SimBroker()
         broker_simulation.initialize({'cash':3})
         fake_trade = self.generate_trade()
         broker_simulation.execute_trade(fake_trade)
