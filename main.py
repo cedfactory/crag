@@ -20,7 +20,8 @@ def crag_simulation():
     params = {'broker':simu_broker, 'rtstr':strategy_super_reversal}
     bot = crag.Crag(params)
     bot.run()
-
+    bot.export_history("sim_broker_history.csv")
+    bot.export_status()
 
 def crag_run(strategy_name, history):
     params = {}
