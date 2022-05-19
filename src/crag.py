@@ -71,13 +71,16 @@ class Crag:
         df_selling_symbols = self.rtstr.get_df_selling_symbols(lst_symbols)
         print("👎")
         print(df_selling_symbols)
+        list_symbols_to_sell = df_selling_symbols.symbol.to_list()
+        df_selling_symbols.set_index("symbol", inplace=True)
         for current_trade in self.current_trades:
-            if current_trade.type == "BUY" and current_trade.symbol in df_selling_symbols and df_selling_symbols[current_trade.symbol]["stimulus"] != "HOLD":
+            if current_trade.type == "BUY" and current_trade.symbol in list_symbols_to_sell and df_selling_symbols["stimulus"][current_trade.symbol] != "HOLD":
                 sell_trade = trade.Trade()
                 sell_trade.type = "SELL"
                 sell_trade.sell_id = current_trade.id
                 sell_trade.buying_price = current_trade.buying_price
                 sell_trade.buying_time = current_trade.time
+                sell_trade.stimulus = df_selling_symbols["stimulus"][current_trade.symbol]
                 sell_trade.symbol = current_trade.symbol
                 sell_trade.symbol_price = self.broker.get_value(current_trade.symbol)
                 sell_trade.size = current_trade.size
