@@ -17,6 +17,7 @@ class Crag:
         self.current_trades = []
 
         self.cash = 0
+        self.init_cash_value = 0
         self.portfolio_value = 0
         self.wallet_value = 0
 
@@ -32,7 +33,8 @@ class Crag:
 
             done = not self.step()
             time.sleep(interval)
-            #self.export_history("broker_history.csv")
+            # self.export_history("broker_history.csv") # DEBUG
+            self.export_history("sim_broker_history.csv") # DEBUG
 
     def step(self):
         print("⌛ [Crag]")
@@ -62,6 +64,8 @@ class Crag:
 
     def trade(self):
         print("[Crag.trade]")
+        if self.cash == 0 and self.init_cash_value == 0:
+            self.init_cash_value = self.broker.get_cash()
         self.cash = self.broker.get_cash()
         trades = []
 
@@ -87,8 +91,8 @@ class Crag:
                 sell_trade.net_price = sell_trade.size * sell_trade.symbol_price
                 sell_trade.buying_fee = current_trade.buying_fee
                 sell_trade.selling_fee = sell_trade.net_price * self.broker.get_commission(sell_trade.symbol)
-                sell_trade.gross_price = sell_trade.net_price + sell_trade.buying_fee + sell_trade.selling_fee
-                sell_trade.roi = (sell_trade.gross_price - sell_trade.net_price) / sell_trade.net_price
+                sell_trade.gross_price = current_trade.net_price + sell_trade.buying_fee + sell_trade.selling_fee
+                sell_trade.roi = (sell_trade.net_price - sell_trade.gross_price) / current_trade.net_price
 
                 done = self.broker.execute_trade(sell_trade)
                 if done:
@@ -101,6 +105,7 @@ class Crag:
 
                     sell_trade.portfolio_value = self.portfolio_value
                     sell_trade.wallet_value = self.wallet_value
+                    sell_trade.wallet_roi = (self.wallet_value - self.init_cash_value) * 100 / self.init_cash_value
 
                     trades.append(sell_trade)
                     self.current_trades.append(sell_trade)
@@ -138,6 +143,7 @@ class Crag:
                     self.wallet_value = self.portfolio_value + self.cash
                     current_trade.portfolio_value = self.portfolio_value
                     current_trade.wallet_value = self.wallet_value
+                    current_trade.wallet_roi = (self.wallet_value - self.init_cash_value) * 100 / self.init_cash_value
 
                     trades.append(current_trade)
                     self.current_trades.append(current_trade)
