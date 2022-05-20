@@ -195,7 +195,6 @@ class SimRealTimeDataProvider(IRealTimeDataProvider):
         if self.input == None or not os.path.exists(self.input):
             return
 
-        self.offset = 0
         self.data = {}
         files = os.listdir(self.input)
         for file in files:
@@ -214,38 +213,28 @@ class SimRealTimeDataProvider(IRealTimeDataProvider):
                 offset = features[feature_name]["period"]
         return offset
 
-    def _check_range_in_dataframes(self, end_in_df):
+    def _is_in_dataframe(self):
+        if self.current_position < 0:
+            return False
         for symbol in self.data:
-            df = self.data[symbol]
-            if end_in_df+1 > len(df.index):
+            if self.current_position >= len(self.data[symbol].index):
                 return False
         return True
 
     def next(self, data_description):
-        self.offset = self._get_offset(data_description.features)
         self.current_position = self.current_position + 1
-        start_in_df = self.current_position
-        end_in_df = self.current_position + self.offset
-
-        if not self._check_range_in_dataframes(end_in_df):
+        if not self._is_in_dataframe():
             return None
 
-        features = data_description.features
-        features["close"] = None # to have the symbol price
         df_result = pd.DataFrame(columns=['symbol'])
         for symbol in data_description.symbols:
             df_symbol = self.data[symbol]
-            df = df_symbol[start_in_df:end_in_df+1] # select from start_in_df until end_in_df included
-            df = df.reset_index()
-
-            df = add_features(df.copy(), features)
-            
-            columns = list(df.columns)
+            available_columns = list(df_symbol.columns)
             row = {'symbol':symbol}
             for feature in data_description.features:
-                if feature not in columns:
+                if feature not in available_columns:
                     return None
-                row[feature] = [df[feature].iloc[-1]]
+                row[feature] = [df_symbol[feature].iloc[self.current_position]]
 
             df_row = pd.DataFrame(data=row)
             df_result = pd.concat((df_result, df_row), axis = 0)
@@ -255,14 +244,13 @@ class SimRealTimeDataProvider(IRealTimeDataProvider):
         return df_result
 
     def get_value(self, symbol):
-        if not symbol in self.data:
+        if not self._is_in_dataframe() or not symbol in self.data:
             return -1
         df_symbol = self.data[symbol]
-        irow = self.current_position + self.offset
-        value = df_symbol.iloc[irow]['close']
+        value = df_symbol.iloc[self.current_position]['close']
         return value
 
-    def record(self, data_description):
+    def record(self, data_description, target="./data/"):
         symbols = ','.join(data_description.symbols)
         symbols = symbols.replace('/','_')
         url = "history?exchange=ftx&symbol="+symbols+"&start=01_04_2022"+"&interval=1h"+"&length=400"
@@ -270,7 +258,9 @@ class SimRealTimeDataProvider(IRealTimeDataProvider):
         for symbol in data_description.symbols:
             formatted_symbol = symbol.replace('/','_')
             df = pd.read_json(response_json["result"][formatted_symbol]["info"])
-            if not os.path.exists("./data/"):
-                os.makedirs("./data/")
-            df.to_csv("./data/"+formatted_symbol+".csv", sep=";")
+            df = add_features(df, data_description.features)
+            print(df)
+            if not os.path.exists(target):
+                os.makedirs(target)
+            df.to_csv(target+'/'+formatted_symbol+".csv", sep=";")
 
