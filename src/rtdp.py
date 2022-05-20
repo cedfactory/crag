@@ -267,6 +267,9 @@ class SimRealTimeDataProvider(IRealTimeDataProvider):
         response_json = utils.fdp_request(url)
         for symbol in data_description.symbols:
             formatted_symbol = symbol.replace('/','_')
+            if response_json["result"][formatted_symbol]["status"] == "ko":
+                print("no data for ",symbol)
+                continue
             df = pd.read_json(response_json["result"][formatted_symbol]["info"])
             df = add_features(df, data_description.features)
             if not os.path.exists(target):
