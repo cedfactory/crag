@@ -8,6 +8,7 @@ class Broker(metaclass = ABCMeta):
     
     def __init__(self, params = None):
         self.cash = 0
+        self.rtdp = None
     
     @abstractmethod
     def initialize(self, params):
@@ -21,6 +22,11 @@ class Broker(metaclass = ABCMeta):
 
     def get_cash(self):
         return self.cash
+
+    def get_current_datetime(self):
+        if rtdp:
+            return self.rtdp.get_current_datetime()
+        return None
 
     @abstractmethod
     def get_value(self, symbol):

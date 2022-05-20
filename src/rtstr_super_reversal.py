@@ -60,6 +60,6 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
 
         return df_result
 
-    def update(self, current_trades, broker_cash, prices_symbols):
-        self.rtctrl.update_rtctrl(current_trades, broker_cash, prices_symbols)
+    def update(self, current_datetime, current_trades, broker_cash, prices_symbols):
+        self.rtctrl.update_rtctrl(current_datetime, current_trades, broker_cash, prices_symbols)
         self.rtctrl.display_summary_info()

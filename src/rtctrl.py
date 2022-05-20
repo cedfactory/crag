@@ -4,12 +4,11 @@ from datetime import datetime
 
 # Class to real time control the strategy behaviours
 class rtctrl():
-    def __init__(self):
+    def __init__(self, current_datetime=None):
         self.df_rtctrl = pd.DataFrame(columns=self.get_df_header())
         self.df_rtctrl_tracking = pd.DataFrame(columns=self.get_df_header_tracking())
         self.symbols = []
-        self.time = datetime.now()
-        self.init_cash_value = 0
+        self.time = current_datetime
         self.actual_price = 0
         self.actual_net_price = 0
         self.roi_value = 0
@@ -42,17 +41,15 @@ class rtctrl():
     def get_list_of_asset_gross_price(self, list_of_current_trades):
         return [sum(current_trade.gross_price for current_trade in list_of_current_trades if current_trade.type == "BUY" and current_trade.symbol == symbol) for symbol in self.symbols]
 
-    def update_rtctrl(self, list_of_current_trades, wallet_cash, prices_symbols):
+    def update_rtctrl(self, current_datetime, list_of_current_trades, wallet_cash, prices_symbols):
         self.prices_symbols = prices_symbols
         if len(list_of_current_trades) == 0:
-            if self.init_cash_value == 0:
-                self.init_cash_value = wallet_cash
             return
 
         self.df_rtctrl = pd.DataFrame(columns=self.get_df_header())
 
         self.symbols = self.get_list_of_traded_symbols(list_of_current_trades)
-        self.time = datetime.now()
+        self.time = current_datetime
         actual_prices = [prices_symbols[symbol] for symbol in self.symbols]
         self.actual_price = actual_prices
         self.wallet_cash = wallet_cash
@@ -66,24 +63,20 @@ class rtctrl():
 
         self.df_rtctrl['actual_net_price'] = self.df_rtctrl['size'] * self.df_rtctrl['actual_price']
         self.df_rtctrl['roi_$'] = self.df_rtctrl['actual_net_price'] - self.df_rtctrl['buying_gross_price']
-        self.df_rtctrl['roi_%'] = self.df_rtctrl['roi_$'] / self.df_rtctrl['buying_gross_price']
+        self.df_rtctrl['roi_%'] = self.df_rtctrl['roi_$'] / self.df_rtctrl['buying_gross_price']    # * 100 ????
         self.df_rtctrl['portfolio_value'] = self.df_rtctrl['actual_net_price']
         self.df_rtctrl['cash'] = self.wallet_cash
         self.df_rtctrl['wallet_value'] = self.df_rtctrl['portfolio_value'].sum() + self.df_rtctrl['cash']
-        if len(self.df_rtctrl) > 0:
-            self.wallet_value = self.df_rtctrl['wallet_value'][0]
-        else:
-            self.wallet_value = self.wallet_cash
+        self.wallet_value = self.df_rtctrl['wallet_value'][0]
         self.df_rtctrl['wallet_%'] = 100 * self.df_rtctrl['portfolio_value'] / self.df_rtctrl['wallet_value']
 
     def display_summary_info(self):
+        roi_percent = 0
+        if self.df_rtctrl['buying_gross_price'].sum() != 0:
+            roi_percent = 100*self.df_rtctrl['roi_$'].sum() / self.df_rtctrl['buying_gross_price'].sum()
         wallet_cash = self.wallet_cash
         portfolio = self.df_rtctrl['actual_net_price'].sum()
         wallet_value = self.wallet_value
-        if self.init_cash_value != 0:
-            roi_percent = (self.wallet_value - self.init_cash_value) * 100 / self.init_cash_value
-        else:
-            roi_percent = 0
         asset_percent = self.df_rtctrl['wallet_%'].sum()
         if self.print_tracking:
             print(self.df_rtctrl)
