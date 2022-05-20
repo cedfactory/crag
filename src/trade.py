@@ -1,12 +1,9 @@
-from datetime import datetime
-
-
 class Trade:
     id = 0
-    def __init__(self):
+    def __init__(self, current_datetime=None):
         self.id = Trade.id
         Trade.id = Trade.id + 1
-        self.time = datetime.now()
+        self.time = current_datetime
 
     def dump(self):
         print("-> trade {}:".format(self.id))

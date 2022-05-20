@@ -18,7 +18,7 @@ class TestSimRealTimeDataProvider:
         assert("AAVE/USD" in dp.data)
         df = dp.data["AAVE/USD"]
         assert(isinstance(df, pd.DataFrame))
-        assert(df.columns.to_list() == ['Unnamed: 0', 'open', 'high', 'low', 'close', 'volume'])
+        assert(df.columns.to_list() == ['datetime', 'open', 'high', 'low', 'close', 'volume'])
         assert(len(df) == 47)
 
     def test_get_value_ko_bad_current_position(self):
@@ -57,6 +57,22 @@ class TestSimRealTimeDataProvider:
         
         # expectations
         assert(value == 244.53)
+
+    def test_get_current_datetime_ok(self):
+        # context
+        input = "./test/data_sim_real_time_data_provider"
+        dp = rtdp.SimRealTimeDataProvider({'input': input})
+        ds = rtdp.DataDescription()
+        ds.symbols = ["AAVE/USD"]
+        ds.features = ["high", "low"]
+        dp.next(ds)
+
+        # action
+        current_time = dp.get_current_datetime()
+        print(current_time)
+        
+        # expectations
+        assert(current_time == "2022-04-01")
 
     def test_next(self):
         # context

@@ -40,7 +40,8 @@ class Crag:
         # update all the data
         ds = self.rtstr.get_data_description()
         prices_symbols = {symbol:self.broker.get_value(symbol) for symbol in ds.symbols}
-        self.rtstr.update(self.current_trades, self.broker.get_cash(), prices_symbols)
+        current_datetime = self.broker.get_current_datetime()
+        self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(), prices_symbols)
 
         current_data = self.broker.next(ds)
         print(current_data)
@@ -63,6 +64,7 @@ class Crag:
     def trade(self):
         print("[Crag.trade]")
         self.cash = self.broker.get_cash()
+        current_datetime = self.broker.get_current_datetime()
         trades = []
 
         # sell symbols
@@ -75,7 +77,7 @@ class Crag:
         df_selling_symbols.set_index("symbol", inplace=True)
         for current_trade in self.current_trades:
             if current_trade.type == "BUY" and current_trade.symbol in list_symbols_to_sell and df_selling_symbols["stimulus"][current_trade.symbol] != "HOLD":
-                sell_trade = trade.Trade()
+                sell_trade = trade.Trade(current_datetime)
                 sell_trade.type = "SELL"
                 sell_trade.sell_id = current_trade.id
                 sell_trade.buying_price = current_trade.buying_price
@@ -112,7 +114,7 @@ class Crag:
         print(df_buying_symbols)
         df_buying_symbols.set_index('symbol', inplace=True)
         for symbol in df_buying_symbols.index.to_list():
-            current_trade = trade.Trade()
+            current_trade = trade.Trade(current_datetime)
             current_trade.type = "BUY"
             current_trade.sell_id = ""
             current_trade.stimulus = ""

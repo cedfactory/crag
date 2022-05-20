@@ -4,6 +4,7 @@ from abc import ABCMeta, abstractmethod
 import csv
 import json
 import os
+from datetime import datetime
 
 from finta import TA # temporary before fdp
 import numpy as np
@@ -152,6 +153,10 @@ class IRealTimeDataProvider(metaclass = ABCMeta):
     def get_value(self, symbol):
         pass
 
+    @abstractmethod
+    def get_current_datetime(self):
+        pass
+
 class RealTimeDataProvider():
     def __init__(self, params = None):
         pass
@@ -185,6 +190,8 @@ class RealTimeDataProvider():
     def get_value(self, symbol):
         return None
 
+    def get_current_datetime(self):
+        return datetime.now()
 
 class SimRealTimeDataProvider(IRealTimeDataProvider):
     def __init__(self, params = None):
@@ -201,17 +208,12 @@ class SimRealTimeDataProvider(IRealTimeDataProvider):
             strs = file.split('.')
             symbol = strs[0].replace("_", "/")
             if symbol in default_symbols and strs[1] == "csv":
-                self.data[symbol] = pd.read_csv(self.input+"/"+file, sep=";")
+                df = pd.read_csv(self.input+"/"+file, sep=";")
+                df.rename(columns={"Unnamed: 0": "datetime"}, inplace=True)
+                #df.set_index('datetime', inplace=True)
+                self.data[symbol] = df
 
         self.current_position = -1
-
-    def _get_offset(self, features):
-        # get the offset from the maximal period found among the features
-        offset = 0
-        for feature_name in features:
-            if features[feature_name] and "period" in features[feature_name] and features[feature_name]["period"] > offset:
-                offset = features[feature_name]["period"]
-        return offset
 
     def _is_in_dataframe(self):
         if self.current_position < 0:
@@ -250,6 +252,14 @@ class SimRealTimeDataProvider(IRealTimeDataProvider):
         value = df_symbol.iloc[self.current_position]['close']
         return value
 
+    def get_current_datetime(self):
+        if not self._is_in_dataframe():
+            return None
+        first_symbol = list(self.data.keys())[0]
+        df_symbol = self.data[first_symbol]
+        value = df_symbol.iloc[self.current_position]['datetime']
+        return value
+
     def record(self, data_description, target="./data/"):
         symbols = ','.join(data_description.symbols)
         symbols = symbols.replace('/','_')
@@ -259,7 +269,6 @@ class SimRealTimeDataProvider(IRealTimeDataProvider):
             formatted_symbol = symbol.replace('/','_')
             df = pd.read_json(response_json["result"][formatted_symbol]["info"])
             df = add_features(df, data_description.features)
-            print(df)
             if not os.path.exists(target):
                 os.makedirs(target)
             df.to_csv(target+'/'+formatted_symbol+".csv", sep=";")
