@@ -2,7 +2,7 @@ import pytest
 import pandas as pd
 import os
 import json
-from src import rtdp_tv,rtstr_tv,crag,broker
+from src import rtstr_super_reversal,crag,broker
 
 class TestCrag:
     def test_run_no_data(self):
