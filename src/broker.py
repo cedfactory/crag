@@ -7,9 +7,12 @@ from . import rtdp
 class Broker(metaclass = ABCMeta):
     
     def __init__(self, params = None):
-        self.cash = 0
+        if params:
+            self.cash = params.get("cash")
+        else:
+            self.cash = 0
         self.rtdp = None
-    
+
     @abstractmethod
     def initialize(self, params):
         pass
@@ -66,7 +69,8 @@ class SimBroker(Broker):
         return self.rtdp.get_value(symbol)
 
     def get_commission(self, symbol):
-        return 0.07
+        # return 0.07
+        return 0.0007
 
     def execute_trade(self, trade):
         if trade.type == "BUY":

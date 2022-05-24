@@ -16,12 +16,10 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
 
         self.rtctrl = rtctrl.rtctrl()
 
-        self.SL = -0.2    # Stop Loss %
-        self.TP = 0.2   # Take Profit %
-        self.TimerSL = self.SL/2    # Stop Loss %
-        self.TimerTP = self.TP/2    # Take Profit %
-        self.Timer = 12
-        self.SPLIT = 10  # Asset Split Overall Percent Size
+        self.SL = -0.2          # Stop Loss %
+        self.TP = 0.2           # Take Profit %
+        self.SPLIT = 1          # Asset Split
+        self.MAX_POSITION = 98  # Asset Overall Percent Size
 
     def get_data_description(self):
         ds = rtdp.DataDescription()
@@ -43,10 +41,25 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
             if (self.df_current_data['ema_short'][symbol] >= self.df_current_data['ema_long'][symbol]
                 and self.df_current_data['super_trend_direction'][symbol] == True
                 and self.df_current_data['ema_short'][symbol] > self.df_current_data['low'][symbol]):
-                    size = 1/self.rtctrl.prices_symbols[symbol] # by default : buy for 1 eur
+                    size = self.get_symbol_buying_size(symbol)
                     df_row = pd.DataFrame(data={"symbol":[symbol], "size":[size]})
                     df_result = pd.concat((df_result, df_row), axis = 0)
 
+        # UGGLY CODING to be replaced and included in first main selection test above...
+        df_rtctrl = self.rtctrl.df_rtctrl.copy()
+        df_result.reset_index(inplace=True, drop=True)
+        if len(df_rtctrl) > 0:
+            df_rtctrl.set_index('symbol', inplace=True)
+            lst_symbols_to_buy = df_result.symbol.to_list()
+            for symbol in lst_symbols_to_buy:
+                try:
+                    if df_rtctrl["wallet_%"][symbol] >= self.MAX_POSITION:
+                        # Symbol to be removed - Over the % limits
+                        df_result.drop(df_result[df_result['symbol'] == symbol].index, inplace=True)
+                except:
+                    # Stay in list
+                    pass
+        df_result.reset_index(inplace=True, drop=True)
         return df_result
 
     def get_df_selling_symbols(self, lst_symbols):
@@ -63,3 +76,24 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
     def update(self, current_datetime, current_trades, broker_cash, prices_symbols):
         self.rtctrl.update_rtctrl(current_datetime, current_trades, broker_cash, prices_symbols)
         self.rtctrl.display_summary_info()
+
+    def get_symbol_buying_size(self, symbol):
+        if self.rtctrl.prices_symbols[symbol] < 0: # first init at -1
+            return 0
+        # size = 1 / self.rtctrl.prices_symbols[symbol] # by default : buy for 1 eur
+        initial_cash = self.rtctrl.init_cash_value
+        available_cash = self.rtctrl.wallet_cash
+        cash_to_buy = initial_cash / self.SPLIT
+        cash_to_buy = cash_to_buy - cash_to_buy * 0.02   # keep some contingency for fees
+
+        if cash_to_buy <= available_cash:
+            size = cash_to_buy / self.rtctrl.prices_symbols[symbol]
+        else:
+            if available_cash < initial_cash * 0.02:
+                size = 0
+            else:
+                size = (available_cash - available_cash * 0.2) / self.rtctrl.prices_symbols[symbol]
+        return size
+
+    def get_portfolio_value(self):
+        return self.rtctrl.df_rtctrl['portfolio_value'].sum()

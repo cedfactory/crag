@@ -101,12 +101,11 @@ def add_features(df, features):
     df['super_trend_direction'] = super_trend.super_trend_direction()
 
     return df
-
-
+'''
 default_symbols = [
         "BTC/USD",
         "DOGE/USD",
-        "MANA/USD",
+        # "MANA/USD",
         "CHZ/USD",
         "AAVE/USD",
         "BNB/USD",
@@ -131,9 +130,13 @@ default_symbols = [
         "BCH/USD",
         "AXS/USD",
         "RAY/USD",
-        "SOL/USD",
+        "SOL/USD"
         "AVAX/USD"
+    ] '''
+default_symbols = [
+        "BTC/USD"
     ]
+
 default_features = ["open", "close", "high", "low", "volume"]
 
 class DataDescription():
@@ -200,7 +203,8 @@ class SimRealTimeDataProvider(IRealTimeDataProvider):
             self.input = params.get("input", self.input)
     
         self.data = {}
-        self.current_position = -1
+        # self.current_position = -1 # CEDE Test Debug
+        self.current_position = 400  # CEDE Test Debug Offset
 
         if self.input == None or not os.path.exists(self.input):
             return
@@ -259,13 +263,16 @@ class SimRealTimeDataProvider(IRealTimeDataProvider):
             return None
         first_symbol = list(self.data.keys())[0]
         df_symbol = self.data[first_symbol]
-        value = df_symbol.iloc[self.current_position]['datetime']
+        #value = df_symbol.iloc[self.current_position]['datetime']
+        value = df_symbol.iloc[self.current_position]['timestamp']
         return value
 
     def record(self, data_description, target="./data/"):
         symbols = ','.join(data_description.symbols)
         symbols = symbols.replace('/','_')
-        url = "history?exchange=ftx&symbol="+symbols+"&start=01_04_2022"+"&interval=1h"+"&length=400"
+        url = "history?exchange=ftx&symbol="+symbols+"&start=01_01_2021"+"&interval=1h"+"&length=9000"
+        # url = "history?exchange=ftx&symbol=" + symbols + "&start=01_01_2020" + "&interval=1h" + "&length=400"
+        # url = "history?exchange=ftx&symbol=" + symbols + "&start=01_01_2021" + "&interval=1h" + "&end=01_01_2022"
         response_json = utils.fdp_request(url)
         for symbol in data_description.symbols:
             formatted_symbol = symbol.replace('/','_')

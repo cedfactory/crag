@@ -16,7 +16,8 @@ def crag_record():
 
 def crag_simulation():
     strategy_super_reversal = rtstr_super_reversal.StrategySuperReversal()
-    simu_broker = broker.SimBroker()
+    param_init_cash = {'cash':10000}
+    simu_broker = broker.SimBroker(param_init_cash)
     params = {'broker':simu_broker, 'rtstr':strategy_super_reversal}
     bot = crag.Crag(params)
     bot.run()

@@ -91,7 +91,7 @@ class BrokerFTX(broker.Broker):
 
     @authentication_required
     def get_commission(self, symbol):
-        return 0.07
+        return 0.0007
 
     @authentication_required
     def execute_trade(self, trade):

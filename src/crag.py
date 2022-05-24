@@ -18,6 +18,7 @@ class Crag:
 
         self.cash = 0
         self.init_cash_value = 0
+        self.df_portfolio_status = pd.DataFrame(columns=['symbol', 'portfolio_size', 'value'])
         self.portfolio_value = 0
         self.wallet_value = 0
 
@@ -45,8 +46,14 @@ class Crag:
         current_datetime = self.broker.get_current_datetime()
         self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(), prices_symbols)
 
+        if(len(self.df_portfolio_status) == 0):
+            self.df_portfolio_status['symbol'] = ds.symbols
+            self.df_portfolio_status['portfolio_size'] = 0
+            self.df_portfolio_status['value'] = 0
+            self.df_portfolio_status.set_index('symbol',drop=True,inplace=True)
+
         current_data = self.broker.next(ds)
-        print(current_data)
+        # print(current_data) # DEBUG
         if current_data is None:
             return False
 
@@ -68,6 +75,7 @@ class Crag:
         if self.cash == 0 and self.init_cash_value == 0:
             self.init_cash_value = self.broker.get_cash()
         self.cash = self.broker.get_cash()
+        self.portfolio_value = self.rtstr.get_portfolio_value()
         current_datetime = self.broker.get_current_datetime()
         trades = []
 
@@ -75,8 +83,8 @@ class Crag:
         lst_symbols = [current_trade.symbol for current_trade in self.current_trades if current_trade.type == "BUY"]
         lst_symbols = list(set(lst_symbols))
         df_selling_symbols = self.rtstr.get_df_selling_symbols(lst_symbols)
-        print("👎")
-        print(df_selling_symbols)
+        # print("👎") # DEBUG
+        # print(df_selling_symbols) # DEBUG
         list_symbols_to_sell = df_selling_symbols.symbol.to_list()
         df_selling_symbols.set_index("symbol", inplace=True)
         for current_trade in self.current_trades:
@@ -102,7 +110,11 @@ class Crag:
                     self.cash = self.broker.get_cash()
                     sell_trade.cash = self.cash
 
-                    self.portfolio_value = self.portfolio_value - sell_trade.net_price
+                    # Portfolio Size/Value Update
+                    self.df_portfolio_status['portfolio_size'][sell_trade.symbol] = self.df_portfolio_status['portfolio_size'][sell_trade.symbol] - sell_trade.size
+                    self.df_portfolio_status['value'][sell_trade.symbol] = self.df_portfolio_status['portfolio_size'][sell_trade.symbol] * sell_trade.symbol_price
+                    self.portfolio_value = self.df_portfolio_status['value'].sum()
+
                     self.wallet_value = self.portfolio_value + self.cash
 
                     sell_trade.portfolio_value = self.portfolio_value
@@ -115,9 +127,10 @@ class Crag:
 
         # buy symbols
         df_buying_symbols = self.rtstr.get_df_buying_symbols()
-        print("👍")
-        print(df_buying_symbols)
+        # print("👍") # DEBUG
+        # print(df_buying_symbols) # DEBUG
         df_buying_symbols.set_index('symbol', inplace=True)
+        df_buying_symbols.drop(df_buying_symbols[df_buying_symbols['size'] == 0].index, inplace=True)
         for symbol in df_buying_symbols.index.to_list():
             current_trade = trade.Trade(current_datetime)
             current_trade.type = "BUY"
@@ -141,7 +154,12 @@ class Crag:
                 if done:
                     self.cash = self.broker.get_cash()
                     current_trade.cash = self.cash
-                    self.portfolio_value = self.portfolio_value + current_trade.net_price
+
+                    # Portfolio Size/Value Update
+                    self.df_portfolio_status['portfolio_size'][symbol] = self.df_portfolio_status['portfolio_size'][symbol] + current_trade.size
+                    self.df_portfolio_status['value'][symbol] = self.df_portfolio_status['portfolio_size'][symbol] * current_trade.symbol_price
+                    self.portfolio_value = self.df_portfolio_status['value'].sum()
+
                     self.wallet_value = self.portfolio_value + self.cash
                     current_trade.portfolio_value = self.portfolio_value
                     current_trade.wallet_value = self.wallet_value
