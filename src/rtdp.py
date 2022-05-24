@@ -199,10 +199,12 @@ class SimRealTimeDataProvider(IRealTimeDataProvider):
         if params:
             self.input = params.get("input", self.input)
     
+        self.data = {}
+        self.current_position = -1
+
         if self.input == None or not os.path.exists(self.input):
             return
 
-        self.data = {}
         files = os.listdir(self.input)
         for file in files:
             strs = file.split('.')
@@ -213,10 +215,10 @@ class SimRealTimeDataProvider(IRealTimeDataProvider):
                 #df.set_index('datetime', inplace=True)
                 self.data[symbol] = df
 
-        self.current_position = -1
-
     def _is_in_dataframe(self):
         if self.current_position < 0:
+            return False
+        if not bool(self.data):
             return False
         for symbol in self.data:
             if self.current_position >= len(self.data[symbol].index):

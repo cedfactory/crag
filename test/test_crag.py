@@ -2,10 +2,23 @@ import pytest
 import pandas as pd
 import os
 import json
-from src import rtdp_tv,rtstr_tv,crag,broker
-'''
-class TestCrag:
+from src import rtstr_super_reversal,crag,broker
 
+class TestCrag:
+    def test_run_no_data(self):
+        # context
+        strategy_super_reversal = rtstr_super_reversal.StrategySuperReversal()
+        simu_broker = broker.SimBroker({'input':'fake_directory'})
+        params = {'broker':simu_broker, 'rtstr':strategy_super_reversal}
+        bot = crag.Crag(params)
+
+        # action
+        bot.run()
+
+        # expectations
+        assert(bot.current_step == 0)
+
+'''
     def test_run(self):
         params = {'infile':'./test/data/history.csv'}
         rtdp = rtdp_tv.RTDPTradingView(params)
