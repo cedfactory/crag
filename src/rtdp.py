@@ -218,6 +218,8 @@ class SimRealTimeDataProvider(IRealTimeDataProvider):
     def _is_in_dataframe(self):
         if self.current_position < 0:
             return False
+        if not bool(self.data):
+            return False
         for symbol in self.data:
             if self.current_position >= len(self.data[symbol].index):
                 return False
