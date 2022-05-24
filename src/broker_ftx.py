@@ -45,7 +45,7 @@ class BrokerFTX(broker.Broker):
         def wrapped(self, *args, **kwargs):
             if not self.authentificated:
                 print("You must be authenticated to use this method {}".format(fn))
-                exit()
+                return None
             else:
                 return fn(self, *args, **kwargs)
         return wrapped
