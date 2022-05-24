@@ -43,7 +43,7 @@ class BrokerFTX(broker.Broker):
     def authentication_required(fn):
         """decoration for methods that require authentification"""
         def wrapped(self, *args, **kwargs):
-            if not self.ftx_exchange:
+            if not self.authentificated:
                 print("You must be authenticated to use this method {}".format(fn))
                 exit()
             else:
