@@ -1,4 +1,4 @@
-from src import rtdp,broker,broker_ftx,crag,rtstr_tv,rtstr_super_reversal
+from src import rtdp,broker,broker_ftx,crag,rtstr_tv,rtstr_super_reversal, analyser
 import pandas as pd
 
 _usage_str = """
@@ -43,6 +43,12 @@ def crag_run(strategy_name, history):
     bot.run()
     bot.export_history("broker_history.csv")
     bot.export_status()
+
+def crag_analyse_resusts():
+    params = {}
+
+    my_analyser = analyser.Analyser(params)
+    my_analyser.run_analyse()
 
 def crag_ftx():
     my_broker_ftx = broker_ftx.BrokerFTX()
@@ -89,6 +95,8 @@ if __name__ == '__main__':
             crag_run(strategy_name, history)
         elif len(sys.argv) >= 2 and (sys.argv[1] == "--ftx"):
             crag_ftx()
+        elif len(sys.argv) >= 2 and (sys.argv[1] == "--analyse"):
+            crag_analyse_resusts()
         else:
             _usage()
     else:
