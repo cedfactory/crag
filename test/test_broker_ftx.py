@@ -20,3 +20,25 @@ class TestBrokerFTX:
 
         # expectations
         assert(authentificated == False)
+
+    def test_get_value(self):
+        # context
+        broker = broker_ftx.BrokerFTX()
+        broker.initialize({})
+
+        # action
+        value = broker.get_value("BTC/USD")
+
+        # expectations
+        assert(value != None)
+
+    def test_get_cash(self):
+        # context
+        broker = broker_ftx.BrokerFTX()
+        broker.initialize({})
+
+        # action
+        value = broker.get_cash()
+
+        # expectations
+        assert(value == None)
