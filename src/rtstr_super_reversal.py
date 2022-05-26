@@ -16,10 +16,10 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
 
         self.rtctrl = rtctrl.rtctrl()
 
-        self.SL = -0.2          # Stop Loss %
-        self.TP = 0.2           # Take Profit %
+        self.SL = -0.2           # Stop Loss %
+        self.TP = 0.2            # Take Profit %
         self.SPLIT = 1          # Asset Split
-        self.MAX_POSITION = 98  # Asset Overall Percent Size
+        self.MAX_POSITION = 100   # Asset Overall Percent Size
 
     def get_data_description(self):
         ds = rtdp.DataDescription()
@@ -28,7 +28,10 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
                         "high" : None,
                         "ema_short" : {"feature": "ema", "period": 5},
                         "ema_long" : {"feature": "ema", "period": 400},
-                        "super_trend_direction" : {"feature": "super_trend"}}
+                        "super_trend_direction" : {"feature": "super_trend"},
+                        "open_long_limit": None,
+                        "close_long_limit": None
+                        }
 
         return ds
 
@@ -41,9 +44,13 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
             if (self.df_current_data['ema_short'][symbol] >= self.df_current_data['ema_long'][symbol]
                 and self.df_current_data['super_trend_direction'][symbol] == True
                 and self.df_current_data['ema_short'][symbol] > self.df_current_data['low'][symbol]):
-                    size = self.get_symbol_buying_size(symbol)
-                    df_row = pd.DataFrame(data={"symbol":[symbol], "size":[size]})
-                    df_result = pd.concat((df_result, df_row), axis = 0)
+                # DEBUG For test purposes.....
+                # pass
+                #
+            # if(self.df_current_data['open_long_limit'][symbol] == True):
+                size = self.get_symbol_buying_size(symbol)
+                df_row = pd.DataFrame(data={"symbol":[symbol], "size":[size]})
+                df_result = pd.concat((df_result, df_row), axis = 0)
 
         # UGGLY CODING to be replaced and included in first main selection test above...
         df_rtctrl = self.rtctrl.df_rtctrl.copy()
@@ -68,8 +75,22 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
             if ((self.df_current_data['ema_short'][symbol] <= self.df_current_data['ema_long'][symbol]
                 or self.df_current_data['super_trend_direction'][symbol] == False)
                 and self.df_current_data['ema_short'][symbol] < self.df_current_data['high'][symbol]):
-                    df_row = pd.DataFrame(data={"symbol":[symbol], "stimulus":["SELL"]})
-                    df_result = pd.concat((df_result, df_row), axis = 0)
+                # DEBUG For test purposes.....
+                #pass
+                #
+            #if (self.df_current_data['close_long_limit'][symbol] == True):
+                df_row = pd.DataFrame(data={"symbol":[symbol], "stimulus":["SELL"]})
+                df_result = pd.concat((df_result, df_row), axis = 0)
+
+        return df_result
+
+    # get_df_selling_symbols and get_df_forced_exit_selling_symbols
+    # could be merged in one...
+    def get_df_forced_exit_selling_symbols(self, lst_symbols):
+        df_result = pd.DataFrame(columns = ['symbol', 'stimulus'])
+        for symbol in self.df_current_data.index.to_list():
+            df_row = pd.DataFrame(data={"symbol":[symbol], "stimulus":["SELL"]})
+            df_result = pd.concat((df_result, df_row), axis = 0)
 
         return df_result
 
@@ -83,16 +104,10 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
         # size = 1 / self.rtctrl.prices_symbols[symbol] # by default : buy for 1 eur
         initial_cash = self.rtctrl.init_cash_value
         available_cash = self.rtctrl.wallet_cash
-        cash_to_buy = initial_cash / self.SPLIT
-        cash_to_buy = cash_to_buy - cash_to_buy * 0.02   # keep some contingency for fees
+        cash_to_buy = available_cash / self.SPLIT
 
-        if cash_to_buy <= available_cash:
-            size = cash_to_buy / self.rtctrl.prices_symbols[symbol]
-        else:
-            if available_cash < initial_cash * 0.02:
-                size = 0
-            else:
-                size = (available_cash - available_cash * 0.2) / self.rtctrl.prices_symbols[symbol]
+        size = cash_to_buy / self.rtctrl.prices_symbols[symbol]
+
         return size
 
     def get_portfolio_value(self):

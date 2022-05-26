@@ -71,14 +71,18 @@ class SimBroker(Broker):
     def get_commission(self, symbol):
         # return 0.07
         return 0.0007
+        # return 0
 
     def execute_trade(self, trade):
         if trade.type == "BUY":
             if self.cash < trade.gross_price:
                 return False
             self.cash = self.cash - trade.gross_price
+            if self.cash < 0.00001:
+                self.cash = 0
         elif trade.type == "SELL":
-            self.cash = self.cash + trade.net_price - trade.selling_fee
+            # self.cash = self.cash + trade.net_price - trade.selling_fee
+            self.cash = self.cash + trade.net_price
         self.trades.append(trade)
         
         return True

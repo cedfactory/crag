@@ -44,16 +44,16 @@ class rtctrl():
 
     def update_rtctrl(self, current_datetime, list_of_current_trades, wallet_cash, prices_symbols):
         self.prices_symbols = prices_symbols
+        self.time = current_datetime
         if len(list_of_current_trades) == 0:
             if self.init_cash_value == 0:
                 self.init_cash_value = wallet_cash
                 self.wallet_cash = wallet_cash
+                self.wallet_value = wallet_cash
             return
 
         self.df_rtctrl = pd.DataFrame(columns=self.get_df_header())
-
         self.symbols = self.get_list_of_traded_symbols(list_of_current_trades)
-        self.time = current_datetime
         actual_prices = [prices_symbols[symbol] for symbol in self.symbols]
         self.actual_price = actual_prices
         self.wallet_cash = wallet_cash
