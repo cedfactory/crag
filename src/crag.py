@@ -105,18 +105,21 @@ class Crag:
                 sell_trade.symbol = current_trade.symbol
                 sell_trade.symbol_price = self.broker.get_value(current_trade.symbol)
 
-                sell_trade.size = current_trade.size # Gross size
-                sell_trade.gross_price = sell_trade.size * sell_trade.symbol_price
+                sell_trade.gross_size = current_trade.net_size         # Sell Net_size = current_trade.Gross size
+                sell_trade.gross_price = sell_trade.gross_size * sell_trade.symbol_price
 
-                sell_trade.size = current_trade.size - self.broker.get_commission(sell_trade.symbol)  # Net size
-                sell_trade.net_price = sell_trade.size * sell_trade.symbol_price
+                sell_trade.net_price = sell_trade.gross_price - sell_trade.gross_price * self.broker.get_commission(current_trade.symbol)
+                sell_trade.net_size = round(sell_trade.net_price / sell_trade.symbol_price, 8)
+
+                # sell_trade.net_size = current_trade.gross_size - self.broker.get_commission(sell_trade.symbol)  # Sell Net size
+                # sell_trade.net_price = sell_trade.net_size * sell_trade.symbol_price
 
                 sell_trade.buying_fee = current_trade.buying_fee
-
                 sell_trade.selling_fee = sell_trade.gross_price - sell_trade.net_price
-                sell_trade.gross_price = sell_trade.gross_price + sell_trade.buying_fee
 
-                sell_trade.roi = (sell_trade.net_price - sell_trade.gross_price) / current_trade.net_price
+                # sell_trade.gross_price = sell_trade.gross_price + sell_trade.buying_fee
+
+                sell_trade.roi = 100 * (sell_trade.net_price - current_trade.gross_price) / current_trade.gross_price
 
                 done = self.broker.execute_trade(sell_trade)
                 if done:
@@ -125,8 +128,11 @@ class Crag:
                     sell_trade.cash = self.cash
 
                     # Portfolio Size/Value Update
-                    self.df_portfolio_status['portfolio_size'][sell_trade.symbol] = self.df_portfolio_status['portfolio_size'][sell_trade.symbol] - current_trade.size
+
+                    self.df_portfolio_status['portfolio_size'][sell_trade.symbol] = self.df_portfolio_status['portfolio_size'][sell_trade.symbol] - sell_trade.gross_size
+
                     self.df_portfolio_status['value'][sell_trade.symbol] = self.df_portfolio_status['portfolio_size'][sell_trade.symbol] * sell_trade.symbol_price
+
                     self.portfolio_value = self.df_portfolio_status['value'].sum()
 
                     self.wallet_value = self.portfolio_value + self.cash
@@ -159,12 +165,15 @@ class Crag:
             current_trade.buying_price = current_trade.symbol_price
 
             current_trade.commission = self.broker.get_commission(current_trade.symbol)
-            current_trade.size = df_buying_symbols["size"][symbol]  # Gross size
-            current_trade.gross_price = current_trade.size * current_trade.buying_price
-            current_trade.size = df_buying_symbols["size"][symbol] - current_trade.commission  # Net size
-            current_trade.net_price = current_trade.size * current_trade.symbol_price
+            current_trade.gross_size = df_buying_symbols["size"][symbol]  # Gross size
+            current_trade.gross_price = current_trade.gross_size * current_trade.buying_price
+
+            current_trade.net_price = current_trade.gross_price * (1 - current_trade.commission)
+            current_trade.net_size = round(current_trade.net_price / current_trade.buying_price, 8)
+
             current_trade.buying_fee = current_trade.gross_price - current_trade.net_price
             current_trade.profit_loss = -current_trade.buying_fee
+
             #current_trade.dump()
             if current_trade.gross_price <= self.cash:
                 done = self.broker.execute_trade(current_trade)
@@ -173,8 +182,10 @@ class Crag:
                     current_trade.cash = self.cash
 
                     # Portfolio Size/Value Update
-                    self.df_portfolio_status['portfolio_size'][symbol] = self.df_portfolio_status['portfolio_size'][symbol] + current_trade.size
-                    self.df_portfolio_status['value'][symbol] = self.df_portfolio_status['portfolio_size'][symbol] * current_trade.symbol_price
+                    # self.df_portfolio_status['portfolio_size'][symbol] = self.df_portfolio_status['portfolio_size'][symbol] + current_trade.size
+                    self.df_portfolio_status['portfolio_size'][symbol] = current_trade.net_size
+                    # self.df_portfolio_status['value'][symbol] = self.df_portfolio_status['portfolio_size'][symbol] * current_trade.symbol_price
+                    self.df_portfolio_status['value'][symbol] = current_trade.net_price
                     self.portfolio_value = self.df_portfolio_status['value'].sum()
 
                     self.wallet_value = self.portfolio_value + self.cash
@@ -186,7 +197,6 @@ class Crag:
                     self.current_trades.append(current_trade)
 
                     print("{} {} {:.2f}".format(current_trade.type, current_trade.symbol, current_trade.gross_price))
-
         self.add_to_log("trades", trades)
 
     def export_status(self):
@@ -220,12 +230,19 @@ class Crag:
                 sell_trade.stimulus = df_selling_symbols["stimulus"][current_trade.symbol]
                 sell_trade.symbol = current_trade.symbol
                 sell_trade.symbol_price = self.broker.get_value(current_trade.symbol)
-                sell_trade.size = current_trade.size
-                sell_trade.net_price = sell_trade.size * sell_trade.symbol_price
+
+                sell_trade.gross_size = current_trade.net_size         # Sell Net_size = current_trade.Gross size
+                sell_trade.gross_price = sell_trade.gross_size * sell_trade.symbol_price
+
+                sell_trade.net_price = sell_trade.gross_price - sell_trade.gross_price * self.broker.get_commission(current_trade.symbol)
+                sell_trade.net_size = round(sell_trade.net_price / sell_trade.symbol_price, 8)
+
+                # sell_trade.net_size = current_trade.gross_size - self.broker.get_commission(sell_trade.symbol)  # Sell Net size
+                # sell_trade.net_price = sell_trade.net_size * sell_trade.symbol_price
                 sell_trade.buying_fee = current_trade.buying_fee
-                sell_trade.selling_fee = sell_trade.net_price * self.broker.get_commission(sell_trade.symbol)
-                sell_trade.gross_price = current_trade.net_price + sell_trade.buying_fee + sell_trade.selling_fee
-                sell_trade.roi = (sell_trade.net_price - sell_trade.gross_price) / current_trade.net_price
+                sell_trade.selling_fee = sell_trade.gross_price - sell_trade.net_price
+                # sell_trade.gross_price = sell_trade.gross_price + sell_trade.buying_fee
+                sell_trade.roi = 100 * (sell_trade.net_price - current_trade.gross_price) / current_trade.gross_price
 
                 done = self.broker.execute_trade(sell_trade)
                 if done:
@@ -234,7 +251,7 @@ class Crag:
                     sell_trade.cash = self.cash
 
                     # Portfolio Size/Value Update
-                    self.df_portfolio_status['portfolio_size'][sell_trade.symbol] = self.df_portfolio_status['portfolio_size'][sell_trade.symbol] - sell_trade.size
+                    self.df_portfolio_status['portfolio_size'][sell_trade.symbol] = self.df_portfolio_status['portfolio_size'][sell_trade.symbol] - sell_trade.gross_size
                     self.df_portfolio_status['value'][sell_trade.symbol] = self.df_portfolio_status['portfolio_size'][sell_trade.symbol] * sell_trade.symbol_price
                     self.portfolio_value = self.df_portfolio_status['value'].sum()
 

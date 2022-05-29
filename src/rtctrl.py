@@ -34,7 +34,7 @@ class rtctrl():
         return list(set(list_symbols))
 
     def get_list_of_asset_size(self, list_of_current_trades):
-        return [sum(current_trade.size for current_trade in list_of_current_trades if current_trade.type == "BUY" and current_trade.symbol == symbol) for symbol in self.symbols]
+        return [sum(current_trade.net_size for current_trade in list_of_current_trades if current_trade.type == "BUY" and current_trade.symbol == symbol) for symbol in self.symbols]
 
     def get_list_of_asset_fees(self, list_of_current_trades):
         return [sum(current_trade.buying_fee for current_trade in list_of_current_trades if current_trade.type == "BUY" and current_trade.symbol == symbol) for symbol in self.symbols]

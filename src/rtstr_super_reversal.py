@@ -28,9 +28,9 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
                         "high" : None,
                         "ema_short" : {"feature": "ema", "period": 5},
                         "ema_long" : {"feature": "ema", "period": 400},
-                        "super_trend_direction" : {"feature": "super_trend"},
-                        "open_long_limit": None,
-                        "close_long_limit": None
+                        "super_trend_direction" : {"feature": "super_trend"}
+                        # "open_long_limit": None,
+                        # "close_long_limit": None
                         }
 
         return ds
@@ -47,7 +47,7 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
                 # DEBUG For test purposes.....
                 # pass
                 #
-            # if(self.df_current_data['open_long_limit'][symbol] == True):
+                # if(self.df_current_data['open_long_limit'][symbol] == True):
                 size = self.get_symbol_buying_size(symbol)
                 df_row = pd.DataFrame(data={"symbol":[symbol], "size":[size]})
                 df_result = pd.concat((df_result, df_row), axis = 0)

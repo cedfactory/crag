@@ -229,14 +229,13 @@ class SimRealTimeDataProvider(IRealTimeDataProvider):
                 df = pd.read_csv(self.input+"/"+file, sep=";")
                 df.rename(columns={"Unnamed: 0": "datetime"}, inplace=True)
 
-                # df["ema_long"] = df["ema_long"].shift(1)
-                # df["ema_short"] = df["ema_short"].shift(1)
-                # df['super_trend_direction'] = df['super_trend_direction'].shift(1)
+                df["ema_long"] = df["ema_long"].shift(1)
+                df["ema_short"] = df["ema_short"].shift(1)
+                df['super_trend_direction'] = df['super_trend_direction'].shift(1)
 
-                df_buy_sell = pd.read_csv('BTC_buy_sell.csv')
-
-                df['open_long_limit'] = df_buy_sell['open_long_limit']
-                df['close_long_limit'] = df_buy_sell['close_long_limit']
+                # df_buy_sell = pd.read_csv('BTC_buy_sell.csv')
+                # df['open_long_limit'] = df_buy_sell['open_long_limit']
+                # df['close_long_limit'] = df_buy_sell['close_long_limit']
 
                 #df.set_index('datetime', inplace=True)
                 self.data[symbol] = df
