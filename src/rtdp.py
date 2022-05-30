@@ -109,7 +109,7 @@ def add_features(df, features):
     df['close_long_limit'] = df_buy_sell['close_long_limit']
 
     return df
-'''
+
 default_symbols = [
         "BTC/USD",
         "DOGE/USD",
@@ -145,6 +145,7 @@ default_symbols = [
 default_symbols = [
         "BTC/USD"
     ]
+'''
 
 default_features = ["open", "close", "high", "low", "volume"]
 
