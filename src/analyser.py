@@ -26,16 +26,53 @@ from . import trade
 
 class Analyser:
     def __init__(self, params = None):
-        self.start_date = 0
-        self.end_date = 0
-        self.list_symbols = []
         self.path = './output/'
 
         self.df_transaction_records = pd.read_csv(self.path + 'sim_broker_history.csv', delimiter=';')
         self.df_wallet_records = pd.read_csv(self.path + 'wallet_tracking_records.csv')
 
+        self.starting_time = self.df_wallet_records['time'][0]
+        self.ending_time = self.df_wallet_records['time'][len(self.df_wallet_records) - 3] # Foced sell need to provide time... to do list
+        self.init_asset = self.df_wallet_records['cash'][0]
+        self.final_wallet = round(self.df_wallet_records['cash'][len(self.df_wallet_records) - 1], 2)
+
+        self.performance = round(self.df_wallet_records['roi%'][len(self.df_wallet_records) - 1], 2)
+
+        self.df_trades = self.df_transaction_records.copy()
+        self.df_trades.drop(self.df_trades[self.df_trades['type'] == 'SOLD'].index, inplace=True)
+        self.nb_transaction = len(self.df_trades)
+        self.positive_trades = round((self.df_trades['transaction_roi%'] >= 0).sum() * 100 / self.nb_transaction, 2)
+        self.negative_trades = round((self.df_trades['transaction_roi%'] <= 0).sum() * 100 / self.nb_transaction, 2)
+        self.best_transaction = round(self.df_trades['transaction_roi%'].max(), 2)
+        self.worst_transaction = round(self.df_trades['transaction_roi%'].min(), 2)
+        self.mean_transaction = round(self.df_trades['transaction_roi%'].mean(), 2)
+
+
+
+        self.list_symbols = list(set(self.df_transaction_records['symbol'].to_list()))
+        self.nb_symbols = len(self.list_symbols)
+
+
+
+    def display_analyse(self):
+        print('period: [', self.starting_time,'] -> [', self.ending_time,']')
+        print('initial wallet: ', self.init_asset,'$')
+        print('final wallet: ', self.final_wallet,'$')
+        print('performance vs US dollar: ', self.performance,'%')
+        print('total trades on the period: ', self.nb_transaction)
+        print('global Win rate: ', self.positive_trades,'%')
+        # print('negative trades executed: ', self.negative_trades,'%')
+        print('best trades executed: ', self.best_transaction,'%')
+        print('worst trades executed: ', self.worst_transaction,'%')
+        print('Average Profit: ', self.mean_transaction,'%')
+
+        print('symbols traded: ', self.list_symbols)
+        print('symbols traded nbr: ', self.nb_symbols)
+
+
+
     def run_analyse(self):
-        print('analyser')
+        self.display_analyse()
 
 
 
