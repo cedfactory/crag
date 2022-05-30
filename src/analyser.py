@@ -40,6 +40,13 @@ class Analyser:
 
         self.df_trades = self.df_transaction_records.copy()
         self.df_trades.drop(self.df_trades[self.df_trades['type'] == 'SOLD'].index, inplace=True)
+
+        self.df_trades['transaction_roi$'] = self.df_trades['net_price'] \
+                                             - self.df_trades['buying_fees'] - self.df_trades['selling_fees'] \
+                                             - self.df_trades['net_size'] * self.df_trades['buying_price']
+
+        self.df_trades.sort_values(by=['transaction_roi%'], ascending=False, inplace=True)
+
         self.nb_transaction = len(self.df_trades)
         self.positive_trades = round((self.df_trades['transaction_roi%'] >= 0).sum() * 100 / self.nb_transaction, 2)
         self.negative_trades = round((self.df_trades['transaction_roi%'] <= 0).sum() * 100 / self.nb_transaction, 2)
@@ -47,6 +54,11 @@ class Analyser:
         self.worst_transaction = round(self.df_trades['transaction_roi%'].min(), 2)
         self.mean_transaction = round(self.df_trades['transaction_roi%'].mean(), 2)
 
+        self.positive_trades_val = round((self.df_trades['transaction_roi$'] >= 0).sum() * 100 / self.nb_transaction, 2)
+        self.negative_trades_val = round((self.df_trades['transaction_roi$'] <= 0).sum() * 100 / self.nb_transaction, 2)
+        self.best_transaction_val = round(self.df_trades['transaction_roi$'].max(), 2)
+        self.worst_transaction_val = round(self.df_trades['transaction_roi$'].min(), 2)
+        self.mean_transaction_val = round(self.df_trades['transaction_roi$'].mean(), 2)
 
 
         self.list_symbols = list(set(self.df_transaction_records['symbol'].to_list()))
@@ -59,12 +71,13 @@ class Analyser:
         print('initial wallet: ', self.init_asset,'$')
         print('final wallet: ', self.final_wallet,'$')
         print('performance vs US dollar: ', self.performance,'%')
+
         print('total trades on the period: ', self.nb_transaction)
         print('global Win rate: ', self.positive_trades,'%')
         # print('negative trades executed: ', self.negative_trades,'%')
-        print('best trades executed: ', self.best_transaction,'%')
-        print('worst trades executed: ', self.worst_transaction,'%')
-        print('Average Profit: ', self.mean_transaction,'%')
+        print('best trades executed: ', self.best_transaction,'%      ', self.best_transaction_val, '$')
+        print('worst trades executed: ', self.worst_transaction,'%      ', self.worst_transaction_val, '$')
+        print('Average Profit: ', self.mean_transaction,'%      ', self.mean_transaction_val,'$')
 
         print('symbols traded: ', self.list_symbols)
         print('symbols traded nbr: ', self.nb_symbols)
