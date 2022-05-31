@@ -79,6 +79,10 @@ class Analyser:
         print('symbols traded: ', self.list_symbols)
         print('symbols traded nbr: ', self.nb_symbols)
 
+        print('best win rate: ', self.list_best_win_rate)
+        print('top5 performer %: ', self.list_top5_perf_average_percent)
+        print('top5 performer $: ', self.list_top5_perf_average_dollard)
+
     def set_data_analysed(self):
         self.list_symbols.append("global")
 
@@ -86,7 +90,7 @@ class Analyser:
             df_symbol_trades = self.df_trades.copy()
 
             if(symbol != "global"):
-                df_symbol_trades.drop(df_symbol_trades[self.df_trades['symbol'] != symbol].index, inplace=True)
+                df_symbol_trades.drop(df_symbol_trades[df_symbol_trades['symbol'] != symbol].index, inplace=True)
 
             df_symbol_trades.sort_values(by=['buying_time'], ascending=True, inplace=True)
             df_symbol_trades.reset_index(drop=True, inplace=True)
@@ -99,15 +103,15 @@ class Analyser:
             nb_trades_performed = len(df_symbol_trades)
             win_rate = round((df_symbol_trades['transaction_roi%'] >= 0).sum() * 100 / nb_trades_performed, 2)
 
-            performance_symbol = df_symbol_trades['transaction_roi%'].sum()
-            performance_average_symbol = df_symbol_trades['transaction_roi%'].mean()
-            best_trade_symbol = df_symbol_trades['transaction_roi%'].max()
-            worst_trade_symbol = df_symbol_trades['transaction_roi%'].min()
+            performance_symbol = round(df_symbol_trades['transaction_roi%'].sum(), 2)
+            performance_average_symbol = round(df_symbol_trades['transaction_roi%'].mean(), 2)
+            best_trade_symbol = round(df_symbol_trades['transaction_roi%'].max(), 2)
+            worst_trade_symbol = round(df_symbol_trades['transaction_roi%'].min(), 2)
 
-            performance_value_symbol = df_symbol_trades['transaction_roi$'].sum()
-            performance_value_average_symbol = df_symbol_trades['transaction_roi$'].mean()
-            best_trade_value_symbol = df_symbol_trades['transaction_roi$'].max()
-            worst_trade_value_symbol = df_symbol_trades['transaction_roi$'].min()
+            performance_value_symbol = round(df_symbol_trades['transaction_roi$'].sum(), 2)
+            performance_value_average_symbol = round(df_symbol_trades['transaction_roi$'].mean(), 2)
+            best_trade_value_symbol = round(df_symbol_trades['transaction_roi$'].max(), 2)
+            worst_trade_value_symbol = round(df_symbol_trades['transaction_roi$'].min(), 2)
 
             df_new_line = pd.DataFrame([[symbol,
                                          first_transaction_buying, last_transaction_selling, nb_trades_performed, win_rate,
@@ -118,9 +122,7 @@ class Analyser:
             self.df_analyser_result = pd.concat([self.df_analyser_result, df_new_line])
             self.df_analyser_result.reset_index(inplace=True, drop=True)
 
-
         self.df_analyser_result.to_csv(self.path + 'analyser_records.csv')
-
 
     def get_df_result_header(self):
         return ["symbol",
@@ -128,9 +130,31 @@ class Analyser:
                 "performance%", "performance_average%", "best_trade%", "worst_trade%",
                 "performance_value$", "performance_value_average$", "best_trade_value$", "worst_trade_value$"]
 
+    def get_best_performer(self):
+        df_performer = self.df_analyser_result.copy()
+
+        df_performer.drop(df_performer[df_performer['symbol'] == 'global'].index, inplace=True)
+
+        # get best win rate
+        df_win_rate = df_performer.copy()
+        df_win_rate.drop(df_win_rate[df_win_rate['win_rate'] <= 40].index, inplace=True)
+        df_win_rate.sort_values(by=['win_rate'], ascending=False, inplace=True)
+        self.list_best_win_rate = df_win_rate['symbol'].to_list()
+
+        # get top 5
+        df_performer.sort_values(by=['performance_average%'], ascending=False, inplace=True)
+        self.list_top5_perf_average_percent = df_performer['symbol'].to_list()
+        self.list_top5_perf_average_percent = self.list_top5_perf_average_percent[:5]
+
+        df_performer.sort_values(by=['performance_value$'], ascending=False, inplace=True)
+        self.list_top5_perf_average_dollard = df_performer['symbol'].to_list()
+        self.list_top5_perf_average_dollard = self.list_top5_perf_average_dollard[:5]
+
+
 
     def run_analyse(self):
         self.set_data_analysed()
+        self.get_best_performer()
         self.display_analyse()
 
 
