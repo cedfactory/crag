@@ -1,5 +1,6 @@
 import time
 import pandas as pd
+import matplotlib.pyplot as plt
 from . import trade
 
 '''
@@ -36,8 +37,12 @@ class Analyser:
         self.df_trades = self.df_transaction_records.copy()
         self.df_trades.drop(self.df_trades[self.df_trades['type'] == 'SOLD'].index, inplace=True)
         self.df_trades['transaction_roi$'] = self.df_trades['net_price'] \
-                                             - self.df_trades['buying_fees'] - self.df_trades['selling_fees'] \
+                                             - self.df_trades['buying_fees'] \
                                              - self.df_trades['net_size'] * self.df_trades['buying_price']
+                                            # - self.df_trades['buying_fees'] - self.df_trades['selling_fees']
+
+        self.df_trades['trade_result_pct'] = self.df_trades['transaction_roi$'] / self.df_trades["net_price"]
+
         # self.df_trades.sort_values(by=['transaction_roi%'], ascending=False, inplace=True)
 
         self.starting_time = self.df_wallet_records['time'][0]
@@ -46,6 +51,13 @@ class Analyser:
         self.final_wallet = round(self.df_wallet_records['cash'][len(self.df_wallet_records) - 1], 2)
 
         self.performance = round(self.df_wallet_records['roi%'][len(self.df_wallet_records) - 1], 2)
+        self.vs_usd_pct = round(100*(self.final_wallet - self.init_asset) / self.init_asset, 2)
+        self.avg_profit = self.df_trades['trade_result_pct'].mean()
+
+        self.df_wallet_records['wallet_ath'] = self.df_wallet_records['wallet'].cummax()
+        self.df_wallet_records['drawdown'] = self.df_wallet_records['wallet_ath'] - self.df_wallet_records['wallet']
+        self.df_wallet_records['drawdown_pct'] = self.df_wallet_records['drawdown'] / self.df_wallet_records['wallet_ath']
+        self.max_days_drawdown = round(self.df_wallet_records['drawdown_pct'].max()*100, 2)
 
         self.nb_transaction = len(self.df_trades)
         self.positive_trades = round((self.df_trades['transaction_roi%'] >= 0).sum() * 100 / self.nb_transaction, 2)
@@ -69,18 +81,25 @@ class Analyser:
 
         self.merge_of_best_lists = []
 
-    def display_analyse(self):
+        self.df_wallet_records['evolution'] = self.df_wallet_records['wallet'].diff()
+        self.df_wallet_records['daily_return'] = self.df_wallet_records['evolution'] / self.df_wallet_records['wallet'].shift(1)
+        self.sharpe_ratio = round((365 ** 0.5) * (self.df_wallet_records['daily_return'].mean() / self.df_wallet_records['daily_return'].std()), 2)
+
+    def display_analysed_data(self):
         print('period: [', self.starting_time,'] -> [', self.ending_time,']')
         print('initial wallet: ', self.init_asset,'$')
         print('final wallet: ', self.final_wallet,'$')
         print('performance vs US dollar: ', self.performance,'%')
-
+        print('performance vs US dollar: ', self.vs_usd_pct, '%')
         print('total trades on the period: ', self.nb_transaction)
         print('global Win rate: ', self.positive_trades,'%')
+        print("worst drawdown days: -{}%".format(self.max_days_drawdown))
         # print('negative trades executed: ', self.negative_trades,'%')
         print('best trades executed: ', self.best_transaction,'%      ', self.best_transaction_val, '$')
         print('worst trades executed: ', self.worst_transaction,'%      ', self.worst_transaction_val, '$')
-        print('Average Profit: ', self.mean_transaction,'%      ', self.mean_transaction_val,'$')
+        print('average profit per trades: ', self.mean_transaction,'%      ', self.mean_transaction_val,'$')
+        print("average profit: {} %".format(round(self.avg_profit * 100, 2)))
+        print('sharpe ratio: ', self.sharpe_ratio)
 
         print('list symbols traded: ', self.list_symbols)
         print('total symbols traded: ', self.nb_symbols)
@@ -102,10 +121,12 @@ class Analyser:
             df_symbol_trades.sort_values(by=['buying_time'], ascending=True, inplace=True)
             df_symbol_trades.reset_index(drop=True, inplace=True)
             first_transaction_buying = df_symbol_trades['buying_time'][0]
+            price_first_buy = df_symbol_trades['buying_price'][0]
 
             df_symbol_trades.sort_values(by=['time'], ascending=False, inplace=True)
             df_symbol_trades.reset_index(drop=True, inplace=True)
             last_transaction_selling = df_symbol_trades['time'][0]
+            price_last_sell = df_symbol_trades['symbol_price'][len(df_symbol_trades)-1]
 
             nb_trades_performed = len(df_symbol_trades)
             win_rate = round((df_symbol_trades['transaction_roi%'] >= 0).sum() * 100 / nb_trades_performed, 2)
@@ -120,8 +141,14 @@ class Analyser:
             best_trade_value_symbol = round(df_symbol_trades['transaction_roi$'].max(), 2)
             worst_trade_value_symbol = round(df_symbol_trades['transaction_roi$'].min(), 2)
 
+            buy_and_hold_pct = (price_last_sell - price_first_buy) / price_first_buy
+            buy_and_hold_wallet = self.init_asset + self.init_asset * buy_and_hold_pct
+            vs_hold_pct = (self.final_wallet - buy_and_hold_wallet) / buy_and_hold_wallet
+            vs_usd_pct = (self.final_wallet - self.init_asset) / self.init_asset
+
             df_new_line = pd.DataFrame([[symbol,
                                          first_transaction_buying, last_transaction_selling, nb_trades_performed, win_rate,
+                                         round(buy_and_hold_pct*100, 2), round(vs_hold_pct*100, 2), round(vs_usd_pct*100, 2),
                                          performance_symbol, performance_average_symbol, best_trade_symbol, worst_trade_symbol,
                                          performance_value_symbol, performance_value_average_symbol, best_trade_value_symbol, worst_trade_value_symbol]],
                                        columns=self.get_df_result_header())
@@ -134,6 +161,7 @@ class Analyser:
     def get_df_result_header(self):
         return ["symbol",
                 "first_buying", "last_selling", "trades_performed", "win_rate",
+                "bnh_perf", "perf_vs_bnh", "perf_vs_usd",
                 "performance%", "performance_average%", "best_trade%", "worst_trade%",
                 "performance_value$", "performance_value_average$", "best_trade_value$", "worst_trade_value$"]
 
@@ -168,11 +196,53 @@ class Analyser:
         self.list_best_win_rate.extend(self.list_ranking_perf_average_dollard)
         self.merge_of_best_lists = list(set(self.merge_of_best_lists))
 
+    def plot_analysed_data(self):
+
+        ax = plt.gca()
+
+        self.df_wallet_records.plot(kind='line', x='time', y='wallet', ax=ax)
+
+        plt.savefig('./output/wallet.png')
+
+        plt.clf()
+        ax = plt.gca()
+
+        self.df_wallet_records.plot(kind='line', x='time', y='portfolio', ax=ax)
+
+        plt.savefig('./output/portfolio.png')
+
+        plt.clf()
+        ax = plt.gca()
+
+        self.df_wallet_records.plot(kind='line', x='time', y='cash', ax=ax)
+
+        plt.savefig('./output/cash.png')
+
+        plt.clf()
+        ax = plt.gca()
+
+        self.df_wallet_records.plot(kind='line', x='time', y='roi%', ax=ax)
+
+        plt.savefig('./output/roi.png')
+
+        plt.clf()
+
+        ax = plt.gca()
+
+        self.df_wallet_records.plot(kind='line', x='time', y='asset%', ax=ax)
+
+        plt.savefig('./output/asset_split.png')
+
+
+
+
+
 
     def run_analyse(self):
         self.set_data_analysed()
         self.get_best_performer()
-        self.display_analyse()
+        self.display_analysed_data()
+        self.plot_analysed_data()
 
 
 

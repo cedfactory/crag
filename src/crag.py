@@ -183,9 +183,10 @@ class Crag:
 
                     # Portfolio Size/Value Update
                     # self.df_portfolio_status['portfolio_size'][symbol] = self.df_portfolio_status['portfolio_size'][symbol] + current_trade.size
-                    self.df_portfolio_status['portfolio_size'][symbol] = current_trade.net_size
+                    self.df_portfolio_status['portfolio_size'][symbol] = self.df_portfolio_status['portfolio_size'][symbol] + current_trade.net_size
                     # self.df_portfolio_status['value'][symbol] = self.df_portfolio_status['portfolio_size'][symbol] * current_trade.symbol_price
-                    self.df_portfolio_status['value'][symbol] = current_trade.net_price
+                    self.df_portfolio_status['value'][symbol] = self.df_portfolio_status['value'][symbol] + current_trade.net_price
+
                     self.portfolio_value = self.df_portfolio_status['value'].sum()
 
                     self.wallet_value = self.portfolio_value + self.cash
