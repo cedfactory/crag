@@ -63,6 +63,12 @@ class Analyser:
         self.list_symbols = list(set(self.df_transaction_records['symbol'].to_list()))
         self.nb_symbols = len(self.list_symbols)
 
+        self.top_ranking = True    # Top 5 or threshold
+        self.ranking = 10
+        self.win_rate_threshold = 40
+
+        self.merge_of_best_lists = []
+
     def display_analyse(self):
         print('period: [', self.starting_time,'] -> [', self.ending_time,']')
         print('initial wallet: ', self.init_asset,'$')
@@ -76,12 +82,13 @@ class Analyser:
         print('worst trades executed: ', self.worst_transaction,'%      ', self.worst_transaction_val, '$')
         print('Average Profit: ', self.mean_transaction,'%      ', self.mean_transaction_val,'$')
 
-        print('symbols traded: ', self.list_symbols)
-        print('symbols traded nbr: ', self.nb_symbols)
+        print('list symbols traded: ', self.list_symbols)
+        print('total symbols traded: ', self.nb_symbols)
 
         print('best win rate: ', self.list_best_win_rate)
-        print('top5 performer %: ', self.list_top5_perf_average_percent)
-        print('top5 performer $: ', self.list_top5_perf_average_dollard)
+        print('top ranking ', self.ranking,' performer %: ', self.list_ranking_perf_average_percent)
+        print('top ranking ', self.ranking,' performer $: ', self.list_ranking_perf_average_dollard)
+        print('merged best lists - ', len(self.merge_of_best_lists),' symbols : ', self.merge_of_best_lists )
 
     def set_data_analysed(self):
         self.list_symbols.append("global")
@@ -136,20 +143,30 @@ class Analyser:
         df_performer.drop(df_performer[df_performer['symbol'] == 'global'].index, inplace=True)
 
         # get best win rate
-        df_win_rate = df_performer.copy()
-        df_win_rate.drop(df_win_rate[df_win_rate['win_rate'] <= 40].index, inplace=True)
-        df_win_rate.sort_values(by=['win_rate'], ascending=False, inplace=True)
-        self.list_best_win_rate = df_win_rate['symbol'].to_list()
+        # Top 5 or threshold
+        if self.top_ranking:
+            df_performer.sort_values(by=['win_rate'], ascending=False, inplace=True)
+            self.list_best_win_rate = df_performer['symbol'].to_list()
+            self.list_best_win_rate = self.list_best_win_rate[:self.ranking]
+        else:
+            df_win_rate = df_performer.copy()
+            df_win_rate.drop(df_win_rate[df_win_rate['win_rate'] <= self.win_rate_threshold].index, inplace=True)
+            df_win_rate.sort_values(by=['win_rate'], ascending=False, inplace=True)
+            self.list_best_win_rate = df_win_rate['symbol'].to_list()
 
         # get top 5
         df_performer.sort_values(by=['performance_average%'], ascending=False, inplace=True)
-        self.list_top5_perf_average_percent = df_performer['symbol'].to_list()
-        self.list_top5_perf_average_percent = self.list_top5_perf_average_percent[:5]
+        self.list_ranking_perf_average_percent = df_performer['symbol'].to_list()
+        self.list_ranking_perf_average_percent = self.list_ranking_perf_average_percent[:self.ranking]
 
         df_performer.sort_values(by=['performance_value$'], ascending=False, inplace=True)
-        self.list_top5_perf_average_dollard = df_performer['symbol'].to_list()
-        self.list_top5_perf_average_dollard = self.list_top5_perf_average_dollard[:5]
+        self.list_ranking_perf_average_dollard = df_performer['symbol'].to_list()
+        self.list_ranking_perf_average_dollard = self.list_ranking_perf_average_dollard[:self.ranking]
 
+        self.merge_of_best_lists = self.list_best_win_rate
+        self.list_best_win_rate.extend(self.list_ranking_perf_average_percent)
+        self.list_best_win_rate.extend(self.list_ranking_perf_average_dollard)
+        self.merge_of_best_lists = list(set(self.merge_of_best_lists))
 
 
     def run_analyse(self):
