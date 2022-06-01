@@ -85,7 +85,7 @@ class TestSimBroker:
         broker_simulation.export_history(history_file_generated)
 
         # expectations
-        lines=[ ["transaction_id", "time", "buying_time", "type", "sell_id", "stimulus", "symbol", "buying_price", "symbol_price", "size", "net_price", "buying_fees", "selling_fees", "gross_price", "roi", "remaining cash", "portfolio value", "wallet value"],
+        lines=[ ["transaction_id", "time", "buying_time", "type", "sell_id", "stimulus", "symbol", "buying_price", "symbol_price", "size", "net_price", "buying_fees", "selling_fees", "gross_price", "roi", "remaining_cash", "portfolio value", "wallet value"],
                 ["BUY", "", "", "ETH/USD", "1", "1", "2", "2", "0.07", "0.07", "2.08", "0.05", "90", "110", "110"] ]
         with open(history_file_generated) as csvfile:
             csvreader = csv.reader(csvfile, delimiter=';')

@@ -28,6 +28,7 @@ from . import trade
 class Analyser:
     def __init__(self, params = None):
         self.path = './output/'
+        self.path_symbol_data = './data/'
 
         self.df_analyser_result = pd.DataFrame(columns=self.get_df_result_header())
 
@@ -74,6 +75,8 @@ class Analyser:
 
         self.list_symbols = list(set(self.df_transaction_records['symbol'].to_list()))
         self.nb_symbols = len(self.list_symbols)
+
+        self.df_symbol_data = self.set_symbol_data()
 
         self.top_ranking = True    # Top 5 or threshold
         self.ranking = 10
@@ -156,6 +159,7 @@ class Analyser:
             self.df_analyser_result = pd.concat([self.df_analyser_result, df_new_line])
             self.df_analyser_result.reset_index(inplace=True, drop=True)
 
+        self.list_symbols.remove("global")
         self.df_analyser_result.to_csv(self.path + 'analyser_records.csv')
 
     def get_df_result_header(self):
@@ -197,52 +201,77 @@ class Analyser:
         self.merge_of_best_lists = list(set(self.merge_of_best_lists))
 
     def plot_analysed_data(self):
-
         ax = plt.gca()
-
         self.df_wallet_records.plot(kind='line', x='time', y='wallet', ax=ax)
-
-        plt.savefig('./output/wallet.png')
-
+        plt.savefig('./output/plot_analyse/wallet_record_wallet.png')
         plt.clf()
         ax = plt.gca()
-
         self.df_wallet_records.plot(kind='line', x='time', y='portfolio', ax=ax)
-
-        plt.savefig('./output/portfolio.png')
-
+        plt.savefig('./output/plot_analyse/wallet_record_portfolio.png')
         plt.clf()
         ax = plt.gca()
-
         self.df_wallet_records.plot(kind='line', x='time', y='cash', ax=ax)
-
-        plt.savefig('./output/cash.png')
-
+        plt.savefig('./output/plot_analyse/wallet_record_cash.png')
         plt.clf()
         ax = plt.gca()
-
         self.df_wallet_records.plot(kind='line', x='time', y='roi%', ax=ax)
-
-        plt.savefig('./output/roi.png')
+        plt.savefig('./output/plot_analyse/wallet_record_roi.png')
+        plt.clf()
+        ax = plt.gca()
+        self.df_wallet_records.plot(kind='line', x='time', y='asset%', ax=ax)
+        plt.savefig('./output/plot_analyse/wallet_record_asset_split.png')
 
         plt.clf()
-
         ax = plt.gca()
+        self.df_transaction_records.plot(kind='line', x='time', y='wallet_roi%', ax=ax)
+        plt.savefig('./output/plot_analyse/transaction_record_wallet_roi.png')
 
-        self.df_wallet_records.plot(kind='line', x='time', y='asset%', ax=ax)
+        plt.clf()
+        ax = plt.gca()
+        self.df_transaction_records.plot(kind='line', x='time', y='remaining_cash', ax=ax)
+        plt.savefig('./output/plot_analyse/transaction_record_remaining_cash.png')
 
-        plt.savefig('./output/asset_split.png')
+        plt.clf()
+        ax = plt.gca()
+        self.df_transaction_records.plot(kind='line', x='time', y='portfolio_value', ax=ax)
+        plt.savefig('./output/plot_analyse/transaction_record_portfolio_value.png')
 
+        plt.clf()
+        ax = plt.gca()
+        self.df_transaction_records.plot(kind='line', x='time', y='wallet_value', ax=ax)
+        plt.savefig('./output/plot_analyse/transaction_record_wallet_value.png')
 
+    def set_symbol_data(self):
+        df_symbol_data = pd.DataFrame()
+        df_symbol_data['time'] = self.df_wallet_records['time']
+        for symbol in self.list_symbols:
+            symbol = symbol.replace("/", "_")
+            df = pd.read_csv(self.path_symbol_data + symbol + '.csv', sep=";")
+            df_symbol_data[symbol] = df['close']
+        df_symbol_data.dropna(inplace=True)
+        return df_symbol_data
 
+    def plot_symbol_data(self):
+        df_symbol_data_normalized = self.df_symbol_data.copy()
 
+        list_symbol = self.df_symbol_data.columns.to_list()
+        list_symbol.remove("time")
 
+        for symbol in list_symbol:
+            ax = plt.gca()
+            max_val = df_symbol_data_normalized[symbol].max()
+            min_val = df_symbol_data_normalized[symbol].min()
+            df_symbol_data_normalized[symbol] = (df_symbol_data_normalized[symbol] - min_val) / (max_val - min_val)
+            df_symbol_data_normalized.plot(kind='line', x='time', y=symbol, ax=ax)
+            plt.savefig('./output/plot_symbol/' + symbol + '_symbol_data.png')
+            plt.clf()
 
     def run_analyse(self):
         self.set_data_analysed()
         self.get_best_performer()
         self.display_analysed_data()
         self.plot_analysed_data()
+        self.plot_symbol_data()
 
 
 
