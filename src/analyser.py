@@ -3,6 +3,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from . import trade
 
+import os
+
 '''
     Period: [2020-12-31 00:00:00] -> [2022-01-10 00:00:00]
     Initial wallet: 1000.0 $
@@ -29,6 +31,8 @@ class Analyser:
     def __init__(self, params = None):
         self.path = './output/'
         self.path_symbol_data = './data/'
+        self.path_symbol_plot_analyse = './output/plot_analyse/'
+        self.path_symbol_plot_symbol = './output/plot_symbol/'
 
         self.df_analyser_result = pd.DataFrame(columns=self.get_df_result_header())
 
@@ -201,45 +205,48 @@ class Analyser:
         self.merge_of_best_lists = list(set(self.merge_of_best_lists))
 
     def plot_analysed_data(self):
+        if not os.path.exists(self.path_symbol_plot_analyse):
+            os.makedirs(self.path_symbol_plot_analyse)
+
         ax = plt.gca()
         self.df_wallet_records.plot(kind='line', x='time', y='wallet', ax=ax)
-        plt.savefig('./output/plot_analyse/wallet_record_wallet.png')
+        plt.savefig(self.path_symbol_plot_analyse + 'wallet_record_wallet.png')
         plt.clf()
         ax = plt.gca()
         self.df_wallet_records.plot(kind='line', x='time', y='portfolio', ax=ax)
-        plt.savefig('./output/plot_analyse/wallet_record_portfolio.png')
+        plt.savefig(self.path_symbol_plot_analyse + 'wallet_record_portfolio.png')
         plt.clf()
         ax = plt.gca()
         self.df_wallet_records.plot(kind='line', x='time', y='cash', ax=ax)
-        plt.savefig('./output/plot_analyse/wallet_record_cash.png')
+        plt.savefig(self.path_symbol_plot_analyse + 'wallet_record_cash.png')
         plt.clf()
         ax = plt.gca()
         self.df_wallet_records.plot(kind='line', x='time', y='roi%', ax=ax)
-        plt.savefig('./output/plot_analyse/wallet_record_roi.png')
+        plt.savefig(self.path_symbol_plot_analyse + 'wallet_record_roi.png')
         plt.clf()
         ax = plt.gca()
         self.df_wallet_records.plot(kind='line', x='time', y='asset%', ax=ax)
-        plt.savefig('./output/plot_analyse/wallet_record_asset_split.png')
+        plt.savefig(self.path_symbol_plot_analyse + 'wallet_record_asset_split.png')
 
         plt.clf()
         ax = plt.gca()
         self.df_transaction_records.plot(kind='line', x='time', y='wallet_roi%', ax=ax)
-        plt.savefig('./output/plot_analyse/transaction_record_wallet_roi.png')
+        plt.savefig(self.path_symbol_plot_analyse + 'transaction_record_wallet_roi.png')
 
         plt.clf()
         ax = plt.gca()
         self.df_transaction_records.plot(kind='line', x='time', y='remaining_cash', ax=ax)
-        plt.savefig('./output/plot_analyse/transaction_record_remaining_cash.png')
+        plt.savefig(self.path_symbol_plot_analyse + 'transaction_record_remaining_cash.png')
 
         plt.clf()
         ax = plt.gca()
         self.df_transaction_records.plot(kind='line', x='time', y='portfolio_value', ax=ax)
-        plt.savefig('./output/plot_analyse/transaction_record_portfolio_value.png')
+        plt.savefig(self.path_symbol_plot_analyse + 'transaction_record_portfolio_value.png')
 
         plt.clf()
         ax = plt.gca()
         self.df_transaction_records.plot(kind='line', x='time', y='wallet_value', ax=ax)
-        plt.savefig('./output/plot_analyse/transaction_record_wallet_value.png')
+        plt.savefig(self.path_symbol_plot_analyse + 'transaction_record_wallet_value.png')
 
     def set_symbol_data(self):
         df_symbol_data = pd.DataFrame()
@@ -252,6 +259,9 @@ class Analyser:
         return df_symbol_data
 
     def plot_symbol_data(self):
+        if not os.path.exists(self.path_symbol_plot_symbol):
+            os.makedirs(self.path_symbol_plot_symbol)
+
         df_symbol_data_normalized = self.df_symbol_data.copy()
 
         list_symbol = self.df_symbol_data.columns.to_list()
@@ -264,7 +274,7 @@ class Analyser:
             # Skearn can be used...
             df_symbol_data_normalized[symbol] = (df_symbol_data_normalized[symbol] - min_val) / (max_val - min_val)
             df_symbol_data_normalized.plot(kind='line', x='time', y=symbol, ax=ax)
-            plt.savefig('./output/plot_symbol/' + symbol + '_symbol_data.png')
+            plt.savefig(self.path_symbol_plot_symbol + symbol + '_symbol_data.png')
             plt.clf()
 
     def run_analyse(self):
