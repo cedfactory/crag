@@ -261,6 +261,7 @@ class Analyser:
             ax = plt.gca()
             max_val = df_symbol_data_normalized[symbol].max()
             min_val = df_symbol_data_normalized[symbol].min()
+            # Skearn can be used...
             df_symbol_data_normalized[symbol] = (df_symbol_data_normalized[symbol] - min_val) / (max_val - min_val)
             df_symbol_data_normalized.plot(kind='line', x='time', y=symbol, ax=ax)
             plt.savefig('./output/plot_symbol/' + symbol + '_symbol_data.png')
