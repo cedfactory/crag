@@ -27,7 +27,7 @@ class rtctrl():
         return ["symbol", "time", "actual_price", "size", "fees", "buying_gross_price", "actual_net_price", "roi_$", "roi_%", "portfolio_value", "cash","wallet_value", "wallet_%"]
 
     def get_df_header_tracking(self):
-        return ["time", " roi%", "cash", "portfolio", "wallet", "asset%"]
+        return ["time", "roi%", "cash", "portfolio", "wallet", "asset%"]
 
     def get_list_of_traded_symbols(self, list_of_current_trades):
         list_symbols = [trade.symbol for trade in list_of_current_trades if trade.type == "BUY"]

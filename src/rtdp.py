@@ -261,7 +261,7 @@ class SimRealTimeDataProvider(IRealTimeDataProvider):
             self.data[symbol]['datetime'] = self.data[symbol].index
             # symbol_file_name = symbol.replace("/", "_")
             # self.data[symbol].to_csv('./toto/' + symbol_file_name + '.csv')
-            # print(symbol,'   ',len(self.data[symbol]))
+            print(symbol,'   ',len(self.data[symbol]))
 
     '''
     def _is_in_dataframe(self):
