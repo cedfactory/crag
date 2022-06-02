@@ -30,7 +30,7 @@ import os
 class Analyser:
     def __init__(self, params = None):
         self.path = './output/'
-        self.path_symbol_data = './data/'
+        self.path_symbol_data = './data_processed/'
         self.path_symbol_plot_analyse = './output/plot_analyse/'
         self.path_symbol_plot_symbol = './output/plot_symbol/'
 
@@ -253,7 +253,8 @@ class Analyser:
         df_symbol_data['time'] = self.df_wallet_records['time']
         for symbol in self.list_symbols:
             symbol = symbol.replace("/", "_")
-            df = pd.read_csv(self.path_symbol_data + symbol + '.csv', sep=";")
+            # df = pd.read_csv(self.path_symbol_data + symbol + '.csv', sep=";")
+            df = pd.read_csv(self.path_symbol_data + symbol + '.csv')
             df_symbol_data[symbol] = df['close']
         df_symbol_data.dropna(inplace=True)
         return df_symbol_data

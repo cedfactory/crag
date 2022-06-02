@@ -259,8 +259,10 @@ class SimRealTimeDataProvider(IRealTimeDataProvider):
             self.data[symbol].sort_index(ascending=True, inplace=True)
             self.data[symbol].reset_index(inplace=True)
             self.data[symbol]['datetime'] = self.data[symbol].index
-            # symbol_file_name = symbol.replace("/", "_")
-            # self.data[symbol].to_csv('./toto/' + symbol_file_name + '.csv')
+            if not os.path.exists('./data_processed'):
+                os.makedirs('./data_processed')
+            symbol_file_name = symbol.replace("/", "_")
+            self.data[symbol].to_csv('./data_processed/' + symbol_file_name + '.csv')
             print(symbol,'   ',len(self.data[symbol]))
 
     '''
