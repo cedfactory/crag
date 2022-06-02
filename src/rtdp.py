@@ -221,7 +221,7 @@ class SimRealTimeDataProvider(IRealTimeDataProvider):
 
         if self.input == None or not os.path.exists(self.input):
             return
-
+        list_dates = []
         files = os.listdir(self.input)
         for file in files:
             strs = file.split('.')
@@ -240,6 +240,28 @@ class SimRealTimeDataProvider(IRealTimeDataProvider):
 
                 #df.set_index('datetime', inplace=True)
                 self.data[symbol] = df
+                list_dates.extend(self.data[symbol]['timestamp'].to_list())
+                list_dates = list(set(list_dates))
+        df_timestamp = pd.DataFrame(list_dates, columns=['timestamp'])
+        df_timestamp.set_index('timestamp', inplace=True)
+        for symbol in self.data:
+            self.data[symbol].set_index('timestamp', inplace=True)
+            df_backup = self.data[symbol].copy()
+            self.data[symbol] = pd.concat([self.data[symbol], df_timestamp], axis=0)
+            self.data[symbol].sort_index(ascending=True, inplace=True)
+            self.data[symbol] = self.data[symbol].index.drop_duplicates(keep=False)
+            if len(self.data[symbol]) == 0:
+                self.data[symbol] = df_backup.copy()
+            else:
+                self.data[symbol] = pd.DataFrame(index=self.data[symbol])
+                self.data[symbol] = pd.concat([self.data[symbol], df_backup], axis=0)
+                self.data[symbol] = self.data[symbol][~self.data[symbol].index.duplicated(keep='first')]
+            self.data[symbol].sort_index(ascending=True, inplace=True)
+            self.data[symbol].reset_index(inplace=True)
+            self.data[symbol]['datetime'] = self.data[symbol].index
+            # symbol_file_name = symbol.replace("/", "_")
+            # self.data[symbol].to_csv('./toto/' + symbol_file_name + '.csv')
+            # print(symbol,'   ',len(self.data[symbol]))
 
     '''
     def _is_in_dataframe(self):
