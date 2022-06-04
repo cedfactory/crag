@@ -1,8 +1,9 @@
 import time
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 from . import trade
-
+import math
 import os
 
 '''
@@ -81,6 +82,9 @@ class Analyser:
         self.nb_symbols = len(self.list_symbols)
 
         self.df_symbol_data = self.set_symbol_data()
+        self.df_symbol_full_data = self.get_df_symbol_full_data()
+        self.df_cross_check = pd.DataFrame()
+        self.df_result_cross_check = pd.DataFrame()
 
         self.top_ranking = True    # Top 5 or threshold
         self.ranking = 10
@@ -91,6 +95,8 @@ class Analyser:
         self.df_wallet_records['evolution'] = self.df_wallet_records['wallet'].diff()
         self.df_wallet_records['daily_return'] = self.df_wallet_records['evolution'] / self.df_wallet_records['wallet'].shift(1)
         self.sharpe_ratio = round((365 ** 0.5) * (self.df_wallet_records['daily_return'].mean() / self.df_wallet_records['daily_return'].std()), 2)
+
+
 
     def display_analysed_data(self):
         print('period: [', self.starting_time,'] -> [', self.ending_time,']')
@@ -248,17 +254,6 @@ class Analyser:
         self.df_transaction_records.plot(kind='line', x='time', y='wallet_value', ax=ax)
         plt.savefig(self.path_symbol_plot_analyse + 'transaction_record_wallet_value.png')
 
-    def set_symbol_data(self):
-        df_symbol_data = pd.DataFrame()
-        df_symbol_data['time'] = self.df_wallet_records['time']
-        for symbol in self.list_symbols:
-            symbol = symbol.replace("/", "_")
-            # df = pd.read_csv(self.path_symbol_data + symbol + '.csv', sep=";")
-            df = pd.read_csv(self.path_symbol_data + symbol + '.csv')
-            df_symbol_data[symbol] = df['close']
-        df_symbol_data.dropna(inplace=True)
-        return df_symbol_data
-
     def plot_symbol_data(self):
         if not os.path.exists(self.path_symbol_plot_symbol):
             os.makedirs(self.path_symbol_plot_symbol)
@@ -278,12 +273,119 @@ class Analyser:
             plt.savefig(self.path_symbol_plot_symbol + symbol + '_symbol_data.png')
             plt.clf()
 
+    def set_symbol_data(self):
+        df_symbol_data = pd.DataFrame()
+        df_symbol_data['time'] = self.df_wallet_records['time']
+        for symbol in self.list_symbols:
+            symbol = symbol.replace("/", "_")
+            # df = pd.read_csv(self.path_symbol_data + symbol + '.csv', sep=";")
+            df = pd.read_csv(self.path_symbol_data + symbol + '.csv')
+            df_symbol_data[symbol] = df['close']
+        df_symbol_data.dropna(inplace=True)
+        return df_symbol_data
+
+    def get_df_symbol_full_data(self):
+        df_symbol_full_data = pd.DataFrame()
+        for symbol in self.list_symbols:
+            symbol_filename = symbol.replace('/', '_')
+            df_data = pd.read_csv("./data_processed/" + symbol_filename + ".csv")
+            df_data['symbol'] = symbol
+            df_symbol_full_data = pd.concat([df_symbol_full_data, df_data])
+        return df_symbol_full_data
+
+    def isnan(self, value):
+        try:
+            return math.isnan(float(value))
+        except:
+            return False
+
+    def cross_check(self):
+        for symbol in self.list_symbols:
+            df_symbol_cross_check = pd.DataFrame()
+            df_symbol_data = self.df_symbol_full_data.copy()
+
+            df_symbol_data = df_symbol_data[df_symbol_data['symbol'] == symbol]
+
+            # df_symbol_full_data.drop(df_symbol_full_data[df_symbol_full_data['symbol'] == symbol].index, inplace=True)
+
+            df_symbol_trades = self.df_trades.copy()
+            df_symbol_trades.drop(df_symbol_trades[df_symbol_trades['symbol'] != symbol].index, inplace=True)
+
+            df_symbol_cross_check['buying_time'] = df_symbol_trades['buying_time']
+            df_symbol_cross_check['selling_time'] = df_symbol_trades['time']
+            df_symbol_cross_check['buying_price'] = df_symbol_trades['buying_price']
+            df_symbol_cross_check['selling_price'] = df_symbol_trades['symbol_price']
+            df_symbol_cross_check['size'] = df_symbol_trades['net_size']
+            df_symbol_cross_check['net_price'] = df_symbol_trades['net_price']
+            df_symbol_cross_check['buying_fees'] = df_symbol_trades['buying_fees']
+            df_symbol_cross_check['selling_fees'] = df_symbol_trades['selling_fees']
+            df_symbol_cross_check['gross_price'] = df_symbol_trades['gross_price']
+
+            # Cross check
+            df_symbol_data.set_index('timestamp', inplace=True)
+
+            # Cross check Buying values
+            df_symbol_cross_check.set_index('buying_time',inplace=True)
+            df_symbol_cross_check['check_buying_price'] = False
+            df_symbol_cross_check['checked_buying_price'] = False
+            for buying_time in df_symbol_cross_check.index.to_list():
+                df_symbol_cross_check['check_buying_price'][buying_time] = df_symbol_data['close'][buying_time]
+            df_symbol_cross_check['checked_buying_price'] = np.where(df_symbol_cross_check['check_buying_price'] == df_symbol_cross_check['buying_price'],
+                                                                     True,
+                                                                     False)
+
+            # Cross check Selling values
+            df_symbol_cross_check.set_index('selling_time', inplace=True)
+            df_symbol_cross_check['check_selling_price'] = False
+            df_symbol_cross_check['checked_selling_price'] = False
+            for selling_time in df_symbol_cross_check.index.to_list():
+                try:
+                    df_symbol_cross_check['check_selling_price'][selling_time] = df_symbol_data['close'][selling_time]
+                except:
+                    print("error selling time: ", selling_time, symbol)
+            df_symbol_cross_check['checked_selling_price'] = np.where(
+                df_symbol_cross_check['check_selling_price'] == df_symbol_cross_check['selling_price'],
+                True,
+                False)
+
+            # Cross check Net price
+            df_symbol_cross_check['buying_*_size'] = df_symbol_cross_check['buying_price'] * df_symbol_cross_check['size']
+            df_symbol_cross_check['selling_*_size'] = df_symbol_cross_check['selling_price'] * df_symbol_cross_check['size']
+
+            # df_symbol_cross_check['checked_net_price'] = np.where(
+            #     df_symbol_cross_check['net_price'] == df_symbol_cross_check['selling_*_size'],
+            #     True,
+            #     False)
+            df_symbol_cross_check['checked_net_price'] = np.where(
+                abs(df_symbol_cross_check['selling_*_size'] - df_symbol_cross_check['net_price']) < 0.0001,
+                True,
+                False)
+
+            df_symbol_cross_check['calc_gross_price_all'] = df_symbol_cross_check['buying_*_size'] * 0.0007 + \
+                                                            df_symbol_cross_check['selling_*_size'] + \
+                                                            df_symbol_cross_check['selling_*_size'] * 0.0007
+
+            df_symbol_cross_check['transaction_benefit'] = df_symbol_cross_check['calc_gross_price_all'] - df_symbol_cross_check['buying_*_size']
+            df_symbol_cross_check['transaction_benefit_%'] = df_symbol_cross_check['transaction_benefit'] * 100 / df_symbol_cross_check['buying_*_size']
+
+            self.df_cross_check = pd.concat([self.df_cross_check, df_symbol_cross_check])
+
+            df_new_line = pd.DataFrame([[symbol,
+                                         df_symbol_cross_check['transaction_benefit'].sum(),
+                                         df_symbol_cross_check['transaction_benefit_%'].sum()]],
+                                       columns=['symbol', 'roi', 'roi_%'])
+
+            self.df_result_cross_check = pd.concat([self.df_result_cross_check, df_new_line])
+
+        self.df_result_cross_check.to_csv('cross_check_results.csv')
+
     def run_analyse(self):
         self.set_data_analysed()
         self.get_best_performer()
         self.display_analysed_data()
         self.plot_analysed_data()
         self.plot_symbol_data()
+        self.cross_check()
 
 
 

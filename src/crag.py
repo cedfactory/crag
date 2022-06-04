@@ -231,6 +231,7 @@ class Crag:
                 sell_trade.stimulus = df_selling_symbols["stimulus"][current_trade.symbol]
                 sell_trade.symbol = current_trade.symbol
                 sell_trade.symbol_price = self.broker.get_value(current_trade.symbol)
+                sell_trade.time = self.scheduler.get_current_time()
 
                 sell_trade.gross_size = current_trade.net_size         # Sell Net_size = current_trade.Gross size
                 sell_trade.gross_price = sell_trade.gross_size * sell_trade.symbol_price
