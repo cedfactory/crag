@@ -361,9 +361,14 @@ class Analyser:
                 True,
                 False)
 
-            df_symbol_cross_check['calc_gross_price_all'] = df_symbol_cross_check['buying_*_size'] * 0.0007 + \
+            df_symbol_cross_check['buying_fees'] = df_symbol_cross_check['buying_*_size'] * 0.0007
+            df_symbol_cross_check['selling_fees'] = df_symbol_cross_check['selling_*_size'] * 0.0007
+            df_symbol_cross_check['total_fees'] = df_symbol_cross_check['buying_fees'] + df_symbol_cross_check['selling_fees']
+
+
+            df_symbol_cross_check['calc_gross_price_all'] =df_symbol_cross_check['buying_fees'] + \
                                                             df_symbol_cross_check['selling_*_size'] + \
-                                                            df_symbol_cross_check['selling_*_size'] * 0.0007
+                                                            df_symbol_cross_check['selling_fees']
 
             df_symbol_cross_check['transaction_benefit'] = df_symbol_cross_check['calc_gross_price_all'] - df_symbol_cross_check['buying_*_size']
             df_symbol_cross_check['transaction_benefit_%'] = df_symbol_cross_check['transaction_benefit'] * 100 / df_symbol_cross_check['buying_*_size']
@@ -371,13 +376,35 @@ class Analyser:
             self.df_cross_check = pd.concat([self.df_cross_check, df_symbol_cross_check])
 
             df_new_line = pd.DataFrame([[symbol,
-                                         df_symbol_cross_check['transaction_benefit'].sum(),
-                                         df_symbol_cross_check['transaction_benefit_%'].sum()]],
-                                       columns=['symbol', 'roi', 'roi_%'])
+                                         len(df_symbol_cross_check),
+                                         round((df_symbol_cross_check['transaction_benefit'] >= 0).sum() * 100 / len(df_symbol_cross_check), 2),
+                                         df_symbol_cross_check['checked_buying_price'].sum() == len(df_symbol_cross_check),
+                                         df_symbol_cross_check['checked_selling_price'].sum() == len(df_symbol_cross_check),
+                                         round(df_symbol_cross_check['buying_fees'].sum(), 2),
+                                         round(df_symbol_cross_check['selling_fees'].sum(), 2),
+                                         round(df_symbol_cross_check['total_fees'].sum(), 2),
+                                         round(df_symbol_cross_check['buying_*_size'].sum(), 2),
+                                         round(df_symbol_cross_check['selling_*_size'].sum(), 2),
+                                         round(df_symbol_cross_check['transaction_benefit'].sum(), 2),
+                                         round(df_symbol_cross_check['transaction_benefit_%'].mean(), 2),
+                                         round(df_symbol_cross_check['transaction_benefit'].sum() * 100 / df_symbol_cross_check['buying_*_size'].sum(), 2)]],
+                                       columns=['symbol',
+                                                'total_transactions',
+                                                'win_rate',
+                                                'buying_price_check',
+                                                'selling_price_check',
+                                                'buying_fees',
+                                                'selling_fees',
+                                                'total_fees',
+                                                'net_buying_price',
+                                                'net_selling_price',
+                                                'roi_$',
+                                                'roi_%',
+                                                'global_roi_%'])
 
             self.df_result_cross_check = pd.concat([self.df_result_cross_check, df_new_line])
 
-        self.df_result_cross_check.to_csv('cross_check_results.csv')
+        self.df_result_cross_check.to_csv(self.path + 'cross_check_results.csv')
 
     def run_analyse(self):
         self.set_data_analysed()
