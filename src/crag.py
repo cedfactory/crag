@@ -40,7 +40,7 @@ class Crag:
             self.log.append({})
 
     def step(self):
-        print("⌛ [Crag]")
+        print("[Crag] ⌛")
 
         # update all the data
         ds = self.rtstr.get_data_description()
@@ -57,6 +57,7 @@ class Crag:
         current_data = self.broker.next(ds)
         # print(current_data) # DEBUG
         if current_data is None:
+            print("[Crag] 💥 no current data")
             self.force_sell_open_trade()
             self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(), prices_symbols)
             return False

@@ -211,6 +211,7 @@ class RealTimeDataProvider():
 
 class SimRealTimeDataProvider(IRealTimeDataProvider):
     def __init__(self, params = None):
+        print("[SimRealTimeDataProvider] initialization...")
         self.input = "./data/"
         self.scheduler = None
         if params:
@@ -223,10 +224,12 @@ class SimRealTimeDataProvider(IRealTimeDataProvider):
         self.current_position = self.scheduler.get_current_position()
 
         if self.input == None or not os.path.exists(self.input):
+            print(" 💥 ",self.input," not found")
             return
         list_dates = []
         files = os.listdir(self.input)
         for file in files:
+            print(" ",format(file))
             strs = file.split('.')
             symbol = strs[0].replace("_", "/")
             if symbol in default_symbols and strs[1] == "csv":
@@ -266,7 +269,6 @@ class SimRealTimeDataProvider(IRealTimeDataProvider):
                 os.makedirs('./data_processed')
             symbol_file_name = symbol.replace("/", "_")
             self.data[symbol].to_csv('./data_processed/' + symbol_file_name + '.csv')
-            print(symbol,'   ',len(self.data[symbol]))
 
     '''
     def _is_in_dataframe(self):
