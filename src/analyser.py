@@ -387,7 +387,9 @@ class Analyser:
                                          round(df_symbol_cross_check['selling_*_size'].sum(), 2),
                                          round(df_symbol_cross_check['transaction_benefit'].sum(), 2),
                                          round(df_symbol_cross_check['transaction_benefit_%'].mean(), 2),
+                                         round(df_symbol_cross_check['calc_gross_price_all'].sum() * 100 / df_symbol_cross_check['buying_*_size'].sum(), 2),
                                          round(df_symbol_cross_check['transaction_benefit'].sum() * 100 / df_symbol_cross_check['buying_*_size'].sum(), 2)]],
+
                                        columns=['symbol',
                                                 'total_transactions',
                                                 'win_rate',
@@ -399,8 +401,9 @@ class Analyser:
                                                 'net_buying_price',
                                                 'net_selling_price',
                                                 'roi_$',
-                                                'roi_%',
-                                                'global_roi_%'])
+                                                'roi',
+                                                'global_roi_%',
+                                                'roi_%'])
 
             self.df_result_cross_check = pd.concat([self.df_result_cross_check, df_new_line])
 
