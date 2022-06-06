@@ -68,9 +68,7 @@ class SimBroker(Broker):
         return self.rtdp.get_value(symbol)
 
     def get_commission(self, symbol):
-        # return 0.07
         return 0.0007
-        # return 0
 
     def execute_trade(self, trade):
         if trade.type == "BUY":
