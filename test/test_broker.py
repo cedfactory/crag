@@ -39,7 +39,7 @@ class TestSimBroker:
         fake_trade.net_price = 2
         fake_trade.buying_fee = 0.07
         fake_trade.selling_fee = 0.07
-        fake_trade.transaction_roi = 0.05
+        fake_trade.roi = 0.05
         fake_trade.cash = 90
         fake_trade.portfolio_value = 110
         fake_trade.wallet_value = 110
