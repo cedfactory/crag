@@ -4,7 +4,7 @@ from datetime import datetime
 
 # Class to real time control the strategy behaviours
 class rtctrl():
-    def __init__(self, current_datetime=None):
+    def __init__(self, current_datetime=None, params=None):
         self.df_rtctrl = pd.DataFrame(columns=self.get_df_header())
         self.df_rtctrl_tracking = pd.DataFrame(columns=self.get_df_header_tracking())
         self.symbols = []
@@ -20,7 +20,9 @@ class rtctrl():
         self.wallet_percent = 0
         self.screener_type = "crypto"
         self.exchange = "ftx"
-        self.print_tracking = True
+        self.verbose = False
+        if params:
+            self.verbose = params.get("rtctrl_verbose", self.verbose)
         self.record_tracking = True
 
     def get_df_header(self):
@@ -86,7 +88,7 @@ class rtctrl():
         else:
             roi_percent = 0
         asset_percent = self.df_rtctrl['wallet_%'].sum()
-        if self.print_tracking:
+        if self.verbose:
             print(self.df_rtctrl)
             print("{} roi: {:.2f}% cash: {:.2f} portfolio: {:.2f} wallet: {:.2f} asset: {:.2f}%".format(self.time, roi_percent, wallet_cash, portfolio, wallet_value, asset_percent))
 

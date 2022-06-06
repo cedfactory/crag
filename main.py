@@ -16,7 +16,7 @@ def crag_record():
 
 def crag_simulation():
     masterClock = chronos.Chronos()
-    strategy_super_reversal = rtstr_super_reversal.StrategySuperReversal()
+    strategy_super_reversal = rtstr_super_reversal.StrategySuperReversal(params={"rtctrl_verbose": True})
     param_init_cash = {'cash':10000, 'chronos':masterClock}
     simu_broker = broker.SimBroker(param_init_cash)
     params = {'broker':simu_broker, 'rtstr':strategy_super_reversal, 'chronos':masterClock}

@@ -14,7 +14,7 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
     def __init__(self, params=None):
         super().__init__(params)
 
-        self.rtctrl = rtctrl.rtctrl()
+        self.rtctrl = rtctrl.rtctrl(params=params)
 
         self.SL = -0.2           # Stop Loss %
         self.TP = 0.2            # Take Profit %
