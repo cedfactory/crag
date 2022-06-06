@@ -103,10 +103,13 @@ def add_features(df, features):
     df['super_trend_direction'] = super_trend.super_trend_direction()
     df['super_trend_direction'] = df['super_trend_direction'].shift(1)
 
+    '''
+    # to compare with other implementation
     df_buy_sell = pd.read_csv('BTC_buy_sell.csv')
 
     df['open_long_limit'] = df_buy_sell['open_long_limit']
     df['close_long_limit'] = df_buy_sell['close_long_limit']
+    '''
 
     return df
 

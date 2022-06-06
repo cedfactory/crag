@@ -100,9 +100,10 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
     # could be merged in one...
     def get_df_forced_exit_selling_symbols(self, lst_symbols):
         df_result = pd.DataFrame(columns = ['symbol', 'stimulus'])
-        for symbol in self.df_current_data.index.to_list():
-            df_row = pd.DataFrame(data={"symbol":[symbol], "stimulus":["SELL"]})
-            df_result = pd.concat((df_result, df_row), axis = 0)
+        if hasattr(self, 'df_current_data'):
+            for symbol in self.df_current_data.index.to_list():
+                df_row = pd.DataFrame(data={"symbol":[symbol], "stimulus":["SELL"]})
+                df_result = pd.concat((df_result, df_row), axis = 0)
 
         return df_result
 

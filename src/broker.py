@@ -7,10 +7,9 @@ from . import rtdp
 class Broker(metaclass = ABCMeta):
     
     def __init__(self, params = None):
+        self.cash = 0
         if params:
-            self.cash = params.get("cash")
-        else:
-            self.cash = 0
+            self.cash = params.get("cash", self.cash)
         self.rtdp = None
 
     @abstractmethod

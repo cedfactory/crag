@@ -11,10 +11,8 @@ class TestRTSTRSuperReversal:
         # expectations
         assert(strategy.SL == -0.2)
         assert(strategy.TP == 0.2)
-        assert(strategy.TimerSL == -0.1)
-        assert(strategy.TimerTP == 0.1)
-        assert(strategy.Timer == 12)
-        assert(strategy.SPLIT == 10)
+        assert(strategy.MAX_POSITION == 5)
+        assert(strategy.SPLIT == 5)
 
     def test_get_data_description(self, mocker):
         # context
@@ -44,7 +42,7 @@ class TestRTSTRSuperReversal:
 
         # expectations
         assert(isinstance(df, pd.DataFrame))
-        assert(df.columns.to_list() == ['symbol', 'size'])
+        assert(df.columns.to_list() == ['symbol', 'size', 'percent'])
 
     def test_get_df_selling_symbols(self):
         # context
