@@ -1,4 +1,4 @@
-from src import rtdp,broker,broker_ftx,crag,rtstr_tv,rtstr_super_reversal
+from src import rtdp,broker,broker_ftx,crag,rtstr_tv,rtstr_super_reversal, analyser, chronos
 import pandas as pd
 
 _usage_str = """
@@ -15,9 +15,11 @@ def crag_record():
     sim_rtdp.record(ds)
 
 def crag_simulation():
+    masterClock = chronos.Chronos()
     strategy_super_reversal = rtstr_super_reversal.StrategySuperReversal()
-    simu_broker = broker.SimBroker()
-    params = {'broker':simu_broker, 'rtstr':strategy_super_reversal}
+    param_init_cash = {'cash':10000, 'chronos':masterClock}
+    simu_broker = broker.SimBroker(param_init_cash)
+    params = {'broker':simu_broker, 'rtstr':strategy_super_reversal, 'chronos':masterClock}
     bot = crag.Crag(params)
     bot.run()
     bot.export_history("sim_broker_history.csv")
@@ -42,6 +44,12 @@ def crag_run(strategy_name, history):
     bot.run()
     bot.export_history("broker_history.csv")
     bot.export_status()
+
+def crag_analyse_resusts():
+    params = {}
+
+    my_analyser = analyser.Analyser(params)
+    my_analyser.run_analyse()
 
 def crag_ftx():
     my_broker_ftx = broker_ftx.BrokerFTX()
@@ -88,6 +96,8 @@ if __name__ == '__main__':
             crag_run(strategy_name, history)
         elif len(sys.argv) >= 2 and (sys.argv[1] == "--ftx"):
             crag_ftx()
+        elif len(sys.argv) >= 2 and (sys.argv[1] == "--analyse"):
+            crag_analyse_resusts()
         else:
             _usage()
     else:

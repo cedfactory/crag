@@ -19,5 +19,9 @@ class RealTimeStrategy(metaclass=ABCMeta):
         pass
 
     @abstractmethod
+    def get_df_forced_exit_selling_symbols(self, lst_symbols):
+        pass
+
+    @abstractmethod
     def update(self, current_datetime, current_trades, broker_cash, prices_symbols):
         pass

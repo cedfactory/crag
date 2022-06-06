@@ -89,7 +89,9 @@ class SuperTrend():
 
 def add_features(df, features):
     df["ema_short"] = TA.EMA(df, period = 5).copy()
+    df["ema_short"] = df["ema_short"].shift(1)
     df["ema_long"] = TA.EMA(df, period = 400).copy()
+    df["ema_long"] = df["ema_long"].shift(1)
     super_trend = SuperTrend(
             df['high'], 
             df['low'], 
@@ -99,14 +101,22 @@ def add_features(df, features):
         )
         
     df['super_trend_direction'] = super_trend.super_trend_direction()
+    df['super_trend_direction'] = df['super_trend_direction'].shift(1)
+
+    '''
+    # to compare with other implementation
+    df_buy_sell = pd.read_csv('BTC_buy_sell.csv')
+
+    df['open_long_limit'] = df_buy_sell['open_long_limit']
+    df['close_long_limit'] = df_buy_sell['close_long_limit']
+    '''
 
     return df
-
 
 default_symbols = [
         "BTC/USD",
         "DOGE/USD",
-        "MANA/USD",
+        # "MANA/USD",
         "CHZ/USD",
         "AAVE/USD",
         "BNB/USD",
@@ -131,9 +141,15 @@ default_symbols = [
         "BCH/USD",
         "AXS/USD",
         "RAY/USD",
-        "SOL/USD",
-        "AVAX/USD"
+        "SOL/USD"
+        # "AVAX/USD"
     ]
+'''
+default_symbols = [
+        "BTC/USD"
+    ]
+'''
+
 default_features = ["open", "close", "high", "low", "volume"]
 
 class DataDescription():
@@ -196,15 +212,19 @@ class RealTimeDataProvider():
 class SimRealTimeDataProvider(IRealTimeDataProvider):
     def __init__(self, params = None):
         self.input = "./data/"
+        self.scheduler = None
         if params:
             self.input = params.get("input", self.input)
+            self.scheduler = params.get("chronos", self.scheduler)
     
         self.data = {}
-        self.current_position = -1
+        # self.current_position = -1 # CEDE Test Debug
+        # self.current_position = 400  # CEDE Test Debug Offset
+        self.current_position = self.scheduler.get_current_position()
 
         if self.input == None or not os.path.exists(self.input):
             return
-
+        list_dates = []
         files = os.listdir(self.input)
         for file in files:
             strs = file.split('.')
@@ -212,9 +232,43 @@ class SimRealTimeDataProvider(IRealTimeDataProvider):
             if symbol in default_symbols and strs[1] == "csv":
                 df = pd.read_csv(self.input+"/"+file, sep=";")
                 df.rename(columns={"Unnamed: 0": "datetime"}, inplace=True)
+
+                df["ema_long"] = df["ema_long"].shift(1)
+                df["ema_short"] = df["ema_short"].shift(1)
+                df['super_trend_direction'] = df['super_trend_direction'].shift(1)
+
+                # df_buy_sell = pd.read_csv('BTC_buy_sell.csv')
+                # df['open_long_limit'] = df_buy_sell['open_long_limit']
+                # df['close_long_limit'] = df_buy_sell['close_long_limit']
+
                 #df.set_index('datetime', inplace=True)
                 self.data[symbol] = df
+                list_dates.extend(self.data[symbol]['timestamp'].to_list())
+                list_dates = list(set(list_dates))
+        df_timestamp = pd.DataFrame(list_dates, columns=['timestamp'])
+        df_timestamp.set_index('timestamp', inplace=True)
+        for symbol in self.data:
+            self.data[symbol].set_index('timestamp', inplace=True)
+            df_backup = self.data[symbol].copy()
+            self.data[symbol] = pd.concat([self.data[symbol], df_timestamp], axis=0)
+            self.data[symbol].sort_index(ascending=True, inplace=True)
+            self.data[symbol] = self.data[symbol].index.drop_duplicates(keep=False)
+            if len(self.data[symbol]) == 0:
+                self.data[symbol] = df_backup.copy()
+            else:
+                self.data[symbol] = pd.DataFrame(index=self.data[symbol])
+                self.data[symbol] = pd.concat([self.data[symbol], df_backup], axis=0)
+                self.data[symbol] = self.data[symbol][~self.data[symbol].index.duplicated(keep='first')]
+            self.data[symbol].sort_index(ascending=True, inplace=True)
+            self.data[symbol].reset_index(inplace=True)
+            self.data[symbol]['datetime'] = self.data[symbol].index
+            if not os.path.exists('./data_processed'):
+                os.makedirs('./data_processed')
+            symbol_file_name = symbol.replace("/", "_")
+            self.data[symbol].to_csv('./data_processed/' + symbol_file_name + '.csv')
+            print(symbol,'   ',len(self.data[symbol]))
 
+    '''
     def _is_in_dataframe(self):
         if self.current_position < 0:
             return False
@@ -224,9 +278,35 @@ class SimRealTimeDataProvider(IRealTimeDataProvider):
             if self.current_position >= len(self.data[symbol].index):
                 return False
         return True
+    '''
+
+    def _is_in_dataframe(self):
+        if self.scheduler.get_current_position() < 0:
+            return False
+        if not bool(self.data):
+            return False
+        for symbol in self.data:
+            if self.scheduler.get_current_position() >= len(self.data[symbol].index):
+                return False
+        return True
+
+    '''
+    def _is_last_in_dataframe(self):
+        for symbol in self.data:
+            if self.current_position >= len(self.data[symbol].index):
+                return True
+        return False
+    '''
+
+    def _is_last_in_dataframe(self):
+        for symbol in self.data:
+            if self.scheduler.get_current_position() >= len(self.data[symbol].index):
+                return True
+        return False
 
     def next(self, data_description):
-        self.current_position = self.current_position + 1
+        # self.current_position = self.current_position + 1
+        self.current_position = self.scheduler.get_current_position()
         if not self._is_in_dataframe():
             return None
 
@@ -238,7 +318,9 @@ class SimRealTimeDataProvider(IRealTimeDataProvider):
             for feature in data_description.features:
                 if feature not in available_columns:
                     return None
-                row[feature] = [df_symbol[feature].iloc[self.current_position]]
+                # row[feature] = [df_symbol[feature].iloc[self.current_position]]
+                row[feature] = [df_symbol[feature].iloc[self.scheduler.get_current_position()]]
+
 
             df_row = pd.DataFrame(data=row)
             df_result = pd.concat((df_result, df_row), axis = 0)
@@ -249,9 +331,15 @@ class SimRealTimeDataProvider(IRealTimeDataProvider):
 
     def get_value(self, symbol):
         if not self._is_in_dataframe() or not symbol in self.data:
-            return -1
+            if self._is_last_in_dataframe():
+                df_symbol = self.data[symbol]
+                value = df_symbol.iloc[len(self.data[symbol].index)-1]['close']
+                return value
+            else:
+                return -1
         df_symbol = self.data[symbol]
-        value = df_symbol.iloc[self.current_position]['close']
+        # value = df_symbol.iloc[self.current_position]['close']
+        value = df_symbol.iloc[self.scheduler.get_current_position()]['close']
         return value
 
     def get_current_datetime(self):
@@ -259,13 +347,17 @@ class SimRealTimeDataProvider(IRealTimeDataProvider):
             return None
         first_symbol = list(self.data.keys())[0]
         df_symbol = self.data[first_symbol]
-        value = df_symbol.iloc[self.current_position]['datetime']
+        #value = df_symbol.iloc[self.current_position]['datetime']
+        #value = df_symbol.iloc[self.current_position]['timestamp']
+        value = self.scheduler.get_current_time()
         return value
 
     def record(self, data_description, target="./data/"):
         symbols = ','.join(data_description.symbols)
         symbols = symbols.replace('/','_')
-        url = "history?exchange=ftx&symbol="+symbols+"&start=01_04_2022"+"&interval=1h"+"&length=400"
+        url = "history?exchange=ftx&symbol="+symbols+"&start=01_01_2021"+"&interval=1h"+"&length=9000"
+        # url = "history?exchange=ftx&symbol=" + symbols + "&start=01_01_2020" + "&interval=1h" + "&length=400"
+        # url = "history?exchange=ftx&symbol=" + symbols + "&start=01_01_2021" + "&interval=1h" + "&end=01_01_2022"
         response_json = utils.fdp_request(url)
         for symbol in data_description.symbols:
             formatted_symbol = symbol.replace('/','_')

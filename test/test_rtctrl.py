@@ -15,7 +15,7 @@ class TestRTCTRL:
             current_trade = trade.Trade()
             current_trade.type = content["type"]
             current_trade.symbol = content["symbol"]
-            current_trade.size = content["size"]
+            current_trade.net_size = content["size"]
             current_trade.buying_fee = content["buying_fee"]
             current_trade.gross_price = content["gross_price"]
             current_trades.append(current_trade)

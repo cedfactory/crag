@@ -18,10 +18,7 @@ class RTStrTradingView(rtstr.RealTimeStrategy):
 
         self.SL = -0.2    # Stop Loss %
         self.TP = 0.2   # Take Profit %
-        self.TimerSL = self.SL/2    # Stop Loss %
-        self.TimerTP = self.TP/2    # Take Profit %
-        self.Timer = 12
-        self.SPLIT = 10  # Asset Split Overall Percent Size
+        self.SPLIT = 98  # Asset Split Overall Percent Size
 
     def get_crypto_buying_list(self, current_data):
         # INPUT: df data received from fdp
