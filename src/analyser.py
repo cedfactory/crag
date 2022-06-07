@@ -273,6 +273,28 @@ class Analyser:
             plt.savefig(self.path_symbol_plot_symbol + symbol + '_symbol_data.png')
             plt.clf()
 
+        df_mean_symbol = pd.DataFrame()
+        df_mean_symbol['time'] = df_symbol_data_normalized['time']
+        df_symbol_data_normalized.drop(columns='time', inplace=True)
+        df_mean_symbol['symbol_value_mean'] = df_symbol_data_normalized.mean(axis=1)
+
+        ax = plt.gca()
+        df_mean_symbol.plot(kind='line', x='time', y='symbol_value_mean', ax=ax)
+        plt.savefig(self.path_symbol_plot_symbol + 'symbol_value_mean' + '_symbol_data.png')
+        plt.clf()
+
+        df_mean_symbol['symbol_wallet'] = self.df_wallet_records['wallet'].copy()
+        max_val = df_mean_symbol['symbol_wallet'].max()
+        min_val = df_mean_symbol['symbol_wallet'].min()
+        df_mean_symbol['symbol_wallet_normalized'] = (df_mean_symbol['symbol_wallet'] - min_val) / (max_val - min_val)
+
+        ax = plt.gca()
+        df_mean_symbol.plot(kind='line', x='time', y='symbol_value_mean', ax=ax)
+        df_mean_symbol.plot(kind='line', x='time', y='symbol_wallet_normalized', ax=ax)
+        plt.savefig(self.path_symbol_plot_symbol + 'wallet_vs' + '_symbol_data.png')
+        plt.savefig(self.path + 'wallet_vs' + '_symbol_data.png')
+        plt.clf()
+
     def set_symbol_data(self):
         df_symbol_data = pd.DataFrame()
         df_symbol_data['time'] = self.df_wallet_records['time']
