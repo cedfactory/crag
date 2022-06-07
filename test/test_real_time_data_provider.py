@@ -19,7 +19,6 @@ class TestRealTimeDataProvider:
 
         # action
         df = dp.next(ds)
-        print(df)
 
         # expectations
         assert(isinstance(df, pd.DataFrame))
