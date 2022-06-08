@@ -13,9 +13,6 @@ class Crag:
             self.rtstr = params.get("rtstr", self.rtstr)
             self.scheduler = params.get("chronos", self.scheduler)
 
-        self.log = []
-        self.current_step = self.scheduler.get_current_position()
-
         self.current_trades = []
 
         self.cash = 0
@@ -35,9 +32,8 @@ class Crag:
             # self.export_history("broker_history.csv") # DEBUG
             self.export_history("sim_broker_history.csv") # DEBUG
 
-            # log
-            self.increment_position()
-            self.log.append({})
+            # increment
+            self.scheduler.increment_time()
 
     def step(self):
         print("[Crag] ⌛")
@@ -68,11 +64,6 @@ class Crag:
         self.trade()
 
         return True
-
-    def add_to_log(self, key, value):
-        # To be fixed - current_step = 400 not compatible with chronos implementation
-        # self.log[self.current_step][key] = value
-        pass
 
     def export_history(self, target=None):
         self.broker.export_history(target)
@@ -199,7 +190,6 @@ class Crag:
                     self.current_trades.append(current_trade)
 
                     print("{} {} {:.2f}".format(current_trade.type, current_trade.symbol, current_trade.gross_price))
-        self.add_to_log("trades", trades)
 
     def export_status(self):
         return self.broker.export_status()
@@ -267,9 +257,3 @@ class Crag:
                     trades.append(sell_trade)
                     self.current_trades.append(sell_trade)
                     print("{} ({}) {} {:.2f} roi={:.2f}".format(sell_trade.type, sell_trade.stimulus, sell_trade.symbol, sell_trade.gross_price, sell_trade.roi))
-
-        self.add_to_log("trades", trades)
-
-    def increment_position(self):
-        self.scheduler.increment_time()
-        self.current_step = self.scheduler.get_current_position()

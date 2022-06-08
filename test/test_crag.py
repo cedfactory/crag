@@ -17,7 +17,7 @@ class TestCrag:
         bot.run()
 
         # expectations
-        assert(bot.current_step == 401)
+
 
 '''
     def test_run(self):
