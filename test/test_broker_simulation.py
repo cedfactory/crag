@@ -1,27 +1,27 @@
 import pytest
 import os
 import csv
-from src import broker,trade,chronos
+from src import broker_simulation,trade,chronos
 
 class TestSimBroker:
 
     def test_initialize(self):
         # context
-        broker_simulation = broker.SimBroker({"chronos":chronos.Chronos()})
-        assert(broker_simulation.get_cash() == 0)
+        broker = broker_simulation.SimBroker({"chronos":chronos.Chronos()})
+        assert(broker.get_cash() == 0)
 
         # action
-        broker_simulation.initialize({'cash':100})
+        broker.initialize({'cash':100})
 
         # expectations
-        assert(broker_simulation.get_cash() == 100)
+        assert(broker.get_cash() == 100)
 
     def test_get_commission(self):
         # context
-        broker_simulation = broker.SimBroker({"chronos":chronos.Chronos()})
+        broker = broker_simulation.SimBroker({"chronos":chronos.Chronos()})
 
         # action
-        commission = broker_simulation.get_commission("FAKE")
+        commission = broker.get_commission("FAKE")
 
         # expectations
         assert(commission == 0.0007)
@@ -50,40 +50,40 @@ class TestSimBroker:
 
     def test_execute_trade_ok(self):
         # context
-        broker_simulation = broker.SimBroker({"chronos":chronos.Chronos()})
-        broker_simulation.initialize({'cash':3})
+        broker = broker_simulation.SimBroker({"chronos":chronos.Chronos()})
+        broker.initialize({'cash':3})
         fake_trade = self.generate_trade()
 
         # action
-        res = broker_simulation.execute_trade(fake_trade)
+        res = broker.execute_trade(fake_trade)
 
         # expectations
         assert(res == True)
-        assert(len(broker_simulation.trades) == 1)
+        assert(len(broker.trades) == 1)
 
     def test_execute_trade_ko(self):
         # context
-        broker_simulation = broker.SimBroker({"chronos":chronos.Chronos()})
-        broker_simulation.initialize({'cash':2})
+        broker = broker_simulation.SimBroker({"chronos":chronos.Chronos()})
+        broker.initialize({'cash':2})
         fake_trade = self.generate_trade()
 
         # action
-        res = broker_simulation.execute_trade(fake_trade)
+        res = broker.execute_trade(fake_trade)
 
         # expectations
         assert(res == False)
-        assert(len(broker_simulation.trades) == 0)
+        assert(len(broker.trades) == 0)
 
     def test_export_history(self):
         # context
-        broker_simulation = broker.SimBroker({"chronos":chronos.Chronos()})
-        broker_simulation.initialize({'cash':3})
+        broker = broker_simulation.SimBroker({"chronos":chronos.Chronos()})
+        broker.initialize({'cash':3})
         fake_trade = self.generate_trade()
-        broker_simulation.execute_trade(fake_trade)
+        broker.execute_trade(fake_trade)
 
         # action
         history_file_generated = "./test/generated/test_export_history.csv"
-        broker_simulation.export_history(history_file_generated)
+        broker.export_history(history_file_generated)
 
         # expectations
 

@@ -2,14 +2,14 @@ import pytest
 import pandas as pd
 import os
 import json
-from src import rtstr_super_reversal,crag,broker,chronos
+from src import rtstr_super_reversal,crag,broker_simulation,chronos
 
 class TestCrag:
     def test_run_no_data(self):
         # context
         strategy_super_reversal = rtstr_super_reversal.StrategySuperReversal()
         scheduler = chronos.Chronos()
-        simu_broker = broker.SimBroker({"input":"fake_directory", "chronos": scheduler})
+        simu_broker = broker_simulation.SimBroker({"input":"fake_directory", "chronos": scheduler})
         params = {"broker":simu_broker, "rtstr":strategy_super_reversal, "chronos": scheduler}
         bot = crag.Crag(params)
 
