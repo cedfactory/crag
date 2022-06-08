@@ -1,6 +1,6 @@
 import pytest
 import pandas as pd
-from src import rtdp, chronos
+from src import rtdp,rtdp_simulation, chronos
 
 class TestSimRealTimeDataProvider:
 
@@ -9,7 +9,7 @@ class TestSimRealTimeDataProvider:
         input = "./test/data_sim_real_time_data_provider"
 
         # action
-        dp = rtdp.SimRealTimeDataProvider({'input': input, 'chronos': chronos.Chronos()})
+        dp = rtdp_simulation.SimRealTimeDataProvider({'input': input, 'chronos': chronos.Chronos()})
 
         # expectations
         assert(dp.input == input)
@@ -24,7 +24,7 @@ class TestSimRealTimeDataProvider:
     def test_get_value_last_in_dataframe(self):
         # context
         input = "./test/data_sim_real_time_data_provider"
-        dp = rtdp.SimRealTimeDataProvider({'input': input, 'chronos': chronos.Chronos()})
+        dp = rtdp_simulation.SimRealTimeDataProvider({'input': input, 'chronos': chronos.Chronos()})
         ds = rtdp.DataDescription()
         ds.symbols = ["AAVE/USD"]
         ds.features = ["high", "low"]
@@ -41,7 +41,7 @@ class TestSimRealTimeDataProvider:
     def test_get_value_ko_bad_symbol(self):
         # context
         input = "./test/data_sim_real_time_data_provider"
-        dp = rtdp.SimRealTimeDataProvider({'input': input, 'chronos': chronos.Chronos()})
+        dp = rtdp_simulation.SimRealTimeDataProvider({'input': input, 'chronos': chronos.Chronos()})
 
         # action
         value = dp.get_value("FOOBAR/USD")
@@ -52,7 +52,7 @@ class TestSimRealTimeDataProvider:
     def test_get_value_ok(self):
         # context
         input = "./test/data_sim_real_time_data_provider"
-        dp = rtdp.SimRealTimeDataProvider({'input': input, 'chronos': chronos.Chronos()})
+        dp = rtdp_simulation.SimRealTimeDataProvider({'input': input, 'chronos': chronos.Chronos()})
         ds = rtdp.DataDescription()
         ds.symbols = ["AAVE/USD"]
         ds.features = ["high", "low"]
@@ -67,7 +67,7 @@ class TestSimRealTimeDataProvider:
     def test_get_current_datetime_ok(self):
         # context
         input = "./test/data_sim_real_time_data_provider"
-        dp = rtdp.SimRealTimeDataProvider({'input': input, 'chronos': chronos.Chronos()})
+        dp = rtdp_simulation.SimRealTimeDataProvider({'input': input, 'chronos': chronos.Chronos()})
         ds = rtdp.DataDescription()
         ds.symbols = ["AAVE/USD"]
         ds.features = ["high", "low"]
@@ -82,7 +82,7 @@ class TestSimRealTimeDataProvider:
     def test_next(self):
         # context
         input = "./test/data_sim_real_time_data_provider"
-        dp = rtdp.SimRealTimeDataProvider({'input': input, 'chronos': chronos.Chronos()})
+        dp = rtdp_simulation.SimRealTimeDataProvider({'input': input, 'chronos': chronos.Chronos()})
         ds = rtdp.DataDescription()
         ds.symbols = ["AAVE/USD"]
         ds.features = ["high", "low"]
@@ -99,7 +99,7 @@ class TestSimRealTimeDataProvider:
     def test_next_next(self):
         # context
         input = "./test/data_sim_real_time_data_provider"
-        dp = rtdp.SimRealTimeDataProvider({'input': input, 'chronos': chronos.Chronos()})
+        dp = rtdp_simulation.SimRealTimeDataProvider({'input': input, 'chronos': chronos.Chronos()})
         ds = rtdp.DataDescription()
         ds.symbols = ["AAVE/USD"]
         ds.features = ["high", "low"]

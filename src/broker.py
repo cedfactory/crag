@@ -1,8 +1,4 @@
 from abc import ABCMeta, abstractmethod
-import csv
-import requests
-import pandas as pd
-from . import rtdp
 
 class Broker(metaclass = ABCMeta):
     
@@ -26,7 +22,7 @@ class Broker(metaclass = ABCMeta):
         return self.cash
 
     def get_current_datetime(self):
-        if rtdp:
+        if self.rtdp:
             return self.rtdp.get_current_datetime()
         return None
 

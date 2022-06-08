@@ -1,4 +1,4 @@
-from src import rtdp,broker_simulation,broker_ftx,crag,rtstr_tv,rtstr_super_reversal, analyser, chronos
+from src import rtdp,rtdp_simulation,broker_simulation,broker_ftx,crag,rtstr_tv,rtstr_super_reversal, analyser, chronos
 import pandas as pd
 
 _usage_str = """
@@ -10,9 +10,9 @@ def _usage():
     print(_usage_str)
 
 def crag_record():
-    sim_rtdp = rtdp.SimRealTimeDataProvider()
+    rtdp = rtdp_simulation.SimRealTimeDataProvider()
     ds = rtdp.DataDescription()
-    sim_rtdp.record(ds)
+    rtdp.record(ds)
 
 def crag_simulation():
     masterClock = chronos.Chronos()

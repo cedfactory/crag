@@ -1,11 +1,11 @@
-from . import broker,rtdp
+from . import broker,rtdp_simulation
 import csv
 
 class SimBroker(broker.Broker):
     def __init__(self, params = None):
         super().__init__(params)
 
-        self.rtdp = rtdp.SimRealTimeDataProvider(params)
+        self.rtdp = rtdp_simulation.SimRealTimeDataProvider(params)
         self.trades = []
 
     def initialize(self, params):
