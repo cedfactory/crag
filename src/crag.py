@@ -7,11 +7,9 @@ class Crag:
 
         self.broker = None
         self.rtstr = None
-        self.scheduler = None
         if params:
             self.broker = params.get("broker", self.broker)
             self.rtstr = params.get("rtstr", self.rtstr)
-            self.scheduler = params.get("chronos", self.scheduler)
 
         self.current_trades = []
 
@@ -33,7 +31,7 @@ class Crag:
             self.export_history("sim_broker_history.csv") # DEBUG
 
             # increment
-            self.scheduler.increment_time()
+            self.broker.tick()
 
     def step(self):
         print("[Crag] ⌛")
@@ -75,7 +73,6 @@ class Crag:
         self.cash = self.broker.get_cash()
         self.portfolio_value = self.rtstr.get_portfolio_value()
         current_datetime = self.broker.get_current_datetime()
-        # current_datetime = self.scheduler.get_current_time()
         trades = []
 
         # sell symbols
@@ -222,7 +219,7 @@ class Crag:
                 sell_trade.stimulus = df_selling_symbols["stimulus"][current_trade.symbol]
                 sell_trade.symbol = current_trade.symbol
                 sell_trade.symbol_price = self.broker.get_value(current_trade.symbol)
-                sell_trade.time = self.scheduler.get_current_time()
+                sell_trade.time = self.broker.get_current_datetime()
 
                 sell_trade.gross_size = current_trade.net_size         # Sell Net_size = current_trade.Gross size
                 sell_trade.gross_price = sell_trade.gross_size * sell_trade.symbol_price

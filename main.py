@@ -1,4 +1,4 @@
-from src import rtdp,rtdp_simulation,broker_simulation,broker_ftx,crag,rtstr_tv,rtstr_super_reversal, analyser, chronos
+from src import rtdp,rtdp_simulation,broker_simulation,broker_ftx,crag,rtstr_tv,rtstr_super_reversal, analyser
 import pandas as pd
 
 _usage_str = """
@@ -15,14 +15,12 @@ def crag_record():
     rtdp.record(ds)
 
 def crag_simulation():
-    masterClock = chronos.Chronos()
-
     strategy_super_reversal = rtstr_super_reversal.StrategySuperReversal(params={"rtctrl_verbose": False})
 
-    broker_params = {'cash':10000, 'chronos':masterClock}
+    broker_params = {'cash':10000}
     simu_broker = broker_simulation.SimBroker(broker_params)
 
-    crag_params = {'broker':simu_broker, 'rtstr':strategy_super_reversal, 'chronos':masterClock}
+    crag_params = {'broker':simu_broker, 'rtstr':strategy_super_reversal}
     bot = crag.Crag(crag_params)
 
     bot.run()

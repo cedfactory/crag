@@ -1,17 +1,17 @@
 from . import rtdp
 import pandas as pd
 import os
-from . import utils
+from . import utils,chronos
 from . import features # temporary (before using fdp)
 
 class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
     def __init__(self, params = None):
         print("[SimRealTimeDataProvider] initialization...")
         self.input = "./data/"
-        self.scheduler = None
+        self.scheduler = chronos.Chronos()
+
         if params:
             self.input = params.get("input", self.input)
-            self.scheduler = params.get("chronos", self.scheduler)
     
         self.data = {}
         # self.current_position = -1 # CEDE Test Debug
@@ -101,6 +101,9 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
                 return True
         return False
 
+    def tick(self):
+        self.scheduler.increment_time()
+
     def next(self, data_description):
         # self.current_position = self.current_position + 1
         self.current_position = self.scheduler.get_current_position()
@@ -142,12 +145,7 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
     def get_current_datetime(self):
         if not self._is_in_dataframe():
             return None
-        first_symbol = list(self.data.keys())[0]
-        df_symbol = self.data[first_symbol]
-        #value = df_symbol.iloc[self.current_position]['datetime']
-        #value = df_symbol.iloc[self.current_position]['timestamp']
-        value = self.scheduler.get_current_time()
-        return value
+        return self.scheduler.get_current_time()
 
     def record(self, data_description, target="./data/"):
         symbols = ','.join(data_description.symbols)

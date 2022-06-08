@@ -55,6 +55,10 @@ class IRealTimeDataProvider(metaclass = ABCMeta):
         pass
 
     @abstractmethod
+    def tick(self):
+        pass
+
+    @abstractmethod
     def next(self, data_description):
         pass
 
@@ -68,6 +72,9 @@ class IRealTimeDataProvider(metaclass = ABCMeta):
 
 class RealTimeDataProvider(IRealTimeDataProvider):
     def __init__(self, params = None):
+        pass
+
+    def tick(self):
         pass
 
     def next(self, data_description):

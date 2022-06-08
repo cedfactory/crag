@@ -15,6 +15,10 @@ class Broker(metaclass = ABCMeta):
     def get_current_data(self):
         return None
 
+    def tick(self):
+        if self.rtdp:
+            return self.rtdp.tick()
+
     def next(self, data_description):
         return None
 

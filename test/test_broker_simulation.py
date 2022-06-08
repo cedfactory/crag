@@ -1,13 +1,13 @@
 import pytest
 import os
 import csv
-from src import broker_simulation,trade,chronos
+from src import broker_simulation,trade
 
 class TestSimBroker:
 
     def test_initialize(self):
         # context
-        broker = broker_simulation.SimBroker({"chronos":chronos.Chronos()})
+        broker = broker_simulation.SimBroker()
         assert(broker.get_cash() == 0)
 
         # action
@@ -18,7 +18,7 @@ class TestSimBroker:
 
     def test_get_commission(self):
         # context
-        broker = broker_simulation.SimBroker({"chronos":chronos.Chronos()})
+        broker = broker_simulation.SimBroker()
 
         # action
         commission = broker.get_commission("FAKE")
@@ -50,7 +50,7 @@ class TestSimBroker:
 
     def test_execute_trade_ok(self):
         # context
-        broker = broker_simulation.SimBroker({"chronos":chronos.Chronos()})
+        broker = broker_simulation.SimBroker()
         broker.initialize({'cash':3})
         fake_trade = self.generate_trade()
 
@@ -63,7 +63,7 @@ class TestSimBroker:
 
     def test_execute_trade_ko(self):
         # context
-        broker = broker_simulation.SimBroker({"chronos":chronos.Chronos()})
+        broker = broker_simulation.SimBroker()
         broker.initialize({'cash':2})
         fake_trade = self.generate_trade()
 
@@ -76,7 +76,7 @@ class TestSimBroker:
 
     def test_export_history(self):
         # context
-        broker = broker_simulation.SimBroker({"chronos":chronos.Chronos()})
+        broker = broker_simulation.SimBroker()
         broker.initialize({'cash':3})
         fake_trade = self.generate_trade()
         broker.execute_trade(fake_trade)
