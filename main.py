@@ -10,9 +10,9 @@ def _usage():
     print(_usage_str)
 
 def crag_record():
-    rtdp = rtdp_simulation.SimRealTimeDataProvider()
+    my_rtdp = rtdp_simulation.SimRealTimeDataProvider()
     ds = rtdp.DataDescription()
-    rtdp.record(ds)
+    my_rtdp.record(ds, "./data2/")
 
 def crag_simulation():
     strategy_super_reversal = rtstr_super_reversal.StrategySuperReversal(params={"rtctrl_verbose": False})
