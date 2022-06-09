@@ -1,5 +1,6 @@
 from . import rtdp
 import pandas as pd
+import ta
 import os
 from . import utils,chronos
 from . import features # temporary (before using fdp)
@@ -35,11 +36,19 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
                 df["ema_short"] = df["ema_short"].shift(1)
                 df['super_trend_direction'] = df['super_trend_direction'].shift(1)
 
-                # df_buy_sell = pd.read_csv('BTC_buy_sell.csv')
-                # df['open_long_limit'] = df_buy_sell['open_long_limit']
-                # df['close_long_limit'] = df_buy_sell['close_long_limit']
+                # -- Trix Indicator --
+                trixLength = 9
+                trixSignal = 21
+                df['TRIX'] = ta.trend.ema_indicator(
+                    ta.trend.ema_indicator(ta.trend.ema_indicator(close=df['close'], window=trixLength),
+                                           window=trixLength), window=trixLength)
+                df['TRIX_PCT'] = df["TRIX"].pct_change() * 100
+                df['TRIX_SIGNAL'] = ta.trend.sma_indicator(df['TRIX_PCT'], trixSignal)
+                df['TRIX_HISTO'] = df['TRIX_PCT'] - df['TRIX_SIGNAL']
 
-                #df.set_index('datetime', inplace=True)
+                # -- Stochasitc RSI --
+                df['STOCH_RSI'] = ta.momentum.stochrsi(close=df['close'], window=14, smooth1=3, smooth2=3)
+
                 self.data[symbol] = df
                 list_dates.extend(self.data[symbol]['timestamp'].to_list())
                 list_dates = list(set(list_dates))

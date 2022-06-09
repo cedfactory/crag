@@ -1,4 +1,4 @@
-from src import rtdp,rtdp_simulation,broker_simulation,broker_ftx,crag,rtstr_super_reversal, analyser
+from src import rtdp,rtdp_simulation,broker_simulation,broker_ftx,crag,rtstr_super_reversal,rtstr_trix,analyser
 import pandas as pd
 
 _usage_str = """
@@ -14,13 +14,16 @@ def crag_record():
     ds = rtdp.DataDescription()
     rtdp.record(ds)
 
-def crag_simulation():
-    strategy_super_reversal = rtstr_super_reversal.StrategySuperReversal(params={"rtctrl_verbose": False})
+def crag_simulation(strategy_name):
+    if strategy_name == "super_reversal":
+        strategy = rtstr_super_reversal.StrategySuperReversal(params={"rtctrl_verbose": False})
+    if strategy_name == "trix":
+        strategy = rtstr_trix.StrategyTrix(params={"rtctrl_verbose": False})
 
     broker_params = {'cash':10000}
     simu_broker = broker_simulation.SimBroker(broker_params)
 
-    crag_params = {'broker':simu_broker, 'rtstr':strategy_super_reversal}
+    crag_params = {'broker':simu_broker, 'rtstr':strategy}
     bot = crag.Crag(crag_params)
 
     bot.run()
@@ -70,17 +73,6 @@ def crag_ftx():
     print("### my trades ###")
     my_broker_ftx.export_history()
 
-    '''
-    # test to buy
-    print("### create order ###")
-    buy_trade = trade.Trade()
-    buy_trade.type = "BUY"
-    buy_trade.symbol = "BTC/USD"
-    buy_trade.net_price = 0.0005
-    result = my_broker_ftx.execute_trade(buy_trade)
-    print(result)
-    '''
-
 
 if __name__ == '__main__':
     import sys
@@ -88,7 +80,7 @@ if __name__ == '__main__':
         if len(sys.argv) == 2 and (sys.argv[1] == "--record"):
             crag_record()
         elif len(sys.argv) == 2 and (sys.argv[1] == "--simulation"):
-            crag_simulation()
+            crag_simulation('trix')
         elif len(sys.argv) >= 2 and (sys.argv[1] == "--run"):
             strategy_name = ""
             if len(sys.argv) >= 3:
