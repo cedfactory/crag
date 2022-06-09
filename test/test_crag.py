@@ -5,10 +5,11 @@ import json
 from src import rtstr_super_reversal,crag,broker_simulation
 
 class TestCrag:
-    def test_run_no_data(self):
+
+    def test_step_no_current_data(self):
         # context
         strategy_super_reversal = rtstr_super_reversal.StrategySuperReversal()
-        simu_broker = broker_simulation.SimBroker({"input":"fake_directory"})
+        simu_broker = broker_simulation.SimBroker({"input":"fake_directory", "cash":10000})
         params = {"broker":simu_broker, "rtstr":strategy_super_reversal}
         bot = crag.Crag(params)
 
@@ -17,6 +18,18 @@ class TestCrag:
 
         # expectations
 
+    def test_step_trade(self):
+        # context
+        simu_broker = broker_simulation.SimBroker({"input":"./test/data_sim_real_time_data_provider", "cash":10000})
+        strategy_super_reversal = rtstr_super_reversal.StrategySuperReversal()
+        crag_params = {"broker":simu_broker, "rtstr":strategy_super_reversal}
+        bot = crag.Crag(crag_params)
+
+        # action
+        bot.run()
+
+        # expectations
+        assert(len(bot.current_trades) == 2)
 
 '''
     def test_run(self):
