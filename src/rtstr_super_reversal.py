@@ -113,11 +113,11 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
 
     def get_symbol_buying_size(self, symbol):
         if self.rtctrl.prices_symbols[symbol] < 0: # first init at -1
-            return 0
+            return 0, 0
 
         available_cash = self.rtctrl.wallet_cash
         if available_cash == 0:
-            return 0
+            return 0, 0
 
         wallet_value = available_cash
 
