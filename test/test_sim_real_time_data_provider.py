@@ -30,13 +30,13 @@ class TestSimRealTimeDataProvider:
         ds.features = ["high", "low"]
 
         # action
-        dp.next(ds)
-        dp.next(ds)
+        dp.tick()
+        dp.tick()
         dp.next(ds)
         value = dp.get_value("AAVE/USD")
         
         # expectations
-        assert(value == 189.53)
+        assert(value == 196.48)
 
     def test_get_value_ko_bad_symbol(self):
         # context
@@ -56,7 +56,6 @@ class TestSimRealTimeDataProvider:
         ds = rtdp.DataDescription()
         ds.symbols = ["AAVE/USD"]
         ds.features = ["high", "low"]
-        dp.next(ds)
 
         # action
         value = dp.get_value("AAVE/USD")
@@ -71,7 +70,6 @@ class TestSimRealTimeDataProvider:
         ds = rtdp.DataDescription()
         ds.symbols = ["AAVE/USD"]
         ds.features = ["high", "low"]
-        dp.next(ds)
 
         # action
         current_time = dp.get_current_datetime()
@@ -88,31 +86,11 @@ class TestSimRealTimeDataProvider:
         ds.features = ["high", "low"]
 
         # action
+        dp.tick()
         df = dp.next(ds)
         
         # expectations
         assert(isinstance(df, pd.DataFrame))
         assert(len(df.index) == 1)
-        assert(df["high"]["AAVE/USD"] == 191.99)
-        assert(df["low"]["AAVE/USD"] == 185.76)
-        
-    def test_next_next(self):
-        # context
-        input = "./test/data_sim_real_time_data_provider"
-        dp = rtdp_simulation.SimRealTimeDataProvider({'input': input})
-        ds = rtdp.DataDescription()
-        ds.symbols = ["AAVE/USD"]
-        ds.features = ["high", "low"]
-
-        # action
-        df = dp.next(ds)
-        df = dp.next(ds)
-        
-        # expectations
-        assert(isinstance(df, pd.DataFrame))
-        assert(len(df.index) == 1)
-        assert(df["high"]["AAVE/USD"] == 191.99)
-        assert(df["low"]["AAVE/USD"] == 185.76)
-        value = dp.get_value("AAVE/USD")
-        assert(value == 189.53)
-        
+        assert(df["high"]["AAVE/USD"] == 199.01)
+        assert(df["low"]["AAVE/USD"] == 189.53)
