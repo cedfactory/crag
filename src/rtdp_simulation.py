@@ -21,6 +21,7 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
         if self.input == None or not os.path.exists(self.input):
             print(" 💥 ",self.input," not found")
             return
+        print("[SimRealTimeDataProvider] reading data from ", self.input)
         list_dates = []
         files = os.listdir(self.input)
         for file in files:
@@ -111,18 +112,19 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
 
         df_result = pd.DataFrame(columns=['symbol'])
         for symbol in data_description.symbols:
-            df_symbol = self.data[symbol]
-            available_columns = list(df_symbol.columns)
-            row = {'symbol':symbol}
-            for feature in data_description.features:
-                if feature not in available_columns:
-                    return None
-                # row[feature] = [df_symbol[feature].iloc[self.current_position]]
-                row[feature] = [df_symbol[feature].iloc[self.scheduler.get_current_position()]]
+            if symbol in self.data:
+                df_symbol = self.data[symbol]
+                available_columns = list(df_symbol.columns)
+                row = {'symbol':symbol}
+                for feature in data_description.features:
+                    if feature not in available_columns:
+                        return None
+                    # row[feature] = [df_symbol[feature].iloc[self.current_position]]
+                    row[feature] = [df_symbol[feature].iloc[self.scheduler.get_current_position()]]
 
 
-            df_row = pd.DataFrame(data=row)
-            df_result = pd.concat((df_result, df_row), axis = 0)
+                df_row = pd.DataFrame(data=row)
+                df_result = pd.concat((df_result, df_row), axis = 0)
 
         df_result.set_index("symbol", inplace=True)
 
@@ -130,7 +132,7 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
 
     def get_value(self, symbol):
         if not self._is_in_dataframe() or not symbol in self.data:
-            if self._is_last_in_dataframe():
+            if self._is_last_in_dataframe() and symbol in self.data:
                 df_symbol = self.data[symbol]
                 value = df_symbol.iloc[len(self.data[symbol].index)-1]['close']
                 return value
