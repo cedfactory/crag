@@ -104,14 +104,10 @@ class StrategyTrix(rtstr.RealTimeStrategy):
             return 0
 
         available_cash = self.rtctrl.wallet_cash
+        if available_cash == 0:
+            return 0
 
-        try:
-            wallet_value = df_rtctrl["wallet_value"][symbol]
-        except:
-            wallet_value = available_cash
-
-        if wallet_value == 0:
-            print("ALERT wallet_value == 0")
+        wallet_value = available_cash
 
         cash_to_buy = wallet_value * self.SPLIT / 100
 
