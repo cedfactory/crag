@@ -8,23 +8,12 @@ class TestBrokerFTX:
 
         # expectations
         assert(broker.simulation == False)
-        print(broker.trades)
         assert(len(broker.trades) == 0)
-
-    def test_initialize_authentification_ok(self):
-        # context
-        broker = broker_ftx.BrokerFTX()
-
-        # action
-        authentificated = broker.initialize({})
-
-        # expectations
-        assert(authentificated == False)
+        assert(broker.authentificated == False)
 
     def test_get_value(self):
         # context
         broker = broker_ftx.BrokerFTX()
-        broker.initialize({})
 
         # action
         value = broker.get_value("BTC/USD")
@@ -35,7 +24,6 @@ class TestBrokerFTX:
     def test_get_cash(self):
         # context
         broker = broker_ftx.BrokerFTX()
-        broker.initialize({})
 
         # action
         value = broker.get_cash()

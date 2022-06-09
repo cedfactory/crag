@@ -8,17 +8,14 @@ class Broker(metaclass = ABCMeta):
             self.cash = params.get("cash", self.cash)
         self.rtdp = None
 
-    @abstractmethod
-    def initialize(self, params):
-        pass
-
     def tick(self):
         if self.rtdp:
             return self.rtdp.tick()
 
-    @abstractmethod
     def get_current_data(self, data_description):
-        pass
+        if self.rtdp:
+            return self.rtdp.get_current_data(data_description)
+        return None
 
     def get_cash(self):
         return self.cash

@@ -39,8 +39,7 @@ def crag_run(strategy_name, history):
         print("💥 missing known strategy ({})".format(strategy_name))
         return
 
-    broker_simu = broker_ftx.BrokerFTX({'simulation':True})
-    broker_simu.initialize({'cash':100})
+    broker_simu = broker_ftx.BrokerFTX({'simulation':True, 'cash':100})
 
     params = {'broker':broker_simu, 'rtstr':strategy_super_reversal}
     bot = crag.Crag(params)
@@ -56,8 +55,7 @@ def crag_analyse_resusts():
 
 def crag_ftx():
     my_broker_ftx = broker_ftx.BrokerFTX()
-    authentificated = my_broker_ftx.initialize({})
-    print("authentification : {}".format(authentificated))
+    print("authentification : {}".format(my_broker_ftx.authentificated))
 
     print("### balance ###")
     balance = my_broker_ftx.get_balance()

@@ -8,13 +8,6 @@ class SimBroker(broker.Broker):
         self.rtdp = rtdp_simulation.SimRealTimeDataProvider(params)
         self.trades = []
 
-    def initialize(self, params):
-        if params:
-            self.cash = params.get("cash", self.cash)
-
-    def get_current_data(self, data_description):
-        return self.rtdp.get_current_data(data_description)
-
     def get_value(self, symbol):
         return self.rtdp.get_value(symbol)
 

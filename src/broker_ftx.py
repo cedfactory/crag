@@ -15,11 +15,12 @@ class BrokerFTX(broker.Broker):
         self.rtdp = rtdp.RealTimeDataProvider(params)
         self.trades = []
         self.simulation = False
-        self.authentificated = False
+        self.authentificated = self.authentification()
         if params:
             self.simulation = params.get("simulation", self.simulation)
          
-    def initialize(self, params):
+    def authentification(self):
+        authentificated = False
         load_dotenv()
         ftx_api_key = os.getenv("FTX_API_KEY")
         ftx_api_secret = os.getenv("FTX_API_SECRET")
@@ -29,13 +30,10 @@ class BrokerFTX(broker.Broker):
             })
         # check authentification
         try:
-            self.authentificated = self.ftx_exchange.check_required_credentials()
+            authentificated = self.ftx_exchange.check_required_credentials()
         except ccxt.AuthenticationError as err:
             print("[BrokerFTX] AuthenticationError : ", err)
-        return self.authentificated
-
-    def get_current_data(self, data_description):
-        return self.rtdp.get_current_data(data_description)
+        return authentificated
 
     def authentication_required(fn):
         """decoration for methods that require authentification"""
