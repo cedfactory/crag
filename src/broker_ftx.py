@@ -34,11 +34,8 @@ class BrokerFTX(broker.Broker):
             print("[BrokerFTX] AuthenticationError : ", err)
         return self.authentificated
 
-    def get_current_data(self):
-        return self.rtdp.get_current_data()
-
-    def next(self, data_description):
-        return self.rtdp.next(data_description)
+    def get_current_data(self, data_description):
+        return self.rtdp.get_current_data(data_description)
 
     def authentication_required(fn):
         """decoration for methods that require authentification"""

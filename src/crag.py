@@ -48,7 +48,7 @@ class Crag:
             self.df_portfolio_status['value'] = 0
             self.df_portfolio_status.set_index('symbol', drop=True, inplace=True)
 
-        current_data = self.broker.next(ds)
+        current_data = self.broker.get_current_data(ds)
         # print(current_data) # DEBUG
         if current_data is None:
             print("[Crag] 💥 no current data")

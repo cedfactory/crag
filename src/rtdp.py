@@ -59,8 +59,8 @@ class IRealTimeDataProvider(metaclass = ABCMeta):
         pass
 
     @abstractmethod
-    def next(self, data_description):
-        pass
+    def get_current_data(self, data_description):
+        return None
 
     @abstractmethod
     def get_value(self, symbol):
@@ -77,7 +77,7 @@ class RealTimeDataProvider(IRealTimeDataProvider):
     def tick(self):
         pass
 
-    def next(self, data_description):
+    def get_current_data(self, data_description):
         symbols = ','.join(data_description.symbols)
         symbols = symbols.replace('/','_')
         url = "history?exchange=ftx&symbol="+symbols+"&start=01_05_2022"+"&interval=1h"+"&length=500"

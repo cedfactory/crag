@@ -104,7 +104,7 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
     def tick(self):
         self.scheduler.increment_time()
 
-    def next(self, data_description):
+    def get_current_data(self, data_description):
         self.current_position = self.scheduler.get_current_position()
         if not self._is_in_dataframe():
             return None

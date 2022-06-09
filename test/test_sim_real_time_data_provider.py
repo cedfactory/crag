@@ -32,7 +32,7 @@ class TestSimRealTimeDataProvider:
         # action
         dp.tick()
         dp.tick()
-        dp.next(ds)
+        dp.get_current_data(ds)
         value = dp.get_value("AAVE/USD")
         
         # expectations
@@ -77,7 +77,7 @@ class TestSimRealTimeDataProvider:
         # expectations
         assert(current_time == "2021-01-17 15:00:00")
 
-    def test_next(self):
+    def test_get_current_data(self):
         # context
         input = "./test/data_sim_real_time_data_provider"
         dp = rtdp_simulation.SimRealTimeDataProvider({'input': input})
@@ -87,7 +87,7 @@ class TestSimRealTimeDataProvider:
 
         # action
         dp.tick()
-        df = dp.next(ds)
+        df = dp.get_current_data(ds)
         
         # expectations
         assert(isinstance(df, pd.DataFrame))

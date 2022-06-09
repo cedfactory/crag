@@ -12,8 +12,8 @@ class SimBroker(broker.Broker):
         if params:
             self.cash = params.get("cash", self.cash)
 
-    def next(self, data_description):
-        return self.rtdp.next(data_description)
+    def get_current_data(self, data_description):
+        return self.rtdp.get_current_data(data_description)
 
     def get_value(self, symbol):
         return self.rtdp.get_value(symbol)
