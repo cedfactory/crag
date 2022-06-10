@@ -1,5 +1,6 @@
 from . import rtdp
 import pandas as pd
+import numpy as np
 import ta
 import os
 from . import utils,chronos
@@ -38,17 +39,23 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
                 df['super_trend_direction'] = df['super_trend_direction'].shift(1)
 
                 # -- Trix Indicator --
-                trixLength = 9
-                trixSignal = 21
-                df['TRIX'] = ta.trend.ema_indicator(
-                    ta.trend.ema_indicator(ta.trend.ema_indicator(close=df['close'], window=trixLength),
-                                           window=trixLength), window=trixLength)
-                df['TRIX_PCT'] = df["TRIX"].pct_change() * 100
-                df['TRIX_SIGNAL'] = ta.trend.sma_indicator(df['TRIX_PCT'], trixSignal)
-                df['TRIX_HISTO'] = df['TRIX_PCT'] - df['TRIX_SIGNAL']
+                df = features.add_trix_indicators(df)
 
-                # -- Stochasitc RSI --
-                df['STOCH_RSI'] = ta.momentum.stochrsi(close=df['close'], window=14, smooth1=3, smooth2=3)
+                # -- cryptobot -- #
+                # add sma cross over 12/26
+                df = features.add_ema_cross_over(df, 12, 26)
+
+                # add macd
+                df = features.add_macd(df)
+
+                # add golden cross
+                df = features.add_golden_cross(df)
+
+                # Add the On-Balance Volume (OBV)
+                df = features.addOBV(df)
+
+                # Add Elder Ray Index
+                df = features.addElderRayIndex(df)
 
                 self.data[symbol] = df
                 list_dates.extend(self.data[symbol]['timestamp'].to_list())

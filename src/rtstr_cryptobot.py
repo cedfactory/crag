@@ -9,7 +9,7 @@ import datetime
 
 from . import rtdp, rtstr, utils, rtctrl
 
-class StrategyTrix(rtstr.RealTimeStrategy):
+class StrategyCryptobot(rtstr.RealTimeStrategy):
 
     def __init__(self, params=None):
         super().__init__(params)
@@ -25,8 +25,13 @@ class StrategyTrix(rtstr.RealTimeStrategy):
     def get_data_description(self):
         ds = rtdp.DataDescription()
         #ds.symbols = ds.symbols[:2]
-        ds.features = { "TRIX_HISTO" : {"feature": "trix", "period": 21},
-                        "STOCH_RSI": {"feature": "stoch_rsi", "period": 14}
+        ds.features = { "ema12gtema26co": {"feature": "ema12gtema26co", "period": 26},  # used for buying signal
+                        "macdgtsignal":   {"feature": "macdgtsignal", "period": 26},  # used for buying signal
+                        "goldencross":    {"feature": "goldencross", "period": 14},  # used for buying signal
+                        "obv_pc":         {"feature": "obv_pc", "period": 14},  # used for buying signal
+                        "eri_buy":        {"feature": "eri_buy", "period": 14}, # used for buying signal
+                        "ema12ltema26co": {"feature": "ema12ltema26co", "period": 26}, # used for selling signal
+                        "macdltsignal":   {"feature": "macdltsignal", "period": 26}    # used for selling signal
                         }
 
         return ds
@@ -37,7 +42,12 @@ class StrategyTrix(rtstr.RealTimeStrategy):
     def get_df_buying_symbols(self):
         df_result = pd.DataFrame(columns = ['symbol', 'size', 'percent'])
         for symbol in self.df_current_data.index.to_list():
-            if(self.df_current_data['TRIX_HISTO'][symbol] > 0 and self.df_current_data['STOCH_RSI'][symbol] < 0.8):
+            if((self.df_current_data["ema12gtema26co"][symbol] is True)
+                    and (self.df_current_data["macdgtsignal"][symbol] is True)
+                    and (self.df_current_data["goldencross"][symbol] is True)
+                    and (self.df_current_data["obv_pc"][symbol] > -5)
+                    and (self.df_current_data["eri_buy"][symbol] is True)):
+
                 size, percent = self.get_symbol_buying_size(symbol)
                 df_row = pd.DataFrame(data={"symbol":[symbol], "size":[size], 'percent':[percent]})
                 df_result = pd.concat((df_result, df_row), axis = 0)
@@ -73,7 +83,9 @@ class StrategyTrix(rtstr.RealTimeStrategy):
     def get_df_selling_symbols(self, lst_symbols):
         df_result = pd.DataFrame(columns = ['symbol', 'stimulus'])
         for symbol in self.df_current_data.index.to_list():
-            if(self.df_current_data['TRIX_HISTO'][symbol] < 0 and self.df_current_data['STOCH_RSI'][symbol] > 0.2):
+            if((self.df_current_data["ema12ltema26co"][symbol] is True)
+                    and (self.df_current_data["macdltsignal"][symbol] is True)):
+
                 df_row = pd.DataFrame(data={"symbol":[symbol], "stimulus":["SELL"]})
                 df_result = pd.concat((df_result, df_row), axis = 0)
 
