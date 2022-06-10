@@ -1,4 +1,4 @@
-from src import rtdp,rtdp_simulation,broker_simulation,broker_ftx,crag,rtstr_super_reversal,rtstr_trix,analyser
+from src import rtdp,rtdp_simulation,broker_simulation,broker_ftx,crag,rtstr_super_reversal,rtstr_trix,rtstr_cryptobot,analyser
 import pandas as pd
 
 _usage_str = """
@@ -15,10 +15,13 @@ def crag_record():
     rtdp.record(ds)
 
 def crag_simulation(strategy_name):
+    print("selected strategy: ",strategy_name)
     if strategy_name == "super_reversal":
         strategy = rtstr_super_reversal.StrategySuperReversal(params={"rtctrl_verbose": False})
     if strategy_name == "trix":
         strategy = rtstr_trix.StrategyTrix(params={"rtctrl_verbose": False})
+    if strategy_name == "cryptobot":
+        strategy = rtstr_cryptobot.StrategyCryptobot(params={"rtctrl_verbose": False})
 
     broker_params = {'cash':10000}
     simu_broker = broker_simulation.SimBroker(broker_params)
@@ -80,7 +83,7 @@ if __name__ == '__main__':
         if len(sys.argv) == 2 and (sys.argv[1] == "--record"):
             crag_record()
         elif len(sys.argv) == 2 and (sys.argv[1] == "--simulation"):
-            crag_simulation('trix')
+            crag_simulation('cryptobot')
         elif len(sys.argv) >= 2 and (sys.argv[1] == "--run"):
             strategy_name = ""
             if len(sys.argv) >= 3:
