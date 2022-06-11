@@ -1,4 +1,4 @@
-from src import rtdp,rtdp_simulation,broker_simulation,broker_ftx,crag,rtstr_super_reversal,rtstr_trix,rtstr_cryptobot,analyser
+from src import rtdp,rtdp_simulation,broker_simulation,broker_ftx,crag,rtstr_super_reversal,rtstr_trix,rtstr_cryptobot,analyser,benchmark
 import pandas as pd
 
 _usage_str = """
@@ -21,7 +21,7 @@ def crag_simulation(strategy_name):
     if strategy_name == "trix":
         strategy = rtstr_trix.StrategyTrix(params={"rtctrl_verbose": False})
     if strategy_name == "cryptobot":
-        strategy = rtstr_cryptobot.StrategyCryptobot(params={"rtctrl_verbose": True})
+        strategy = rtstr_cryptobot.StrategyCryptobot(params={"rtctrl_verbose": False})
 
     broker_params = {'cash':10000}
     simu_broker = broker_simulation.SimBroker(broker_params)
@@ -60,6 +60,13 @@ def crag_analyse_resusts():
     my_analyser = analyser.Analyser(params)
     my_analyser.run_analyse()
 
+def crag_benchmark_resusts():
+    params = {}
+
+    my_benchmark = benchmark.Benchmark(params)
+    my_benchmark.run_benchmark()
+
+
 def crag_ftx():
     my_broker_ftx = broker_ftx.BrokerFTX()
     authentificated = my_broker_ftx.initialize({})
@@ -83,7 +90,7 @@ if __name__ == '__main__':
         if len(sys.argv) == 2 and (sys.argv[1] == "--record"):
             crag_record()
         elif len(sys.argv) == 2 and (sys.argv[1] == "--simulation"):
-            crag_simulation('cryptobot')
+            crag_simulation('super_reversal')
         elif len(sys.argv) >= 2 and (sys.argv[1] == "--run"):
             strategy_name = ""
             if len(sys.argv) >= 3:
@@ -96,6 +103,8 @@ if __name__ == '__main__':
             crag_ftx()
         elif len(sys.argv) >= 2 and (sys.argv[1] == "--analyse"):
             crag_analyse_resusts()
+        elif len(sys.argv) >= 2 and (sys.argv[1] == "--benchmark"):
+            crag_benchmark_resusts()
         else:
             _usage()
     else:
