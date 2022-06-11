@@ -21,7 +21,7 @@ def crag_simulation(strategy_name):
     if strategy_name == "trix":
         strategy = rtstr_trix.StrategyTrix(params={"rtctrl_verbose": False})
     if strategy_name == "cryptobot":
-        strategy = rtstr_cryptobot.StrategyCryptobot(params={"rtctrl_verbose": False})
+        strategy = rtstr_cryptobot.StrategyCryptobot(params={"rtctrl_verbose": True})
 
     broker_params = {'cash':10000}
     simu_broker = broker_simulation.SimBroker(broker_params)
