@@ -30,8 +30,6 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
                         "ema_short" : {"feature": "ema", "period": 5},
                         "ema_long" : {"feature": "ema", "period": 400},
                         "super_trend_direction" : {"feature": "super_trend"}
-                        # "open_long_limit": None,
-                        # "close_long_limit": None
                         }
 
         return ds
