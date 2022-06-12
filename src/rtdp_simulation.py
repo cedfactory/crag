@@ -63,6 +63,9 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
                 df = features.addSTOCHRSI(df, 14)
                 df = features.addWILLR(df, 14)
 
+                # VuManChu Cipher B
+                df = features.add_feature_VMC(df, 200, 50, 14)
+
                 self.data[symbol] = df
                 list_dates.extend(self.data[symbol]['timestamp'].to_list())
                 list_dates = list(set(list_dates))

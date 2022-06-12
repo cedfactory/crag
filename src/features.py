@@ -80,7 +80,55 @@ class SuperTrend():
         
     def super_trend_direction(self):
         return self.st['Supertrend']
-    
+
+
+class VMC_strat():
+    def __init__(
+            self,
+            df_list,
+            oldest_pair,
+            EMA_long_window=200,
+            EMA_short_window=50,
+            chop_window=14,
+            take_profit=0.05,
+            stop_loss=0.05
+    ):
+        self.df_list = df_list
+        self.oldest_pair = oldest_pair
+        self.EMA_long_window = EMA_long_window
+        self.EMA_short_window = EMA_short_window
+        self.chop_window = chop_window
+        self.take_profit = take_profit
+        self.stop_loss = stop_loss
+
+    def populate_indicators(self, show_log=False):
+        # -- Clear dataset --
+        for pair in self.df_list:
+            df = self.df_list[pair]
+            df.drop(columns=df.columns.difference(['open', 'high', 'low', 'close', 'volume']), inplace=True)
+
+            # -- Populate indicators --
+
+            df['HLC3'] = (df['high'] + df['close'] + df['low']) / 3
+            vmc = VMC(high=df['high'], low=df['low'], close=df['HLC3'], open=df['open'])
+            df['VMC_WAVE1'] = vmc.wave_1()
+            df['VMC_WAVE2'] = vmc.wave_2()
+            vmc = VMC(high=df['high'], low=df['low'], close=df['close'], open=df['open'])
+            df['MONEY_FLOW'] = vmc.money_flow()
+
+            df['ema_short'] = ta.trend.ema_indicator(close=df['close'], window=self.EMA_short_window)
+            df['ema_long'] = ta.trend.ema_indicator(close=df['close'], window=self.EMA_long_window)
+
+            df["CHOP"] = chop(df['high'], df['low'], df['close'], window=self.chop_window)
+
+            df = get_n_columns(df, ["VMC_WAVE1", "VMC_WAVE2", "MONEY_FLOW", "ema_short", "ema_long", "CHOP"], 1)
+
+            self.df_list[pair] = df
+            # -- Log --
+            if (show_log):
+                print(self.df_list[self.oldest_pair])
+
+        return self.df_list[self.oldest_pair]
 
 def add_features(df, features):
     df["ema_short"] = TA.EMA(df, period = 5).copy()
@@ -225,3 +273,124 @@ def addWILLR(df, willWindow=14):
     df['WILLR'] = ta.momentum.williams_r(high=df['high'], low=df['low'], close=df['close'], lbp=willWindow)
     return df
 
+class VMC():
+    """ VuManChu Cipher B + Divergences
+        Args:
+            high(pandas.Series): dataset 'High' column.
+            low(pandas.Series): dataset 'Low' column.
+            close(pandas.Series): dataset 'Close' column.
+            wtChannelLen(int): n period.
+            wtAverageLen(int): n period.
+            wtMALen(int): n period.
+            rsiMFIperiod(int): n period.
+            rsiMFIMultiplier(int): n period.
+            rsiMFIPosY(int): n period.
+    """
+
+    def __init__(
+        self: pd.Series,
+        open: pd.Series,
+        high: pd.Series,
+        low: pd.Series,
+        close: pd.Series,
+        wtChannelLen: int = 9,
+        wtAverageLen: int = 12,
+        wtMALen: int = 3,
+        rsiMFIperiod: int = 60,
+        rsiMFIMultiplier: int = 150,
+        rsiMFIPosY: int = 2.5
+    ) -> None:
+        self._high = high
+        self._low = low
+        self._close = close
+        self._open = open
+        self._wtChannelLen = wtChannelLen
+        self._wtAverageLen = wtAverageLen
+        self._wtMALen = wtMALen
+        self._rsiMFIperiod = rsiMFIperiod
+        self._rsiMFIMultiplier = rsiMFIMultiplier
+        self._rsiMFIPosY = rsiMFIPosY
+
+        self._run()
+        self.wave_1()
+
+    def _run(self) -> None:
+        self.hlc3 = (self._close + self._high + self._low)
+        self._esa = ta.trend.ema_indicator(
+            close=self.hlc3, window=self._wtChannelLen)
+        self._de = ta.trend.ema_indicator(
+            close=abs(self.hlc3 - self._esa), window=self._wtChannelLen)
+        self._rsi = ta.trend.sma_indicator(self._close, self._rsiMFIperiod)
+        self._ci = (self.hlc3 - self._esa) / (0.015 * self._de)
+
+    def wave_1(self) -> pd.Series:
+        """VMC Wave 1
+        Returns:
+            pandas.Series: New feature generated.
+        """
+        wt1 = ta.trend.ema_indicator(self._ci, self._wtAverageLen)
+        return pd.Series(wt1, name="wt1")
+
+    def wave_2(self) -> pd.Series:
+        """VMC Wave 2
+        Returns:
+            pandas.Series: New feature generated.
+        """
+        wt2 = ta.trend.sma_indicator(self.wave_1(), self._wtMALen)
+        return pd.Series(wt2, name="wt2")
+
+    def money_flow(self) -> pd.Series:
+        """VMC Money Flow
+        Returns:
+            pandas.Series: New feature generated.
+        """
+        mfi = ((self._close - self._open) /
+               (self._high - self._low)) * self._rsiMFIMultiplier
+        rsi = ta.trend.sma_indicator(mfi, self._rsiMFIperiod)
+        money_flow = rsi - self._rsiMFIPosY
+        return pd.Series(money_flow, name="money_flow")
+
+def chop(high, low, close, window=14):
+    # Choppiness indicator
+
+    tr1 = pd.DataFrame(high - low).rename(columns={0: 'tr1'})
+    tr2 = pd.DataFrame(abs(high - close.shift(1))
+                       ).rename(columns={0: 'tr2'})
+    tr3 = pd.DataFrame(abs(low - close.shift(1))
+                       ).rename(columns={0: 'tr3'})
+    frames = [tr1, tr2, tr3]
+    tr = pd.concat(frames, axis=1, join='inner').dropna().max(axis=1)
+    atr = tr.rolling(1).mean()
+    highh = high.rolling(window).max()
+    lowl = low.rolling(window).min()
+    chop_serie = 100 * np.log10((atr.rolling(window).sum()) /
+                          (highh - lowl)) / np.log10(window)
+
+    return pd.Series(chop_serie, name="CHOP")
+
+def add_feature_VMC(df, EMA_long_window=200, EMA_short_window=50,chop_window=14):
+
+    # -- Populate indicators --
+    df['HLC3'] = (df['high'] + df['close'] + df['low']) / 3
+
+    vmc = VMC(high=df['high'], low=df['low'], close=df['HLC3'], open=df['open'])
+
+    df['VMC_WAVE1'] = vmc.wave_1()
+    df['VMC_WAVE2'] = vmc.wave_2()
+    vmc = VMC(high=df['high'], low=df['low'], close=df['close'], open=df['open'])
+    df['MONEY_FLOW'] = vmc.money_flow()
+
+    df['ema_short_vmc'] = ta.trend.ema_indicator(close=df['close'], window=EMA_short_window)
+    df['ema_long_vmc'] = ta.trend.ema_indicator(close=df['close'], window=EMA_long_window)
+
+    df["CHOP"] = chop(df['high'], df['low'], df['close'], window=chop_window)
+
+    df = get_n_columns(df, ['VMC_WAVE1', 'VMC_WAVE2'], n=1)
+
+    return df
+
+def get_n_columns(df, columns, n=1):
+    dt = df.copy()
+    for col in columns:
+        dt["n"+str(n)+"_"+col] = dt[col].shift(n)
+    return dt
