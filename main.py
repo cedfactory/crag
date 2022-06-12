@@ -1,4 +1,4 @@
-from src import rtdp,rtdp_simulation,broker_simulation,broker_ftx,crag,rtstr_super_reversal,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,analyser,benchmark
+from src import rtdp,rtdp_simulation,broker_simulation,broker_ftx,crag,rtstr_super_reversal,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC,analyser,benchmark
 import pandas as pd
 
 _usage_str = """
@@ -24,6 +24,8 @@ def crag_simulation(strategy_name):
         strategy = rtstr_cryptobot.StrategyCryptobot(params={"rtctrl_verbose": False})
     if strategy_name == "bigwill":
         strategy = rtstr_bigwill.StrategyBigWill(params={"rtctrl_verbose": False})
+    if strategy_name == "vmc":
+        strategy = rtstr_VMC.StrategyVMC(params={"rtctrl_verbose": False})
 
     broker_params = {'cash':10000}
     simu_broker = broker_simulation.SimBroker(broker_params)
@@ -90,7 +92,7 @@ if __name__ == '__main__':
         if len(sys.argv) == 2 and (sys.argv[1] == "--record"):
             crag_record()
         elif len(sys.argv) == 2 and (sys.argv[1] == "--simulation"):
-            crag_simulation('bigwill')
+            crag_simulation('vmc')
         elif len(sys.argv) >= 2 and (sys.argv[1] == "--run"):
             strategy_name = ""
             if len(sys.argv) >= 3:
