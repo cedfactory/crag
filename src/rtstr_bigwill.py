@@ -34,6 +34,7 @@ class StrategyBigWill(rtstr.RealTimeStrategy):
         ds.features = { "low" : None,
                         "high" : None,
                         "AO" : {"feature": "AO", "period": 22},
+                        "previous_AO": {"feature": "previous_AO", "period": 22},
                         "EMA100" : {"feature": "EMA100", "period": 100},
                         "EMA200": {"feature": "EMA200", "period": 200},
                         "STOCH_RSI": {"feature": "STOCH_RSI", "period": 14},
