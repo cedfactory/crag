@@ -200,3 +200,28 @@ def addElderRayIndex(df):
     ) | ((df["elder_ray_bear"] < df["elder_ray_bear"].shift(1)))
 
     return df
+
+
+# BIGWILL features
+def addAO(df, aoParam1=6, aoParam2=22):
+    df['AO'] = ta.momentum.awesome_oscillator(df['high'], df['low'], window1=aoParam1, window2=aoParam2)
+    df['previous_AO'] = df['AO'].shift(1)
+    return df
+
+# DEBUG generic EMA could be used for to avoid errors for now...
+def addEMA100(df):
+    df['EMA100'] = ta.trend.ema_indicator(close=df['close'], window=100)
+    return df
+
+def addEMA200(df):
+    df['EMA200'] = ta.trend.ema_indicator(close=df['close'], window=200)
+    return df
+
+def addSTOCHRSI(df, stochWindow=14):
+    df['STOCH_RSI'] = ta.momentum.stochrsi(close=df['close'], window=stochWindow)
+    return df
+
+def addWILLR(df, willWindow=14):
+    df['WILLR'] = ta.momentum.williams_r(high=df['high'], low=df['low'], close=df['close'], lbp=willWindow)
+    return df
+

@@ -94,7 +94,7 @@ class Benchmark:
         plt.savefig(self.path + 'transaction_total.png')
         plt.clf()
 
-    def run_analyse(self):
+    def run_benchmark(self):
         pass
 
 

@@ -57,6 +57,13 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
                 # Add Elder Ray Index
                 df = features.addElderRayIndex(df)
 
+                # BIGWILL features
+                df = features.addAO(df, 6, 22)
+                df = features.addEMA100(df)
+                df = features.addEMA200(df)
+                df = features.addSTOCHRSI(df, 14)
+                df = features.addWILLR(df, 14)
+
                 self.data[symbol] = df
                 list_dates.extend(self.data[symbol]['timestamp'].to_list())
                 list_dates = list(set(list_dates))
