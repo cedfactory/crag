@@ -37,7 +37,9 @@ class StrategyTrix(rtstr.RealTimeStrategy):
     def get_df_buying_symbols(self):
         df_result = pd.DataFrame(columns = ['symbol', 'size', 'percent'])
         for symbol in self.df_current_data.index.to_list():
-            if(self.df_current_data['TRIX_HISTO'][symbol] > 0 and self.df_current_data['STOCH_RSI'][symbol] < 0.8):
+            if(
+                    self.df_current_data['TRIX_HISTO'][symbol] > 0 and self.df_current_data['STOCH_RSI'][symbol] < 0.8
+            ):
                 size, percent = self.get_symbol_buying_size(symbol)
                 df_row = pd.DataFrame(data={"symbol":[symbol], "size":[size], 'percent':[percent]})
                 df_result = pd.concat((df_result, df_row), axis = 0)
@@ -73,7 +75,9 @@ class StrategyTrix(rtstr.RealTimeStrategy):
     def get_df_selling_symbols(self, lst_symbols):
         df_result = pd.DataFrame(columns = ['symbol', 'stimulus'])
         for symbol in self.df_current_data.index.to_list():
-            if(self.df_current_data['TRIX_HISTO'][symbol] < 0 and self.df_current_data['STOCH_RSI'][symbol] > 0.2):
+            if(
+                    self.df_current_data['TRIX_HISTO'][symbol] < 0 and self.df_current_data['STOCH_RSI'][symbol] > 0.2
+            ):
                 df_row = pd.DataFrame(data={"symbol":[symbol], "stimulus":["SELL"]})
                 df_result = pd.concat((df_result, df_row), axis = 0)
 

@@ -42,11 +42,13 @@ class StrategyCryptobot(rtstr.RealTimeStrategy):
     def get_df_buying_symbols(self):
         df_result = pd.DataFrame(columns = ['symbol', 'size', 'percent'])
         for symbol in self.df_current_data.index.to_list():
-            if((self.df_current_data["ema12gtema26co"][symbol] is True)
+            if(
+                    (self.df_current_data["ema12gtema26co"][symbol] is True)
                     and (self.df_current_data["macdgtsignal"][symbol] is True)
                     and (self.df_current_data["goldencross"][symbol] is True)
                     and (self.df_current_data["obv_pc"][symbol] > -5)
-                    and (self.df_current_data["eri_buy"][symbol] is True)):
+                    and (self.df_current_data["eri_buy"][symbol] is True)
+            ):
 
                 size, percent = self.get_symbol_buying_size(symbol)
                 df_row = pd.DataFrame(data={"symbol":[symbol], "size":[size], 'percent':[percent]})
@@ -83,9 +85,10 @@ class StrategyCryptobot(rtstr.RealTimeStrategy):
     def get_df_selling_symbols(self, lst_symbols):
         df_result = pd.DataFrame(columns = ['symbol', 'stimulus'])
         for symbol in self.df_current_data.index.to_list():
-            if((self.df_current_data["ema12ltema26co"][symbol] is True)
-                    and (self.df_current_data["macdltsignal"][symbol] is True)):
-
+            if(
+                    (self.df_current_data["ema12ltema26co"][symbol] is True)
+                    and (self.df_current_data["macdltsignal"][symbol] is True)
+            ):
                 df_row = pd.DataFrame(data={"symbol":[symbol], "stimulus":["SELL"]})
                 df_result = pd.concat((df_result, df_row), axis = 0)
 

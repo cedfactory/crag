@@ -55,7 +55,6 @@ class StrategyBigWill(rtstr.RealTimeStrategy):
                     and self.df_current_data['WILLR'][symbol] < self.willOverSold
                     and self.df_current_data['EMA100'][symbol] > self.df_current_data['EMA200'][symbol]
             ):
-
                 size, percent = self.get_symbol_buying_size(symbol)
                 df_row = pd.DataFrame(data={"symbol":[symbol], "size":[size], 'percent':[percent]})
                 df_result = pd.concat((df_result, df_row), axis = 0)
@@ -96,7 +95,6 @@ class StrategyBigWill(rtstr.RealTimeStrategy):
                      and self.df_current_data['STOCH_RSI'][symbol] >  self.stochOverSold)
                     or self.df_current_data['WILLR'][symbol] > self.willOverBought
             ):
-
                 df_row = pd.DataFrame(data={"symbol":[symbol], "stimulus":["SELL"]})
                 df_result = pd.concat((df_result, df_row), axis = 0)
 
