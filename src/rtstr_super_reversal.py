@@ -16,8 +16,8 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
 
         self.rtctrl = rtctrl.rtctrl(params=params)
 
-        self.SL = -0.2           # Stop Loss %
-        self.TP = 0.2            # Take Profit %
+        self.SL = -100           # Stop Loss %
+        self.TP = 20             # Take Profit %
         self.SPLIT = 5           # Asset Split %
         self.MAX_POSITION = 5    # Asset Overall Percent Size
         self.match_full_position = True
@@ -40,13 +40,11 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
     def get_df_buying_symbols(self):
         df_result = pd.DataFrame(columns = ['symbol', 'size', 'percent'])
         for symbol in self.df_current_data.index.to_list():
-            if (self.df_current_data['ema_short'][symbol] >= self.df_current_data['ema_long'][symbol]
-                and self.df_current_data['super_trend_direction'][symbol] == True
-                and self.df_current_data['ema_short'][symbol] > self.df_current_data['low'][symbol]):
-                # DEBUG For test purposes.....
-                # pass
-                #
-                # if(self.df_current_data['open_long_limit'][symbol] == True):
+            if (
+                    self.df_current_data['ema_short'][symbol] >= self.df_current_data['ema_long'][symbol]
+                    and self.df_current_data['super_trend_direction'][symbol] == True
+                    and self.df_current_data['ema_short'][symbol] > self.df_current_data['low'][symbol]
+            ):
                 size, percent = self.get_symbol_buying_size(symbol)
                 df_row = pd.DataFrame(data={"symbol":[symbol], "size":[size], 'percent':[percent]})
                 df_result = pd.concat((df_result, df_row), axis = 0)
@@ -79,18 +77,28 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
         df_result.reset_index(inplace=True, drop=True)
         return df_result
 
-    def get_df_selling_symbols(self, lst_symbols):
+    def get_df_selling_symbols(self, lst_symbols, df_sl_tp):
         df_result = pd.DataFrame(columns = ['symbol', 'stimulus'])
         for symbol in self.df_current_data.index.to_list():
-            if ((self.df_current_data['ema_short'][symbol] <= self.df_current_data['ema_long'][symbol]
-                or self.df_current_data['super_trend_direction'][symbol] == False)
-                and self.df_current_data['ema_short'][symbol] < self.df_current_data['high'][symbol]):
-                # DEBUG For test purposes.....
-                #pass
-                #
-            #if (self.df_current_data['close_long_limit'][symbol] == True):
+            if (
+                    (self.df_current_data['ema_short'][symbol] <= self.df_current_data['ema_long'][symbol]
+                     or self.df_current_data['super_trend_direction'][symbol] == False)
+                    and self.df_current_data['ema_short'][symbol] < self.df_current_data['high'][symbol]
+            ) or (
+                    (df_sl_tp['roi_sl_tp'][symbol] > self.TP)
+                    or (df_sl_tp['roi_sl_tp'][symbol] < self.SL)
+            ):
                 df_row = pd.DataFrame(data={"symbol":[symbol], "stimulus":["SELL"]})
                 df_result = pd.concat((df_result, df_row), axis = 0)
+
+                if(df_sl_tp['roi_sl_tp'][symbol] > self.TP):
+                    print('=========================== TAKE PROFIT ==========================')
+                    print('=========================== ', symbol,' ==========================')
+                    print('=========================== ', df_sl_tp['roi_sl_tp'][symbol], ' ==========================')
+                if(df_sl_tp['roi_sl_tp'][symbol] < self.SL):
+                    print('=========================== STOP LOST ==========================')
+                    print('=========================== ', symbol,' ==========================')
+                    print('=========================== ', df_sl_tp['roi_sl_tp'][symbol], ' ==========================')
 
         return df_result
 

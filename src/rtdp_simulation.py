@@ -92,18 +92,6 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
             symbol_file_name = symbol.replace("/", "_")
             self.data[symbol].to_csv('./data_processed/' + symbol_file_name + '.csv')
 
-    '''
-    def _is_in_dataframe(self):
-        if self.current_position < 0:
-            return False
-        if not bool(self.data):
-            return False
-        for symbol in self.data:
-            if self.current_position >= len(self.data[symbol].index):
-                return False
-        return True
-    '''
-
     def _is_in_dataframe(self):
         if self.scheduler.get_current_position() < 0:
             return False
@@ -113,14 +101,6 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
             if self.scheduler.get_current_position() >= len(self.data[symbol].index):
                 return False
         return True
-
-    '''
-    def _is_last_in_dataframe(self):
-        for symbol in self.data:
-            if self.current_position >= len(self.data[symbol].index):
-                return True
-        return False
-    '''
 
     def _is_last_in_dataframe(self):
         for symbol in self.data:
