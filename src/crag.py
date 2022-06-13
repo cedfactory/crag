@@ -19,8 +19,7 @@ class Crag:
         self.portfolio_value = 0
         self.wallet_value = 0
 
-        self.static_size = True
-        self.size = 1
+
 
     def run(self, interval=1):
         done = False
