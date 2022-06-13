@@ -39,7 +39,8 @@ default_symbols = [
     ]
 '''
 default_symbols = [
-        "BTC/USD"
+        # "BTC/USD"
+        "OMG/USD"
     ]
 '''
 

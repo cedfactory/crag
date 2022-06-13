@@ -15,10 +15,9 @@ class Crag:
 
         self.cash = 0
         self.init_cash_value = 0
-        self.df_portfolio_status = pd.DataFrame(columns=['symbol', 'portfolio_size', 'value'])
+        self.df_portfolio_status = pd.DataFrame(columns=['symbol', 'portfolio_size', 'value', 'buying_value', 'roi_sl_tp'])
         self.portfolio_value = 0
         self.wallet_value = 0
-
 
 
     def run(self, interval=1):
@@ -45,6 +44,8 @@ class Crag:
             self.df_portfolio_status['symbol'] = ds.symbols
             self.df_portfolio_status['portfolio_size'] = 0
             self.df_portfolio_status['value'] = 0
+            self.df_portfolio_status['buying_value'] = 0
+            self.df_portfolio_status['roi_sl_tp'] = 0
             self.df_portfolio_status.set_index('symbol', drop=True, inplace=True)
 
         current_data = self.broker.get_current_data(ds)
@@ -77,7 +78,8 @@ class Crag:
         # sell symbols
         lst_symbols = [current_trade.symbol for current_trade in self.current_trades if current_trade.type == "BUY"]
         lst_symbols = list(set(lst_symbols))
-        df_selling_symbols = self.rtstr.get_df_selling_symbols(lst_symbols)
+        self.update_df_roi_sl_tp(lst_symbols)
+        df_selling_symbols = self.rtstr.get_df_selling_symbols(lst_symbols, self.df_portfolio_status)
         # print("👎") # DEBUG
         # print(df_selling_symbols) # DEBUG
         list_symbols_to_sell = df_selling_symbols.symbol.to_list()
@@ -99,12 +101,8 @@ class Crag:
                 sell_trade.net_price = sell_trade.gross_price - sell_trade.gross_price * self.broker.get_commission(current_trade.symbol)
                 sell_trade.net_size = round(sell_trade.net_price / sell_trade.symbol_price, 8)
 
-                # sell_trade.net_size = current_trade.gross_size - self.broker.get_commission(sell_trade.symbol)  # Sell Net size
-                # sell_trade.net_price = sell_trade.net_size * sell_trade.symbol_price
-
                 sell_trade.buying_fee = current_trade.buying_fee
                 sell_trade.selling_fee = sell_trade.gross_price - sell_trade.net_price
-
                 # sell_trade.gross_price = sell_trade.gross_price + sell_trade.buying_fee
 
                 sell_trade.roi = 100 * (sell_trade.net_price - current_trade.gross_price) / current_trade.gross_price
@@ -118,8 +116,20 @@ class Crag:
                     # Portfolio Size/Value Update
 
                     self.df_portfolio_status['portfolio_size'][sell_trade.symbol] = self.df_portfolio_status['portfolio_size'][sell_trade.symbol] - sell_trade.gross_size
-
+                    if self.df_portfolio_status['portfolio_size'][sell_trade.symbol] < 0.0000001:
+                        self.df_portfolio_status['portfolio_size'][sell_trade.symbol] = 0
                     self.df_portfolio_status['value'][sell_trade.symbol] = self.df_portfolio_status['portfolio_size'][sell_trade.symbol] * sell_trade.symbol_price
+                    self.df_portfolio_status['buying_value'][sell_trade.symbol] = self.df_portfolio_status['buying_value'][sell_trade.symbol] - current_trade.gross_price
+                    if self.df_portfolio_status['portfolio_size'][sell_trade.symbol] == 0:
+                        self.df_portfolio_status['roi_sl_tp'][sell_trade.symbol] = 0
+                    else:
+                        self.df_portfolio_status['roi_sl_tp'][sell_trade.symbol] = 100 * (self.df_portfolio_status['value'][sell_trade.symbol] / self.df_portfolio_status['buying_value'][sell_trade.symbol] - 1)
+                    '''
+                    print('selling: ', sell_trade.symbol,
+                          ' value: ', self.df_portfolio_status['value'][sell_trade.symbol],
+                          ' buying value : ', self.df_portfolio_status['buying_value'][sell_trade.symbol],
+                          ' roi: ', self.df_portfolio_status['roi_sl_tp'][sell_trade.symbol])
+                    '''
 
                     self.portfolio_value = self.df_portfolio_status['value'].sum()
 
@@ -170,11 +180,16 @@ class Crag:
                     current_trade.cash = self.cash
 
                     # Portfolio Size/Value Update
-                    # self.df_portfolio_status['portfolio_size'][symbol] = self.df_portfolio_status['portfolio_size'][symbol] + current_trade.size
                     self.df_portfolio_status['portfolio_size'][symbol] = self.df_portfolio_status['portfolio_size'][symbol] + current_trade.net_size
-                    # self.df_portfolio_status['value'][symbol] = self.df_portfolio_status['portfolio_size'][symbol] * current_trade.symbol_price
                     self.df_portfolio_status['value'][symbol] = self.df_portfolio_status['value'][symbol] + current_trade.net_price
-
+                    self.df_portfolio_status['buying_value'][symbol] = self.df_portfolio_status['buying_value'][symbol] + current_trade.gross_price
+                    self.df_portfolio_status['roi_sl_tp'][symbol] = 100 * (self.df_portfolio_status['value'][symbol] / self.df_portfolio_status['buying_value'][symbol] - 1)
+                    '''
+                    print('buying: ', symbol,
+                          ' value: ', self.df_portfolio_status['value'][symbol],
+                          ' buying value : ',self.df_portfolio_status['buying_value'][symbol],
+                          ' roi: ', self.df_portfolio_status['roi_sl_tp'][symbol])
+                    '''
                     self.portfolio_value = self.df_portfolio_status['value'].sum()
 
                     self.wallet_value = self.portfolio_value + self.cash
@@ -239,9 +254,11 @@ class Crag:
                     self.cash = self.broker.get_cash()
                     sell_trade.cash = self.cash
 
-                    # Portfolio Size/Value Update
+                    # Portfolio Size/Value Update/sl and tp
                     self.df_portfolio_status['portfolio_size'][sell_trade.symbol] = self.df_portfolio_status['portfolio_size'][sell_trade.symbol] - sell_trade.gross_size
                     self.df_portfolio_status['value'][sell_trade.symbol] = self.df_portfolio_status['portfolio_size'][sell_trade.symbol] * sell_trade.symbol_price
+                    self.df_portfolio_status['buying_value'][symbol] = self.df_portfolio_status['buying_value'][symbol] + current_trade.gross_price
+
                     self.portfolio_value = self.df_portfolio_status['value'].sum()
 
                     self.wallet_value = self.portfolio_value + self.cash
@@ -253,3 +270,17 @@ class Crag:
                     trades.append(sell_trade)
                     self.current_trades.append(sell_trade)
                     print("{} ({}) {} {:.2f} roi={:.2f}".format(sell_trade.type, sell_trade.stimulus, sell_trade.symbol, sell_trade.gross_price, sell_trade.roi))
+
+    def update_df_roi_sl_tp(self, lst_symbols):
+        for symbol in lst_symbols:
+            symbol_price = self.broker.get_value(symbol)
+            self.df_portfolio_status['value'][symbol] = self.df_portfolio_status['portfolio_size'][symbol] * symbol_price
+            if self.df_portfolio_status['portfolio_size'][symbol] == 0 \
+                    or self.df_portfolio_status['buying_value'][symbol] == 0 \
+                    or self.df_portfolio_status['value'][symbol] == 0:
+                self.df_portfolio_status['roi_sl_tp'][symbol] = 0
+            else:
+                self.df_portfolio_status['roi_sl_tp'][symbol] = 100 * (self.df_portfolio_status['value'][symbol] / self.df_portfolio_status['buying_value'][symbol] - 1)
+
+            # if self.df_portfolio_status['roi_sl_tp'][symbol] < -50:
+            #    print('symbol: ', symbol," --- roi ", self.df_portfolio_status['roi_sl_tp'][symbol])

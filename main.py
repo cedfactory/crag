@@ -94,7 +94,7 @@ if __name__ == '__main__':
         if len(sys.argv) == 2 and (sys.argv[1] == "--record"):
             crag_record()
         elif len(sys.argv) == 2 and (sys.argv[1] == "--simulation"):
-            crag_simulation('bigwill')
+            crag_simulation('super_reversal')
         elif len(sys.argv) >= 2 and (sys.argv[1] == "--run"):
             strategy_name = ""
             if len(sys.argv) >= 3:
