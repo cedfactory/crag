@@ -16,8 +16,8 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
 
         self.rtctrl = rtctrl.rtctrl(params=params)
 
-        self.SL = -100           # Stop Loss %
-        self.TP = 20             # Take Profit %
+        self.SL = -5             # Stop Loss %
+        self.TP = 1000           # Take Profit %
         self.SPLIT = 5           # Asset Split %
         self.MAX_POSITION = 5    # Asset Overall Percent Size
         self.match_full_position = True
@@ -119,11 +119,11 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
 
     def get_symbol_buying_size(self, symbol):
         if self.rtctrl.prices_symbols[symbol] < 0: # first init at -1
-            return 0
+            return 0, 0
 
         available_cash = self.rtctrl.wallet_cash
         if available_cash == 0:
-            return 0
+            return 0, 0
 
         wallet_value = available_cash
 

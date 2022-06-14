@@ -16,8 +16,8 @@ class StrategyCryptobot(rtstr.RealTimeStrategy):
 
         self.rtctrl = rtctrl.rtctrl(params=params)
 
-        self.SL = -0.2           # Stop Loss %
-        self.TP = 0.2            # Take Profit %
+        self.SL = -5             # Stop Loss %
+        self.TP = 1000           # Take Profit %
         self.SPLIT = 5           # Asset Split %
         self.MAX_POSITION = 5    # Asset Overall Percent Size
         self.match_full_position = True
@@ -82,15 +82,27 @@ class StrategyCryptobot(rtstr.RealTimeStrategy):
         df_result.reset_index(inplace=True, drop=True)
         return df_result
 
-    def get_df_selling_symbols(self, lst_symbols):
+    def get_df_selling_symbols(self, lst_symbols, df_sl_tp):
         df_result = pd.DataFrame(columns = ['symbol', 'stimulus'])
         for symbol in self.df_current_data.index.to_list():
             if(
                     (self.df_current_data["ema12ltema26co"][symbol] is True)
                     and (self.df_current_data["macdltsignal"][symbol] is True)
+            ) or (
+                    (df_sl_tp['roi_sl_tp'][symbol] > self.TP)
+                    or (df_sl_tp['roi_sl_tp'][symbol] < self.SL)
             ):
                 df_row = pd.DataFrame(data={"symbol":[symbol], "stimulus":["SELL"]})
                 df_result = pd.concat((df_result, df_row), axis = 0)
+
+                if(df_sl_tp['roi_sl_tp'][symbol] > self.TP):
+                    print('=========================== TAKE PROFIT ==========================')
+                    print('=========================== ', symbol,' ==========================')
+                    print('=========================== ', df_sl_tp['roi_sl_tp'][symbol], ' ==========================')
+                if(df_sl_tp['roi_sl_tp'][symbol] < self.SL):
+                    print('=========================== STOP LOST ==========================')
+                    print('=========================== ', symbol,' ==========================')
+                    print('=========================== ', df_sl_tp['roi_sl_tp'][symbol], ' ==========================')
 
         return df_result
 
@@ -111,7 +123,7 @@ class StrategyCryptobot(rtstr.RealTimeStrategy):
 
     def get_symbol_buying_size(self, symbol):
         if self.rtctrl.prices_symbols[symbol] < 0: # first init at -1
-            return 0
+            return 0, 0
 
         available_cash = self.rtctrl.wallet_cash
         if available_cash == 0:

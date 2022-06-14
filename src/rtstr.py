@@ -15,7 +15,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def get_df_selling_symbols(self, lst_symbols):
+    def get_df_selling_symbols(self, lst_symbols, df_sl_tp):
         pass
 
     @abstractmethod
