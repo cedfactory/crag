@@ -257,7 +257,7 @@ class Crag:
                     # Portfolio Size/Value Update/sl and tp
                     self.df_portfolio_status['portfolio_size'][sell_trade.symbol] = self.df_portfolio_status['portfolio_size'][sell_trade.symbol] - sell_trade.gross_size
                     self.df_portfolio_status['value'][sell_trade.symbol] = self.df_portfolio_status['portfolio_size'][sell_trade.symbol] * sell_trade.symbol_price
-                    self.df_portfolio_status['buying_value'][symbol] = self.df_portfolio_status['buying_value'][symbol] + current_trade.gross_price
+                    self.df_portfolio_status['buying_value'][sell_trade.symbol] = self.df_portfolio_status['buying_value'][sell_trade.symbol] + current_trade.gross_price
 
                     self.portfolio_value = self.df_portfolio_status['value'].sum()
 

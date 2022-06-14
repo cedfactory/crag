@@ -16,8 +16,8 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
 
         self.rtctrl = rtctrl.rtctrl(params=params)
 
-        self.SL = -100           # Stop Loss %
-        self.TP = 20             # Take Profit %
+        self.SL = -5             # Stop Loss %
+        self.TP = 1000           # Take Profit %
         self.SPLIT = 5           # Asset Split %
         self.MAX_POSITION = 5    # Asset Overall Percent Size
         self.match_full_position = True
