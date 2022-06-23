@@ -144,9 +144,6 @@ def crag_test_scenario(df):
         directory_data_target = os.path.join(strategy_directory, "./data/")
         recorder.record_for_data_scenario(ds, start_date, end_date, list_interval[0], directory_data_target)
 
-
-        print(os.getcwd())
-
         for strategy in list_strategy:
             crag_simulation_scenario(strategy, start_date, end_date, list_interval[0])
             list_output_filename = ['sim_broker_history.csv', 'wallet_tracking_records.csv']
