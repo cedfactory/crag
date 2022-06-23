@@ -126,7 +126,6 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
             df.to_csv(target+'/'+formatted_symbol+".csv", sep=";")
 
 
-
     def record_for_data_scenario(self, data_description, start_date, end_date, interval, target="./data/"):
         symbols = ','.join(data_description.symbols)
         symbols = symbols.replace('/','_')

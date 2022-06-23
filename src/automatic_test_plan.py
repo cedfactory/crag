@@ -15,8 +15,9 @@ class AutomaticTestPlan():
                                   'test_id', 'path_results']
         self.df_output_test_plan = pd.DataFrame(columns=self.test_plan_columns)
 
-        # self.list_strategies = ['super_reversal', 'trix', 'cryptobot', 'bigwill', 'vmc']
-        self.list_strategies = ['super_reversal', 'trix', 'cryptobot']
+        # do not use _ in strategy names
+        # self.list_strategies = ['superreversal', 'trix', 'cryptobot', 'bigwill', 'vmc']
+        self.list_strategies = ['superreversal', 'trix', 'cryptobot']
         self.list_sl = [-10000, -5, -10, -15]
         self.list_tp = [10000, 10, 15, 20]
         self.interval = '1h'
