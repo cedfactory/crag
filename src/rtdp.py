@@ -25,7 +25,7 @@ default_symbols = [
         "SRM/USD",
         "FTM/USD",
         "LTC/USD",
-        "RUNE/USD",
+        # "RUNE/USD",
         "CRO/USD",
         "UNI/USD",
         "SUSHI/USD",
@@ -35,7 +35,7 @@ default_symbols = [
         "AXS/USD",
         "RAY/USD",
         "SOL/USD"
-        # "AVAX/USD"
+        #"AVAX/USD"
     ]
 '''
 default_symbols = [
@@ -109,4 +109,5 @@ class RealTimeDataProvider(IRealTimeDataProvider):
 
     def get_current_datetime(self):
         return datetime.now()
+
 

@@ -10,86 +10,39 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
     def __init__(self, params = None):
         print("[SimRealTimeDataProvider] initialization...")
         self.input = "./data/"
-        self.scheduler = chronos.Chronos()
+        self.processed_data = "./data_processed/"
+        self.start = 0
+        self.end = 0
+        self.intervals = 0
 
         if params:
-            self.input = params.get("input", self.input)
+            # self.input = params.get("input", self.input)
+            self.start = params.get("start", self.start)
+            self.end = params.get("end", self.end)
+            self.intervals = params.get("intervals", self.intervals)
+            self.scheduler = chronos.Chronos(self.start, self.end, self.intervals)
+        else:
+            self.scheduler = chronos.Chronos()
     
         self.data = {}
-        # self.current_position = -1 # CEDE Test Debug
-        # self.current_position = 400  # CEDE Test Debug Offset
         self.current_position = self.scheduler.get_current_position()
 
         if self.input == None or not os.path.exists(self.input):
             print(" 💥 ",self.input," not found")
             return
-        list_dates = []
-        files = os.listdir(self.input)
+
+        if self.processed_data == None or not os.path.exists(self.processed_data):
+            print(" 💥 ",self.processed_data," not found")
+            return
+
+        files = os.listdir(self.processed_data)
         for file in files:
-            print(" ",format(file))
             strs = file.split('.')
             symbol = strs[0].replace("_", "/")
             if symbol in rtdp.default_symbols and strs[1] == "csv":
-                df = pd.read_csv(self.input+"/"+file, sep=";")
-                df.rename(columns={"Unnamed: 0": "datetime"}, inplace=True)
-
-                df["ema_long"] = df["ema_long"].shift(1)
-                df["ema_short"] = df["ema_short"].shift(1)
-                df['super_trend_direction'] = df['super_trend_direction'].shift(1)
-
-                # -- Trix Indicator --
-                df = features.add_trix_indicators(df)
-
-                # -- cryptobot -- #
-                # add sma cross over 12/26
-                df = features.add_ema_cross_over(df, 12, 26)
-
-                # add macd
-                df = features.add_macd(df)
-
-                # add golden cross
-                df = features.add_golden_cross(df)
-
-                # Add the On-Balance Volume (OBV)
-                df = features.addOBV(df)
-
-                # Add Elder Ray Index
-                df = features.addElderRayIndex(df)
-
-                # BIGWILL features
-                df = features.addAO(df, 6, 22)
-                df = features.addEMA100(df)
-                df = features.addEMA200(df)
-                df = features.addSTOCHRSI(df, 14)
-                df = features.addWILLR(df, 14)
-
-                # VuManChu Cipher B
-                df = features.add_feature_VMC(df, 200, 50, 14)
-
+                # df = pd.read_csv(self.processed_data+"/"+file, sep=";")
+                df = pd.read_csv(self.processed_data + "/" + file)
                 self.data[symbol] = df
-                list_dates.extend(self.data[symbol]['timestamp'].to_list())
-                list_dates = list(set(list_dates))
-        df_timestamp = pd.DataFrame(list_dates, columns=['timestamp'])
-        df_timestamp.set_index('timestamp', inplace=True)
-        for symbol in self.data:
-            self.data[symbol].set_index('timestamp', inplace=True)
-            df_backup = self.data[symbol].copy()
-            self.data[symbol] = pd.concat([self.data[symbol], df_timestamp], axis=0)
-            self.data[symbol].sort_index(ascending=True, inplace=True)
-            self.data[symbol] = self.data[symbol].index.drop_duplicates(keep=False)
-            if len(self.data[symbol]) == 0:
-                self.data[symbol] = df_backup.copy()
-            else:
-                self.data[symbol] = pd.DataFrame(index=self.data[symbol])
-                self.data[symbol] = pd.concat([self.data[symbol], df_backup], axis=0)
-                self.data[symbol] = self.data[symbol][~self.data[symbol].index.duplicated(keep='first')]
-            self.data[symbol].sort_index(ascending=True, inplace=True)
-            self.data[symbol].reset_index(inplace=True)
-            self.data[symbol]['datetime'] = self.data[symbol].index
-            if not os.path.exists('./data_processed'):
-                os.makedirs('./data_processed')
-            symbol_file_name = symbol.replace("/", "_")
-            self.data[symbol].to_csv('./data_processed/' + symbol_file_name + '.csv')
 
     def _is_in_dataframe(self):
         if self.scheduler.get_current_position() < 0:
@@ -117,7 +70,10 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
 
         df_result = pd.DataFrame(columns=['symbol'])
         for symbol in data_description.symbols:
-            df_symbol = self.data[symbol]
+            try:
+                df_symbol = self.data[symbol]
+            except:
+                return None
             available_columns = list(df_symbol.columns)
             row = {'symbol':symbol}
             for feature in data_description.features:
@@ -170,3 +126,69 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
                 os.makedirs(target)
             df.to_csv(target+'/'+formatted_symbol+".csv", sep=";")
 
+
+
+    def record_for_data_scenario(self, data_description, start_date, end_date, interval, target="./data/"):
+        symbols = ','.join(data_description.symbols)
+        symbols = symbols.replace('/','_')
+        list_missing_data = []
+        url = "history?exchange=ftx&symbol=" + symbols + "&start=" + start_date + "&interval=" + interval + "&end=" + end_date
+        print('interval from: ', start_date, ' -> ', end_date)
+        response_json = utils.fdp_request(url)
+        for symbol in data_description.symbols:
+            formatted_symbol = symbol.replace('/','_')
+            if response_json["result"][formatted_symbol]["status"] == "ko":
+                print("no data for ",symbol)
+                list_missing_data.append(symbol)
+                continue
+            df = pd.read_json(response_json["result"][formatted_symbol]["info"])
+
+            df['timestamp'] = pd.to_datetime(df['index'], unit='ms')
+            df.drop(columns="index", inplace=True)
+
+            df = features.add_features(df, data_description.features)
+            if not os.path.exists(target):
+                os.makedirs(target)
+            df.to_csv(target+'/'+formatted_symbol+".csv", sep=";")
+
+        list_dates = []
+        directory = os.getcwd()
+
+
+        files = os.listdir(self.input)
+        for file in files:
+            strs = file.split('.')
+            symbol = strs[0].replace("_", "/")
+            if symbol in rtdp.default_symbols and strs[1] == "csv":
+                df = pd.read_csv(self.input+"/"+file, sep=";")
+                self.data[symbol] = df
+                list_dates.extend(self.data[symbol]['timestamp'].to_list())
+                list_dates = list(set(list_dates))
+        df_timestamp = pd.DataFrame(list_dates, columns=['timestamp'])
+        df_timestamp.set_index('timestamp', inplace=True)
+        for symbol in self.data:
+            self.data[symbol].set_index('timestamp', inplace=True)
+            df_backup = self.data[symbol].copy()
+            self.data[symbol] = pd.concat([self.data[symbol], df_timestamp], axis=0)
+            self.data[symbol].sort_index(ascending=True, inplace=True)
+            self.data[symbol] = self.data[symbol].index.drop_duplicates(keep=False)
+            if len(self.data[symbol]) == 0:
+                self.data[symbol] = df_backup.copy()
+            else:
+                self.data[symbol] = pd.DataFrame(index=self.data[symbol])
+                self.data[symbol] = pd.concat([self.data[symbol], df_backup], axis=0)
+                self.data[symbol] = self.data[symbol][~self.data[symbol].index.duplicated(keep='first')]
+            self.data[symbol].sort_index(ascending=True, inplace=True)
+            self.data[symbol].reset_index(inplace=True)
+            self.data[symbol]['datetime'] = self.data[symbol].index
+            if not os.path.exists('./data_processed'):
+                os.makedirs('./data_processed')
+            symbol_file_name = symbol.replace("/", "_")
+            self.data[symbol].drop(columns="Unnamed: 0", inplace=True)
+            self.data[symbol].drop(columns="datetime", inplace=True)
+            self.data[symbol].to_csv('./data_processed/' + symbol_file_name + '.csv')
+
+        for symbol in list_missing_data:
+            self.data[symbol] = self.data['BTC/USD'].copy()
+            self.data[symbol].loc[:] = np.nan
+            self.data[symbol].to_csv('./data_processed/' + symbol.replace("/", "_") + '.csv')

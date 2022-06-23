@@ -1,5 +1,6 @@
-from src import rtdp,rtdp_simulation,broker_simulation,broker_ftx,crag,rtstr_super_reversal,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC,analyser,benchmark
+from src import rtdp,rtdp_simulation,broker_simulation,broker_ftx,crag,rtstr_super_reversal,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC,analyser,benchmark, automatic_test_plan
 import pandas as pd
+import os
 
 _usage_str = """
 Options:
@@ -88,6 +89,83 @@ def crag_ftx():
     my_broker_ftx.export_history()
 
 
+def crag_simulation_scenario(strategy_name, start_date, end_date, interval):
+    print("selected strategy: ",strategy_name)
+    if strategy_name == "super_reversal":
+        strategy = rtstr_super_reversal.StrategySuperReversal(params={"rtctrl_verbose": False})
+    if strategy_name == "trix":
+        strategy = rtstr_trix.StrategyTrix(params={"rtctrl_verbose": False})
+    if strategy_name == "cryptobot":
+        strategy = rtstr_cryptobot.StrategyCryptobot(params={"rtctrl_verbose": False})
+    if strategy_name == "bigwill":
+        strategy = rtstr_bigwill.StrategyBigWill(params={"rtctrl_verbose": False})
+    if strategy_name == "vmc":
+        strategy = rtstr_VMC.StrategyVMC(params={"rtctrl_verbose": False})
+
+    broker_params = {'cash':10000, 'start': start_date, 'end': end_date, "intervals": interval}
+    simu_broker = broker_simulation.SimBroker(broker_params)
+
+    crag_params = {'broker':simu_broker, 'rtstr':strategy}
+    bot = crag.Crag(crag_params)
+
+    bot.run()
+
+    bot.export_history("sim_broker_history.csv")
+    bot.export_status()
+
+def crag_test_scenario(df):
+
+    ds = rtdp.DataDescription()
+    list_periods = df['period'].to_list()
+    list_periods = list(set(list_periods))
+    list_interval = df['interval'].to_list()     # multi interval to be implemented...
+    list_interval = list(set(list_interval))     # multi interval to be implemented...
+    list_strategy = df['strategy'].to_list()
+    list_strategy = list(set(list_strategy))
+
+    home_directory = os.getcwd()
+    auto_test_directory = os.path.join(os.getcwd(), "./automatic_test_results")
+    print(auto_test_directory)
+    os.chdir(auto_test_directory)
+
+    print(os.getcwd())
+
+    for period in list_periods:
+        start_date = period[0:10]
+        end_date = period[11:21]
+
+        # strategy_directory = auto_test_directory + period
+        strategy_directory = os.path.join(auto_test_directory, "./" + period)
+        os.chdir(strategy_directory)
+
+        recorder_params = {'start': start_date, 'end': end_date, "intervals": list_interval[0]}
+        recorder = rtdp_simulation.SimRealTimeDataProvider(recorder_params)
+
+        directory_data_target = os.path.join(strategy_directory, "./data/")
+        recorder.record_for_data_scenario(ds, start_date, end_date, list_interval[0], directory_data_target)
+
+
+        print(os.getcwd())
+
+        for strategy in list_strategy:
+            crag_simulation_scenario(strategy, start_date, end_date, list_interval[0])
+            list_output_filename = ['sim_broker_history.csv', 'wallet_tracking_records.csv']
+            for filename in list_output_filename:
+                prefixe = filename.split(".")[0]
+                extention = filename.split(".")[1]
+                interval = list_interval[0]
+                if os.path.exists(filename):
+                    filename2 = './output/' + prefixe + '_' + period + '_' + strategy + '_' + interval + extention
+                    os.rename(filename, filename2)
+        print('benchmark: ')
+        crag_benchmark_resusts(df)
+        os.chdir(auto_test_directory)
+        print(os.getcwd())
+
+
+
+
+
 if __name__ == '__main__':
     import sys
     if len(sys.argv) >= 2:
@@ -109,6 +187,9 @@ if __name__ == '__main__':
             crag_analyse_resusts()
         elif len(sys.argv) >= 2 and (sys.argv[1] == "--benchmark"):
             crag_benchmark_resusts()
+        elif len(sys.argv) >= 2 and (sys.argv[1] == "--scenario"):
+            df_test_plan = automatic_test_plan.build_automatic_test_plan('2020-01-01', '2022-06-01', 5)
+            crag_test_scenario(df_test_plan)
         else:
             _usage()
     else:
