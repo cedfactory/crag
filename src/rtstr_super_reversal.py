@@ -85,17 +85,17 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
                      or self.df_current_data['super_trend_direction'][symbol] == False)
                     and self.df_current_data['ema_short'][symbol] < self.df_current_data['high'][symbol]
             ) or (
-                    (df_sl_tp['roi_sl_tp'][symbol] > self.TP)
-                    or (df_sl_tp['roi_sl_tp'][symbol] < self.SL)
+                    (isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] > self.TP)
+                    or (isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] < self.SL)
             ):
                 df_row = pd.DataFrame(data={"symbol":[symbol], "stimulus":["SELL"]})
                 df_result = pd.concat((df_result, df_row), axis = 0)
 
-                if(df_sl_tp['roi_sl_tp'][symbol] > self.TP):
+                if(isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] > self.TP):
                     print('=========================== TAKE PROFIT ==========================')
                     print('=========================== ', symbol,' ==========================')
                     print('=========================== ', df_sl_tp['roi_sl_tp'][symbol], ' ==========================')
-                if(df_sl_tp['roi_sl_tp'][symbol] < self.SL):
+                if(isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] < self.SL):
                     print('=========================== STOP LOST ==========================')
                     print('=========================== ', symbol,' ==========================')
                     print('=========================== ', df_sl_tp['roi_sl_tp'][symbol], ' ==========================')

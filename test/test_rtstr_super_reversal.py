@@ -9,8 +9,8 @@ class TestRTSTRSuperReversal:
         strategy = rtstr_super_reversal.StrategySuperReversal()
 
         # expectations
-        assert(strategy.SL == -0.2)
-        assert(strategy.TP == 0.2)
+        assert(strategy.SL == -5)
+        assert(strategy.TP == 1000)
         assert(strategy.MAX_POSITION == 5)
         assert(strategy.SPLIT == 5)
 
@@ -50,7 +50,7 @@ class TestRTSTRSuperReversal:
         strategy = self._initialize_current_data(strategy)
 
         # action
-        df = strategy.get_df_selling_symbols([])
+        df = strategy.get_df_selling_symbols([], None)
 
         # expectations
         assert(isinstance(df, pd.DataFrame))

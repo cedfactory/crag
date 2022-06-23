@@ -18,7 +18,10 @@ class TestSimRealTimeDataProvider:
         assert("AAVE/USD" in dp.data)
         df = dp.data["AAVE/USD"]
         assert(isinstance(df, pd.DataFrame))
-        assert(df.columns.to_list() == ["timestamp", "datetime", "open", "high", "low", "close", "volume", "ema_short", "ema_long", "super_trend_direction"])
+        expected_columns = ['timestamp', 'datetime', 'open', 'high', 'low', 'close', 'volume', 'ema_short', 'ema_long', 'super_trend_direction', 'TRIX', 'TRIX_PCT', 'TRIX_SIGNAL', 'TRIX_HISTO', 
+'STOCH_RSI', 'ema12', 'ema26', 'ema12gtema26', 'ema12gtema26co', 'ema12ltema26', 'ema12ltema26co', 'macd', 'signal', 'macdgtsignal', 'macdgtsignalco', 'macdltsignal', 
+'macdltsignalco', 'sma50', 'sma200', 'goldencross', 'obv', 'obv_pc', 'ema13', 'elder_ray_bull', 'elder_ray_bear', 'eri_buy', 'eri_sell', 'AO', 'previous_AO', 'EMA100', 'EMA200', 'WILLR', 'HLC3', 'VMC_WAVE1', 'VMC_WAVE2', 'MONEY_FLOW', 'ema_short_vmc', 'ema_long_vmc', 'CHOP', 'n1_VMC_WAVE1', 'n1_VMC_WAVE2']
+        assert(df.columns.to_list() == expected_columns)
         assert(len(df) == 402)
 
     def test_get_value_last_in_dataframe(self):
