@@ -19,7 +19,7 @@ def crag_record():
 
 def crag_simulation(strategy_name):
     print("selected strategy: ",strategy_name)
-    if strategy_name == "super_reversal":
+    if strategy_name == "superreversal":
         strategy = rtstr_super_reversal.StrategySuperReversal(params={"rtctrl_verbose": False})
     if strategy_name == "trix":
         strategy = rtstr_trix.StrategyTrix(params={"rtctrl_verbose": False})
@@ -46,7 +46,7 @@ def crag_run(strategy_name, history):
     if history != "":
         params['infile'] = history
 
-    if strategy_name == "super_reversal":
+    if strategy_name == "superreversal":
         strategy_super_reversal = rtstr_super_reversal.StrategySuperReversal()
     else:
         print("💥 missing known strategy ({})".format(strategy_name))
@@ -98,7 +98,7 @@ def crag_ftx():
 
 def crag_simulation_scenario(strategy_name, start_date, end_date, interval):
     print("selected strategy: ",strategy_name)
-    if strategy_name == "super_reversal":
+    if strategy_name == "superreversal":
         strategy = rtstr_super_reversal.StrategySuperReversal(params={"rtctrl_verbose": False})
     if strategy_name == "trix":
         strategy = rtstr_trix.StrategyTrix(params={"rtctrl_verbose": False})
@@ -155,7 +155,7 @@ def crag_test_scenario(df):
                 extention = filename.split(".")[1]
                 interval = list_interval[0]
                 if os.path.exists(filename):
-                    filename2 = './output/' + prefixe + '_' + period + '_' + strategy + '_' + interval + extention
+                    filename2 = './output/' + prefixe + '_' + period + '_' + strategy + '_' + interval + "." + extention
                     os.rename(filename, filename2)
 
         print('benchmark: ', period)
@@ -179,7 +179,7 @@ if __name__ == '__main__':
         if len(sys.argv) == 2 and (sys.argv[1] == "--record"):
             crag_record()
         elif len(sys.argv) == 2 and (sys.argv[1] == "--simulation"):
-            crag_simulation('super_reversal')
+            crag_simulation('superreversal')
         elif len(sys.argv) >= 2 and (sys.argv[1] == "--run"):
             strategy_name = ""
             if len(sys.argv) >= 3:
