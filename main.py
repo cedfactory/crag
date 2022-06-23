@@ -1,6 +1,8 @@
 from src import rtdp,rtdp_simulation,broker_simulation,broker_ftx,crag,rtstr_super_reversal,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC,analyser,benchmark, automatic_test_plan
 import pandas as pd
 import os
+import shutil
+import fnmatch
 
 _usage_str = """
 Options:
@@ -71,6 +73,11 @@ def crag_benchmark_resusts():
     my_benchmark = benchmark.Benchmark(params)
     my_benchmark.run_benchmark()
 
+def crag_benchmark_scenario(df, period):
+    params = {'period': period}
+
+    my_benchmark = benchmark.Benchmark(params)
+    my_benchmark.set_benchmark_df_results(df)
 
 def crag_ftx():
     my_broker_ftx = broker_ftx.BrokerFTX()
@@ -118,23 +125,19 @@ def crag_test_scenario(df):
     ds = rtdp.DataDescription()
     list_periods = df['period'].to_list()
     list_periods = list(set(list_periods))
-    list_interval = df['interval'].to_list()     # multi interval to be implemented...
-    list_interval = list(set(list_interval))     # multi interval to be implemented...
+    list_interval = df['interval'].to_list()     # multi interval to be implemented... one day maybe
+    list_interval = list(set(list_interval))     # multi interval to be implemented... one day maybe
     list_strategy = df['strategy'].to_list()
     list_strategy = list(set(list_strategy))
 
     home_directory = os.getcwd()
     auto_test_directory = os.path.join(os.getcwd(), "./automatic_test_results")
-    print(auto_test_directory)
     os.chdir(auto_test_directory)
-
-    print(os.getcwd())
 
     for period in list_periods:
         start_date = period[0:10]
         end_date = period[11:21]
 
-        # strategy_directory = auto_test_directory + period
         strategy_directory = os.path.join(auto_test_directory, "./" + period)
         os.chdir(strategy_directory)
 
@@ -154,14 +157,21 @@ def crag_test_scenario(df):
                 if os.path.exists(filename):
                     filename2 = './output/' + prefixe + '_' + period + '_' + strategy + '_' + interval + extention
                     os.rename(filename, filename2)
-        print('benchmark: ')
-        crag_benchmark_resusts(df)
+
+        print('benchmark: ', period)
+
+        # Move files for benchmark
+        output_dir = os.path.join(strategy_directory, "./output")
+        benchmark_dir = os.path.join(strategy_directory, "./benchmark")
+        list_csv_files = fnmatch.filter(os.listdir(output_dir), '*.csv')
+        for csv_file in list_csv_files:
+            shutil.copy(os.path.join(output_dir, csv_file), os.path.join(benchmark_dir, csv_file))
+
+        crag_benchmark_scenario(df, period)
+
         os.chdir(auto_test_directory)
         print(os.getcwd())
-
-
-
-
+        df.to_csv(period + "_output.csv")
 
 if __name__ == '__main__':
     import sys

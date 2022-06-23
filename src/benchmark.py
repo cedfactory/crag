@@ -14,6 +14,10 @@ class Benchmark:
         self.path_symbol_data = './data_processed/'
         self.path_symbol_plot_analyse = './benchmark/plot_analyse/'
 
+        self.period = 0
+        if params:
+            self.period = params.get("period", self.period)
+
         if not os.path.exists(self.path_output):
             os.makedirs(self.path_output)
 
@@ -24,7 +28,7 @@ class Benchmark:
         list_csv_files = fnmatch.filter(os.listdir(self.path), '*.csv')
         for csv_file in list_csv_files:
             prefixe = csv_file.split(".")[0]
-            strategy = prefixe.split("_")[3]
+            strategy = prefixe.split("_")[5]
             self.list_strategies.append(strategy)
             if prefixe.split("_")[0] == 'sim':
                 df_data = pd.read_csv(self.path + csv_file, delimiter=';')
@@ -45,7 +49,9 @@ class Benchmark:
                     end = end.split(" ")[0]
                 else:
                     self.df_wallet_records = pd.concat([self.df_wallet_records, df_data])
-        self.path_results = self.path_output + '/' + start + '_to_' + end + '/'
+        # self.path_results = self.path_output + '/' + start + '_to_' + end + '/'
+
+        self.path_results = self.path_output
         if not os.path.exists(self.path_results):
             os.makedirs(self.path_results)
         period = " from_" + start + ' to ' + end
@@ -160,5 +166,25 @@ class Benchmark:
     def run_benchmark(self):
         pass
 
+    def set_benchmark_df_results(self, df):
+        print(self.df_plot_data)
 
+        for strategy in self.list_strategies:
+            transaction_total = self.df_plot_data.loc['transaction_total', strategy]
+            global_win_rate = self.df_plot_data.loc['global_win_rate', strategy]
+            profit_dol = self.df_plot_data.loc['profit$', strategy]
+            profit_percent = self.df_plot_data.loc['profit%', strategy]
+
+            df.loc[(df['period'] == self.period) & (df['strategy'] == strategy), 'total_transaction'] = transaction_total
+            df.loc[(df['period'] == self.period) & (df['strategy'] == strategy), 'profit$'] = profit_dol
+            df.loc[(df['period'] == self.period) & (df['strategy'] == strategy), 'profit%'] = profit_percent
+            df.loc[(df['period'] == self.period) & (df['strategy'] == strategy), 'win_rate'] = global_win_rate
+
+            ''' CEDE Comment: Alternative methode
+            df['total_transaction'] = np.where( (df['period'] == self.period) & (df['strategy'] == strategy),
+                                                transaction_total,
+                                                df['total_transaction']
+                                                )
+            '''
+        return df
 
