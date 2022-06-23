@@ -145,6 +145,36 @@ def add_features(df, features):
         
     df['super_trend_direction'] = super_trend.super_trend_direction()
     df['super_trend_direction'] = df['super_trend_direction'].shift(1)
+    df['super_trend_direction'] = df['super_trend_direction'].shift(1)
+
+    # -- Trix Indicator --
+    df = add_trix_indicators(df)
+
+    # -- cryptobot -- #
+    # add sma cross over 12/26
+    df = add_ema_cross_over(df, 12, 26)
+
+    # add macd
+    df = add_macd(df)
+
+    # add golden cross
+    df = add_golden_cross(df)
+
+    # Add the On-Balance Volume (OBV)
+    df = addOBV(df)
+
+    # Add Elder Ray Index
+    df = addElderRayIndex(df)
+
+    # BIGWILL features
+    df = addAO(df, 6, 22)
+    df = addEMA100(df)
+    df = addEMA200(df)
+    df = addSTOCHRSI(df, 14)
+    df = addWILLR(df, 14)
+
+    # VuManChu Cipher B
+    df = add_feature_VMC(df, 200, 50, 14)
 
     return df
 

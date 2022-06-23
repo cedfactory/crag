@@ -110,3 +110,4 @@ class RealTimeDataProvider(IRealTimeDataProvider):
     def get_current_datetime(self):
         return datetime.now()
 
+
