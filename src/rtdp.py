@@ -9,7 +9,7 @@ from . import features # temporary (before using fdp)
 default_symbols = [
         "BTC/USD",
         "DOGE/USD",
-        # "MANA/USD",
+        #"MANA/USD",
         "CHZ/USD",
         "AAVE/USD",
         "BNB/USD",
@@ -25,7 +25,7 @@ default_symbols = [
         "SRM/USD",
         "FTM/USD",
         "LTC/USD",
-        "RUNE/USD",
+        #"RUNE/USD",
         "CRO/USD",
         "UNI/USD",
         "SUSHI/USD",
@@ -34,8 +34,8 @@ default_symbols = [
         "BCH/USD",
         "AXS/USD",
         "RAY/USD",
-        "SOL/USD"
-        # "AVAX/USD"
+        "SOL/USD",
+        #"AVAX/USD"
     ]
 '''
 default_symbols = [
@@ -81,7 +81,7 @@ class RealTimeDataProvider(IRealTimeDataProvider):
     def get_current_data(self, data_description):
         symbols = ','.join(data_description.symbols)
         symbols = symbols.replace('/','_')
-        url = "history?exchange=ftx&symbol="+symbols+"&start=01_05_2022"+"&interval=1h"+"&length=500"
+        url = "history?exchange=ftx&symbol="+symbols+"&start=2022-06-01"+"&interval=1h"
         response_json = utils.fdp_request(url)
 
         df_result = pd.DataFrame(columns=['symbol'])

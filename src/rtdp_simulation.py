@@ -157,7 +157,7 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
     def record(self, data_description, target="./data/"):
         symbols = ','.join(data_description.symbols)
         symbols = symbols.replace('/','_')
-        url = "history?exchange=ftx&symbol="+symbols+"&start=01_01_2021"+"&interval=1h"+"&length=9000"
+        url = "history?exchange=ftx&symbol="+symbols+"&start=2022-06-01"+"&interval=1h"
         # url = "history?exchange=ftx&symbol=" + symbols + "&start=01_01_2020" + "&interval=1h" + "&length=400"
         # url = "history?exchange=ftx&symbol=" + symbols + "&start=01_01_2021" + "&interval=1h" + "&end=01_01_2022"
         response_json = utils.fdp_request(url)

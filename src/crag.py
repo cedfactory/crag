@@ -7,9 +7,11 @@ class Crag:
 
         self.broker = None
         self.rtstr = None
+        self.interval = 10
         if params:
             self.broker = params.get("broker", self.broker)
             self.rtstr = params.get("rtstr", self.rtstr)
+            self.interval = params.get("interval", self.interval)
 
         self.current_trades = []
 
@@ -20,16 +22,15 @@ class Crag:
         self.wallet_value = 0
 
 
-    def run(self, interval=1):
+    def run(self):
         done = False
         while not done:
             done = not self.step()
-            # time.sleep(interval)
-            # self.export_history("broker_history.csv") # DEBUG
-            self.export_history("sim_broker_history.csv") # DEBUG
-
-            # increment
-            self.broker.tick()
+            self.export_history("broker_history.csv")
+            if done:
+                break
+            time.sleep(self.interval)
+            self.broker.tick() # increment
 
     def step(self):
         print("[Crag] ⌛")

@@ -38,20 +38,16 @@ def crag_simulation(strategy_name):
     bot.export_history("sim_broker_history.csv")
     bot.export_status()
 
-def crag_run(strategy_name, history):
-    params = {}
-    if history != "":
-        params['infile'] = history
-
+def crag_live(strategy_name, history):
     if strategy_name == "super_reversal":
-        strategy_super_reversal = rtstr_super_reversal.StrategySuperReversal()
+        my_strategy = rtstr_super_reversal.StrategySuperReversal()
     else:
         print("💥 missing known strategy ({})".format(strategy_name))
         return
 
-    broker_simu = broker_ftx.BrokerFTX({'simulation':True, 'cash':100})
+    my_broker = broker_ftx.BrokerFTX({'account':'test_bot', 'simulation':False})
 
-    params = {'broker':broker_simu, 'rtstr':strategy_super_reversal}
+    params = {'broker':my_broker, 'rtstr':my_strategy, 'interval':5}
     bot = crag.Crag(params)
     bot.run()
     bot.export_history("broker_history.csv")
@@ -93,14 +89,14 @@ if __name__ == '__main__':
             crag_record()
         elif len(sys.argv) == 2 and (sys.argv[1] == "--simulation"):
             crag_simulation('super_reversal')
-        elif len(sys.argv) >= 2 and (sys.argv[1] == "--run"):
+        elif len(sys.argv) >= 2 and (sys.argv[1] == "--live"):
             strategy_name = ""
             if len(sys.argv) >= 3:
                 strategy_name = sys.argv[2]
             history = ""
             if len(sys.argv) >= 4:
                 history = sys.argv[3]
-            crag_run(strategy_name, history)
+            crag_live(strategy_name, history)
         elif len(sys.argv) >= 2 and (sys.argv[1] == "--ftx"):
             crag_ftx()
         elif len(sys.argv) >= 2 and (sys.argv[1] == "--analyse"):
