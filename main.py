@@ -3,7 +3,9 @@ import pandas as pd
 
 _usage_str = """
 Options:
-    [--record <csvfile>, --run <botname>]
+    --record <csvfile>
+    --simulation <StrategyName>
+    --live <StrategyName>
 """
 
 def _usage():
@@ -16,16 +18,17 @@ def crag_record():
 
 def crag_simulation(strategy_name):
     print("selected strategy: ",strategy_name)
-    if strategy_name == "super_reversal":
-        strategy = rtstr_super_reversal.StrategySuperReversal(params={"rtctrl_verbose": False})
-    if strategy_name == "trix":
-        strategy = rtstr_trix.StrategyTrix(params={"rtctrl_verbose": False})
-    if strategy_name == "cryptobot":
-        strategy = rtstr_cryptobot.StrategyCryptobot(params={"rtctrl_verbose": False})
-    if strategy_name == "bigwill":
-        strategy = rtstr_bigwill.StrategyBigWill(params={"rtctrl_verbose": False})
-    if strategy_name == "vmc":
-        strategy = rtstr_VMC.StrategyVMC(params={"rtctrl_verbose": False})
+    available_strategies = rtstr.RealTimeStrategy.get_strategies_list()
+    if strategy_name in available_strategies:
+        strategy = rtstr.RealTimeStrategy.get_strategy_from_name(strategy_name, {"rtctrl_verbose": False})
+    else:
+        print("💥 missing known strategy ({})".format(strategy_name))
+        print("available strategies : ", available_strategies)
+        return
+
+    if strategy == None:
+        print("💥 can't instantiate strategy ({})".format(strategy_name))
+        return
 
     broker_params = {'cash':10000}
     simu_broker = broker_simulation.SimBroker(broker_params)
@@ -57,13 +60,13 @@ def crag_live(strategy_name):
     bot.export_history("broker_history.csv")
     bot.export_status()
 
-def crag_analyse_resusts():
+def crag_analyse_results():
     params = {}
 
     my_analyser = analyser.Analyser(params)
     my_analyser.run_analyse()
 
-def crag_benchmark_resusts():
+def crag_benchmark_results():
     params = {}
 
     my_benchmark = benchmark.Benchmark(params)
@@ -91,19 +94,18 @@ if __name__ == '__main__':
     if len(sys.argv) >= 2:
         if len(sys.argv) == 2 and (sys.argv[1] == "--record"):
             crag_record()
-        elif len(sys.argv) == 2 and (sys.argv[1] == "--simulation"):
-            crag_simulation('super_reversal')
-        elif len(sys.argv) >= 2 and (sys.argv[1] == "--live"):
-            strategy_name = ""
-            if len(sys.argv) >= 3:
-                strategy_name = sys.argv[2]
+        elif len(sys.argv) > 2 and (sys.argv[1] == "--simulation"):
+            strategy_name = sys.argv[2]
+            crag_simulation(strategy_name)
+        elif len(sys.argv) > 2 and (sys.argv[1] == "--live"):
+            strategy_name = sys.argv[2]
             crag_live(strategy_name)
         elif len(sys.argv) >= 2 and (sys.argv[1] == "--ftx"):
             crag_ftx()
         elif len(sys.argv) >= 2 and (sys.argv[1] == "--analyse"):
-            crag_analyse_resusts()
+            crag_analyse_results()
         elif len(sys.argv) >= 2 and (sys.argv[1] == "--benchmark"):
-            crag_benchmark_resusts()
+            crag_benchmark_results()
         else:
             _usage()
     else:
