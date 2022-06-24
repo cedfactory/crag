@@ -1,4 +1,4 @@
-from src import rtdp,rtdp_simulation,broker_simulation,broker_ftx,crag,rtstr_super_reversal,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC,analyser,benchmark
+from src import rtdp,rtdp_simulation,broker_simulation,broker_ftx,crag,rtstr,rtstr_super_reversal,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC,analyser,benchmark
 import pandas as pd
 
 _usage_str = """
@@ -38,11 +38,15 @@ def crag_simulation(strategy_name):
     bot.export_history("sim_broker_history.csv")
     bot.export_status()
 
-def crag_live(strategy_name, history):
-    if strategy_name == "super_reversal":
-        my_strategy = rtstr_super_reversal.StrategySuperReversal()
+def crag_live(strategy_name):
+
+    params = {}
+    available_strategies = rtstr.RealTimeStrategy.get_strategies_list()
+    if strategy_name in available_strategies:
+        my_strategy = rtstr.RealTimeStrategy.get_strategy_from_name(strategy_name, params)
     else:
         print("💥 missing known strategy ({})".format(strategy_name))
+        print("available strategies : ", available_strategies)
         return
 
     my_broker = broker_ftx.BrokerFTX({'account':'test_bot', 'simulation':False})
@@ -93,10 +97,7 @@ if __name__ == '__main__':
             strategy_name = ""
             if len(sys.argv) >= 3:
                 strategy_name = sys.argv[2]
-            history = ""
-            if len(sys.argv) >= 4:
-                history = sys.argv[3]
-            crag_live(strategy_name, history)
+            crag_live(strategy_name)
         elif len(sys.argv) >= 2 and (sys.argv[1] == "--ftx"):
             crag_ftx()
         elif len(sys.argv) >= 2 and (sys.argv[1] == "--analyse"):
