@@ -7,10 +7,17 @@ class SimBroker(broker.Broker):
 
         self.rtdp = rtdp_simulation.SimRealTimeDataProvider(params)
         self.trades = []
+        self.initialize(params)
 
     def initialize(self, params):
+        self.start_date = 0
+        self.end_date = 0
+        self.intervals = 0
         if params:
             self.cash = params.get("cash", self.cash)
+            self.start_date = params.get("start", self.start_date)
+            self.end_date = params.get("end", self.end_date)
+            self.intervals = params.get("intervals", self.intervals)
 
     def get_current_data(self, data_description):
         return self.rtdp.get_current_data(data_description)
@@ -20,6 +27,9 @@ class SimBroker(broker.Broker):
 
     def get_commission(self, symbol):
         return 0.0007
+
+    def get_info(self):
+        return self.start_date, self.end_date,  self.intervals
 
     def execute_trade(self, trade):
         if trade.type == "BUY":

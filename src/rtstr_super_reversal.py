@@ -20,7 +20,9 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
         self.TP = 0             # Take Profit %
         if params:
             self.SL = params.get("sl", self.SL)
-            self.TP = params.get("cash", self.TP)
+            self.TP = params.get("tp", self.TP)
+        self.str_sl = "sl" + str(self.SL)
+        self.str_tp = "tp" + str(self.TP)
 
         if self.SL == 0:     # SL == 0 => mean no SL
             self.SL = -1000
@@ -42,6 +44,9 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
                         }
 
         return ds
+
+    def get_info(self):
+        return "superreversal", self.str_sl, self.str_tp
 
     def set_current_data(self, current_data):
         self.df_current_data = current_data
@@ -122,9 +127,9 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
 
         return df_result
 
-    def update(self, current_datetime, current_trades, broker_cash, prices_symbols):
+    def update(self, current_datetime, current_trades, broker_cash, prices_symbols, record_info):
         self.rtctrl.update_rtctrl(current_datetime, current_trades, broker_cash, prices_symbols)
-        self.rtctrl.display_summary_info()
+        self.rtctrl.display_summary_info(record_info)
 
     def get_symbol_buying_size(self, symbol):
         if self.rtctrl.prices_symbols[symbol] < 0: # first init at -1
