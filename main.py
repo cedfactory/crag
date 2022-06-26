@@ -146,8 +146,8 @@ def crag_test_scenario(df):
 
     for period in list_periods:
 
-        # CEDE debug
-        period = "2020-06-25_2021-06-13"
+        # CEDE for debug purpose
+        # period = "2020-06-25_2021-06-13"
 
         start_date = period[0:10]
         end_date = period[11:21]
