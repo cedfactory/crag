@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 
 class AutomaticTestPlan():
-    def __init__(self, start_date, end_date, split):
+    def __init__(self, params):
         self.path_results = "./automatic_test_results/"
         if not os.path.exists(self.path_results):
             os.makedirs(self.path_results)
@@ -15,20 +15,23 @@ class AutomaticTestPlan():
                                   'test_id', 'path_results']
         self.df_output_test_plan = pd.DataFrame(columns=self.test_plan_columns)
 
-        # do not use _ in strategy names
-        # self.list_strategies = ['superreversal', 'trix', 'cryptobot', 'bigwill', 'vmc']
-        self.list_strategies = ['superreversal', 'trix', 'cryptobot']
-        self.list_sl = [-10000, -5, -10, -15]
-        self.list_tp = [10000, 10, 15, 20]
-        self.interval = '1h'
 
-        self.str_start_date = start_date
-        self.str_end_date = end_date
+        self.list_strategies = 0
+        self.list_sl = 0
+        self.list_tp = 0
+        self.split = 0
+        self.interval = 0
+        if(params):
+            self.str_start_date = params.get("start", self.list_strategies)
+            self.str_end_date = params.get("end", self.list_strategies)
+            self.list_strategies = params.get("startegies", self.list_strategies)
+            self.list_sl = params.get("sl", self.list_sl)
+            self.list_tp = params.get("tp", self.list_tp)
+            self.split = params.get("split", self.split)
+            self.interval = params.get("interval", self.interval)
 
         self.start_date = datetime.strptime(self.str_start_date, "%Y-%m-%d")
         self.end_date = datetime.strptime(self.str_end_date, "%Y-%m-%d")
-
-        self.split = split
 
         delta = (self.end_date - self.start_date)/self.split
 
@@ -74,8 +77,8 @@ class AutomaticTestPlan():
     def savetofile(self):
         self.df_output_test_plan.to_csv(self.path_results + 'automatictestplan.csv')
 
-def build_automatic_test_plan(start_date, end_date, split):
-    automatictestplan = AutomaticTestPlan(start_date, end_date, split)
+def build_automatic_test_plan(params):
+    automatictestplan = AutomaticTestPlan(params)
     automatictestplan.savetofile()
     return automatictestplan.df_output_test_plan
 

@@ -25,16 +25,31 @@ class Benchmark:
         self.df_wallet_records = pd.DataFrame()
 
         self.list_strategies = []
+        self.list_interval = []
+        self.list_sl = []
+        self.list_tp = []
         list_csv_files = fnmatch.filter(os.listdir(self.path), '*.csv')
         for csv_file in list_csv_files:
             prefixe = csv_file.split(".")[0]
             strategy = prefixe.split("_")[5]
+            interval = prefixe.split("_")[6]
+            sl = prefixe.split("_")[7]
+            sl = sl[2:]
+            tp = prefixe.split("_")[8]
+            tp = tp[2:]
+
             self.list_strategies.append(strategy)
+            self.list_interval.append(interval)
+            self.list_sl.append(sl)
+            self.list_tp.append(tp)
             if prefixe.split("_")[0] == 'sim':
                 df_data = pd.read_csv(self.path + csv_file, delimiter=';')
             elif prefixe.split("_")[0] == 'wallet':
                 df_data = pd.read_csv(self.path + csv_file)
             df_data['strategy'] = strategy
+            df_data['interval'] = interval
+            df_data['sl'] = sl
+            df_data['tp'] = tp
             if prefixe.split("_")[0] == 'sim':
                 if len(self.df_transaction_records) == 0:
                     self.df_transaction_records = df_data.copy()
@@ -57,24 +72,44 @@ class Benchmark:
         period = " from_" + start + ' to ' + end
 
         self.list_strategies = list(set(self.list_strategies))
+        self.list_interval = list(set(self.list_interval))
+        self.list_sl = list(set(self.list_sl))
+        self.list_tp = list(set(self.list_tp))
+
+        self.list_batch_run = []
+        for strategy in self.list_strategies:
+            for interval in self.list_interval:
+                for sl in self.list_sl:
+                    for tp in self.list_tp:
+                        self.list_batch_run.append(strategy + '_' + interval + '_' + sl + '_' + tp)
+        self.list_batch_run = list(set(self.list_batch_run))
 
         # Wallet values
         self.df_wallet = pd.DataFrame()
         for strategy in self.list_strategies:
-            df_strategy = self.df_wallet_records[self.df_wallet_records['strategy'] == strategy].copy()
-            if len(self.df_wallet) == 0:
-                self.df_wallet = pd.DataFrame(columns=self.list_strategies, index=df_strategy['time'].to_list())
-            df_strategy.set_index('time', inplace=True)
-            self.df_wallet[strategy] = df_strategy['wallet']
+            for interval in self.list_interval:
+                for sl in self.list_sl:
+                    for tp in self.list_tp:
+                        df_strategy = self.df_wallet_records[(self.df_wallet_records['strategy'] == strategy)
+                                                             & (self.df_wallet_records['interval'] == interval)
+                                                             & (self.df_wallet_records['sl'] == sl)
+                                                             & (self.df_wallet_records['tp'] == tp)].copy()
+                        if len(self.df_wallet) == 0:
+                            self.df_wallet = pd.DataFrame(columns=self.list_batch_run, index=df_strategy['time'].to_list())
+                        df_strategy.set_index('time', inplace=True)
+                        self.df_wallet[strategy + '_' + interval + '_' + sl + '_' + tp] = df_strategy['wallet']
 
         # Dropping last 2 rows using drop
         # DEBUG identified bug in Crag forced_sell_position
         n = 2
         self.df_wallet.drop(self.df_wallet.tail(n).index, inplace=True)
 
+        # self.df_wallet = self.df_wallet.dropna(axis=1)
+        # self.list_batch_run = self.df_wallet.columns.to_list()
+
         # Plot Wallet values
         ax = plt.gca()
-        for strategy in self.list_strategies:
+        for strategy in self.list_batch_run:
             self.df_wallet.plot(kind='line', y=strategy, ax=ax)
         # ax.legend(bbox_to_anchor=(1, 1.02), loc='upper left')
         plt.title('wallet_strategy' + period)
@@ -84,24 +119,33 @@ class Benchmark:
         # Global Win rate
         self.df_plot_data = pd.DataFrame()
         for strategy in self.list_strategies:
-            df_strategy = self.df_transaction_records[self.df_transaction_records['strategy'] == strategy].copy()
-            df_strategy = df_strategy[df_strategy['type'] == 'SELL'].copy()
-            if len(self.df_plot_data) == 0:
-                self.df_plot_data = pd.DataFrame(columns=self.list_strategies, index=['transaction_total',
-                                                                                      'global_win_rate',
-                                                                                      'profit$',
-                                                                                      'profit%'])
+            for interval in self.list_interval:
+                for sl in self.list_sl:
+                    for tp in self.list_tp:
+                        df_strategy = self.df_transaction_records[(self.df_transaction_records['strategy'] == strategy)
+                                                                  & (self.df_transaction_records['interval'] == interval)
+                                                                  & (self.df_transaction_records['sl'] == sl)
+                                                                  & (self.df_transaction_records['tp'] == tp)].copy()
+                        df_strategy = df_strategy[df_strategy['type'] == 'SELL'].copy()
+                        if len(self.df_plot_data) == 0:
+                            self.df_plot_data = pd.DataFrame(columns=self.list_batch_run, index=['transaction_total',
+                                                                                                 'global_win_rate',
+                                                                                                 'profit$',
+                                                                                                 'profit%'])
+                        strategy_id = strategy + '_' + interval + '_' + sl + '_' + tp
+                        self.df_plot_data[strategy_id]['transaction_total'] = len(df_strategy)
 
-            self.df_plot_data[strategy]['transaction_total'] = len(df_strategy)
+                        # df_strategy['transaction_roi$'] = df_strategy['net_price'] - df_strategy['buying_fees'] - df_strategy['selling_fees'] - df_strategy['net_size'] * df_strategy['buying_price']
+                        df_strategy['transaction_roi$'] = df_strategy['net_price'] - df_strategy['buying_fees'] - df_strategy['net_size'] * df_strategy['buying_price']
 
-            # df_strategy['transaction_roi$'] = df_strategy['net_price'] - df_strategy['buying_fees'] - df_strategy['selling_fees'] - df_strategy['net_size'] * df_strategy['buying_price']
-            df_strategy['transaction_roi$'] = df_strategy['net_price'] - df_strategy['buying_fees'] - df_strategy['net_size'] * df_strategy['buying_price']
+                        self.df_plot_data[strategy_id]['global_win_rate'] = round((df_strategy['transaction_roi$'] >= 0).sum() * 100 / self.df_plot_data[strategy_id]['transaction_total'], 2)
 
-            self.df_plot_data[strategy]['global_win_rate'] = round((df_strategy['transaction_roi$'] >= 0).sum() * 100 / self.df_plot_data[strategy]['transaction_total'], 2)
-
-            df_strategy = self.df_wallet_records[self.df_wallet_records['strategy'] == strategy].copy()
-            self.df_plot_data[strategy]['profit$'] = round(df_strategy['wallet'][len(df_strategy)-1] - df_strategy['wallet'][0], 1)
-            self.df_plot_data[strategy]['profit%'] = round(self.df_plot_data[strategy]['profit$'] * 100 / df_strategy['wallet'][0], 1)
+                        df_strategy = self.df_wallet_records[(self.df_wallet_records['strategy'] == strategy)
+                                                              & (self.df_wallet_records['interval'] == interval)
+                                                              & (self.df_wallet_records['sl'] == sl)
+                                                              & (self.df_wallet_records['tp'] == tp)].copy()
+                        self.df_plot_data[strategy_id]['profit$'] = round(df_strategy['wallet'][len(df_strategy)-1] - df_strategy['wallet'][0], 1)
+                        self.df_plot_data[strategy_id]['profit%'] = round(self.df_plot_data[strategy_id]['profit$'] * 100 / df_strategy['wallet'][0], 1)
 
         # Plot win rate
         df_win_rate = self.df_plot_data.copy()
