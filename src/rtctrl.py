@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 import requests
 from datetime import datetime
 
@@ -22,9 +23,12 @@ class rtctrl():
         self.exchange = "ftx"
         self.verbose = False
         self.suffix = 0
+        self.working_directory = 0
         if params:
             self.verbose = params.get("rtctrl_verbose", self.verbose)
             self.suffix = params.get("suffix", self.suffix)
+            self.working_directory = params.get("working_directory", self.working_directory)
+            self.export_filename = os.path.join(self.working_directory, "./" + "wallet_tracking_records" + self.suffix + ".csv")
         self.record_tracking = True
 
     def get_df_header(self):
@@ -100,6 +104,6 @@ class rtctrl():
 
                 self.df_rtctrl_tracking = pd.concat([self.df_rtctrl_tracking, df_new_line])
                 self.df_rtctrl_tracking.reset_index(inplace=True, drop=True)
-                self.df_rtctrl_tracking.to_csv("wallet_tracking_records" + self.suffix + ".csv")
+                self.df_rtctrl_tracking.to_csv(self.export_filename)
             except:
                 pass

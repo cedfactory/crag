@@ -20,7 +20,7 @@ def fdp_request(url):
             reason = "exception when requesting {}".format(fdp_url+'/'+url)
             response_json = {"status":"ko", "reason":reason}
             FDP_ERROR = True
-            print('FDP ERROR')
+            print('FDP ERROR - url:', fdp_url+'/'+url)
     
     return response_json
 
