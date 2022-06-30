@@ -35,7 +35,7 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
             return
 
         if self.processed_data == None or not os.path.exists(self.processed_data):
-            print(" 💥 ",self.processed_data," not found")
+            # print(" 💥 ",self.processed_data," not found")
             return
 
         files = os.listdir(self.processed_data)
@@ -44,7 +44,9 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
             symbol = strs[0].replace("_", "/")
             if symbol in rtdp.default_symbols and strs[1] == "csv":
                 # df = pd.read_csv(self.processed_data+"/"+file, sep=";")
-                df = pd.read_csv(self.processed_data + "/" + file)
+                # df = pd.read_csv(self.processed_data + "/" + file)
+                csv_filename = os.path.join(self.processed_data, file) # DEBUG CEDE IN ORDER TO KILL WARNINGS
+                df = pd.read_csv(csv_filename, low_memory=False)
                 self.data[symbol] = df
 
     def _is_in_dataframe(self):
@@ -161,7 +163,9 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
             strs = file.split('.')
             symbol = strs[0].replace("_", "/")
             if symbol in rtdp.default_symbols and strs[1] == "csv":
-                df = pd.read_csv(self.data_directory+"/"+file, sep=";")
+                # df = pd.read_csv(self.data_directory + "/" + file, sep=";")
+                csv_filename = os.path.join(self.data_directory, file)
+                df = pd.read_csv(csv_filename, sep=";", low_memory=False)
                 self.data[symbol] = df
                 list_dates.extend(self.data[symbol]['timestamp'].to_list())
                 list_dates = list(set(list_dates))

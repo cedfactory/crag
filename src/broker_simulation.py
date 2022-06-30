@@ -1,3 +1,5 @@
+import pandas as pd
+
 from . import broker,rtdp_simulation
 import csv
 
@@ -47,6 +49,15 @@ class SimBroker(broker.Broker):
 
     def export_history(self, target):
         if len(self.trades) > 0:
+            df = pd.DataFrame(columns=self.trades[0].get_csv_header())
+            if target.endswith(".csv"):
+                for trade in self.trades:
+                    list_trade_row = trade.get_csv_row()
+                    df.loc[len(df)] = list_trade_row
+                    # df = df.append(list_trade_row)
+            df.to_csv(target)
+        '''
+        if len(self.trades) > 0:
             if target.endswith(".csv"):
                 with open(target, 'w', newline='') as f:
                     writer = csv.writer(f, delimiter=';')
@@ -56,6 +67,7 @@ class SimBroker(broker.Broker):
                     f.close()
             else:
                 print(self.trades)
+        '''
 
     def export_status(self):
         print("Status :")
