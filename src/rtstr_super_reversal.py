@@ -33,6 +33,8 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
         self.MAX_POSITION = 5    # Asset Overall Percent Size
         self.match_full_position = True
 
+        self.zero_print = True
+
     def get_data_description(self):
         ds = rtdp.DataDescription()
         #ds.symbols = ds.symbols[:2]
@@ -105,10 +107,11 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
                 df_row = pd.DataFrame(data={"symbol":[symbol], "stimulus":["SELL"]})
                 df_result = pd.concat((df_result, df_row), axis = 0)
 
-                if(isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] > self.TP):
-                    print('TAKE PROFIT: ', symbol, ": ", df_sl_tp['roi_sl_tp'][symbol])
-                if(isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] < self.SL):
-                    print('STOP LOST: ', symbol, ": ", df_sl_tp['roi_sl_tp'][symbol])
+                if not self.zero_print:
+                    if(isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] > self.TP):
+                        print('TAKE PROFIT: ', symbol, ": ", df_sl_tp['roi_sl_tp'][symbol])
+                    if(isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] < self.SL):
+                        print('STOP LOST: ', symbol, ": ", df_sl_tp['roi_sl_tp'][symbol])
 
         return df_result
 

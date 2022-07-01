@@ -24,6 +24,8 @@ class Crag:
         self.portfolio_value = 0
         self.wallet_value = 0
 
+        self.zero_print = True
+
         self.strategy_name, self.str_sl, self.str_tp = self.rtstr.get_info()
         self.start_date, self.end_date,  self.inteval = self.broker.get_info()
         self.export_filename = "sim_broker_history"\
@@ -49,7 +51,8 @@ class Crag:
         self.export_history(self.export_filename) # DEBUG CEDE
 
     def step(self):
-        print("[Crag] ⌛")
+        if not self.zero_print:
+            print("[Crag] ⌛")
 
         # update all the data
         ds = self.rtstr.get_data_description()
@@ -68,7 +71,8 @@ class Crag:
         current_data = self.broker.get_current_data(ds)
         # print(current_data) # DEBUG
         if current_data is None:
-            print("[Crag] 💥 no current data")
+            if not self.zero_print:
+                print("[Crag] 💥 no current data")
             self.force_sell_open_trade()
             self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(), prices_symbols, True)
             return False
@@ -84,7 +88,8 @@ class Crag:
         self.broker.export_history(target)
 
     def trade(self):
-        print("[Crag.trade]")
+        if not self.zero_print:
+            print("[Crag.trade]")
         if self.cash == 0 and self.init_cash_value == 0:
             self.init_cash_value = self.broker.get_cash()
         self.cash = self.broker.get_cash()
@@ -97,8 +102,6 @@ class Crag:
         lst_symbols = list(set(lst_symbols))
         self.update_df_roi_sl_tp(lst_symbols)
         df_selling_symbols = self.rtstr.get_df_selling_symbols(lst_symbols, self.df_portfolio_status)
-        # print("👎") # DEBUG
-        # print(df_selling_symbols) # DEBUG
         list_symbols_to_sell = df_selling_symbols.symbol.to_list()
         df_selling_symbols.set_index("symbol", inplace=True)
         for current_trade in self.current_trades:
@@ -158,12 +161,11 @@ class Crag:
 
                     trades.append(sell_trade)
                     self.current_trades.append(sell_trade)
-                    print("{} ({}) {} {:.2f} roi={:.2f}".format(sell_trade.type, sell_trade.stimulus, sell_trade.symbol, sell_trade.gross_price, sell_trade.roi))
+                    if not self.zero_print:
+                        print("{} ({}) {} {:.2f} roi={:.2f}".format(sell_trade.type, sell_trade.stimulus, sell_trade.symbol, sell_trade.gross_price, sell_trade.roi))
 
         # buy symbols
         df_buying_symbols = self.rtstr.get_df_buying_symbols()
-        # print("👍") # DEBUG
-        # print(df_buying_symbols) # DEBUG
         df_buying_symbols.set_index('symbol', inplace=True)
         df_buying_symbols.drop(df_buying_symbols[df_buying_symbols['size'] == 0].index, inplace=True)
         for symbol in df_buying_symbols.index.to_list():
@@ -216,14 +218,15 @@ class Crag:
 
                     trades.append(current_trade)
                     self.current_trades.append(current_trade)
-
-                    print("{} {} {:.2f}".format(current_trade.type, current_trade.symbol, current_trade.gross_price))
+                    if not self.zero_print:
+                        print("{} {} {:.2f}".format(current_trade.type, current_trade.symbol, current_trade.gross_price))
 
     def export_status(self):
         return self.broker.export_status()
 
     def force_sell_open_trade(self):
-        print("[Crag.forced.exit.trade]")
+        if not self.zero_print:
+            print("[Crag.forced.exit.trade]")
         if self.cash == 0 and self.init_cash_value == 0:
             self.init_cash_value = self.broker.get_cash()
         self.cash = self.broker.get_cash()
@@ -235,9 +238,10 @@ class Crag:
         lst_symbols = [current_trade.symbol for current_trade in self.current_trades if current_trade.type == "BUY"]
         lst_symbols = list(set(lst_symbols))
         df_selling_symbols = self.rtstr.get_df_forced_exit_selling_symbols(lst_symbols)
-        print("👎")
-        print('Selling remaining open positions before exit')
-        print(df_selling_symbols)
+        if not self.zero_print:
+            print("👎")
+            print('Selling remaining open positions before exit')
+            print(df_selling_symbols)
         list_symbols_to_sell = df_selling_symbols.symbol.to_list()
         df_selling_symbols.set_index("symbol", inplace=True)
         for current_trade in self.current_trades:
@@ -286,7 +290,8 @@ class Crag:
 
                     trades.append(sell_trade)
                     self.current_trades.append(sell_trade)
-                    print("{} ({}) {} {:.2f} roi={:.2f}".format(sell_trade.type, sell_trade.stimulus, sell_trade.symbol, sell_trade.gross_price, sell_trade.roi))
+                    if not self.zero_print:
+                        print("{} ({}) {} {:.2f} roi={:.2f}".format(sell_trade.type, sell_trade.stimulus, sell_trade.symbol, sell_trade.gross_price, sell_trade.roi))
 
     def update_df_roi_sl_tp(self, lst_symbols):
         for symbol in lst_symbols:
