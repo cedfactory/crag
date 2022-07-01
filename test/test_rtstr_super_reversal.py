@@ -9,7 +9,7 @@ class TestRTSTRSuperReversal:
         strategy = rtstr_super_reversal.StrategySuperReversal()
 
         # expectations
-        assert(strategy.SL == -5)
+        assert(strategy.SL == -1000)
         assert(strategy.TP == 1000)
         assert(strategy.MAX_POSITION == 5)
         assert(strategy.SPLIT == 5)
