@@ -1,4 +1,4 @@
-from src import rtdp,rtdp_simulation,broker_simulation,broker_ftx,crag,rtstr,rtstr_super_reversal,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC,analyser,benchmark
+from src import rtdp,rtdp_simulation,broker_simulation,broker_ftx,crag,rtstr,rtstr_super_reversal,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC,analyser,benchmark,automatic_test_plan
 import pandas as pd
 import os
 import shutil
@@ -98,17 +98,13 @@ def crag_ftx():
 
 
 def crag_simulation_scenario(strategy_name, start_date, end_date, interval):
-    print("selected strategy: ",strategy_name)
-    if strategy_name == "super_reversal":
-        strategy = rtstr_super_reversal.StrategySuperReversal(params={"rtctrl_verbose": False})
-    if strategy_name == "trix":
-        strategy = rtstr_trix.StrategyTrix(params={"rtctrl_verbose": False})
-    if strategy_name == "cryptobot":
-        strategy = rtstr_cryptobot.StrategyCryptobot(params={"rtctrl_verbose": False})
-    if strategy_name == "bigwill":
-        strategy = rtstr_bigwill.StrategyBigWill(params={"rtctrl_verbose": False})
-    if strategy_name == "vmc":
-        strategy = rtstr_VMC.StrategyVMC(params={"rtctrl_verbose": False})
+    available_strategies = rtstr.RealTimeStrategy.get_strategies_list()
+    if strategy_name in available_strategies:
+        strategy = rtstr.RealTimeStrategy.get_strategy_from_name(strategy_name, {"rtctrl_verbose": False})
+    else:
+        print("💥 missing known strategy ({})".format(strategy_name))
+        print("available strategies : ", available_strategies)
+        return
 
     broker_params = {'cash':10000, 'start': start_date, 'end': end_date, "intervals": interval}
     simu_broker = broker_simulation.SimBroker(broker_params)
@@ -156,7 +152,7 @@ def crag_test_scenario(df):
                 extention = filename.split(".")[1]
                 interval = list_interval[0]
                 if os.path.exists(filename):
-                    filename2 = './output/' + prefixe + '_' + period + '_' + strategy + '_' + interval + extention
+                    filename2 = './output/' + prefixe + '_' + period + '_' + strategy + '_' + interval + "." + extention
                     os.rename(filename, filename2)
 
         print('benchmark: ', period)
@@ -181,7 +177,7 @@ if __name__ == '__main__':
             crag_record()
         elif len(sys.argv) > 2 and (sys.argv[1] == "--simulation"):
             strategy_name = sys.argv[2]
-            crag_simulation(strategy_name)
+            crag_simulation('StrategySuperReversal')
         elif len(sys.argv) > 2 and (sys.argv[1] == "--live"):
             strategy_name = sys.argv[2]
             crag_live(strategy_name)
