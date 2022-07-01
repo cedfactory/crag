@@ -19,8 +19,10 @@ class rtctrl():
         self.screener_type = "crypto"
         self.exchange = "ftx"
         self.verbose = False
+        self.suffix = ""
         if params:
             self.verbose = params.get("rtctrl_verbose", self.verbose)
+            self.suffix = params.get("suffix", self.suffix)
         self.record_tracking = True
 
     def get_df_header(self):
@@ -77,7 +79,7 @@ class rtctrl():
             self.wallet_value = self.wallet_cash
         self.df_rtctrl['wallet_%'] = 100 * self.df_rtctrl['portfolio_value'] / self.df_rtctrl['wallet_value']
 
-    def display_summary_info(self):
+    def display_summary_info(self, record_info):
         wallet_cash = self.wallet_cash
         portfolio = self.df_rtctrl['actual_net_price'].sum()
         wallet_value = self.wallet_value
@@ -90,9 +92,9 @@ class rtctrl():
             print(self.df_rtctrl)
             print("{} roi: {:.2f}% cash: {:.2f} portfolio: {:.2f} wallet: {:.2f} asset: {:.2f}%".format(self.time, roi_percent, wallet_cash, portfolio, wallet_value, asset_percent))
 
-        if self.record_tracking:
+        if self.record_tracking and record_info:
             df_new_line = pd.DataFrame([[self.time, roi_percent, wallet_cash, portfolio, wallet_value, asset_percent]], columns=self.get_df_header_tracking())
 
             self.df_rtctrl_tracking = pd.concat([self.df_rtctrl_tracking, df_new_line])
             self.df_rtctrl_tracking.reset_index(inplace=True, drop=True)
-            self.df_rtctrl_tracking.to_csv("wallet_tracking_records.csv")
+            self.df_rtctrl_tracking.to_csv("wallet_tracking_records" + self.suffix + ".csv")

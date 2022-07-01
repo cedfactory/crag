@@ -4,6 +4,8 @@ import os
 import shutil
 import fnmatch
 
+import concurrent.futures
+
 _usage_str = """
 Options:
     --record <csvfile>
@@ -99,8 +101,9 @@ def crag_ftx():
 
 def crag_simulation_scenario(strategy_name, start_date, end_date, interval, sl, tp):
     available_strategies = rtstr.RealTimeStrategy.get_strategies_list()
+    strategy_suffix = "_" + strategy_name + "_" + start_date + "_" + end_date + "_" + interval + "_sl" + str(sl) + "_tp" + str(tp)
     if strategy_name in available_strategies:
-        strategy = rtstr.RealTimeStrategy.get_strategy_from_name(strategy_name, {"rtctrl_verbose": False, "sl": sl, "tp": tp})
+        strategy = rtstr.RealTimeStrategy.get_strategy_from_name(strategy_name, {"rtctrl_verbose": False, "sl": sl, "tp": tp, "suffix": strategy_suffix})
     else:
         print("💥 missing known strategy ({})".format(strategy_name))
         print("available strategies : ", available_strategies)
@@ -114,7 +117,9 @@ def crag_simulation_scenario(strategy_name, start_date, end_date, interval, sl, 
 
     bot.run()
 
-    bot.export_history("sim_broker_history.csv")
+    bot.export_history("sim_broker_history"
+                       + strategy_suffix
+                       + ".csv")
     bot.export_status()
 
 def crag_test_scenario(df):
@@ -131,7 +136,6 @@ def crag_test_scenario(df):
     list_sl = df['sl'].to_list()
     list_sl = list(set(list_sl))
 
-
     home_directory = os.getcwd()
     auto_test_directory = os.path.join(os.getcwd(), "./automatic_test_results")
     os.chdir(auto_test_directory)
@@ -139,7 +143,7 @@ def crag_test_scenario(df):
     for period in list_periods:
 
         # CEDE debug
-        # period = "2020-06-25_2021-12-06"
+        period = "2020-06-25_2021-06-13"
 
         start_date = period[0:10]
         end_date = period[11:21]
@@ -151,30 +155,40 @@ def crag_test_scenario(df):
         recorder = rtdp_simulation.SimRealTimeDataProvider(recorder_params)
 
         directory_data_target = os.path.join(strategy_directory, "./data/")
-        # recorder.record_for_data_scenario(ds, start_date, end_date, list_interval[0], directory_data_target)
+        recorder.record_for_data_scenario(ds, start_date, end_date, list_interval[0], directory_data_target)
 
+        '''
         for strategy in list_strategy:
             for sl in list_sl:
                 for tp in list_tp:
                     crag_simulation_scenario(strategy, start_date, end_date, list_interval[0], sl, tp)
-                    list_output_filename = ['sim_broker_history.csv', 'wallet_tracking_records.csv']
-                    for filename in list_output_filename:
-                        prefixe = filename.split(".")[0]
-                        extention = filename.split(".")[1]
-                        interval = list_interval[0]
-                        if os.path.exists(filename):
-                            filename2 = './output/' \
-                                        + prefixe \
-                                        + '_' + period \
-                                        + '_' + strategy \
-                                        + '_' + interval \
-                                        + '_' + 'sl' + sl\
-                                        + '_' + 'tp' + tp\
-                                        + '.' + extention
-                            os.rename(filename, filename2)
+        '''
+
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = []
+            for strategy in list_strategy:
+                for sl in list_sl:
+                    for tp in list_tp:
+                        futures.append(
+                            executor.submit(crag_simulation_scenario,
+                                            strategy, start_date, end_date, list_interval[0], sl, tp
+                                            )
+                        )
+
+        list_output_filename = []
+        for file in os.listdir("./"):
+            if file.startswith('sim_broker_history'):
+                list_output_filename.append(file)
+        for file in os.listdir("./"):
+            if file.startswith('wallet_tracking_records'):
+                list_output_filename.append(file)
+        print("output file list: ", list_output_filename)
+        for filename in list_output_filename:
+            if os.path.exists(filename):
+                filename2 = './output/' + filename
+                os.rename(filename, filename2)
 
         print('benchmark: ', period)
-
         # Move files for benchmark
         output_dir = os.path.join(strategy_directory, "./output")
         benchmark_dir = os.path.join(strategy_directory, "./benchmark")

@@ -26,7 +26,7 @@ class StrategyBigWill(rtstr.RealTimeStrategy):
         self.TP = 0             # Take Profit %
         if params:
             self.SL = params.get("sl", self.SL)
-            self.TP = params.get("cash", self.TP)
+            self.TP = params.get("tp", self.TP)
 
         if self.SL == 0:     # SL == 0 => mean no SL
             self.SL = -1000

@@ -83,7 +83,10 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
 
 
             df_row = pd.DataFrame(data=row)
-            df_result = pd.concat((df_result, df_row), axis = 0)
+            try:
+                df_result = pd.concat((df_result, df_row), axis = 0)
+            except:
+                print('error')
 
         df_result.set_index("symbol", inplace=True)
 
@@ -125,7 +128,6 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
                 os.makedirs(target)
             df.to_csv(target+'/'+formatted_symbol+".csv", sep=";")
 
-
     def record_for_data_scenario(self, data_description, start_date, end_date, interval, target="./data/"):
         symbols = ','.join(data_description.symbols)
         symbols = symbols.replace('/','_')
@@ -151,7 +153,6 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
 
         list_dates = []
         directory = os.getcwd()
-
 
         files = os.listdir(self.input)
         for file in files:

@@ -21,12 +21,22 @@ class Crag:
         self.portfolio_value = 0
         self.wallet_value = 0
 
+        self.strategy_name, self.str_sl, self.str_tp = self.rtstr.get_info()
+        self.start_date, self.end_date,  self.inteval = self.broker.get_info()
+        self.export_filename = "sim_broker_history"\
+                               + "_" + self.strategy_name\
+                               + "_" + str(self.start_date)\
+                               + "_" + str(self.end_date)\
+                               + "_" + str(self.inteval)\
+                               + "_" + str(self.str_sl)\
+                               + "_" + str(self.str_tp)\
+                               + ".csv"
 
     def run(self):
         done = False
         while not done:
             done = not self.step()
-            self.export_history("broker_history.csv")
+            self.export_history(self.export_filename)
             if done:
                 break
             time.sleep(self.interval)
@@ -39,7 +49,7 @@ class Crag:
         ds = self.rtstr.get_data_description()
         prices_symbols = {symbol:self.broker.get_value(symbol) for symbol in ds.symbols}
         current_datetime = self.broker.get_current_datetime()
-        self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(), prices_symbols)
+        self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(), prices_symbols, False)
 
         if(len(self.df_portfolio_status) == 0):
             self.df_portfolio_status['symbol'] = ds.symbols
@@ -54,7 +64,7 @@ class Crag:
         if current_data is None:
             print("[Crag] 💥 no current data")
             self.force_sell_open_trade()
-            self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(), prices_symbols)
+            self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(), prices_symbols, True)
             return False
 
         self.rtstr.set_current_data(current_data)
