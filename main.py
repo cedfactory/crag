@@ -97,10 +97,10 @@ def crag_ftx():
     my_broker_ftx.export_history()
 
 
-def crag_simulation_scenario(strategy_name, start_date, end_date, interval):
+def crag_simulation_scenario(strategy_name, start_date, end_date, interval, sl, tp):
     available_strategies = rtstr.RealTimeStrategy.get_strategies_list()
     if strategy_name in available_strategies:
-        strategy = rtstr.RealTimeStrategy.get_strategy_from_name(strategy_name, {"rtctrl_verbose": False})
+        strategy = rtstr.RealTimeStrategy.get_strategy_from_name(strategy_name, {"rtctrl_verbose": False, "sl": sl, "tp": tp})
     else:
         print("💥 missing known strategy ({})".format(strategy_name))
         print("available strategies : ", available_strategies)
@@ -118,20 +118,29 @@ def crag_simulation_scenario(strategy_name, start_date, end_date, interval):
     bot.export_status()
 
 def crag_test_scenario(df):
-
     ds = rtdp.DataDescription()
+
     list_periods = df['period'].to_list()
     list_periods = list(set(list_periods))
     list_interval = df['interval'].to_list()     # multi interval to be implemented... one day maybe
     list_interval = list(set(list_interval))     # multi interval to be implemented... one day maybe
     list_strategy = df['strategy'].to_list()
     list_strategy = list(set(list_strategy))
+    list_tp = df['tp'].to_list()
+    list_tp = list(set(list_tp))
+    list_sl = df['sl'].to_list()
+    list_sl = list(set(list_sl))
+
 
     home_directory = os.getcwd()
     auto_test_directory = os.path.join(os.getcwd(), "./automatic_test_results")
     os.chdir(auto_test_directory)
 
     for period in list_periods:
+
+        # CEDE debug
+        # period = "2020-06-25_2021-12-06"
+
         start_date = period[0:10]
         end_date = period[11:21]
 
@@ -142,18 +151,27 @@ def crag_test_scenario(df):
         recorder = rtdp_simulation.SimRealTimeDataProvider(recorder_params)
 
         directory_data_target = os.path.join(strategy_directory, "./data/")
-        recorder.record_for_data_scenario(ds, start_date, end_date, list_interval[0], directory_data_target)
+        # recorder.record_for_data_scenario(ds, start_date, end_date, list_interval[0], directory_data_target)
 
         for strategy in list_strategy:
-            crag_simulation_scenario(strategy, start_date, end_date, list_interval[0])
-            list_output_filename = ['sim_broker_history.csv', 'wallet_tracking_records.csv']
-            for filename in list_output_filename:
-                prefixe = filename.split(".")[0]
-                extention = filename.split(".")[1]
-                interval = list_interval[0]
-                if os.path.exists(filename):
-                    filename2 = './output/' + prefixe + '_' + period + '_' + strategy + '_' + interval + "." + extention
-                    os.rename(filename, filename2)
+            for sl in list_sl:
+                for tp in list_tp:
+                    crag_simulation_scenario(strategy, start_date, end_date, list_interval[0], sl, tp)
+                    list_output_filename = ['sim_broker_history.csv', 'wallet_tracking_records.csv']
+                    for filename in list_output_filename:
+                        prefixe = filename.split(".")[0]
+                        extention = filename.split(".")[1]
+                        interval = list_interval[0]
+                        if os.path.exists(filename):
+                            filename2 = './output/' \
+                                        + prefixe \
+                                        + '_' + period \
+                                        + '_' + strategy \
+                                        + '_' + interval \
+                                        + '_' + 'sl' + sl\
+                                        + '_' + 'tp' + tp\
+                                        + '.' + extention
+                            os.rename(filename, filename2)
 
         print('benchmark: ', period)
 
@@ -188,7 +206,15 @@ if __name__ == '__main__':
         elif len(sys.argv) >= 2 and (sys.argv[1] == "--benchmark"):
             crag_benchmark_results()
         elif len(sys.argv) >= 2 and (sys.argv[1] == "--scenario"):
-            df_test_plan = automatic_test_plan.build_automatic_test_plan('2020-01-01', '2022-06-01', 5)
+            params = {"start": '2020-01-01',
+                      "end": '2022-06-01',
+                      "split": 5,
+                      "interval": '1h',
+                      "startegies": ['superreversal', 'trix', 'cryptobot'],    # WARNING do not use _ in strategy names
+                      "sl": [0, -5, -10],
+                      "tp": [0, 10, 20]
+            }
+            df_test_plan = automatic_test_plan.build_automatic_test_plan(params)
             crag_test_scenario(df_test_plan)
         else:
             _usage()
