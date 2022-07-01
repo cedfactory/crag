@@ -1,6 +1,6 @@
 from src import rtdp,rtdp_simulation,broker_simulation,broker_ftx,crag,rtstr,rtstr_super_reversal,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC,analyser,benchmark,automatic_test_plan
 import pandas as pd
-import os
+import os, sys
 import shutil
 import fnmatch
 
@@ -12,7 +12,9 @@ Options:
     --simulation <StrategyName>
     --live <StrategyName>
 """
-GLOBAL_ID_THREAD = 0
+
+def blockPrint():
+    sys.stdout = open(os.devnull, 'w')
 
 def _usage():
     print(_usage_str)
@@ -63,7 +65,9 @@ def crag_live(strategy_name):
     params = {'broker':my_broker, 'rtstr':my_strategy, 'interval':5}
     bot = crag.Crag(params)
     bot.run()
-    bot.export_history("broker_history.csv")
+
+    # DEBUG CEDE
+    # bot.export_history("broker_history.csv")
     bot.export_status()
 
 def crag_analyse_results():
@@ -232,7 +236,8 @@ def crag_test_scenario_for_period(df, ds, period, auto_test_directory, list_inte
     df.to_csv(period + "_output.csv")
 
 if __name__ == '__main__':
-    import sys
+    # blockPrint()
+
     if len(sys.argv) >= 2:
         if len(sys.argv) == 2 and (sys.argv[1] == "--record"):
             crag_record()

@@ -99,10 +99,10 @@ class rtctrl():
             print(self.df_rtctrl)
             print("{} roi: {:.2f}% cash: {:.2f} portfolio: {:.2f} wallet: {:.2f} asset: {:.2f}%".format(self.time, roi_percent, wallet_cash, portfolio, wallet_value, asset_percent))
 
-        if self.record_tracking and record_info:
+        if self.record_tracking:
             df_new_line = pd.DataFrame([[self.time, roi_percent, wallet_cash, portfolio, wallet_value, asset_percent]], columns=self.get_df_header_tracking())
 
             self.df_rtctrl_tracking = pd.concat([self.df_rtctrl_tracking, df_new_line])
             self.df_rtctrl_tracking.reset_index(inplace=True, drop=True)
-            if self.export_filename != None and self.export_filename != "":
+            if record_info and self.export_filename != None and self.export_filename != "":
                 self.df_rtctrl_tracking.to_csv(self.export_filename)

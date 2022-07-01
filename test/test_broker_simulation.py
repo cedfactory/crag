@@ -87,7 +87,7 @@ class TestSimBroker:
 
         # expectations
 
-        lines=[ ["transaction_id", "time", "buying_time", "type", "sell_id", "stimulus", "symbol", "buying_price", "symbol_price", "net_size", "net_price", "buying_fees", "selling_fees", "gross_price", "transaction_roi%", "remaining_cash", "portfolio_value", "wallet_value", "wallet_roi%"],
+        lines=[ ["", "transaction_id", "time", "buying_time", "type", "sell_id", "stimulus", "symbol", "buying_price", "symbol_price", "net_size", "net_price", "buying_fees", "selling_fees", "gross_price", "transaction_roi%", "remaining_cash", "portfolio_value", "wallet_value", "wallet_roi%"],
                 ["BUY", "", "", "ETH/USD", "1", "1", "2", "2", "0.07", "0.07", "2.08", "0.05", "90", "110", "110", "1"] ]
         with open(history_file_generated) as csvfile:
             csvreader = csv.reader(csvfile, delimiter=';')
@@ -95,7 +95,7 @@ class TestSimBroker:
             assert(header == lines[0])
             
             line = next(csvreader)
-            assert(line[3:] == lines[1])
+            assert(line[4:] == lines[1])
 
         # cleaning
         os.remove(history_file_generated)

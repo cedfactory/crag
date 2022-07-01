@@ -41,11 +41,12 @@ class Crag:
         done = False
         while not done:
             done = not self.step()
-            self.export_history(self.export_filename)
             if done:
                 break
             time.sleep(self.interval)
             self.broker.tick() # increment
+
+        self.export_history(self.export_filename) # DEBUG CEDE
 
     def step(self):
         print("[Crag] ⌛")
