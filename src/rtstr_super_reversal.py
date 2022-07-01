@@ -106,13 +106,9 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
                 df_result = pd.concat((df_result, df_row), axis = 0)
 
                 if(isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] > self.TP):
-                    print('=========================== TAKE PROFIT ==========================')
-                    print('=========================== ', symbol,' ==========================')
-                    print('=========================== ', df_sl_tp['roi_sl_tp'][symbol], ' ==========================')
+                    print('TAKE PROFIT: ', symbol, ": ", df_sl_tp['roi_sl_tp'][symbol])
                 if(isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] < self.SL):
-                    print('=========================== STOP LOST ==========================')
-                    print('=========================== ', symbol,' ==========================')
-                    print('=========================== ', df_sl_tp['roi_sl_tp'][symbol], ' ==========================')
+                    print('STOP LOST: ', symbol, ": ", df_sl_tp['roi_sl_tp'][symbol])
 
         return df_result
 

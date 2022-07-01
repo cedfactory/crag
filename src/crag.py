@@ -1,3 +1,4 @@
+import os
 import time
 import pandas as pd
 from . import trade
@@ -7,11 +8,13 @@ class Crag:
 
         self.broker = None
         self.rtstr = None
+        self.working_directory = None
         self.interval = 10
         if params:
             self.broker = params.get("broker", self.broker)
             self.rtstr = params.get("rtstr", self.rtstr)
             self.interval = params.get("interval", self.interval)
+            self.working_directory = params.get("working_directory", self.working_directory)
 
         self.current_trades = []
 
@@ -31,6 +34,8 @@ class Crag:
                                + "_" + str(self.str_sl)\
                                + "_" + str(self.str_tp)\
                                + ".csv"
+        if self.working_directory != None:
+            self.export_filename = os.path.join(self.working_directory, self.export_filename)
 
     def run(self):
         done = False

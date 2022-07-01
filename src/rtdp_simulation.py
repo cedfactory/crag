@@ -9,37 +9,42 @@ from . import features # temporary (before using fdp)
 class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
     def __init__(self, params = None):
         print("[SimRealTimeDataProvider] initialization...")
-        self.input = "./data/"
+        self.working_directory = ""
+        self.data_directory = "./data/"
+        self.processed_data = "./data_processed/"
         self.start = None
         self.end = None
         self.intervals = None
 
         if params:
-            self.input = params.get("input", self.input)
+            self.data_directory = params.get("data_directory", self.data_directory)
             self.start = params.get("start", self.start)
             self.end = params.get("end", self.end)
             self.intervals = params.get("intervals", self.intervals)
 
         if self.start != None and self.end != None:
             self.scheduler = chronos.Chronos(self.start, self.end, self.intervals)
+            self.working_directory = params.get("working_directory", self.working_directory)
+            self.data_directory = os.path.join(self.working_directory, "./data/")
+            self.processed_data = os.path.join(self.working_directory, "./data_processed/")
         else:
             self.scheduler = chronos.Chronos()
     
         self.data = {}
         self.current_position = self.scheduler.get_current_position()
 
-        if self.input == None or not os.path.exists(self.input):
-            print(" 💥 ",self.input," not found")
+        if self.data_directory == None or not os.path.exists(self.data_directory):
+            print(" 💥 ",self.data_directory," not found")
             return
-        print("[SimRealTimeDataProvider] reading data from ", self.input)
+        print("[SimRealTimeDataProvider] reading data from ", self.data_directory)
 
-        files = os.listdir(self.input)
+        files = os.listdir(self.data_directory)
         for file in files:
             strs = file.split('.')
             symbol = strs[0].replace("_", "/")
             if symbol in rtdp.default_symbols and strs[1] == "csv":
                 #f = pd.read_csv(self.processed_data+"/"+file, sep=";")
-                df = pd.read_csv(self.input + "/" + file, sep=";")
+                df = pd.read_csv(self.data_directory + "/" + file, sep=";")
                 self.data[symbol] = df
 
     def _is_in_dataframe(self):
@@ -114,8 +119,6 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
         symbols = ','.join(data_description.symbols)
         symbols = symbols.replace('/','_')
         url = "history?exchange=ftx&symbol="+symbols+"&start=2022-06-01"+"&interval=1h"
-        # url = "history?exchange=ftx&symbol=" + symbols + "&start=01_01_2020" + "&interval=1h" + "&length=400"
-        # url = "history?exchange=ftx&symbol=" + symbols + "&start=01_01_2021" + "&interval=1h" + "&end=01_01_2022"
         response_json = utils.fdp_request(url)
         for symbol in data_description.symbols:
             formatted_symbol = symbol.replace('/','_')
@@ -124,11 +127,11 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
                 continue
             df = pd.read_json(response_json["result"][formatted_symbol]["info"])
             df = features.add_features(df, data_description.features)
-            if not os.path.exists(target):
-                os.makedirs(target)
-            df.to_csv(target+'/'+formatted_symbol+".csv", sep=";")
+            if not os.path.exists(self.data_directory):
+                os.makedirs(self.data_directory)
+            df.to_csv(self.data_directory+'/'+formatted_symbol+".csv", sep=";")
 
-    def record_for_data_scenario(self, data_description, start_date, end_date, interval, target="./data/"):
+    def record_for_data_scenario(self, data_description, start_date, end_date, interval):
         symbols = ','.join(data_description.symbols)
         symbols = symbols.replace('/','_')
         list_missing_data = []
@@ -147,19 +150,19 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
             df.drop(columns="index", inplace=True)
 
             df = features.add_features(df, data_description.features)
-            if not os.path.exists(target):
-                os.makedirs(target)
-            df.to_csv(target+'/'+formatted_symbol+".csv", sep=";")
+            if not os.path.exists(self.data_directory):
+                os.makedirs(self.data_directory)
+            df.to_csv(self.data_directory+'/'+formatted_symbol+".csv", sep=";")
 
         list_dates = []
         directory = os.getcwd()
 
-        files = os.listdir(self.input)
+        files = os.listdir(self.data_directory)
         for file in files:
             strs = file.split('.')
             symbol = strs[0].replace("_", "/")
             if symbol in rtdp.default_symbols and strs[1] == "csv":
-                df = pd.read_csv(self.input+"/"+file, sep=";")
+                df = pd.read_csv(self.data_directory+"/"+file, sep=";")
                 self.data[symbol] = df
                 list_dates.extend(self.data[symbol]['timestamp'].to_list())
                 list_dates = list(set(list_dates))

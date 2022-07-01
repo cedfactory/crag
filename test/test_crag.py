@@ -9,7 +9,7 @@ class TestCrag:
     def test_step_no_current_data(self):
         # context
         strategy_super_reversal = rtstr_super_reversal.StrategySuperReversal()
-        simu_broker = broker_simulation.SimBroker({"input":"fake_directory", "cash":10000})
+        simu_broker = broker_simulation.SimBroker({"data_directory":"fake_directory", "cash":10000})
         params = {"broker":simu_broker, "rtstr":strategy_super_reversal}
         bot = crag.Crag(params)
 
@@ -20,7 +20,7 @@ class TestCrag:
 
     def test_step_trade(self):
         # context
-        simu_broker = broker_simulation.SimBroker({"input":"./test/data_sim_real_time_data_provider", "cash":10000})
+        simu_broker = broker_simulation.SimBroker({"data_directory":"./test/data_sim_real_time_data_provider", "cash":10000})
         strategy_super_reversal = rtstr_super_reversal.StrategySuperReversal()
         crag_params = {"broker":simu_broker, "rtstr":strategy_super_reversal}
         bot = crag.Crag(crag_params)

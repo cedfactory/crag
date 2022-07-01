@@ -12,6 +12,7 @@ Options:
     --simulation <StrategyName>
     --live <StrategyName>
 """
+GLOBAL_ID_THREAD = 0
 
 def _usage():
     print(_usage_str)
@@ -99,20 +100,21 @@ def crag_ftx():
     my_broker_ftx.export_history()
 
 
-def crag_simulation_scenario(strategy_name, start_date, end_date, interval, sl, tp):
+def crag_simulation_scenario(strategy_name, start_date, end_date, interval, sl, tp, working_directory):
     available_strategies = rtstr.RealTimeStrategy.get_strategies_list()
+    os.chdir(working_directory)
     strategy_suffix = "_" + strategy_name + "_" + start_date + "_" + end_date + "_" + interval + "_sl" + str(sl) + "_tp" + str(tp)
     if strategy_name in available_strategies:
-        strategy = rtstr.RealTimeStrategy.get_strategy_from_name(strategy_name, {"rtctrl_verbose": False, "sl": sl, "tp": tp, "suffix": strategy_suffix})
+        strategy = rtstr.RealTimeStrategy.get_strategy_from_name(strategy_name, {"rtctrl_verbose": False, "sl": sl, "tp": tp, "suffix": strategy_suffix, "working_directory": working_directory})
     else:
         print("💥 missing known strategy ({})".format(strategy_name))
         print("available strategies : ", available_strategies)
         return
 
-    broker_params = {'cash':10000, 'start': start_date, 'end': end_date, "intervals": interval}
+    broker_params = {'cash':10000, 'start': start_date, 'end': end_date, "intervals": interval, "working_directory": working_directory}
     simu_broker = broker_simulation.SimBroker(broker_params)
 
-    crag_params = {'broker':simu_broker, 'rtstr':strategy}
+    crag_params = {'broker':simu_broker, 'rtstr':strategy, "working_directory": working_directory}
     bot = crag.Crag(crag_params)
 
     bot.run()
@@ -140,67 +142,94 @@ def crag_test_scenario(df):
     auto_test_directory = os.path.join(os.getcwd(), "./automatic_test_results")
     os.chdir(auto_test_directory)
 
+    '''
     for period in list_periods:
+        crag_test_scenario_for_period(df, ds, period, auto_test_directory, list_interval, list_strategy, list_sl, list_tp)
+    '''
 
-        # CEDE for debug purpose
-        # period = "2020-06-25_2021-06-13"
-
+    for period in list_periods:
         start_date = period[0:10]
         end_date = period[11:21]
 
         strategy_directory = os.path.join(auto_test_directory, "./" + period)
         os.chdir(strategy_directory)
+        print("recorder: ",os.getcwd())
 
-        recorder_params = {'start': start_date, 'end': end_date, "intervals": list_interval[0]}
+        recorder_params = {'start': start_date, 'end': end_date, "intervals": list_interval[0], "working_directory": strategy_directory}
         recorder = rtdp_simulation.SimRealTimeDataProvider(recorder_params)
 
         directory_data_target = os.path.join(strategy_directory, "./data/")
-        recorder.record_for_data_scenario(ds, start_date, end_date, list_interval[0], directory_data_target)
+        recorder.record_for_data_scenario(ds, start_date, end_date, list_interval[0])
 
-        '''
+    os.chdir(auto_test_directory)
+    print("recorder completed: ", os.getcwd())
+
+    # multithreading
+    with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
+        futures = []
+        for period in list_periods:
+            futures.append(
+                executor.submit(
+                    crag_test_scenario_for_period,
+                    df, ds, period, auto_test_directory, list_interval, list_strategy, list_sl, list_tp
+                )
+            )
+
+def crag_test_scenario_for_period(df, ds, period, auto_test_directory, list_interval, list_strategy, list_sl, list_tp):
+    # CEDE for debug purpose
+    # period = "2020-06-25_2021-06-13"
+
+    start_date = period[0:10]
+    end_date = period[11:21]
+
+    strategy_directory = os.path.join(auto_test_directory, "./" + period)
+    os.chdir(strategy_directory)
+
+    '''
+    recorder_params = {'start': start_date, 'end': end_date, "intervals": list_interval[0]}
+    recorder = rtdp_simulation.SimRealTimeDataProvider(recorder_params)
+
+    directory_data_target = os.path.join(strategy_directory, "./data/")
+    recorder.record_for_data_scenario(ds, start_date, end_date, list_interval[0], directory_data_target)
+    '''
+    # multithreading
+    with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
+        futures = []
         for strategy in list_strategy:
             for sl in list_sl:
                 for tp in list_tp:
-                    crag_simulation_scenario(strategy, start_date, end_date, list_interval[0], sl, tp)
-        '''
+                    futures.append(
+                        executor.submit(crag_simulation_scenario,
+                                        strategy, start_date, end_date, list_interval[0], sl, tp, strategy_directory
+                                        )
+                    )
 
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = []
-            for strategy in list_strategy:
-                for sl in list_sl:
-                    for tp in list_tp:
-                        futures.append(
-                            executor.submit(crag_simulation_scenario,
-                                            strategy, start_date, end_date, list_interval[0], sl, tp
-                                            )
-                        )
+    list_output_filename = []
+    for file in os.listdir("./"):
+        if file.startswith('sim_broker_history'):
+            list_output_filename.append(file)
+    for file in os.listdir("./"):
+        if file.startswith('wallet_tracking_records'):
+            list_output_filename.append(file)
+    print("output file list: ", list_output_filename)
+    for filename in list_output_filename:
+        if os.path.exists(filename):
+            filename2 = './output/' + filename
+            os.rename(filename, filename2)
 
-        list_output_filename = []
-        for file in os.listdir("./"):
-            if file.startswith('sim_broker_history'):
-                list_output_filename.append(file)
-        for file in os.listdir("./"):
-            if file.startswith('wallet_tracking_records'):
-                list_output_filename.append(file)
-        print("output file list: ", list_output_filename)
-        for filename in list_output_filename:
-            if os.path.exists(filename):
-                filename2 = './output/' + filename
-                os.rename(filename, filename2)
+    print('benchmark: ', period)
+    # Move files for benchmark
+    output_dir = os.path.join(strategy_directory, "./output")
+    benchmark_dir = os.path.join(strategy_directory, "./benchmark")
+    list_csv_files = fnmatch.filter(os.listdir(output_dir), '*.csv')
+    for csv_file in list_csv_files:
+        shutil.copy(os.path.join(output_dir, csv_file), os.path.join(benchmark_dir, csv_file))
 
-        print('benchmark: ', period)
-        # Move files for benchmark
-        output_dir = os.path.join(strategy_directory, "./output")
-        benchmark_dir = os.path.join(strategy_directory, "./benchmark")
-        list_csv_files = fnmatch.filter(os.listdir(output_dir), '*.csv')
-        for csv_file in list_csv_files:
-            shutil.copy(os.path.join(output_dir, csv_file), os.path.join(benchmark_dir, csv_file))
+    crag_benchmark_scenario(df, period)
 
-        crag_benchmark_scenario(df, period)
-
-        os.chdir(auto_test_directory)
-        print(os.getcwd())
-        df.to_csv(period + "_output.csv")
+    os.chdir(auto_test_directory)
+    print(os.getcwd())
+    df.to_csv(period + "_output.csv")
 
 if __name__ == '__main__':
     import sys
@@ -220,9 +249,9 @@ if __name__ == '__main__':
         elif len(sys.argv) >= 2 and (sys.argv[1] == "--benchmark"):
             crag_benchmark_results()
         elif len(sys.argv) >= 2 and (sys.argv[1] == "--scenario"):
-            params = {"start": '2020-01-01',
-                      "end": '2022-06-01',
-                      "split": 5,
+            params = {"start": '2020-01-01',  # YYYY-MM-DD
+                      "end": '2022-06-28',    # YYYY-MM-DD
+                      "split": 2,
                       "interval": '1h',
                       "startegies": ['superreversal', 'trix', 'cryptobot'],    # WARNING do not use _ in strategy names
                       "sl": [0, -5, -10],

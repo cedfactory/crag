@@ -14,6 +14,8 @@ class Chronos():
         else:
             self.df_time = pd.read_csv('./data/' + 'BTC_USD.csv', delimiter=';', usecols=['timestamp'])
 
+        #self.duration_tick = len(self.get_df_range_time())
+        
         self.master_time = self.set_time()
 
     def increment_time(self):

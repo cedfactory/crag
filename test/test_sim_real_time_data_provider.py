@@ -6,13 +6,13 @@ class TestSimRealTimeDataProvider:
 
     def test_constructor(self):
         # context
-        input = "./test/data_sim_real_time_data_provider"
+        data_directory = "./test/data_sim_real_time_data_provider"
 
         # action
-        dp = rtdp_simulation.SimRealTimeDataProvider({'input': input})
+        dp = rtdp_simulation.SimRealTimeDataProvider({'data_directory': data_directory})
 
         # expectations
-        assert(dp.input == input)
+        assert(dp.data_directory == data_directory)
         assert(dp.current_position == 400)
         assert(len(dp.data) == 1)
         assert("AAVE/USD" in dp.data)
@@ -24,8 +24,8 @@ class TestSimRealTimeDataProvider:
 
     def test_get_value_last_in_dataframe(self):
         # context
-        input = "./test/data_sim_real_time_data_provider"
-        dp = rtdp_simulation.SimRealTimeDataProvider({'input': input})
+        data_directory = "./test/data_sim_real_time_data_provider"
+        dp = rtdp_simulation.SimRealTimeDataProvider({'data_directory': data_directory})
         ds = rtdp.DataDescription()
         ds.symbols = ["AAVE/USD"]
         ds.features = ["high", "low"]
@@ -41,8 +41,8 @@ class TestSimRealTimeDataProvider:
 
     def test_get_value_ko_bad_symbol(self):
         # context
-        input = "./test/data_sim_real_time_data_provider"
-        dp = rtdp_simulation.SimRealTimeDataProvider({'input': input})
+        data_directory = "./test/data_sim_real_time_data_provider"
+        dp = rtdp_simulation.SimRealTimeDataProvider({'data_directory': data_directory})
 
         # action
         value = dp.get_value("FOOBAR/USD")
@@ -52,8 +52,8 @@ class TestSimRealTimeDataProvider:
 
     def test_get_value_ok(self):
         # context
-        input = "./test/data_sim_real_time_data_provider"
-        dp = rtdp_simulation.SimRealTimeDataProvider({'input': input})
+        data_directory = "./test/data_sim_real_time_data_provider"
+        dp = rtdp_simulation.SimRealTimeDataProvider({'data_directory': data_directory})
         ds = rtdp.DataDescription()
         ds.symbols = ["AAVE/USD"]
         ds.features = ["high", "low"]
@@ -66,8 +66,8 @@ class TestSimRealTimeDataProvider:
 
     def test_get_current_datetime_ok(self):
         # context
-        input = "./test/data_sim_real_time_data_provider"
-        dp = rtdp_simulation.SimRealTimeDataProvider({'input': input})
+        data_directory = "./test/data_sim_real_time_data_provider"
+        dp = rtdp_simulation.SimRealTimeDataProvider({'data_directory': data_directory})
         ds = rtdp.DataDescription()
         ds.symbols = ["AAVE/USD"]
         ds.features = ["high", "low"]
@@ -80,8 +80,8 @@ class TestSimRealTimeDataProvider:
 
     def test_get_current_data(self):
         # context
-        input = "./test/data_sim_real_time_data_provider"
-        dp = rtdp_simulation.SimRealTimeDataProvider({'input': input})
+        data_directory = "./test/data_sim_real_time_data_provider"
+        dp = rtdp_simulation.SimRealTimeDataProvider({'data_directory': data_directory})
         ds = rtdp.DataDescription()
         ds.symbols = ["AAVE/USD"]
         ds.features = ["high", "low"]
