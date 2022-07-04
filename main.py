@@ -3,6 +3,7 @@ import pandas as pd
 import os, sys
 import shutil
 import fnmatch
+import cProfile
 
 import concurrent.futures
 
@@ -243,7 +244,7 @@ if __name__ == '__main__':
             crag_record()
         elif len(sys.argv) > 2 and (sys.argv[1] == "--simulation"):
             strategy_name = sys.argv[2]
-            crag_simulation('StrategySuperReversal')
+            crag_simulation(strategy_name)
         elif len(sys.argv) > 2 and (sys.argv[1] == "--live"):
             strategy_name = sys.argv[2]
             crag_live(strategy_name)
@@ -264,6 +265,10 @@ if __name__ == '__main__':
             }
             df_test_plan = automatic_test_plan.build_automatic_test_plan(params)
             crag_test_scenario(df_test_plan)
+        elif len(sys.argv) > 2 and (sys.argv[1] == "--profiler"):
+            strategy_name = sys.argv[2]
+            cProfile.run('crag_simulation(strategy_name)')
+            
         else:
             _usage()
     else:
