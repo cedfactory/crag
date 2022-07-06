@@ -61,11 +61,7 @@ class Crag:
         self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(), prices_symbols, False)
 
         if(len(self.df_portfolio_status) == 0):
-            self.df_portfolio_status['symbol'] = ds.symbols
-            self.df_portfolio_status['portfolio_size'] = 0
-            self.df_portfolio_status['value'] = 0
-            self.df_portfolio_status['buying_value'] = 0
-            self.df_portfolio_status['roi_sl_tp'] = 0
+            self.df_portfolio_status = pd.DataFrame({"symbol":ds.symbols, "portfolio_size":0, "value":0, "buying_value":0, "roi_sl_tp":0})
             self.df_portfolio_status.set_index('symbol', drop=True, inplace=True)
 
         current_data = self.broker.get_current_data(ds)
