@@ -73,6 +73,9 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
         if not self._is_in_dataframe():
             return None
 
+        data = {'symbol':[]}
+        for feature in data_description.features:
+            data[feature] = []
         df_result = pd.DataFrame(columns=['symbol'])
         for symbol in data_description.symbols:
             if symbol in self.data:
@@ -81,20 +84,13 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
                 #print("no data found for ",symbol)
                 continue
             available_columns = list(df_symbol.columns)
-            row = {'symbol':symbol}
+            data['symbol'].append(symbol)
             for feature in data_description.features:
                 if feature not in available_columns:
                     return None
-                # row[feature] = [df_symbol[feature].iloc[self.current_position]]
-                row[feature] = [df_symbol[feature].iloc[self.scheduler.get_current_position()]]
+                data[feature].append(df_symbol[feature].iloc[self.scheduler.get_current_position()])
 
-
-            df_row = pd.DataFrame(data=row)
-            try:
-                df_result = pd.concat((df_result, df_row), axis = 0)
-            except:
-                print('error')
-
+        df_result = pd.DataFrame(data)
         df_result.set_index("symbol", inplace=True)
 
         return df_result
