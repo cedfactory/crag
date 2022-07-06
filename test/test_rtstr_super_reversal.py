@@ -55,3 +55,6 @@ class TestRTSTRSuperReversal:
         # expectations
         assert(isinstance(df, pd.DataFrame))
         assert(df.columns.to_list() == ['symbol', 'stimulus'])
+        assert(len(df) == 1)
+        assert(df.iloc[0]['symbol'] == "BTC/USD")
+        assert(df.iloc[0]['stimulus'] == "SELL")
