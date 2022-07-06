@@ -28,7 +28,7 @@ class TestRTSTRSuperReversal:
     def _initialize_current_data(self, strategy):
         ds = strategy.get_data_description()
         df_current_data = pd.DataFrame(data={"index":[0], "symbol":["BTC/USD"], "low":[1.1], "high":[2.2], "ema_short":[1], "ema_long":[2], "super_trend_direction":[True]})
-        df_current_data.set_index("index", inplace=True)
+        df_current_data.set_index("symbol", inplace=True)
         strategy.set_current_data(df_current_data)
         return strategy
 
