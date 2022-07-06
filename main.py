@@ -255,6 +255,9 @@ if __name__ == '__main__':
         elif len(sys.argv) >= 2 and (sys.argv[1] == "--benchmark"):
             crag_benchmark_results()
         elif len(sys.argv) >= 2 and (sys.argv[1] == "--scenario"):
+            # INFO:
+            # BULLRUN FROM 2020-10-01 TO 2022-04-01
+            # BEARMARKET FROM 2018-01-01 TO 2020-09-01
             params = {"start": '2020-01-01',  # YYYY-MM-DD
                       "end": '2022-06-28',    # YYYY-MM-DD
                       "split": 2,
