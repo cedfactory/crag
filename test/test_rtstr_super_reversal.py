@@ -35,7 +35,7 @@ class TestRTSTRSuperReversal:
     def test_get_df_buying_symbols(self):
         # context
         strategy = rtstr_super_reversal.StrategySuperReversal()
-        data = {"index":[0], "symbol":["BTC/USD"], "low":[1.1], "high":[2.2], "ema_short":[2.2], "ema_long":[2], "super_trend_direction":[True]}
+        data = {"index":[0, 1], "symbol":["BTC/USD", "ETH/USD"], "low":[1.1, 1.1], "high":[2.2, 2.2], "ema_short":[2.2, 1.9], "ema_long":[2, 2], "super_trend_direction":[True, True]}
         strategy = self._initialize_current_data(strategy, data)
 
         # action
