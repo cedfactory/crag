@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+import pandas as pd
 import inspect
 import importlib
 
@@ -20,12 +21,20 @@ class RealTimeStrategy(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def get_df_forced_exit_selling_symbols(self, lst_symbols):
-        pass
-
-    @abstractmethod
     def update(self, current_datetime, current_trades, broker_cash, prices_symbols, record_info):
         pass
+
+    # get_df_selling_symbols and get_df_forced_exit_selling_symbols
+    # could be merged in one...
+    def get_df_forced_exit_selling_symbols(self, lst_symbols):
+        data = {'symbol':[], 'stimulus':[]}
+        if hasattr(self, 'df_current_data'):
+            for symbol in self.df_current_data.index.to_list():
+                data["symbol"].append(symbol)
+                data["stimulus"].append("SELL")
+
+        df_result = pd.DataFrame(data)
+        return df_result
 
 
     @staticmethod

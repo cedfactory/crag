@@ -120,17 +120,6 @@ class StrategyCryptobot(rtstr.RealTimeStrategy):
         df_result = pd.DataFrame(data)
         return df_result
 
-    # get_df_selling_symbols and get_df_forced_exit_selling_symbols
-    # could be merged in one...
-    def get_df_forced_exit_selling_symbols(self, lst_symbols):
-        df_result = pd.DataFrame(columns = ['symbol', 'stimulus'])
-        if hasattr(self, 'df_current_data'):
-            for symbol in self.df_current_data.index.to_list():
-                df_row = pd.DataFrame(data={"symbol":[symbol], "stimulus":["SELL"]})
-                df_result = pd.concat((df_result, df_row), axis = 0)
-
-        return df_result
-
     def update(self, current_datetime, current_trades, broker_cash, prices_symbols, record_info):
         self.rtctrl.update_rtctrl(current_datetime, current_trades, broker_cash, prices_symbols)
         self.rtctrl.display_summary_info(record_info)
