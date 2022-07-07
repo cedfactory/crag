@@ -102,16 +102,16 @@ class StrategyCryptobot(rtstr.RealTimeStrategy):
                     (self.df_current_data["ema12ltema26co"][symbol] is True)
                     and (self.df_current_data["macdltsignal"][symbol] is True)
             ) or (
-                    (df_sl_tp['roi_sl_tp'][symbol] > self.TP)
-                    or (df_sl_tp['roi_sl_tp'][symbol] < self.SL)
+                    (isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] > self.TP)
+                    or (isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] < self.SL)
             ):
                 df_row = pd.DataFrame(data={"symbol":[symbol], "stimulus":["SELL"]})
                 df_result = pd.concat((df_result, df_row), axis = 0)
 
                 if not self.zero_print:
-                    if(df_sl_tp['roi_sl_tp'][symbol] > self.TP):
+                    if(isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] > self.TP):
                         print('TAKE PROFIT: ', symbol, ": ", df_sl_tp['roi_sl_tp'][symbol])
-                    if(df_sl_tp['roi_sl_tp'][symbol] < self.SL):
+                    if(isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] < self.SL):
                         print('STOP LOST: ', symbol, ": ", df_sl_tp['roi_sl_tp'][symbol])
 
         return df_result
@@ -132,7 +132,7 @@ class StrategyCryptobot(rtstr.RealTimeStrategy):
         self.rtctrl.display_summary_info(record_info)
 
     def get_symbol_buying_size(self, symbol):
-        if self.rtctrl.prices_symbols[symbol] < 0: # first init at -1
+        if not symbol in self.rtctrl.prices_symbols or self.rtctrl.prices_symbols[symbol] < 0: # first init at -1
             return 0, 0
 
         available_cash = self.rtctrl.wallet_cash
