@@ -4,7 +4,7 @@ from src import rtdp
 
 class TestRealTimeDataProvider:
     src_utils_fdp_request = 'src.utils.fdp_request'
-    fdp_response = {'elapsed_time': '0:00:02.537734', 'result': {'status': 'ok', 'AAVE_USD': {'info':'{"symbol":{"0":"AAVE/USD"},"open":{"0":"10.0"},"high":{"0":"12.0"},"low":{"0":"9.0"},"close":{"0":"11.0"},"volume":{"0":"1000"}}'}}, 'status': 'ok'}
+    fdp_response = {'result': {'ETH_EURS': {'status': 'ok', 'info': '{"index":{"0":1638662400000},"open":{"0":3525.0},"high":{"0":3732.8855,},"low":{"0":3460.0},"close":{"0":3732.8855},"volume":{"0":0.3798}}'}, 'BTC_EURS': {'status': 'ok', 'info': '{"index":{"0":1638662400000},"open":{"0":43388.73},"high":{"0":43481.66},"low":{"0":42105.38},"close":{"0":43035.5},"volume":{"0":0.00628}}'}}, 'status': 'ok', 'elapsed_time': '0:00:00.476569'}
 
     def test_get_current_data(self, mocker):
         #data = [['AAVE/USD', 10., 12., 9., 11.]]
@@ -13,7 +13,7 @@ class TestRealTimeDataProvider:
         # context
         dp = rtdp.RealTimeDataProvider()
         ds = rtdp.DataDescription()
-        ds.symbols = ["AAVE/USD"]
+        ds.symbols = ["ETH/EURS", "BTC/EURS"]
         ds.features = ["open", "high", "low", "close"]
         mocker.patch(self.src_utils_fdp_request, side_effect=[self.fdp_response])
 
@@ -23,10 +23,15 @@ class TestRealTimeDataProvider:
         # expectations
         assert(isinstance(df, pd.DataFrame))
         assert(df.columns.to_list() == ['open', 'high', 'low', 'close'])
-        assert(df['open']['AAVE/USD'] == 10.0)
-        assert(df['high']['AAVE/USD'] == 12.0)
-        assert(df['low']['AAVE/USD'] == 9.0)
-        assert(df['close']['AAVE/USD'] == 11.0)
+        assert(df['open']['ETH/EURS'] == 3525.00)
+        assert(df['high']['ETH/EURS'] == 3732.8855)
+        assert(df['low']['ETH/EURS'] == 3460.00)
+        assert(df['close']['ETH/EURS'] == 3732.8855)
+
+        assert(df['open']['BTC/EURS'] == 43388.73)
+        assert(df['high']['BTC/EURS'] == 43481.6600)
+        assert(df['low']['BTC/EURS'] == 42105.38)
+        assert(df['close']['BTC/EURS'] == 43035.5000)
 
     def test_get_value(self):
         # context
