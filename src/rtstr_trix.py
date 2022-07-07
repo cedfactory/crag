@@ -50,14 +50,17 @@ class StrategyTrix(rtstr.RealTimeStrategy):
         self.df_current_data = current_data
 
     def get_df_buying_symbols(self):
-        df_result = pd.DataFrame(columns = ['symbol', 'size', 'percent'])
+        data = {'symbol':[], 'size':[], 'percent':[]}
         for symbol in self.df_current_data.index.to_list():
             if(
                     self.df_current_data['TRIX_HISTO'][symbol] > 0 and self.df_current_data['STOCH_RSI'][symbol] < 0.8
             ):
                 size, percent = self.get_symbol_buying_size(symbol)
-                df_row = pd.DataFrame(data={"symbol":[symbol], "size":[size], 'percent':[percent]})
-                df_result = pd.concat((df_result, df_row), axis = 0)
+                data['symbol'].append(symbol)
+                data['size'].append(size)
+                data['percent'].append(percent)
+
+        df_result = pd.DataFrame(data)
 
         # UGGLY CODING to be replaced and included in first main selection test above...
         df_rtctrl = self.rtctrl.df_rtctrl.copy()
@@ -88,7 +91,7 @@ class StrategyTrix(rtstr.RealTimeStrategy):
         return df_result
 
     def get_df_selling_symbols(self, lst_symbols, df_sl_tp):
-        df_result = pd.DataFrame(columns = ['symbol', 'stimulus'])
+        data = {'symbol':[], 'stimulus':[]}
         for symbol in self.df_current_data.index.to_list():
             if(
                     self.df_current_data['TRIX_HISTO'][symbol] < 0 and self.df_current_data['STOCH_RSI'][symbol] > 0.2
@@ -96,8 +99,8 @@ class StrategyTrix(rtstr.RealTimeStrategy):
                     (isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] > self.TP)
                     or (isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] < self.SL)
             ):
-                df_row = pd.DataFrame(data={"symbol":[symbol], "stimulus":["SELL"]})
-                df_result = pd.concat((df_result, df_row), axis = 0)
+                data["symbol"].append(symbol)
+                data["stimulus"].append("SELL")
 
                 if not self.zero_print:
                     if(isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] > self.TP):
@@ -105,6 +108,7 @@ class StrategyTrix(rtstr.RealTimeStrategy):
                     if(isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] < self.SL):
                         print('STOP LOST: ', symbol, ": ", df_sl_tp['roi_sl_tp'][symbol])
 
+        df_result = pd.DataFrame(data)
         return df_result
 
     # get_df_selling_symbols and get_df_forced_exit_selling_symbols
