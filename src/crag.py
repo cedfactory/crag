@@ -10,10 +10,12 @@ class Crag:
         self.rtstr = None
         self.working_directory = None
         self.interval = 10
+        self.logger = None
         if params:
             self.broker = params.get("broker", self.broker)
             self.rtstr = params.get("rtstr", self.rtstr)
             self.interval = params.get("interval", self.interval)
+            self.logger = params.get("logger", self.logger)
             self.working_directory = params.get("working_directory", self.working_directory)
 
         self.current_trades = []
@@ -40,6 +42,8 @@ class Crag:
             self.export_filename = os.path.join(self.working_directory, self.export_filename)
 
     def run(self):
+        if self.logger:
+            self.logger.log("Running with {}".format(type(self.rtstr).__name__))
         done = False
         while not done:
             done = not self.step()

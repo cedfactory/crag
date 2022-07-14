@@ -1,4 +1,5 @@
 from src import rtdp,rtdp_simulation,broker_simulation,broker_ftx,crag,rtstr,rtstr_super_reversal,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC,analyser,benchmark,automatic_test_plan
+from src import logger
 import pandas as pd
 import os, sys
 import shutil
@@ -6,6 +7,8 @@ import fnmatch
 import cProfile,pstats
 from datetime import datetime
 import concurrent.futures
+from dotenv import load_dotenv
+
 
 _usage_str = """
 Options:
@@ -19,6 +22,12 @@ def blockPrint():
 
 def _usage():
     print(_usage_str)
+
+def _initialize_crag_discord_bot():
+    load_dotenv()
+    token = os.getenv("CRAG_DISCORD_BOT_TOKEN")
+    channel_id = os.getenv("CRAG_DISCORD_BOT_CHANNEL")
+    return logger.LoggerDiscordBot(params={"token":token, "channel_id":channel_id})
 
 def crag_record():
     my_rtdp = rtdp_simulation.SimRealTimeDataProvider()
@@ -51,7 +60,6 @@ def crag_simulation(strategy_name):
     bot.export_status()
 
 def crag_live(strategy_name):
-
     params = {}
     available_strategies = rtstr.RealTimeStrategy.get_strategies_list()
     if strategy_name in available_strategies:
@@ -61,9 +69,10 @@ def crag_live(strategy_name):
         print("available strategies : ", available_strategies)
         return
 
-    my_broker = broker_ftx.BrokerFTX({'account':'test_bot', 'simulation':False})
+    my_broker = broker_ftx.BrokerFTX({'account':'test_bot', 'simulation':True})
 
-    params = {'broker':my_broker, 'rtstr':my_strategy, 'interval':5}
+    crag_discord_bot = _initialize_crag_discord_bot()
+    params = {'broker':my_broker, 'rtstr':my_strategy, 'interval':5, 'logger':crag_discord_bot}
     bot = crag.Crag(params)
     bot.run()
 
