@@ -93,6 +93,9 @@ class BrokerFTX(broker.Broker):
     def get_commission(self, symbol):
         return 0.0007
 
+    def get_info(self):
+        return None, None, None
+
     @authentication_required
     def execute_trade(self, trade):
         if self.simulation:
