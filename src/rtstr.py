@@ -67,10 +67,11 @@ class RealTimeStrategy(metaclass=ABCMeta):
     def get_df_selling_symbols(self, lst_symbols, df_sl_tp):
         pass
 
-    @abstractmethod
     def update(self, current_datetime, current_trades, broker_cash, prices_symbols, record_info):
-        pass
-
+        if self.rtctrl:
+            self.rtctrl.update_rtctrl(current_datetime, current_trades, broker_cash, prices_symbols)
+            self.rtctrl.display_summary_info(record_info)
+        
     def get_symbol_buying_size(self, symbol):
         if not symbol in self.rtctrl.prices_symbols or self.rtctrl.prices_symbols[symbol] < 0: # first init at -1
             return 0, 0
