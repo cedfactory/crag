@@ -16,6 +16,38 @@ class RealTimeStrategy(metaclass=ABCMeta):
     def get_df_buying_symbols(self):
         pass
 
+    def get_df_selling_symbols_common(self, df_result):
+        if not self.rtctrl or len(self.rtctrl.df_rtctrl) == 0:
+            return df_result
+
+        df_rtctrl = self.rtctrl.df_rtctrl.copy()
+
+        df_rtctrl.set_index('symbol', inplace=True)
+        lst_symbols_to_buy = df_result.symbol.to_list()
+        for symbol in lst_symbols_to_buy:
+            try:
+                df_result_percent = df_result.copy()
+                df_result_percent.set_index('symbol', inplace=True, drop=True)
+                if df_rtctrl["wallet_%"][symbol] >= self.MAX_POSITION:
+                    # Symbol to be removed - Over the % limits
+                    df_result.drop(df_result[df_result['symbol'] == symbol].index, inplace=True)
+                elif (df_rtctrl["wallet_%"][symbol] + df_result_percent['percent'][symbol]) >= self.MAX_POSITION:
+                    if self.match_full_position == True:
+                        diff_percent = self.MAX_POSITION - df_rtctrl["wallet_%"][symbol]
+                        cash_needed = diff_percent * df_rtctrl["wallet_value"][symbol] / 100
+                        size_to_match = cash_needed / self.rtctrl.prices_symbols[symbol]
+                        df_result['size'] = np.where(df_result['symbol'] == symbol, size_to_match, df_result['size'])
+                        df_result['percent'] = np.where(df_result['symbol'] == symbol, diff_percent, df_result['percent'])
+                    else:
+                        df_result.drop(df_result[df_result['symbol'] == symbol].index, inplace=True)
+            except:
+                # Stay in list
+                pass
+
+        df_result.reset_index(inplace=True, drop=True)
+
+        return df_result
+
     @abstractmethod
     def get_df_selling_symbols(self, lst_symbols, df_sl_tp):
         pass
