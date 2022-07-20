@@ -79,7 +79,3 @@ class StrategyCryptobot(rtstr.RealTimeStrategy):
 
         df_result = pd.DataFrame(data)
         return df_result
-
-    def update(self, current_datetime, current_trades, broker_cash, prices_symbols, record_info):
-        self.rtctrl.update_rtctrl(current_datetime, current_trades, broker_cash, prices_symbols)
-        self.rtctrl.display_summary_info(record_info)
