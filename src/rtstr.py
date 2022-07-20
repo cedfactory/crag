@@ -27,9 +27,32 @@ class RealTimeStrategy(metaclass=ABCMeta):
     def get_data_description(self):
         pass
 
+    def set_current_data(self, current_data):
+        self.df_current_data = current_data
+
     @abstractmethod
-    def get_df_buying_symbols(self):
+    def condition_for_buying(self, symbol):
         pass
+
+    @abstractmethod
+    def condition_for_selling(self, symbol, df_sl_tp):
+        pass
+
+    def get_df_buying_symbols(self):
+        data = {'symbol':[], 'size':[], 'percent':[]}
+        for symbol in self.df_current_data.index.to_list():
+            if self.condition_for_buying(symbol) == True:
+                size, percent = self.get_symbol_buying_size(symbol)
+                data['symbol'].append(symbol)
+                data['size'].append(size)
+                data['percent'].append(percent)
+
+        df_result = pd.DataFrame(data)
+        df_result.reset_index(inplace=True, drop=True)
+        
+        df_result = self.get_df_selling_symbols_common(df_result)
+        
+        return df_result
 
     def get_df_selling_symbols_common(self, df_result):
         if not self.rtctrl or len(self.rtctrl.df_rtctrl) == 0:
@@ -63,9 +86,20 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
         return df_result
 
-    @abstractmethod
     def get_df_selling_symbols(self, lst_symbols, df_sl_tp):
-        pass
+        data = {'symbol':[], 'stimulus':[]}
+        for symbol in self.df_current_data.index.to_list():
+            if self.condition_for_selling(symbol, df_sl_tp):
+                data["symbol"].append(symbol)
+                data["stimulus"].append("SELL")
+
+                if(isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] > self.TP):
+                    print('TAKE PROFIT: ', symbol, ": ", df_sl_tp['roi_sl_tp'][symbol])
+                if(isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] < self.SL):
+                    print('STOP LOST: ', symbol, ": ", df_sl_tp['roi_sl_tp'][symbol])
+
+        df_result = pd.DataFrame(data)
+        return df_result
 
     def update(self, current_datetime, current_trades, broker_cash, prices_symbols, record_info):
         if self.rtctrl:
