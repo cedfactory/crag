@@ -1,6 +1,7 @@
 import pytest
 import pandas as pd
 from src import rtstr_bigwill,rtdp
+from . import test_rtstr
 
 class TestRTSTRBigWill:
 
@@ -55,6 +56,24 @@ class TestRTSTRBigWill:
         assert(df.iloc[0]['symbol'] == "BTC/USD")
         assert(df.iloc[0]['size'] == 0)
         assert(df.iloc[0]['percent'] == 0)
+
+    def test_get_df_buying_symbols_with_rtctrl(self):
+        # context
+        strategy = rtstr_bigwill.StrategyBigWill()
+        data = {"index":[0, 1], "symbol":["BTC/USD", "ETH/USD"], "low":[1, 2], "high":[0.7, 0.9], "AO":[1, -1], "previous_AO":[2, 2], "EMA100":[50, 50], "EMA200":[25, 25], "STOCH_RSI":[1, 1.1], "WILLR":[-100, -100]}
+        strategy = self._initialize_current_data(strategy, data)
+        test_rtstr.update_rtctrl(strategy)
+
+        # action
+        df = strategy.get_df_buying_symbols()
+
+        # expectations
+        assert(isinstance(df, pd.DataFrame))
+        assert(df.columns.to_list() == ['symbol', 'size', 'percent'])
+        assert(len(df) == 1)
+        assert(df.iloc[0]['symbol'] == "BTC/USD")
+        assert(df.iloc[0]['size'] == 0)
+        assert(df.iloc[0]['percent'] == 0)       
 
     def test_get_df_selling_symbols(self):
         # context
