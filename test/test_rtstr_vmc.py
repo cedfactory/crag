@@ -40,8 +40,7 @@ class TestRTSTRVMC:
         strategy.set_current_data(df_current_data)
         return strategy
 
-    def test_get_df_buying_symbols(self):
-        # context
+    def _get_strategy_for_buying_and_selling(self):
         strategy = rtstr_VMC.StrategyVMC()
         data = {"index":[0, 1], "symbol":["BTC/USD", "ETH/USD"],
             "low":[1, 1],
@@ -61,6 +60,11 @@ class TestRTSTRVMC:
             "WILLR":[-5, -15]
         }
         strategy = self._initialize_current_data(strategy, data)
+        return strategy
+    
+    def test_get_df_buying_symbols(self):
+        # context
+        strategy = self._get_strategy_for_buying_and_selling()
 
         # action
         df = strategy.get_df_buying_symbols()
@@ -75,25 +79,7 @@ class TestRTSTRVMC:
 
     def test_get_df_selling_symbols(self):
         # context
-        strategy = rtstr_VMC.StrategyVMC()
-        data = {"index":[0, 1], "symbol":["BTC/USD", "ETH/USD"],
-            "low":[1, 1],
-            "high":[1, 1],
-            "close":[3, 1],
-            "AO":[-1, -1],
-            "previous_AO":[1000, 1000],
-            "STOCH_RSI":[0.3, 0.1],
-            "ema_short_vmc":[2, 0],
-            "ema_long_vmc":[1, 1],
-            "MONEY_FLOW":[1, -1],
-            "VMC_WAVE1":[-1, 1],
-            "VMC_WAVE2":[-2, 1],
-            "n1_VMC_WAVE1":[1, 2],
-            "n1_VMC_WAVE2":[2, 1],
-            "CHOP":[40, 60],
-            "WILLR":[-5, -15]
-        }
-        strategy = self._initialize_current_data(strategy, data)
+        strategy = self._get_strategy_for_buying_and_selling()
 
         # action
         df = strategy.get_df_selling_symbols([], None)
