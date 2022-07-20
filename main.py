@@ -152,7 +152,6 @@ def crag_test_scenario(df):
     list_sl = df['sl'].to_list()
     list_sl = list(set(list_sl))
 
-    home_directory = os.getcwd()
     auto_test_directory = os.path.join(os.getcwd(), "./automatic_test_results")
     os.chdir(auto_test_directory)
 
