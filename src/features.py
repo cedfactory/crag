@@ -81,7 +81,7 @@ class SuperTrend():
     def super_trend_direction(self):
         return self.st['Supertrend']
 
-
+'''
 class VMC_strat():
     def __init__(
             self,
@@ -129,6 +129,7 @@ class VMC_strat():
                 print(self.df_list[self.oldest_pair])
 
         return self.df_list[self.oldest_pair]
+'''
 
 def add_features(df, features):
     df["ema_short"] = TA.EMA(df, period = 5).copy()
