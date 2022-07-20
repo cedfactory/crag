@@ -22,21 +22,6 @@ class StrategyBigWill(rtstr.RealTimeStrategy):
         self.stochOverBought = 0.8
         self.stochOverSold = 0.2
 
-        self.SL = 0             # Stop Loss %
-        self.TP = 0             # Take Profit %
-        if params:
-            self.SL = params.get("sl", self.SL)
-            self.TP = params.get("tp", self.TP)
-
-        if self.SL == 0:     # SL == 0 => mean no SL
-            self.SL = -1000
-        if self.TP == 0:     # TP == 0 => mean no TP
-            self.TP = 1000
-
-        self.SPLIT = 5           # Asset Split %
-        self.MAX_POSITION = 5    # Asset Overall Percent Size
-        self.match_full_position = True
-
     def get_data_description(self):
         ds = rtdp.DataDescription()
         #ds.symbols = ds.symbols[:2]
