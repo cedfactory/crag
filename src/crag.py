@@ -28,8 +28,10 @@ class Crag:
 
         self.zero_print = True
 
-        self.strategy_name, self.str_sl, self.str_tp = self.rtstr.get_info()
-        self.start_date, self.end_date,  self.inteval = self.broker.get_info()
+        if self.rtstr != None:
+            self.strategy_name, self.str_sl, self.str_tp = self.rtstr.get_info()
+        if self.broker != None:
+            self.start_date, self.end_date,  self.inteval = self.broker.get_info()
         self.export_filename = "sim_broker_history"\
                                + "_" + self.strategy_name\
                                + "_" + str(self.start_date)\
