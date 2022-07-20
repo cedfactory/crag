@@ -91,27 +91,3 @@ class StrategyTrix(rtstr.RealTimeStrategy):
     def update(self, current_datetime, current_trades, broker_cash, prices_symbols, record_info):
         self.rtctrl.update_rtctrl(current_datetime, current_trades, broker_cash, prices_symbols)
         self.rtctrl.display_summary_info(record_info)
-
-    def get_symbol_buying_size(self, symbol):
-        if not symbol in self.rtctrl.prices_symbols or self.rtctrl.prices_symbols[symbol] < 0: # first init at -1
-            return 0, 0
-
-        available_cash = self.rtctrl.wallet_cash
-        if available_cash == 0:
-            return 0, 0
-
-        wallet_value = available_cash
-
-        cash_to_buy = wallet_value * self.SPLIT / 100
-
-        if cash_to_buy > available_cash:
-            cash_to_buy = available_cash
-
-        size = cash_to_buy / self.rtctrl.prices_symbols[symbol]
-
-        percent =  cash_to_buy * 100 / wallet_value
-
-        return size, percent
-
-    def get_portfolio_value(self):
-        return self.rtctrl.df_rtctrl['portfolio_value'].sum()
