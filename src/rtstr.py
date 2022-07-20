@@ -6,7 +6,22 @@ import importlib
 class RealTimeStrategy(metaclass=ABCMeta):
 
     def __init__(self, params=None):
-        pass
+        self.SL = 0             # Stop Loss %
+        self.TP = 0             # Take Profit %
+        if params:
+            self.SL = params.get("sl", self.SL)
+            self.TP = params.get("tp", self.TP)
+        self.str_sl = "sl" + str(self.SL)
+        self.str_tp = "tp" + str(self.TP)
+
+        if self.SL == 0:     # SL == 0 => mean no SL
+            self.SL = -1000
+        if self.TP == 0:     # TP == 0 => mean no TP
+            self.TP = 1000
+
+        self.SPLIT = 5           # Asset Split %
+        self.MAX_POSITION = 5    # Asset Overall Percent Size
+        self.match_full_position = True
 
     @abstractmethod
     def get_data_description(self):
