@@ -1,4 +1,7 @@
+import pytest
 from . import test_rtctrl
+from src import rtstr,rtstr_bigwill,rtstr_cryptobot,rtstr_super_reversal,rtstr_trix,rtstr_VMC
+
 
 def update_rtctrl(rtstr):
     current_trades = test_rtctrl.get_current_trades_sample()
@@ -9,3 +12,14 @@ def update_rtctrl(rtstr):
     rtstr.rtctrl.update_rtctrl(current_datetime, current_trades, 100, prices_symbols)
 
     return rtstr
+
+class TestRTSTR:
+
+    def test_get_strategies_list(self):
+        # action
+        available_strategies = rtstr.RealTimeStrategy.get_strategies_list()
+
+        # expectations
+        expected_strategies = ['StrategyBigWill', 'StrategyCryptobot', 'StrategySuperReversal', 'StrategyTrix', 'StrategyVMC']
+        print(available_strategies)
+        assert(available_strategies == expected_strategies)
