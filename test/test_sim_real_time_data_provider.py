@@ -1,4 +1,6 @@
 import pytest
+import shutil
+import os.path
 import pandas as pd
 from src import rtdp,rtdp_simulation
 
@@ -95,3 +97,28 @@ class TestSimRealTimeDataProvider:
         assert(len(df.index) == 1)
         assert(df["high"]["AAVE/USD"] == 199.01)
         assert(df["low"]["AAVE/USD"] == 189.53)
+
+    def test_record(self, mocker):
+        # context
+        data_directory = "./test/tmp/"
+        if os.path.isdir(data_directory):
+            shutil.rmtree(data_directory)
+
+        my_rtdp = rtdp_simulation.SimRealTimeDataProvider({"data_directory": data_directory})
+        ds = rtdp.DataDescription()
+        ds.symbols = ["AAVE/EURS"]
+
+        df = pd.read_csv("./test/data/AAVE_USD.csv", delimiter=';')
+        json_df = {'result': {'AAVE_EURS': {'status': 'ok', 'info':df.to_json()}}}
+        mocker.patch('src.utils.fdp_request', side_effect=[json_df])
+
+        # action
+        my_rtdp.record(ds)
+
+        # expectations
+        expected_filename = data_directory+'AAVE_EURS.csv'
+        assert(os.path.isfile(expected_filename))
+
+        # cleaning
+        shutil.rmtree(data_directory)
+
