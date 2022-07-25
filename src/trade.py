@@ -4,7 +4,11 @@ class Trade:
         self.id = Trade.id
         Trade.id = Trade.id + 1
         self.time = current_datetime
-
+        
+    @staticmethod
+    def reset_id():
+        Trade.id = 0
+        
     def dump(self):
         print("-> trade {}:".format(self.id))
         print("   {} {} ({})".format(self.type, self.symbol, self.stimulus))
