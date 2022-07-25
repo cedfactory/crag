@@ -23,3 +23,17 @@ class TestRTSTR:
         expected_strategies = ['StrategyBigWill', 'StrategyCryptobot', 'StrategySuperReversal', 'StrategyTrix', 'StrategyVMC']
         print(available_strategies)
         assert(available_strategies == expected_strategies)
+
+    def test_get_strategy_from_name_ok(self):
+        # action
+        strategy = rtstr.RealTimeStrategy.get_strategy_from_name("StrategySuperReversal")
+
+        # expectations
+        assert(strategy != None)
+
+    def test_get_strategy_from_name_ko(self):
+        # action
+        strategy = rtstr.RealTimeStrategy.get_strategy_from_name("StrategyFoobar")
+
+        # expectations
+        assert(strategy == None)
