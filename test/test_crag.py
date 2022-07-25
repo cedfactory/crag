@@ -2,7 +2,7 @@ import pytest
 import pandas as pd
 import os
 import json
-from src import rtstr_super_reversal,crag,broker_simulation
+from src import rtstr_super_reversal,crag,broker_simulation,trade
 
 class TestCrag:
 
@@ -20,6 +20,7 @@ class TestCrag:
 
     def test_step_trade(self):
         # context
+        trade.Trade.reset_id()
         simu_broker = broker_simulation.SimBroker({"data_directory":"./test/data_sim_real_time_data_provider", "cash":10000})
         strategy_super_reversal = rtstr_super_reversal.StrategySuperReversal()
         crag_params = {"broker":simu_broker, "rtstr":strategy_super_reversal, "interval":1}
@@ -31,7 +32,7 @@ class TestCrag:
         # expectations
         assert(len(bot.current_trades) == 2)
         trade1 = [0, '2021-01-17 15:00:00', '', 'SOLD', '', '', 'AAVE/USD', 189.53, 189.53, 2.63625811, 499.65, 0.35000000000002274, '', 500.0, '', 9500.0, 499.65, 9999.65, -0.003500000000003638]
-        trade2 = [1, None, '2021-01-17 15:00:00', 'SELL', 3, 'SELL', 'AAVE/USD', 189.53, 196.48, 2.63441273, 517.609413057383, 0.35000000000002274, 0.36258039541701237, 517.9719934528, 3.521882611476599, 10017.609413057384, 0.0, 10017.609413057384, 0.1760941305738379]
+        trade2 = [1, None, '2021-01-17 15:00:00', 'SELL', 0, 'SELL', 'AAVE/USD', 189.53, 196.48, 2.63441273, 517.609413057383, 0.35000000000002274, 0.36258039541701237, 517.9719934528, 3.521882611476599, 10017.609413057384, 0.0, 10017.609413057384, 0.1760941305738379]
         print(trade2)
         print(bot.current_trades[1].get_csv_row()[1:])
         assert(bot.current_trades[0].get_csv_row()[1:] == trade1[1:])
