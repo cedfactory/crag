@@ -21,8 +21,7 @@ class TestRTSTR:
 
         # expectations
         expected_strategies = ['StrategyBigWill', 'StrategyCryptobot', 'StrategySuperReversal', 'StrategyTrix', 'StrategyVMC']
-        print(available_strategies)
-        assert(available_strategies == expected_strategies)
+        assert(set(available_strategies) == set(expected_strategies))
 
     def test_get_strategy_from_name_ok(self):
         # action
