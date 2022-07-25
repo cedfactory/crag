@@ -89,6 +89,25 @@ class Crag:
     def export_history(self, target=None):
         self.broker.export_history(target)
 
+    def _prepare_sell_trade_from_bought_trade(self, bought_trade, current_datetime, df_selling_symbols):
+        sell_trade = trade.Trade(current_datetime)
+        sell_trade.type = "SELL"
+        sell_trade.sell_id = bought_trade.id
+        sell_trade.buying_price = bought_trade.buying_price
+        sell_trade.buying_time = bought_trade.time
+        sell_trade.stimulus = df_selling_symbols["stimulus"][bought_trade.symbol]
+        sell_trade.symbol = bought_trade.symbol
+        sell_trade.symbol_price = self.broker.get_value(bought_trade.symbol)
+        sell_trade.gross_size = bought_trade.net_size         # Sell Net_size = bought_trade.Gross size
+        sell_trade.gross_price = sell_trade.gross_size * sell_trade.symbol_price
+        sell_trade.net_price = sell_trade.gross_price - sell_trade.gross_price * self.broker.get_commission(bought_trade.symbol)
+        sell_trade.net_size = round(sell_trade.net_price / sell_trade.symbol_price, 8)
+        sell_trade.buying_fee = bought_trade.buying_fee
+        sell_trade.selling_fee = sell_trade.gross_price - sell_trade.net_price
+        sell_trade.roi = 100 * (sell_trade.net_price - bought_trade.gross_price) / bought_trade.gross_price
+        return sell_trade
+ 
+
     def trade(self):
         if not self.zero_print:
             print("[Crag.trade]")
@@ -108,27 +127,7 @@ class Crag:
         df_selling_symbols.set_index("symbol", inplace=True)
         for current_trade in self.current_trades:
             if current_trade.type == "BUY" and current_trade.symbol in list_symbols_to_sell and df_selling_symbols["stimulus"][current_trade.symbol] != "HOLD":
-                sell_trade = trade.Trade(current_datetime)
-                sell_trade.type = "SELL"
-                sell_trade.sell_id = current_trade.id
-                sell_trade.buying_price = current_trade.buying_price
-                sell_trade.buying_time = current_trade.time
-                sell_trade.stimulus = df_selling_symbols["stimulus"][current_trade.symbol]
-                sell_trade.symbol = current_trade.symbol
-                sell_trade.symbol_price = self.broker.get_value(current_trade.symbol)
-
-                sell_trade.gross_size = current_trade.net_size         # Sell Net_size = current_trade.Gross size
-                sell_trade.gross_price = sell_trade.gross_size * sell_trade.symbol_price
-
-                sell_trade.net_price = sell_trade.gross_price - sell_trade.gross_price * self.broker.get_commission(current_trade.symbol)
-                sell_trade.net_size = round(sell_trade.net_price / sell_trade.symbol_price, 8)
-
-                sell_trade.buying_fee = current_trade.buying_fee
-                sell_trade.selling_fee = sell_trade.gross_price - sell_trade.net_price
-                # sell_trade.gross_price = sell_trade.gross_price + sell_trade.buying_fee
-
-                sell_trade.roi = 100 * (sell_trade.net_price - current_trade.gross_price) / current_trade.gross_price
-
+                sell_trade = self._prepare_sell_trade_from_bought_trade(current_trade, current_datetime, df_selling_symbols)
                 done = self.broker.execute_trade(sell_trade)
                 if done:
                     current_trade.type = "SOLD"
@@ -248,29 +247,8 @@ class Crag:
         df_selling_symbols.set_index("symbol", inplace=True)
         for current_trade in self.current_trades:
             if current_trade.type == "BUY" and current_trade.symbol in list_symbols_to_sell and df_selling_symbols["stimulus"][current_trade.symbol] != "HOLD":
-                sell_trade = trade.Trade(current_datetime)
-                sell_trade.type = "SELL"
-                sell_trade.sell_id = current_trade.id
-                sell_trade.buying_price = current_trade.buying_price
-                sell_trade.buying_time = current_trade.time
-                sell_trade.stimulus = df_selling_symbols["stimulus"][current_trade.symbol]
-                sell_trade.symbol = current_trade.symbol
-                sell_trade.symbol_price = self.broker.get_value(current_trade.symbol)
+                sell_trade = self._prepare_sell_trade_from_bought_trade(current_trade, current_datetime, df_selling_symbols)
                 sell_trade.time = self.broker.get_current_datetime()
-
-                sell_trade.gross_size = current_trade.net_size         # Sell Net_size = current_trade.Gross size
-                sell_trade.gross_price = sell_trade.gross_size * sell_trade.symbol_price
-
-                sell_trade.net_price = sell_trade.gross_price - sell_trade.gross_price * self.broker.get_commission(current_trade.symbol)
-                sell_trade.net_size = round(sell_trade.net_price / sell_trade.symbol_price, 8)
-
-                # sell_trade.net_size = current_trade.gross_size - self.broker.get_commission(sell_trade.symbol)  # Sell Net size
-                # sell_trade.net_price = sell_trade.net_size * sell_trade.symbol_price
-                sell_trade.buying_fee = current_trade.buying_fee
-                sell_trade.selling_fee = sell_trade.gross_price - sell_trade.net_price
-                # sell_trade.gross_price = sell_trade.gross_price + sell_trade.buying_fee
-                sell_trade.roi = 100 * (sell_trade.net_price - current_trade.gross_price) / current_trade.gross_price
-
                 done = self.broker.execute_trade(sell_trade)
                 if done:
                     current_trade.type = "SOLD"
