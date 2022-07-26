@@ -41,3 +41,16 @@ class TestLoggerFile:
         # cleaning
         os.remove(filename)
 
+
+class TestLoggerDiscordBot:
+
+    def test_constructor(self):
+        # context
+        params = {"channel_id":"123456", "token":"987654"}
+
+        # action
+        my_logger = logger.LoggerDiscordBot(params)
+
+        # expectations
+        assert(my_logger.channel_id == "123456")
+        assert(my_logger.token == "987654")
