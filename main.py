@@ -30,9 +30,10 @@ def _initialize_crag_discord_bot():
     return logger.LoggerDiscordBot(params={"token":token, "channel_id":channel_id})
 
 def crag_record():
-    my_rtdp = rtdp_simulation.SimRealTimeDataProvider()
+    rtdp_params = {"working_directory": "./data2/"}
+    my_rtdp = rtdp_simulation.SimRealTimeDataProvider(rtdp_params)
     ds = rtdp.DataDescription()
-    my_rtdp.record(ds, "./data2/")
+    my_rtdp.record(ds)
 
 def crag_simulation(strategy_name):
     print("selected strategy: ",strategy_name)
