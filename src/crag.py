@@ -136,15 +136,15 @@ class Crag:
 
                     # Portfolio Size/Value Update
 
-                    self.df_portfolio_status['portfolio_size'][sell_trade.symbol] = self.df_portfolio_status['portfolio_size'][sell_trade.symbol] - sell_trade.gross_size
-                    if self.df_portfolio_status['portfolio_size'][sell_trade.symbol] < 0.0000001:
-                        self.df_portfolio_status['portfolio_size'][sell_trade.symbol] = 0
-                    self.df_portfolio_status['value'][sell_trade.symbol] = self.df_portfolio_status['portfolio_size'][sell_trade.symbol] * sell_trade.symbol_price
-                    self.df_portfolio_status['buying_value'][sell_trade.symbol] = self.df_portfolio_status['buying_value'][sell_trade.symbol] - current_trade.gross_price
-                    if self.df_portfolio_status['portfolio_size'][sell_trade.symbol] == 0:
-                        self.df_portfolio_status['roi_sl_tp'][sell_trade.symbol] = 0
+                    self.df_portfolio_status.at[sell_trade.symbol]['portfolio_size'] = self.df_portfolio_status.at[sell_trade.symbol]['portfolio_size'] - sell_trade.gross_size
+                    if self.df_portfolio_status.at[sell_trade.symbol]['portfolio_size'] < 0.0000001:
+                        self.df_portfolio_status.at[sell_trade.symbol]['portfolio_size'] = 0
+                    self.df_portfolio_status.at[sell_trade.symbol]['value'] = self.df_portfolio_status.at[sell_trade.symbol]['portfolio_size'] * sell_trade.symbol_price
+                    self.df_portfolio_status.at[sell_trade.symbol]['buying_value'] = self.df_portfolio_status.at[sell_trade.symbol]['buying_value'] - current_trade.gross_price
+                    if self.df_portfolio_status.at[sell_trade.symbol]['portfolio_size'] == 0:
+                        self.df_portfolio_status.at[sell_trade.symbol]['roi_sl_tp'] = 0
                     else:
-                        self.df_portfolio_status['roi_sl_tp'][sell_trade.symbol] = 100 * (self.df_portfolio_status['value'][sell_trade.symbol] / self.df_portfolio_status['buying_value'][sell_trade.symbol] - 1)
+                        self.df_portfolio_status.at[sell_trade.symbol]['roi_sl_tp'] = 100 * (self.df_portfolio_status.at[sell_trade.symbol]['value'] / self.df_portfolio_status.at[sell_trade.symbol]['buying_value'] - 1)
                     '''
                     print('selling: ', sell_trade.symbol,
                           ' value: ', self.df_portfolio_status['value'][sell_trade.symbol],
