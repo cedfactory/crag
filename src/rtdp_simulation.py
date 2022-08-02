@@ -43,8 +43,6 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
             strs = file.split('.')
             symbol = strs[0].replace("_", "/")
             if symbol in rtdp.default_symbols and strs[1] == "csv":
-                #f = pd.read_csv(self.processed_data+"/"+file, sep=";")
-                df = pd.read_csv(self.data_directory + "/" + file, sep=";")
                 csv_filename = os.path.join(self.data_directory, file) # DEBUG CEDE IN ORDER TO KILL WARNINGS
                 df = pd.read_csv(csv_filename, low_memory=False, sep=";")
                 self.data[symbol] = df
@@ -68,6 +66,12 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
     def tick(self):
         self.scheduler.increment_time()
 
+    def drop_unused_data(self, data_description):
+        for symbol in data_description.symbols:
+            for column in self.data[symbol].columns:
+                if column not in data_description.features and column != 'close':
+                    self.data[symbol].drop(column, axis=1, inplace=True)
+
     def get_current_data(self, data_description):
         self.current_position = self.scheduler.get_current_position()
         if not self._is_in_dataframe():
@@ -76,7 +80,6 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
         data = {'symbol':[]}
         for feature in data_description.features:
             data[feature] = []
-        df_result = pd.DataFrame(columns=['symbol'])
         for symbol in data_description.symbols:
             if symbol in self.data:
                 df_symbol = self.data[symbol]

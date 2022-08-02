@@ -21,6 +21,9 @@ class SimBroker(broker.Broker):
             self.end_date = params.get("end", self.end_date)
             self.intervals = params.get("intervals", self.intervals)
 
+    def drop_unused_data(self, data_description):
+        self.rtdp.drop_unused_data(data_description)
+
     def get_current_data(self, data_description):
         return self.rtdp.get_current_data(data_description)
 

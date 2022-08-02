@@ -172,14 +172,14 @@ def crag_test_scenario(df):
         recorder_params = {'start': start_date, 'end': end_date, "intervals": list_interval[0], "working_directory": strategy_directory}
         recorder = rtdp_simulation.SimRealTimeDataProvider(recorder_params)
 
-        directory_data_target = os.path.join(strategy_directory, "./data/")
+        # directory_data_target = os.path.join(strategy_directory, "./data/")
         recorder.record_for_data_scenario(ds, start_date, end_date, list_interval[0])
 
     os.chdir(auto_test_directory)
     print("recorder completed: ", os.getcwd())
 
     # multithreading
-    with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=len(list_periods)) as executor:
         futures = []
         for period in list_periods:
             futures.append(
@@ -207,7 +207,7 @@ def crag_test_scenario_for_period(df, ds, period, auto_test_directory, list_inte
     recorder.record_for_data_scenario(ds, start_date, end_date, list_interval[0], directory_data_target)
     '''
     # multithreading
-    with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=len(list_strategy) * len(list_sl) * len(list_tp)) as executor:
         futures = []
         for strategy in list_strategy:
             for sl in list_sl:
@@ -269,11 +269,15 @@ if __name__ == '__main__':
             # BEARMARKET FROM 2018-01-01 TO 2020-09-01
             params = {"start": '2022-01-01',  # YYYY-MM-DD
                       "end": '2022-06-28',    # YYYY-MM-DD
-                      "split": 2,
+                      # "split": 2,
+                      "split": 1,
                       "interval": '1h',
-                      "startegies": ['StrategySuperReversal', 'StrategyTrix', 'StrategyCryptobot'],    # WARNING do not use _ in strategy names
-                      "sl": [0, -5, -10],
-                      "tp": [0, 10, 20]
+                      # "startegies": ['StrategySuperReversal', 'StrategyTrix', 'StrategyCryptobot'],    # WARNING do not use _ in strategy names
+                      "startegies": ['StrategySuperReversal'],      # WARNING do not use _ in strategy names
+                      # "sl": [0, -5, -10],
+                      # "tp": [0, 10, 20]
+                      "sl": [0],
+                      "tp": [0]
             }
             df_test_plan = automatic_test_plan.build_automatic_test_plan(params)
             crag_test_scenario(df_test_plan)

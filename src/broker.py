@@ -12,6 +12,10 @@ class Broker(metaclass = ABCMeta):
         if self.rtdp:
             return self.rtdp.tick()
 
+    def drop_unused_data(self, data_description):
+        if self.rtdp:
+            self.rtdp.drop_unused_data(data_description)
+
     def get_current_data(self, data_description):
         if self.rtdp:
             return self.rtdp.get_current_data(data_description)

@@ -11,6 +11,7 @@ class Crag:
         self.working_directory = None
         self.interval = 10
         self.logger = None
+        self.clear_unused_data = True
         if params:
             self.broker = params.get("broker", self.broker)
             self.rtstr = params.get("rtstr", self.rtstr)
@@ -47,11 +48,16 @@ class Crag:
         if self.logger:
             self.logger.log("Running with {}".format(type(self.rtstr).__name__))
         done = False
+        toto = 0  # DEBUG
         while not done:
+            print(toto) # DEBUG
+            if(toto == 3): # DEBUG
+                print("######") # DEBUG
             done = not self.step()
+            toto = toto + 1 # DEBUG
             if done:
                 break
-            time.sleep(self.interval)
+            # time.sleep(self.interval)
             self.broker.tick() # increment
 
         self.export_history(self.export_filename) # DEBUG CEDE
@@ -62,6 +68,9 @@ class Crag:
 
         # update all the data
         ds = self.rtstr.get_data_description()
+        if self.clear_unused_data:
+            self.broker.drop_unused_data(ds)
+            self.clear_unused_data = False
         prices_symbols = {symbol:self.broker.get_value(symbol) for symbol in ds.symbols}
         current_datetime = self.broker.get_current_datetime()
         self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(), prices_symbols, False)
