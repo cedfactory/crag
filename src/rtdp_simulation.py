@@ -68,9 +68,10 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
 
     def drop_unused_data(self, data_description):
         for symbol in data_description.symbols:
-            for column in self.data[symbol].columns:
-                if column not in data_description.features and column != 'close':
-                    self.data[symbol].drop(column, axis=1, inplace=True)
+            if symbol in self.data:
+                for column in self.data[symbol].columns:
+                    if column not in data_description.features and column != 'close':
+                        self.data[symbol].drop(column, axis=1, inplace=True)
 
     def get_current_data(self, data_description):
         self.current_position = self.scheduler.get_current_position()
