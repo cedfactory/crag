@@ -61,7 +61,8 @@ def crag_simulation(strategy_name):
     bot.export_status()
 
 def crag_live(strategy_name):
-    params = {}
+    crag_discord_bot = _initialize_crag_discord_bot()
+    params = {"logger":crag_discord_bot}
     available_strategies = rtstr.RealTimeStrategy.get_strategies_list()
     if strategy_name in available_strategies:
         my_strategy = rtstr.RealTimeStrategy.get_strategy_from_name(strategy_name, params)
@@ -72,7 +73,6 @@ def crag_live(strategy_name):
 
     my_broker = broker_ftx.BrokerFTX({'account':'test_bot', 'simulation':True})
 
-    crag_discord_bot = _initialize_crag_discord_bot()
     params = {'broker':my_broker, 'rtstr':my_strategy, 'interval':5, 'logger':crag_discord_bot}
     bot = crag.Crag(params)
     bot.run()
