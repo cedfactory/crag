@@ -14,6 +14,17 @@ class TestRTSTRSuperReversal:
         assert(strategy.MAX_POSITION == 5)
         assert(strategy.SPLIT == 5)
 
+
+    def test_constructor_with_params(self):
+        # action
+        strategy = rtstr_super_reversal.StrategySuperReversal(params = {"sl":-10, "tp": 20})
+
+        # expectations
+        assert(strategy.SL == -10)
+        assert(strategy.TP == 20)
+        assert(strategy.MAX_POSITION == 5)
+        assert(strategy.SPLIT == 5)
+
     def test_get_data_description(self, mocker):
         # context
         strategy = rtstr_super_reversal.StrategySuperReversal()
