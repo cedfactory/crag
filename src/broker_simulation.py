@@ -57,20 +57,7 @@ class SimBroker(broker.Broker):
                 for trade in self.trades:
                     list_trade_row = trade.get_csv_row()
                     df.loc[len(df)] = list_trade_row
-                    # df = df.append(list_trade_row)
             df.to_csv(target, sep=';')
-        '''
-        if len(self.trades) > 0:
-            if target.endswith(".csv"):
-                with open(target, 'w', newline='') as f:
-                    writer = csv.writer(f, delimiter=';')
-                    writer.writerow(self.trades[0].get_csv_header())
-                    for trade in self.trades:
-                        writer.writerow(trade.get_csv_row())
-                    f.close()
-            else:
-                print(self.trades)
-        '''
 
     def export_status(self):
         print("Status :")
