@@ -117,6 +117,7 @@ def crag_ftx():
 
 def crag_simulation_scenario(strategy_name, start_date, end_date, interval, sl, tp, working_directory):
     available_strategies = rtstr.RealTimeStrategy.get_strategies_list()
+
     os.chdir(working_directory)
     strategy_suffix = "_" + strategy_name + "_" + start_date + "_" + end_date + "_" + interval + "_sl" + str(sl) + "_tp" + str(tp)
     if strategy_name in available_strategies:
@@ -156,11 +157,6 @@ def crag_test_scenario(df):
     auto_test_directory = os.path.join(os.getcwd(), "./automatic_test_results")
     os.chdir(auto_test_directory)
 
-    '''
-    for period in list_periods:
-        crag_test_scenario_for_period(df, ds, period, auto_test_directory, list_interval, list_strategy, list_sl, list_tp)
-    '''
-
     for period in list_periods:
         start_date = period[0:10]
         end_date = period[11:21]
@@ -190,22 +186,12 @@ def crag_test_scenario(df):
             )
 
 def crag_test_scenario_for_period(df, ds, period, auto_test_directory, list_interval, list_strategy, list_sl, list_tp):
-    # CEDE for debug purpose
-    # period = "2020-06-25_2021-06-13"
-
     start_date = period[0:10]
     end_date = period[11:21]
 
     strategy_directory = os.path.join(auto_test_directory, "./" + period)
     os.chdir(strategy_directory)
 
-    '''
-    recorder_params = {'start': start_date, 'end': end_date, "intervals": list_interval[0]}
-    recorder = rtdp_simulation.SimRealTimeDataProvider(recorder_params)
-
-    directory_data_target = os.path.join(strategy_directory, "./data/")
-    recorder.record_for_data_scenario(ds, start_date, end_date, list_interval[0], directory_data_target)
-    '''
     # multithreading
     with concurrent.futures.ThreadPoolExecutor(max_workers=len(list_strategy) * len(list_sl) * len(list_tp)) as executor:
         futures = []
@@ -267,13 +253,12 @@ if __name__ == '__main__':
             # INFO:
             # BULLRUN FROM 2020-10-01 TO 2022-04-01
             # BEARMARKET FROM 2018-01-01 TO 2020-09-01
+            ##########################################
             params = {"start": '2022-01-01',  # YYYY-MM-DD
-                      "end": '2022-06-28',    # YYYY-MM-DD
-                      # "split": 2,
+                      "end": '2022-08-01',    # YYYY-MM-DD
                       "split": 1,
                       "interval": '1h',
-                      # "startegies": ['StrategySuperReversal', 'StrategyTrix', 'StrategyCryptobot'],    # WARNING do not use _ in strategy names
-                      "startegies": ['StrategySuperReversal'],      # WARNING do not use _ in strategy names
+                      "startegies": ['StrategySuperReversal', 'StrategyTrix', 'StrategyCryptobot'],
                       # "sl": [0, -5, -10],
                       # "tp": [0, 10, 20]
                       "sl": [0],
