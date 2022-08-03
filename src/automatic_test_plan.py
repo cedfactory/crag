@@ -1,5 +1,6 @@
 import pandas as pd
 import os
+import shutil
 from datetime import datetime
 
 class AutomaticTestPlan():
@@ -8,13 +9,11 @@ class AutomaticTestPlan():
         if not os.path.exists(self.path_results):
             os.makedirs(self.path_results)
 
-
         self.test_plan_columns = ['start', 'end', 'split', 'period',
                                   'strategy', 'interval', 'sl', 'tp',
                                   'total_transaction', 'profit$', 'profit%', 'win_rate', 'ath', 'drawdown',
                                   'test_id', 'path_results']
         self.df_output_test_plan = pd.DataFrame(columns=self.test_plan_columns)
-
 
         self.list_strategies = 0
         self.list_sl = 0
@@ -66,6 +65,9 @@ class AutomaticTestPlan():
                             self.df_output_test_plan['test_id'][len(self.df_output_test_plan) - 1] = str(start)[0:10]+'_'+str(end)[0:10]+'_'+strategy+'_sl'+ str(sl)+'_tp'+str(tp)
                             self.df_output_test_plan['path_results'][len(self.df_output_test_plan) - 1] = self.path_results+str(start)[0:10]+'_'+str(end)[0:10]
                             if not os.path.exists(self.df_output_test_plan['path_results'][len(self.df_output_test_plan) - 1]):
+                                os.makedirs(self.df_output_test_plan['path_results'][len(self.df_output_test_plan) - 1])
+                            else:
+                                shutil.rmtree(self.df_output_test_plan['path_results'][len(self.df_output_test_plan) - 1])
                                 os.makedirs(self.df_output_test_plan['path_results'][len(self.df_output_test_plan) - 1])
                             if not os.path.exists(self.df_output_test_plan['path_results'][len(self.df_output_test_plan) - 1] + '/data/'):
                                 os.makedirs(self.df_output_test_plan['path_results'][len(self.df_output_test_plan) - 1] + '/data/')
