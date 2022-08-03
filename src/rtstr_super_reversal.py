@@ -31,7 +31,7 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
         return ds
 
     def get_info(self):
-        return "superreversal", self.str_sl, self.str_tp
+        return "StrategySuperReversal", self.str_sl, self.str_tp
 
     def condition_for_buying(self, symbol):
         return self.df_current_data['ema_short'][symbol] >= self.df_current_data['ema_long'][symbol] \

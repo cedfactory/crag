@@ -32,7 +32,7 @@ class StrategyCryptobot(rtstr.RealTimeStrategy):
         return ds
 
     def get_info(self):
-        return "cryptobot", self.str_sl, self.str_tp
+        return "StrategyCryptobot", self.str_sl, self.str_tp
 
     def condition_for_buying(self, symbol):
         return self.df_current_data["ema12gtema26co"][symbol] \

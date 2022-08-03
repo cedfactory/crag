@@ -27,7 +27,7 @@ class StrategyTrix(rtstr.RealTimeStrategy):
         return ds
 
     def get_info(self):
-        return "trix", self.str_sl, self.str_tp
+        return "StrategyTrix", self.str_sl, self.str_tp
 
     def condition_for_buying(self, symbol):
         return self.df_current_data['TRIX_HISTO'][symbol] > 0 and self.df_current_data['STOCH_RSI'][symbol] < 0.8
