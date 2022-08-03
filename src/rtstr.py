@@ -8,9 +8,11 @@ class RealTimeStrategy(metaclass=ABCMeta):
     def __init__(self, params=None):
         self.SL = 0             # Stop Loss %
         self.TP = 0             # Take Profit %
+        self.logger = None
         if params:
             self.SL = params.get("sl", self.SL)
             self.TP = params.get("tp", self.TP)
+            self.logger = params.get("logger", self.logger)
         self.str_sl = "sl" + str(self.SL)
         self.str_tp = "tp" + str(self.TP)
 
@@ -52,6 +54,9 @@ class RealTimeStrategy(metaclass=ABCMeta):
         
         df_result = self.get_df_selling_symbols_common(df_result)
         
+        if self.logger != None and len(df_result) > 0:
+            self.logger.log(df_result)
+            
         return df_result
 
     def get_df_selling_symbols_common(self, df_result):
@@ -99,6 +104,10 @@ class RealTimeStrategy(metaclass=ABCMeta):
                     print('STOP LOST: ', symbol, ": ", df_sl_tp['roi_sl_tp'][symbol])
 
         df_result = pd.DataFrame(data)
+        
+        if self.logger != None and len(df_result) > 0:
+            self.logger.log(df_result)
+         
         return df_result
 
     def update(self, current_datetime, current_trades, broker_cash, prices_symbols, record_info):
