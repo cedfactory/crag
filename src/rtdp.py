@@ -71,6 +71,10 @@ class IRealTimeDataProvider(metaclass = ABCMeta):
     def get_current_datetime(self):
         pass
 
+    @abstractmethod
+    def check_data_description(self, data_description):
+        pass
+
 class RealTimeDataProvider(IRealTimeDataProvider):
     def __init__(self, params = None):
         pass
@@ -108,5 +112,8 @@ class RealTimeDataProvider(IRealTimeDataProvider):
 
     def get_current_datetime(self):
         return datetime.now()
+
+    def check_data_description(self, data_description):
+        pass
 
 

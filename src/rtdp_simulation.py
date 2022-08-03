@@ -66,7 +66,7 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
     def tick(self):
         self.scheduler.increment_time()
 
-    def drop_unused_data(self, data_description):
+    def check_data_description(self, data_description):
         for symbol in data_description.symbols:
             if symbol in self.data:
                 for column in self.data[symbol].columns:

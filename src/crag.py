@@ -62,10 +62,12 @@ class Crag:
             print("[Crag] ⌛")
 
         # update all the data
+        # TODO : this call should be done once, during the initialization of the system
         ds = self.rtstr.get_data_description()
         if self.clear_unused_data:
-            self.broker.drop_unused_data(ds)
+            self.broker.check_data_description(ds)
             self.clear_unused_data = False
+
         prices_symbols = {symbol:self.broker.get_value(symbol) for symbol in ds.symbols}
         current_datetime = self.broker.get_current_datetime()
         self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(), prices_symbols, False)
