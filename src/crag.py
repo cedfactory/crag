@@ -55,7 +55,7 @@ class Crag:
             # time.sleep(self.interval)
             self.broker.tick() # increment
 
-        self.export_history(self.export_filename) # DEBUG CEDE
+        self.export_history(self.export_filename)
 
     def step(self):
         if not self.zero_print:
@@ -149,12 +149,6 @@ class Crag:
                         self.df_portfolio_status.at[sell_trade.symbol, 'roi_sl_tp'] = 0
                     else:
                         self.df_portfolio_status.at[sell_trade.symbol, 'roi_sl_tp'] = 100 * (self.df_portfolio_status.at[sell_trade.symbol, 'value'] / self.df_portfolio_status.at[sell_trade.symbol, 'buying_value'] - 1)
-                    '''
-                    print('selling: ', sell_trade.symbol,
-                          ' value: ', self.df_portfolio_status['value'][sell_trade.symbol],
-                          ' buying value : ', self.df_portfolio_status['buying_value'][sell_trade.symbol],
-                          ' roi: ', self.df_portfolio_status['roi_sl_tp'][sell_trade.symbol])
-                    '''
 
                     self.portfolio_value = self.df_portfolio_status['value'].sum()
 
@@ -208,12 +202,7 @@ class Crag:
                     self.df_portfolio_status.at[symbol, 'value'] = self.df_portfolio_status.at[symbol, 'value'] + current_trade.net_price
                     self.df_portfolio_status.at[symbol, 'buying_value'] = self.df_portfolio_status.at[symbol, 'buying_value'] + current_trade.gross_price
                     self.df_portfolio_status.at[symbol, 'roi_sl_tp'] = 100 * (self.df_portfolio_status.at[symbol, 'value'] / self.df_portfolio_status.at[symbol, 'buying_value'] - 1)
-                    '''
-                    print('buying: ', symbol,
-                          ' value: ', self.df_portfolio_status['value'][symbol],
-                          ' buying value : ',self.df_portfolio_status['buying_value'][symbol],
-                          ' roi: ', self.df_portfolio_status['roi_sl_tp'][symbol])
-                    '''
+
                     self.portfolio_value = self.df_portfolio_status['value'].sum()
 
                     self.wallet_value = self.portfolio_value + self.cash
