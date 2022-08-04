@@ -1,0 +1,24 @@
+version: '3'
+
+services:
+  crag:
+    image: crag
+    container_name: crag
+    volumes:
+      - ./:/mnt/
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - fdp
+    links:
+      - fdp:fdp
+    command: /bin/bash
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
+
+  fdp:
+    image: fdp
+    container_name: fdp
+    ports:
+      - 5000:5000
