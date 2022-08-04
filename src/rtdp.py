@@ -91,17 +91,18 @@ class RealTimeDataProvider(IRealTimeDataProvider):
         data = {feature: [] for feature in data_description.features}
         data["symbol"] = []
         
-        for symbol in data_description.symbols:
-            formatted_symbol = symbol.replace('/','_')
-            df = pd.read_json(response_json["result"][formatted_symbol]["info"])
-            df = features.add_features(df, data_description.features)
-            columns = list(df.columns)
+        if response_json["status"] == "ok":
+            for symbol in data_description.symbols:
+                formatted_symbol = symbol.replace('/','_')
+                df = pd.read_json(response_json["result"][formatted_symbol]["info"])
+                df = features.add_features(df, data_description.features)
+                columns = list(df.columns)
 
-            data["symbol"].append(symbol)
-            for feature in data_description.features:
-                if feature not in columns:
-                    return None
-                data[feature].append(df[feature].iloc[-1])
+                data["symbol"].append(symbol)
+                for feature in data_description.features:
+                    if feature not in columns:
+                        return None
+                    data[feature].append(df[feature].iloc[-1])
 
         df_result = pd.DataFrame(data)
         df_result.set_index("symbol", inplace=True)
