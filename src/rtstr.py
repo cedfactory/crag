@@ -55,7 +55,9 @@ class RealTimeStrategy(metaclass=ABCMeta):
         df_result = self.get_df_selling_symbols_common(df_result)
         
         if self.logger != None and len(df_result) > 0:
-            self.logger.log(df_result)
+            df_result["symbol"].values.tolist()
+            str_symbols = ", ".join(df_result["symbol"].values.tolist())
+            self.logger.log("[get_df_buying_symbols] : "+str_symbols)
             
         return df_result
 

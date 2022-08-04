@@ -7,6 +7,7 @@ import os.path
 # for LoggerDiscordBot
 import requests
 import os
+import discord
 
 
 class ILogger(metaclass=ABCMeta):
@@ -14,15 +15,18 @@ class ILogger(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def log(self, msg):
+    def log(self, msg, header=""):
         pass
 
 class LoggerConsole(ILogger):
     def __init__(self, params=None):
         pass
 
-    def log(self, msg):
-        print(msg)
+    def log(self, msg, header=""):
+        if header != "":
+            print("{} : {}".format(header, msg))
+        else:
+            print(msg)
 
 class LoggerFile(ILogger):
     def __init__(self, params=None):
@@ -37,7 +41,7 @@ class LoggerFile(ILogger):
         else:
             pathlib.Path(self.filename).touch()
 
-    def log(self, msg):
+    def log(self, msg, header=""):
         if self.filename != "":
             with open(self.filename, 'a') as f:
                 f.write(msg)
@@ -46,11 +50,41 @@ class LoggerDiscordBot(ILogger):
     def __init__(self, params=None):
         self.channel_id = None
         self.token = None
+        self.webhook = None
         if params:
             self.channel_id = params.get("channel_id", self.channel_id)
             self.token = params.get("token", self.token)
-        
-    def log(self, msg):
+            self.webhook = params.get("webhook", self.webhook)
+
+
+    def log_webhook(self, msg, header="None"):
+        # https://gist.github.com/Bilka2/5dd2ca2b6e9f3573e0c2defe5d3031b2
+        url = "https://discord.com/api/webhooks/1004857490262994974/uj6QSk_UrWtScpjv6Ah0vKu-Dgn56KYClPPDi642Ymz6aLPQTHLbW58s9SrFrVrgawWL"
+
+        #for all params, see https://discordapp.com/developers/docs/resources/webhook#execute-webhook
+        data = {
+            "content" : "",
+            "username" : "StrategySuperReversal" # TODO : get this info from params
+        }
+
+        #for all params, see https://discordapp.com/developers/docs/resources/channel#embed-object
+        data["embeds"] = [
+            {
+                "description" : msg,
+                "title" : header
+            }
+        ]
+
+        result = requests.post(url, json = data)
+
+        try:
+            result.raise_for_status()
+        except requests.exceptions.HTTPError as err:
+            print(err)
+        else:
+            print("Payload delivered successfully, code {}.".format(result.status_code))
+
+    def log_post(self, msg, header=""):
         # https://stackoverflow.com/questions/69160500/discord-py-send-messages-outside-of-events
         if self.token is None or self.channel_id is None:
             return
@@ -63,5 +97,14 @@ class LoggerDiscordBot(ILogger):
             "User-Agent": f"DiscordBot"
         }
 
-        r = requests.post(SEND_URL.format(id=self.channel_id), headers=headers, json={"content": msg})
+        if header != "":
+            content = "{} : {}".format(header, msg)
+        else:
+            content = msg
+        r = requests.post(SEND_URL.format(id=self.channel_id), headers=headers, json={"content": content})
 
+    def log(self, msg, header=""):
+        if self.webhook != "":
+            self.log_webhook(msg, header)
+        else:
+            self.log_post(msg, header)

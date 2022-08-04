@@ -27,7 +27,8 @@ def _initialize_crag_discord_bot():
     load_dotenv()
     token = os.getenv("CRAG_DISCORD_BOT_TOKEN")
     channel_id = os.getenv("CRAG_DISCORD_BOT_CHANNEL")
-    return logger.LoggerDiscordBot(params={"token":token, "channel_id":channel_id})
+    webhook = os.getenv("CRAG_DISCORD_BOT_WEBHOOK")
+    return logger.LoggerDiscordBot(params={"token":token, "channel_id":channel_id, "webhook":webhook})
 
 def crag_record():
     rtdp_params = {"working_directory": "./data2/"}
