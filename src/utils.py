@@ -8,19 +8,21 @@ import json
 def fdp_request(url):
     load_dotenv()
     fdp_url = os.getenv("FDP_URL")
+    if not fdp_url or fdp_url == "":
+        return {"status":"ko", "info":"fdp url not found"}
 
-    FDP_ERROR = True
-    while FDP_ERROR:
+    n_attempts = 3
+    while n_attempts > 0:
         try:
             request = urllib.request.Request(fdp_url+'/'+url)
             request.add_header("User-Agent", "cheese")
             response = urllib.request.urlopen(request).read()
             response_json = json.loads(response)
-            FDP_ERROR = False
+            break
         except:
             reason = "exception when requesting {}".format(fdp_url+'/'+url)
-            response_json = {"status":"ko", "reason":reason}
-            FDP_ERROR = True
+            response_json = {"status":"ko", "info":reason}
+            n_attempts = n_attempts - 1
             print('FDP ERROR : ', reason)
     
     return response_json
