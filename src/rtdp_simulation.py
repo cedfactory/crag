@@ -43,9 +43,12 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
             strs = file.split('.')
             symbol = strs[0].replace("_", "/")
             if symbol in rtdp.default_symbols and strs[1] == "csv":
-                csv_filename = os.path.join(self.data_directory, file) # DEBUG CEDE IN ORDER TO KILL WARNINGS
+                csv_filename = os.path.join(self.data_directory, file)
                 df = pd.read_csv(csv_filename, low_memory=False, sep=";")
                 self.data[symbol] = df
+                # WARNING CEDE TEMPORARY WORK AROUND
+                # self.data[symbol] = df.iloc[:-1, :]
+
 
     def _is_in_dataframe(self):
         if self.scheduler.get_current_position() < 0:
@@ -108,7 +111,6 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
             else:
                 return -1
         df_symbol = self.data[symbol]
-        # value = df_symbol.iloc[self.current_position]['close']
         value = df_symbol.iloc[self.scheduler.get_current_position()]['close']
         return value
 
@@ -116,6 +118,11 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
         if not self._is_in_dataframe():
             return None
         return self.scheduler.get_current_time()
+
+    def get_final_datetime(self):
+        if not self._is_in_dataframe():
+            return None
+        return self.scheduler.get_final_time()
 
     def record(self, data_description, target="./data/"):
         symbols = ','.join(data_description.symbols)

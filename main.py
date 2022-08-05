@@ -88,14 +88,14 @@ def crag_analyse_results():
     my_analyser = analyser.Analyser(params)
     my_analyser.run_analyse()
 
-def crag_benchmark_results():
-    params = {}
-
+def crag_benchmark_results(params):
     my_benchmark = benchmark.Benchmark(params)
     my_benchmark.run_benchmark()
 
-def crag_benchmark_scenario(df, period):
-    params = {'period': period}
+def crag_benchmark_scenario(df, start_date, end_date, period):
+    params = {"start": start_date,  # YYYY-MM-DD
+              "end": end_date,  # YYYY-MM-DD
+              "period": period}
 
     my_benchmark = benchmark.Benchmark(params)
     my_benchmark.set_benchmark_df_results(df)
@@ -226,14 +226,27 @@ def crag_test_scenario_for_period(df, ds, period, auto_test_directory, list_inte
     for csv_file in list_csv_files:
         shutil.copy(os.path.join(output_dir, csv_file), os.path.join(benchmark_dir, csv_file))
 
-    crag_benchmark_scenario(df, period)
+    crag_benchmark_scenario(df, start_date, end_date, period)
 
     os.chdir(auto_test_directory)
     print(os.getcwd())
     df.to_csv(period + "_output.csv")
 
 if __name__ == '__main__':
-    # blockPrint()
+    # INFO:
+    # BULLRUN FROM 2020-10-01 TO 2022-04-01
+    # BEARMARKET FROM 2018-01-01 TO 2020-09-01
+    ##########################################
+    params = {"start": '2022-01-01',  # YYYY-MM-DD
+              "end": '2022-02-01',  # YYYY-MM-DD
+              "split": 1,
+              "interval": '1h',
+              "startegies": ['StrategySuperReversal', 'StrategyTrix', 'StrategyCryptobot'],
+              # "sl": [0, -5, -10],
+              # "tp": [0, 10, 20]
+              "sl": [0],
+              "tp": [0]
+              }
 
     if len(sys.argv) >= 2:
         if len(sys.argv) == 2 and (sys.argv[1] == "--record"):
@@ -249,22 +262,8 @@ if __name__ == '__main__':
         elif len(sys.argv) >= 2 and (sys.argv[1] == "--analyse"):
             crag_analyse_results()
         elif len(sys.argv) >= 2 and (sys.argv[1] == "--benchmark"):
-            crag_benchmark_results()
+            crag_benchmark_results(params)
         elif len(sys.argv) >= 2 and (sys.argv[1] == "--scenario"):
-            # INFO:
-            # BULLRUN FROM 2020-10-01 TO 2022-04-01
-            # BEARMARKET FROM 2018-01-01 TO 2020-09-01
-            ##########################################
-            params = {"start": '2022-01-01',  # YYYY-MM-DD
-                      "end": '2022-08-01',    # YYYY-MM-DD
-                      "split": 1,
-                      "interval": '1h',
-                      "startegies": ['StrategySuperReversal', 'StrategyTrix', 'StrategyCryptobot'],
-                      # "sl": [0, -5, -10],
-                      # "tp": [0, 10, 20]
-                      "sl": [0],
-                      "tp": [0]
-            }
             df_test_plan = automatic_test_plan.build_automatic_test_plan(params)
             crag_test_scenario(df_test_plan)
         elif len(sys.argv) > 2 and (sys.argv[1] == "--profiler"):

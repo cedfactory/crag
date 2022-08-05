@@ -29,6 +29,11 @@ class Broker(metaclass = ABCMeta):
             return self.rtdp.get_current_datetime()
         return None
 
+    def get_final_datetime(self):
+        if self.rtdp:
+            return self.rtdp.get_final_datetime()
+        return None
+
     @abstractmethod
     def get_value(self, symbol):
         pass

@@ -9,16 +9,26 @@ import os, fnmatch
 
 class Benchmark:
     def __init__(self, params = None):
-        self.path = './benchmark/'
-        self.path_output = self.path + '/output/'
-        self.path_symbol_data = './data_processed/'
-        self.path_symbol_plot_analyse = './benchmark/plot_analyse/'
-
         self.period = 0
+        self.start = 0
+        self.end = 0
         if params:
+            self.start = params.get("start", self.start)
+            self.end = params.get("end", self.end)
+            self.root = os.getcwd()
             self.period = params.get("period", self.period)
+            self.path = self.root
+
+        self.path_output = self.path + '/output/'
+        self.path_benchmark = self.path + '/benchmark/'
+        self.path_symbol_data = self.path + './data_processed/'
+        self.path_symbol_plot_analyse = self.path + './benchmark/plot_analyse/'
+
+        if not os.path.exists(self.path_symbol_plot_analyse):
+            os.makedirs(self.path_symbol_plot_analyse)
 
         if not os.path.exists(self.path_output):
+            print("ERROR: MISSING STRATEGY OUTPUT DIRECTORY")
             os.makedirs(self.path_output)
 
         self.df_transaction_records = pd.DataFrame()
@@ -28,10 +38,10 @@ class Benchmark:
         self.list_interval = []
         self.list_sl = []
         self.list_tp = []
-        list_csv_files = fnmatch.filter(os.listdir(self.path), '*.csv')
+        list_csv_files = fnmatch.filter(os.listdir(self.path_output), '*.csv')
         for csv_file in list_csv_files:
             prefixe = csv_file.split(".")[0]
-            strategy = prefixe.split("_")[5]
+            strategy = prefixe.split("_")[3]
             interval = prefixe.split("_")[6]
             sl = prefixe.split("_")[7]
             sl = sl[2:]
@@ -43,9 +53,9 @@ class Benchmark:
             self.list_sl.append(sl)
             self.list_tp.append(tp)
             if prefixe.split("_")[0] == 'sim':
-                df_data = pd.read_csv(self.path + csv_file, delimiter=';')
+                df_data = pd.read_csv(self.path_benchmark + csv_file, delimiter=';')
             elif prefixe.split("_")[0] == 'wallet':
-                df_data = pd.read_csv(self.path + csv_file)
+                df_data = pd.read_csv(self.path_benchmark + csv_file)
             df_data['strategy'] = strategy
             df_data['interval'] = interval
             df_data['sl'] = sl
@@ -66,10 +76,10 @@ class Benchmark:
                     self.df_wallet_records = pd.concat([self.df_wallet_records, df_data])
         # self.path_results = self.path_output + '/' + start + '_to_' + end + '/'
 
-        self.path_results = self.path_output
+        self.path_results = self.path_symbol_plot_analyse
         if not os.path.exists(self.path_results):
             os.makedirs(self.path_results)
-        period = " from_" + start + ' to ' + end
+        period = " from_" + self.start + ' to ' + self.end
 
         self.list_strategies = list(set(self.list_strategies))
         self.list_interval = list(set(self.list_interval))
@@ -101,7 +111,7 @@ class Benchmark:
 
         # Dropping last 2 rows using drop
         # DEBUG identified bug in Crag forced_sell_position
-        n = 2
+        n = 3
         self.df_wallet.drop(self.df_wallet.tail(n).index, inplace=True)
 
         # self.df_wallet = self.df_wallet.dropna(axis=1)
@@ -144,7 +154,7 @@ class Benchmark:
                                                               & (self.df_wallet_records['interval'] == interval)
                                                               & (self.df_wallet_records['sl'] == sl)
                                                               & (self.df_wallet_records['tp'] == tp)].copy()
-                        self.df_plot_data[strategy_id]['profit$'] = round(df_strategy['wallet'][len(df_strategy)-1] - df_strategy['wallet'][0], 1)
+                        self.df_plot_data[strategy_id]['profit$'] = round(df_strategy['wallet'][len(df_strategy) - 4] - df_strategy['wallet'][0], 1)
                         self.df_plot_data[strategy_id]['profit%'] = round(self.df_plot_data[strategy_id]['profit$'] * 100 / df_strategy['wallet'][0], 1)
 
         # Plot win rate

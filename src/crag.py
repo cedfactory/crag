@@ -77,11 +77,10 @@ class Crag:
             self.df_portfolio_status.set_index('symbol', drop=True, inplace=True)
 
         current_data = self.broker.get_current_data(ds)
-        # print(current_data) # DEBUG
         if current_data is None:
             if not self.zero_print:
                 print("[Crag] 💥 no current data")
-            self.force_sell_open_trade()
+            # self.force_sell_open_trade()
             self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(), prices_symbols, True)
             return False
 
@@ -112,7 +111,6 @@ class Crag:
         sell_trade.selling_fee = sell_trade.gross_price - sell_trade.net_price
         sell_trade.roi = 100 * (sell_trade.net_price - bought_trade.gross_price) / bought_trade.gross_price
         return sell_trade
- 
 
     def trade(self):
         if not self.zero_print:
@@ -122,15 +120,24 @@ class Crag:
         self.cash = self.broker.get_cash()
         self.portfolio_value = self.rtstr.get_portfolio_value()
         current_datetime = self.broker.get_current_datetime()
+        final_datetime = self.broker.get_final_datetime()
+
         trades = []
 
         # sell symbols
         lst_symbols = [current_trade.symbol for current_trade in self.current_trades if current_trade.type == "BUY"]
         lst_symbols = list(set(lst_symbols))
         self.update_df_roi_sl_tp(lst_symbols)
-        df_selling_symbols = self.rtstr.get_df_selling_symbols(lst_symbols, self.df_portfolio_status)
+        if current_datetime == final_datetime:
+            # final step - force all the symbols to be sold
+            df_selling_symbols = self.rtstr.get_df_forced_selling_symbols(lst_symbols)
+        else:
+            # identify symbols to sell
+            df_selling_symbols = self.rtstr.get_df_selling_symbols(lst_symbols, self.df_portfolio_status)
         list_symbols_to_sell = df_selling_symbols.symbol.to_list()
+
         df_selling_symbols.set_index("symbol", inplace=True)
+
         for current_trade in self.current_trades:
             if current_trade.type == "BUY" and current_trade.symbol in list_symbols_to_sell and df_selling_symbols["stimulus"][current_trade.symbol] != "HOLD":
                 sell_trade = self._prepare_sell_trade_from_bought_trade(current_trade, current_datetime, df_selling_symbols)
@@ -169,6 +176,8 @@ class Crag:
         df_buying_symbols = self.rtstr.get_df_buying_symbols()
         df_buying_symbols.set_index('symbol', inplace=True)
         df_buying_symbols.drop(df_buying_symbols[df_buying_symbols['size'] == 0].index, inplace=True)
+        if current_datetime == final_datetime:
+            df_buying_symbols.drop(df_buying_symbols.index, inplace=True)
         for symbol in df_buying_symbols.index.to_list():
             current_trade = trade.Trade(current_datetime)
             current_trade.type = "BUY"
@@ -192,7 +201,6 @@ class Crag:
             current_trade.buying_fee = current_trade.gross_price - current_trade.net_price
             current_trade.profit_loss = -current_trade.buying_fee
 
-            #current_trade.dump()
             if current_trade.gross_price <= self.cash:
                 done = self.broker.execute_trade(current_trade)
                 if done:
@@ -219,54 +227,6 @@ class Crag:
 
     def export_status(self):
         return self.broker.export_status()
-
-    def force_sell_open_trade(self):
-        if not self.zero_print:
-            print("[Crag.forced.exit.trade]")
-        if self.cash == 0 and self.init_cash_value == 0:
-            self.init_cash_value = self.broker.get_cash()
-        self.cash = self.broker.get_cash()
-        self.portfolio_value = self.rtstr.get_portfolio_value()
-        current_datetime = self.broker.get_current_datetime()
-        trades = []
-
-        # sell symbols
-        lst_symbols = [current_trade.symbol for current_trade in self.current_trades if current_trade.type == "BUY"]
-        lst_symbols = list(set(lst_symbols))
-        df_selling_symbols = self.rtstr.get_df_forced_exit_selling_symbols(lst_symbols)
-        if not self.zero_print:
-            print("👎")
-            print('Selling remaining open positions before exit')
-            print(df_selling_symbols)
-        list_symbols_to_sell = df_selling_symbols.symbol.to_list()
-        df_selling_symbols.set_index("symbol", inplace=True)
-        for current_trade in self.current_trades:
-            if current_trade.type == "BUY" and current_trade.symbol in list_symbols_to_sell and df_selling_symbols["stimulus"][current_trade.symbol] != "HOLD":
-                sell_trade = self._prepare_sell_trade_from_bought_trade(current_trade, current_datetime, df_selling_symbols)
-                sell_trade.time = self.broker.get_current_datetime()
-                done = self.broker.execute_trade(sell_trade)
-                if done:
-                    current_trade.type = "SOLD"
-                    self.cash = self.broker.get_cash()
-                    sell_trade.cash = self.cash
-
-                    # Portfolio Size/Value Update/sl and tp
-                    self.df_portfolio_status.at[sell_trade.symbol, 'portfolio_size'] = self.df_portfolio_status.at[sell_trade.symbol, 'portfolio_size'] - sell_trade.gross_size
-                    self.df_portfolio_status.at[sell_trade.symbol, 'value'] = self.df_portfolio_status.at[sell_trade.symbol, 'portfolio_size'] * sell_trade.symbol_price
-                    self.df_portfolio_status.at[sell_trade.symbol, 'buying_value'] = self.df_portfolio_status.at[sell_trade.symbol, 'buying_value'] + current_trade.gross_price
-
-                    self.portfolio_value = self.df_portfolio_status['value'].sum()
-
-                    self.wallet_value = self.portfolio_value + self.cash
-
-                    sell_trade.portfolio_value = self.portfolio_value
-                    sell_trade.wallet_value = self.wallet_value
-                    sell_trade.wallet_roi = (self.wallet_value - self.init_cash_value) * 100 / self.init_cash_value
-
-                    trades.append(sell_trade)
-                    self.current_trades.append(sell_trade)
-                    if not self.zero_print:
-                        print("{} ({}) {} {:.2f} roi={:.2f}".format(sell_trade.type, sell_trade.stimulus, sell_trade.symbol, sell_trade.gross_price, sell_trade.roi))
 
     def update_df_roi_sl_tp(self, lst_symbols):
         for symbol in lst_symbols:

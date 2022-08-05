@@ -43,3 +43,6 @@ class Chronos():
         df_datetime = pd.DataFrame()
         df_datetime['timestamp'] = pd.to_datetime(df['index'], unit='ms')
         return df_datetime
+
+    def get_final_time(self):
+        return self.df_time['timestamp'][len(self.df_time)-1]

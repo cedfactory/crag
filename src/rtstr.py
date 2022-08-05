@@ -112,6 +112,12 @@ class RealTimeStrategy(metaclass=ABCMeta):
          
         return df_result
 
+    def get_df_forced_selling_symbols(self, lst_symbols):
+        lst_stimulus = ['SELL'] * len(lst_symbols)
+        data = {'symbol': lst_symbols, 'stimulus': lst_stimulus}
+        df_result = pd.DataFrame(data)
+        return df_result
+
     def update(self, current_datetime, current_trades, broker_cash, prices_symbols, record_info):
         if self.rtctrl:
             self.rtctrl.update_rtctrl(current_datetime, current_trades, broker_cash, prices_symbols)
