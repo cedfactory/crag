@@ -5,22 +5,37 @@ import urllib.parse
 import urllib.request
 import json
 
-def fdp_request(url):
+def fdp_request(params):
     load_dotenv()
     fdp_url = os.getenv("FDP_URL")
     if not fdp_url or fdp_url == "":
         return {"status":"ko", "info":"fdp url not found"}
 
+    service = params.get("service")
+    if service == "history":
+        exchange = params.get("exchange", "")
+        symbol = params.get("symbol", "")
+        start = params.get("start", "")
+        interval = params.get("interval", "")
+        end = params.get("end", "")
+        url = "history?exchange=" + exchange + "&symbol=" + symbol + "&start=" + start
+        if interval != "":
+            url = url + "&interval=" + interval
+        if end != "":
+            url = url + "&end=" + end
+    else:
+        return {"status":"ko", "info":"unknown service"}
+
     n_attempts = 3
     while n_attempts > 0:
         try:
-            request = urllib.request.Request(fdp_url+'/'+url)
+            request = urllib.request.Request(fdp_url+url)
             request.add_header("User-Agent", "cheese")
             response = urllib.request.urlopen(request).read()
             response_json = json.loads(response)
             break
         except:
-            reason = "exception when requesting {}".format(fdp_url+'/'+url)
+            reason = "exception when requesting {}".format(fdp_url+url)
             response_json = {"status":"ko", "info":reason}
             n_attempts = n_attempts - 1
             print('FDP ERROR : ', reason)

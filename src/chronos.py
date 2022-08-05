@@ -33,8 +33,8 @@ class Chronos():
 
     def get_df_range_time(self):
         formatted_symbol = "BTC_USD"
-        url = "history?exchange=ftx&symbol=" + formatted_symbol + "&start=" + self.start_date + "&interval=" + self.interval + "&end=" + self.end_date
-        response_json = utils.fdp_request(url)
+        params = { "service":"history", "exchange":"ftx", "symbol":formatted_symbol, "start":self.start_date, "end": self.end_date, "interval": self.interval }
+        response_json = utils.fdp_request(params)
 
         if response_json["result"][formatted_symbol]["status"] == "ko":
             print("no data for scheduler ")

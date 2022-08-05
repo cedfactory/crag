@@ -127,8 +127,8 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
     def record(self, data_description, target="./data/"):
         symbols = ','.join(data_description.symbols)
         symbols = symbols.replace('/','_')
-        url = "history?exchange=ftx&symbol="+symbols+"&start=2022-06-01"+"&interval=1h"
-        response_json = utils.fdp_request(url)
+        params = { "service":"history", "exchange":"ftx", "symbol":symbols, "start":"2022-06-01", "interval": "1h" }
+        response_json = utils.fdp_request(params)
         for symbol in data_description.symbols:
             formatted_symbol = symbol.replace('/','_')
             if response_json["result"][formatted_symbol]["status"] == "ko":
@@ -144,9 +144,9 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
         symbols = ','.join(data_description.symbols)
         symbols = symbols.replace('/','_')
         list_missing_data = []
-        url = "history?exchange=ftx&symbol=" + symbols + "&start=" + start_date + "&interval=" + interval + "&end=" + end_date
+        params = { "service":"history", "exchange":"ftx", "symbol":symbols, "start":start_date, "end": end_date, "interval": interval }
         print('interval from: ', start_date, ' -> ', end_date)
-        response_json = utils.fdp_request(url)
+        response_json = utils.fdp_request(params)
         for symbol in data_description.symbols:
             formatted_symbol = symbol.replace('/','_')
             if response_json["result"][formatted_symbol]["status"] == "ko":

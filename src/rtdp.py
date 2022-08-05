@@ -85,8 +85,8 @@ class RealTimeDataProvider(IRealTimeDataProvider):
     def get_current_data(self, data_description):
         symbols = ','.join(data_description.symbols)
         symbols = symbols.replace('/','_')
-        url = "history?exchange=ftx&symbol="+symbols+"&start=2022-06-01"+"&interval=1h"
-        response_json = utils.fdp_request(url)
+        params = { "service":"history", "exchange":"ftx", "symbol":symbols, "start":"2022-06-01", "interval": "1h" }
+        response_json = utils.fdp_request(params)
 
         data = {feature: [] for feature in data_description.features}
         data["symbol"] = []
@@ -117,4 +117,6 @@ class RealTimeDataProvider(IRealTimeDataProvider):
     def check_data_description(self, data_description):
         pass
 
+    def get_final_datetime(self):
+        return None
 

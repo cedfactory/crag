@@ -18,3 +18,4 @@ ta==0.10.1
 graphviz==0.20
 gprof2dot==2021.2.21
 discord
+discord.py

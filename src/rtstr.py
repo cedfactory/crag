@@ -57,7 +57,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
         if self.logger != None and len(df_result) > 0:
             df_result["symbol"].values.tolist()
             str_symbols = ", ".join(df_result["symbol"].values.tolist())
-            self.logger.log("[get_df_buying_symbols] : "+str_symbols)
+            self.logger.log(str_symbols, header="get_df_buying_symbols")
             
         return df_result
 
@@ -108,7 +108,9 @@ class RealTimeStrategy(metaclass=ABCMeta):
         df_result = pd.DataFrame(data)
         
         if self.logger != None and len(df_result) > 0:
-            self.logger.log(df_result)
+            df_result["symbol"].values.tolist()
+            str_symbols = ", ".join(df_result["symbol"].values.tolist())
+            self.logger.log(str_symbols, header="get_df_selling_symbols")
          
         return df_result
 
