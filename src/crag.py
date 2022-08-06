@@ -46,7 +46,7 @@ class Crag:
 
     def run(self):
         if self.logger:
-            self.logger.log("Running with {}".format(type(self.rtstr).__name__))
+            self.logger.log("Running with {}".format(type(self.rtstr).__name__), header="", author=type(self).__name__)
         done = False
         while not done:
             done = not self.step()

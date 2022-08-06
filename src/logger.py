@@ -41,10 +41,16 @@ class LoggerFile(ILogger):
         else:
             pathlib.Path(self.filename).touch()
 
-    def log(self, msg, header=""):
+    def log(self, msg, header="", author=""):
         if self.filename != "":
             with open(self.filename, 'a') as f:
-                f.write(msg)
+                content = ""
+                if author != "":
+                    content = content + "[{}] ".format(author)
+                if header != "":
+                    content = content + "[{}] ".format(header)
+                content = content + msg
+                f.write(content)
 
 class LoggerDiscordBot(ILogger):
     def __init__(self, params=None):
@@ -57,21 +63,22 @@ class LoggerDiscordBot(ILogger):
             self.webhook = params.get("webhook", self.webhook)
 
 
-    def log_webhook(self, msg, header="None"):
+    def log_webhook(self, msg, header, author):
         # https://gist.github.com/Bilka2/5dd2ca2b6e9f3573e0c2defe5d3031b2
         url = "https://discord.com/api/webhooks/1004857490262994974/uj6QSk_UrWtScpjv6Ah0vKu-Dgn56KYClPPDi642Ymz6aLPQTHLbW58s9SrFrVrgawWL"
 
         #for all params, see https://discordapp.com/developers/docs/resources/webhook#execute-webhook
         data = {
             "content" : "",
-            "username" : "StrategySuperReversal" # TODO : get this info from params
+            "username" : author
         }
 
         #for all params, see https://discordapp.com/developers/docs/resources/channel#embed-object
         data["embeds"] = [
             {
                 "description" : msg,
-                "title" : header
+                "title" : header,
+                "color" : int('0xff5733', base=16)
             }
         ]
 
@@ -84,7 +91,7 @@ class LoggerDiscordBot(ILogger):
         else:
             print("Payload delivered successfully, code {}.".format(result.status_code))
 
-    def log_post(self, msg, header=""):
+    def log_post(self, msg, header="", author=""):
         # https://stackoverflow.com/questions/69160500/discord-py-send-messages-outside-of-events
         if self.token is None or self.channel_id is None:
             return
@@ -97,14 +104,16 @@ class LoggerDiscordBot(ILogger):
             "User-Agent": f"DiscordBot"
         }
 
+        content = ""
+        if author != "":
+            content = content + "[{}] ".format(author)
         if header != "":
-            content = "{} : {}".format(header, msg)
-        else:
-            content = msg
+            content = content + "[{}] ".format(header)
+        content = content + msg
         r = requests.post(SEND_URL.format(id=self.channel_id), headers=headers, json={"content": content})
 
-    def log(self, msg, header=""):
+    def log(self, msg, header="", author=""):
         if self.webhook != "":
-            self.log_webhook(msg, header)
+            self.log_webhook(msg, header, author)
         else:
-            self.log_post(msg, header)
+            self.log_post(msg, header, author)

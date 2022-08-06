@@ -25,6 +25,9 @@ class RealTimeStrategy(metaclass=ABCMeta):
         self.MAX_POSITION = 5    # Asset Overall Percent Size
         self.match_full_position = True
 
+    def get_name(self):
+        return type(self).__name__
+
     @abstractmethod
     def get_data_description(self):
         pass
@@ -57,7 +60,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
         if self.logger != None and len(df_result) > 0:
             df_result["symbol"].values.tolist()
             str_symbols = ", ".join(df_result["symbol"].values.tolist())
-            self.logger.log(str_symbols, header="get_df_buying_symbols")
+            self.logger.log(str_symbols, header="get_df_buying_symbols", author=self.get_name())
             
         return df_result
 
@@ -110,7 +113,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
         if self.logger != None and len(df_result) > 0:
             df_result["symbol"].values.tolist()
             str_symbols = ", ".join(df_result["symbol"].values.tolist())
-            self.logger.log(str_symbols, header="get_df_selling_symbols")
+            self.logger.log(str_symbols, header="get_df_selling_symbols", author=self.get_name())
          
         return df_result
 
