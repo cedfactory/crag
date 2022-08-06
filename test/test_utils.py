@@ -3,7 +3,7 @@ from src import utils
 
 class TestUtils:
 
-    def test_fdp_request_ko_bad_fdp_url(self, mocker):
+    def test_fdp_request_ko_bad_service(self, mocker):
         # context
         mocker.patch('os.getenv', side_effect=[None])
 
@@ -35,4 +35,4 @@ class TestUtils:
         # expectations
         assert(response_json["status"] == "ko")
         print(response_json["info"])
-        assert(response_json["info"] == "exception when requesting fake_fdp_url/history?exchange=ftx&symbol=BTC_USD&start=2022-01-01&interval=1h&end=2022-02-01")
+        assert(response_json["info"] == "exception when requesting fake_fdp_url/history?exchange=ftx&start=2022-01-01&interval=1h&end=2022-02-01&symbol=BTC_USD")
