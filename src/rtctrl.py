@@ -52,10 +52,16 @@ class rtctrl():
     def get_list_of_asset_gross_price(self, list_of_current_trades):
         return [sum(current_trade.gross_price for current_trade in list_of_current_trades if current_trade.type == "BUY" and current_trade.symbol == symbol) for symbol in self.symbols]
 
-    def update_rtctrl(self, current_datetime, list_of_current_trades, wallet_cash, prices_symbols):
+    def update_rtctrl(self, current_datetime, list_of_current_trades, wallet_cash, prices_symbols, final_date):
         self.prices_symbols = prices_symbols
         self.time = current_datetime
-        if len(list_of_current_trades) == 0:
+
+        if current_datetime == final_date:
+            final_step = True
+        else:
+            final_step = False
+
+        if len(list_of_current_trades) == 0 and (not final_step):
             if self.init_cash_value == 0:
                 self.init_cash_value = wallet_cash
                 self.wallet_cash = wallet_cash
@@ -106,4 +112,10 @@ class rtctrl():
             self.df_rtctrl_tracking = pd.concat([self.df_rtctrl_tracking, df_new_line])
             self.df_rtctrl_tracking.reset_index(inplace=True, drop=True)
             if record_info and self.export_filename != None and self.export_filename != "":
+                interval = self.df_rtctrl_tracking['time'][1] - self.df_rtctrl_tracking['time'][0]
+                self.df_rtctrl_tracking['time'][len(self.df_rtctrl_tracking)-1] = self.df_rtctrl_tracking['time'][len(self.df_rtctrl_tracking)-1] + interval
+
+                self.df_rtctrl_tracking.drop(index=self.df_rtctrl_tracking.index[-2], axis=0, inplace=True)
+                self.df_rtctrl_tracking.reset_index(drop=True, inplace=True)
+
                 self.df_rtctrl_tracking.to_csv(self.export_filename)

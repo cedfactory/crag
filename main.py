@@ -238,10 +238,13 @@ if __name__ == '__main__':
     # BEARMARKET FROM 2018-01-01 TO 2020-09-01
     ##########################################
     params = {"start": '2022-01-01',  # YYYY-MM-DD
-              "end": '2022-02-01',  # YYYY-MM-DD
+              "end": '2022-08-06',  # YYYY-MM-DD
               "split": 1,
               "interval": '1h',
-              "startegies": ['StrategySuperReversal', 'StrategyTrix', 'StrategyCryptobot'],
+              # "startegies": ['StrategySuperReversal', 'StrategyTrix', 'StrategyCryptobot'],
+              # "startegies": ['StrategySuperReversal', 'StrategyCryptobot'],
+              "startegies": ['StrategySuperReversal'],
+              # "startegies": ['StrategyCryptobot'],
               # "sl": [0, -5, -10],
               # "tp": [0, 10, 20]
               "sl": [0],

@@ -20,6 +20,7 @@ class Crag:
             self.working_directory = params.get("working_directory", self.working_directory)
 
         self.current_trades = []
+        self.closed_trades = []
 
         self.cash = 0
         self.init_cash_value = 0
@@ -41,6 +42,7 @@ class Crag:
                                + "_" + str(self.str_sl)\
                                + "_" + str(self.str_tp)\
                                + ".csv"
+        self.final_datetime = self.broker.get_final_datetime()
         if self.working_directory != None:
             self.export_filename = os.path.join(self.working_directory, self.export_filename)
 
@@ -70,7 +72,7 @@ class Crag:
 
         prices_symbols = {symbol:self.broker.get_value(symbol) for symbol in ds.symbols}
         current_datetime = self.broker.get_current_datetime()
-        self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(), prices_symbols, False)
+        self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(), prices_symbols, False, self.final_datetime)
 
         if(len(self.df_portfolio_status) == 0):
             self.df_portfolio_status = pd.DataFrame({"symbol":ds.symbols, "portfolio_size":0, "value":0, "buying_value":0, "roi_sl_tp":0})
@@ -81,7 +83,7 @@ class Crag:
             if not self.zero_print:
                 print("[Crag] 💥 no current data")
             # self.force_sell_open_trade()
-            self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(), prices_symbols, True)
+            self.rtstr.update(self.final_datetime, self.current_trades, self.broker.get_cash(), prices_symbols, True, self.final_datetime)
             return False
 
         self.rtstr.set_current_data(current_data)
@@ -224,6 +226,13 @@ class Crag:
                     self.current_trades.append(current_trade)
                     if not self.zero_print:
                         print("{} {} {:.2f}".format(current_trade.type, current_trade.symbol, current_trade.gross_price))
+
+        # Clear the current_trades for optimization
+        lst_buy_trades = []
+        for current_trade in self.current_trades:
+            if current_trade.type == "BUY":
+                lst_buy_trades.append(current_trade)
+        self.current_trades = lst_buy_trades
 
     def export_status(self):
         return self.broker.export_status()

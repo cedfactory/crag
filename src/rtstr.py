@@ -119,9 +119,9 @@ class RealTimeStrategy(metaclass=ABCMeta):
         df_result = pd.DataFrame(data)
         return df_result
 
-    def update(self, current_datetime, current_trades, broker_cash, prices_symbols, record_info):
+    def update(self, current_datetime, current_trades, broker_cash, prices_symbols, record_info, final_date):
         if self.rtctrl:
-            self.rtctrl.update_rtctrl(current_datetime, current_trades, broker_cash, prices_symbols)
+            self.rtctrl.update_rtctrl(current_datetime, current_trades, broker_cash, prices_symbols, final_date)
             self.rtctrl.display_summary_info(record_info)
         
     def get_symbol_buying_size(self, symbol):
