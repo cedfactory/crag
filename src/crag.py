@@ -128,7 +128,6 @@ class Crag:
         self.cash = self.broker.get_cash()
         self.portfolio_value = self.rtstr.get_portfolio_value()
         current_datetime = self.broker.get_current_datetime()
-        final_datetime = self.broker.get_final_datetime()
 
         trades = []
 
@@ -136,7 +135,7 @@ class Crag:
         lst_symbols = [current_trade.symbol for current_trade in self.current_trades if current_trade.type == "BUY"]
         lst_symbols = list(set(lst_symbols))
         self.update_df_roi_sl_tp(lst_symbols)
-        if current_datetime == final_datetime:
+        if current_datetime == self.final_datetime:
             # final step - force all the symbols to be sold
             df_selling_symbols = self.rtstr.get_df_forced_selling_symbols(lst_symbols)
         else:
@@ -184,7 +183,7 @@ class Crag:
         df_buying_symbols = self.rtstr.get_df_buying_symbols()
         df_buying_symbols.set_index('symbol', inplace=True)
         df_buying_symbols.drop(df_buying_symbols[df_buying_symbols['size'] == 0].index, inplace=True)
-        if current_datetime == final_datetime:
+        if current_datetime == self.final_datetime:
             df_buying_symbols.drop(df_buying_symbols.index, inplace=True)
         for symbol in df_buying_symbols.index.to_list():
             current_trade = trade.Trade(current_datetime)
