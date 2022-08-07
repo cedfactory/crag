@@ -44,9 +44,16 @@ class Crag:
         if self.working_directory != None:
             self.export_filename = os.path.join(self.working_directory, self.export_filename)
 
-    def run(self):
+    def log(self, msg, header=""):
         if self.logger:
-            self.logger.log("Running with {}".format(type(self.rtstr).__name__), header="", author=type(self).__name__)
+            self.logger.log(msg, header=header, author=type(self).__name__)
+
+
+    def run(self):
+        msg_broker_info = "{}\nCash : {}".format(type(self.broker).__name__, self.broker.get_cash())
+        msh_strategy_info = "Running with {}".format(type(self.rtstr).__name__)
+        msg = msg_broker_info + "\n" + msh_strategy_info
+        self.log(msg, "run")
         done = False
         while not done:
             done = not self.step()
@@ -224,6 +231,8 @@ class Crag:
                     self.current_trades.append(current_trade)
                     if not self.zero_print:
                         print("{} {} {:.2f}".format(current_trade.type, current_trade.symbol, current_trade.gross_price))
+
+        self.log("current cash {}".format(self.broker.get_cash()), "trade")
 
     def export_status(self):
         return self.broker.export_status()
