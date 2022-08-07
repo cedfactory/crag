@@ -20,7 +20,6 @@ class Crag:
             self.working_directory = params.get("working_directory", self.working_directory)
 
         self.current_trades = []
-        self.closed_trades = []
 
         self.cash = 0
         self.init_cash_value = 0
@@ -46,9 +45,16 @@ class Crag:
         if self.working_directory != None:
             self.export_filename = os.path.join(self.working_directory, self.export_filename)
 
-    def run(self):
+    def log(self, msg, header=""):
         if self.logger:
-            self.logger.log("Running with {}".format(type(self.rtstr).__name__), header="", author=type(self).__name__)
+            self.logger.log(msg, header=header, author=type(self).__name__)
+
+
+    def run(self):
+        msg_broker_info = "{}\nCash : {}".format(type(self.broker).__name__, self.broker.get_cash())
+        msh_strategy_info = "Running with {}".format(type(self.rtstr).__name__)
+        msg = msg_broker_info + "\n" + msh_strategy_info
+        self.log(msg, "run")
         done = False
         while not done:
             done = not self.step()
@@ -72,7 +78,7 @@ class Crag:
 
         prices_symbols = {symbol:self.broker.get_value(symbol) for symbol in ds.symbols}
         current_datetime = self.broker.get_current_datetime()
-        self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(), prices_symbols, False, self.final_datetime)
+        self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(), prices_symbols, False)
 
         if(len(self.df_portfolio_status) == 0):
             self.df_portfolio_status = pd.DataFrame({"symbol":ds.symbols, "portfolio_size":0, "value":0, "buying_value":0, "roi_sl_tp":0})
@@ -83,7 +89,7 @@ class Crag:
             if not self.zero_print:
                 print("[Crag] 💥 no current data")
             # self.force_sell_open_trade()
-            self.rtstr.update(self.final_datetime, self.current_trades, self.broker.get_cash(), prices_symbols, True, self.final_datetime)
+            self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(), prices_symbols, True)
             return False
 
         self.rtstr.set_current_data(current_data)
@@ -233,6 +239,8 @@ class Crag:
             if current_trade.type == "BUY":
                 lst_buy_trades.append(current_trade)
         self.current_trades = lst_buy_trades
+
+        self.log("current cash {}".format(self.broker.get_cash()), "trade")
 
     def export_status(self):
         return self.broker.export_status()
