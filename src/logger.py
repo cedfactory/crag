@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+import pandas as pd
 
 # for LoggerFile
 import pathlib
@@ -73,13 +74,33 @@ class LoggerDiscordBot(ILogger):
         }
 
         #for all params, see https://discordapp.com/developers/docs/resources/channel#embed-object
-        data["embeds"] = [
-            {
-                "description" : msg,
-                "title" : header,
-                "color" : int('0xff5733', base=16)
-            }
-        ]
+        if isinstance(msg, pd.DataFrame):
+            msg = msg.to_string(index=False)
+            msg = '```' + msg + '```'
+            print(msg)
+        if isinstance(msg, list):
+            data["embeds"] = [
+                {
+                    "title" : header,
+                    "color" : int('0xff5733', base=16),
+                    "fields": []
+                }
+            ]
+            for str in msg:
+                new_msg = {
+                    "name" : str,
+                    "value" : "> additional info",
+                    "inline" : True
+                }
+                data["embeds"][0]["fields"].append(new_msg)
+        else:
+            data["embeds"] = [
+                {
+                    "description" : msg,
+                    "title" : header,
+                    "color" : int('0xff5733', base=16)
+                }
+            ]
 
         result = requests.post(self.webhook, json = data)
 
