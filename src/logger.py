@@ -65,7 +65,6 @@ class LoggerDiscordBot(ILogger):
 
     def log_webhook(self, msg, header, author):
         # https://gist.github.com/Bilka2/5dd2ca2b6e9f3573e0c2defe5d3031b2
-        url = "https://discord.com/api/webhooks/1004857490262994974/uj6QSk_UrWtScpjv6Ah0vKu-Dgn56KYClPPDi642Ymz6aLPQTHLbW58s9SrFrVrgawWL"
 
         #for all params, see https://discordapp.com/developers/docs/resources/webhook#execute-webhook
         data = {
@@ -82,7 +81,7 @@ class LoggerDiscordBot(ILogger):
             }
         ]
 
-        result = requests.post(url, json = data)
+        result = requests.post(self.webhook, json = data)
 
         try:
             result.raise_for_status()
