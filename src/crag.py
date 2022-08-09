@@ -12,6 +12,7 @@ class Crag:
         self.interval = 10
         self.logger = None
         self.clear_unused_data = True
+        self.final_datetime = self.broker.get_final_datetime()
         if params:
             self.broker = params.get("broker", self.broker)
             self.rtstr = params.get("rtstr", self.rtstr)
@@ -32,6 +33,7 @@ class Crag:
         if self.rtstr != None:
             self.strategy_name, self.str_sl, self.str_tp = self.rtstr.get_info()
         if self.broker != None:
+            self.final_datetime = self.broker.get_final_datetime()
             self.start_date, self.end_date,  self.inteval = self.broker.get_info()
         self.export_filename = "sim_broker_history"\
                                + "_" + self.strategy_name\
@@ -41,7 +43,6 @@ class Crag:
                                + "_" + str(self.str_sl)\
                                + "_" + str(self.str_tp)\
                                + ".csv"
-        self.final_datetime = self.broker.get_final_datetime()
         if self.working_directory != None:
             self.export_filename = os.path.join(self.working_directory, self.export_filename)
 
