@@ -1,7 +1,7 @@
 import pytest
 from . import test_rtctrl
 from src import rtstr,rtstr_bigwill,rtstr_cryptobot,rtstr_super_reversal,rtstr_trix,rtstr_VMC
-
+import pandas as pd
 
 def update_rtctrl(rtstr):
     current_trades = test_rtctrl.get_current_trades_sample()
@@ -36,3 +36,14 @@ class TestRTSTR:
 
         # expectations
         assert(strategy == None)
+
+    def test_get_df_forced_selling_symbols(self):
+        # action
+        df = rtstr.RealTimeStrategy.get_df_forced_selling_symbols(["SYMBOL1", "SYMBOL2"])
+
+        # expectations
+        assert(isinstance(df, pd.DataFrame))
+        assert("symbol" in df.columns.tolist())
+        assert(df["symbol"].tolist() == ["SYMBOL1", "SYMBOL2"])
+        assert("stimulus" in df.columns.tolist())
+        assert(df["stimulus"].tolist() == ["SELL", "SELL"])

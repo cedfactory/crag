@@ -1,7 +1,7 @@
 import os
 import time
 import pandas as pd
-from . import trade
+from . import trade,rtstr
 
 class Crag:
     def __init__(self, params = None):
@@ -137,7 +137,7 @@ class Crag:
         self.update_df_roi_sl_tp(lst_symbols)
         if current_datetime == self.final_datetime:
             # final step - force all the symbols to be sold
-            df_selling_symbols = self.rtstr.get_df_forced_selling_symbols(lst_symbols)
+            df_selling_symbols = rtstr.RealTimeStrategy.get_df_forced_selling_symbols(lst_symbols)
         else:
             # identify symbols to sell
             df_selling_symbols = self.rtstr.get_df_selling_symbols(lst_symbols, self.df_portfolio_status)

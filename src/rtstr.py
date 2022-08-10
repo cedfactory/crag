@@ -110,11 +110,12 @@ class RealTimeStrategy(metaclass=ABCMeta):
         df_result = pd.DataFrame(data)
         
         if self.logger != None and len(df_result) > 0:
-            self.logger.log(df_result, header="get_df_buying_symbols", author=self.get_name())
+            self.logger.log(df_result, header="get_df_selling_symbols", author=self.get_name())
          
         return df_result
 
-    def get_df_forced_selling_symbols(self, lst_symbols):
+    @staticmethod
+    def get_df_forced_selling_symbols(lst_symbols):
         lst_stimulus = ['SELL'] * len(lst_symbols)
         data = {'symbol': lst_symbols, 'stimulus': lst_stimulus}
         df_result = pd.DataFrame(data)
