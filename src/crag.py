@@ -12,7 +12,6 @@ class Crag:
         self.interval = 10
         self.logger = None
         self.clear_unused_data = True
-        self.final_datetime = self.broker.get_final_datetime()
         if params:
             self.broker = params.get("broker", self.broker)
             self.rtstr = params.get("rtstr", self.rtstr)
