@@ -151,6 +151,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
     # get_df_selling_symbols and get_df_forced_exit_selling_symbols
     # could be merged in one...
+    '''
     def get_df_forced_exit_selling_symbols(self, lst_symbols):
         data = {'symbol':[], 'stimulus':[]}
         if hasattr(self, 'df_current_data'):
@@ -160,7 +161,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
         df_result = pd.DataFrame(data)
         return df_result
-
+    '''
 
     @staticmethod
     def __get_strategies_list_from_class(strategy):
