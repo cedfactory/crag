@@ -63,10 +63,8 @@ class LoggerDiscordBot(ILogger):
             self.token = params.get("token", self.token)
             self.webhook = params.get("webhook", self.webhook)
 
-
-    def log_webhook(self, msg, header, author):
-        # https://gist.github.com/Bilka2/5dd2ca2b6e9f3573e0c2defe5d3031b2
-
+    @staticmethod
+    def _prepare_data_to_post(msg, header, author):
         #for all params, see https://discordapp.com/developers/docs/resources/webhook#execute-webhook
         data = {
             "content" : "",
@@ -77,7 +75,6 @@ class LoggerDiscordBot(ILogger):
         if isinstance(msg, pd.DataFrame):
             msg = msg.to_string(index=False)
             msg = '```' + msg + '```'
-            print(msg)
         if isinstance(msg, list):
             data["embeds"] = [
                 {
@@ -89,7 +86,7 @@ class LoggerDiscordBot(ILogger):
             for str in msg:
                 new_msg = {
                     "name" : str,
-                    "value" : "> additional info",
+                    "value" : "",
                     "inline" : True
                 }
                 data["embeds"][0]["fields"].append(new_msg)
@@ -102,8 +99,12 @@ class LoggerDiscordBot(ILogger):
                 }
             ]
 
-        result = requests.post(self.webhook, json = data)
+        return data
 
+    def log_webhook(self, msg, header, author):
+        # https://gist.github.com/Bilka2/5dd2ca2b6e9f3573e0c2defe5d3031b2
+        data = self._prepare_data_to_post(msg, header, author)
+        result = requests.post(self.webhook, json = data)
         try:
             result.raise_for_status()
         except requests.exceptions.HTTPError as err:
