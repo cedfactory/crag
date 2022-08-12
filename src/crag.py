@@ -176,8 +176,9 @@ class Crag:
 
                     trades.append(sell_trade)
                     self.current_trades.append(sell_trade)
-                    if not self.zero_print:
-                        print("{} ({}) {} {:.2f} roi={:.2f}".format(sell_trade.type, sell_trade.stimulus, sell_trade.symbol, sell_trade.gross_price, sell_trade.roi))
+                    
+                    msg = "{} ({}) {} {:.2f} roi={:.2f}".format(sell_trade.type, sell_trade.stimulus, sell_trade.symbol, sell_trade.gross_price, sell_trade.roi)
+                    self.log(msg, "symbol sold")
 
         # buy symbols
         df_buying_symbols = self.rtstr.get_df_buying_symbols()
@@ -229,9 +230,10 @@ class Crag:
 
                     trades.append(current_trade)
                     self.current_trades.append(current_trade)
-                    if not self.zero_print:
-                        print("{} {} {:.2f}".format(current_trade.type, current_trade.symbol, current_trade.gross_price))
 
+                    msg = "{} {} {:.2f}".format(current_trade.type, current_trade.symbol, current_trade.gross_price)
+                    self.log(msg, "symbol bought")
+                    
         # Clear the current_trades for optimization
         lst_buy_trades = []
         for current_trade in self.current_trades:
