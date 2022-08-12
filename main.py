@@ -317,29 +317,29 @@ if __name__ == '__main__':
         elif len(sys.argv) > 2 and (sys.argv[1] == "--profiler"):
             strategy_name = sys.argv[2]
 
-                #cProfile.run('crag_simulation(strategy_name)', 'simulation.prof')
+            #cProfile.run('crag_simulation(strategy_name)', 'simulation.prof')
 
-                start = datetime.now()
+            start = datetime.now()
 
-                # ref : https://www.machinelearningplus.com/python/cprofile-how-to-profile-your-python-code/
-                profiler = cProfile.Profile()
-                profiler.enable()
-                crag_simulation(strategy_name)
-                profiler.disable()
-                stats = pstats.Stats(profiler).sort_stats('cumtime')
-                stats.strip_dirs() # removes all leading path information from file names
-                stats.print_stats()
-                stats.dump_stats('stats_dump.dat')
+            # ref : https://www.machinelearningplus.com/python/cprofile-how-to-profile-your-python-code/
+            profiler = cProfile.Profile()
+            profiler.enable()
+            crag_simulation(strategy_name)
+            profiler.disable()
+            stats = pstats.Stats(profiler).sort_stats('cumtime')
+            stats.strip_dirs() # removes all leading path information from file names
+            stats.print_stats()
+            stats.dump_stats('stats_dump.dat')
 
-                end = datetime.now()
-                elapsed_time = str(end - start)
-                print(elapsed_time)
+            end = datetime.now()
+            elapsed_time = str(end - start)
+            print(elapsed_time)
 
-                # to visualize stats_dump.dat
-                # gprof2dot -f pstats stats_dump.dat | dot -Tpng -o output.png
+            # to visualize stats_dump.dat
+            # gprof2dot -f pstats stats_dump.dat | dot -Tpng -o output.png
 
 
-            else:
-                _usage()
-        else:
-            _usage()
+    else:
+        _usage()
+else:
+    _usage()
