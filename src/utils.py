@@ -1,10 +1,16 @@
 import os
+
+import pandas as pd
 from dotenv import load_dotenv
 import urllib
 import urllib.parse
 import urllib.request
 import json
 import concurrent.futures
+
+import yfinance as yf
+
+from datetime import datetime
 
 def _atomic_fdp_request(url):
     n_attempts = 3
@@ -23,7 +29,7 @@ def _atomic_fdp_request(url):
     return response_json
 
 
-def fdp_request(params, multithreading = False):
+def fdp_request(params, multithreading = True):
     load_dotenv()
     fdp_url = os.getenv("FDP_URL")
     if not fdp_url or fdp_url == "":
@@ -66,3 +72,13 @@ def fdp_request_post(url, params):
     request = urllib.request.Request(fdp_url+'/'+url, urllib.parse.urlencode(params).encode())
     response = urllib.request.urlopen(request).read().decode()
     return json.loads(response)
+
+def normalize(df):
+    result = df.copy()
+    for feature_name in df.columns:
+        max_value = df[feature_name].max()
+        min_value = df[feature_name].min()
+        result[feature_name] = (df[feature_name] - min_value) / (max_value - min_value)
+        result[feature_name] = result[feature_name] - result[feature_name][0]
+    return result
+

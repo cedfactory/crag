@@ -237,8 +237,6 @@ class Crag:
         for current_trade in self.current_trades:
             if current_trade.type == "BUY":
                 lst_buy_trades.append(current_trade)
-        self.current_trades = lst_buy_trades
-
         self.log("current cash {}".format(self.broker.get_cash()), "trade")
 
     def export_status(self):

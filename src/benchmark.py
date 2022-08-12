@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from . import trade
+from . import utils
 import math
 import os, fnmatch
 
@@ -111,19 +112,33 @@ class Benchmark:
 
         # Dropping last 2 rows using drop
         # DEBUG identified bug in Crag forced_sell_position
-        n = 3
+        n = 1
         self.df_wallet.drop(self.df_wallet.tail(n).index, inplace=True)
-
-        # self.df_wallet = self.df_wallet.dropna(axis=1)
-        # self.list_batch_run = self.df_wallet.columns.to_list()
 
         # Plot Wallet values
         ax = plt.gca()
         for strategy in self.list_batch_run:
             self.df_wallet.plot(kind='line', y=strategy, ax=ax)
-        # ax.legend(bbox_to_anchor=(1, 1.02), loc='upper left')
+        plt.grid()
         plt.title('wallet_strategy' + period)
         plt.savefig(self.path_results + 'wallet_strategy.png')
+        plt.clf()
+
+        # Plot Wallet normalized
+        self.df_BTC_normalized = pd.read_csv('./data_processed/BTC_USD.csv')
+        self.df_BTC_normalized.set_index('timestamp', inplace=True)
+        self.df_BTC_normalized = self.df_BTC_normalized[['close']]
+        self.df_wallet['BTC'] = self.df_BTC_normalized["close"]
+        self.df_wallet = utils.normalize(self.df_wallet)
+
+        ax = plt.gca()
+        for strategy in self.list_batch_run:
+            self.df_wallet.plot(kind='line', y=strategy, ax=ax)
+        self.df_wallet.plot(kind='line', y="BTC", ax=ax)
+        plt.grid()
+        plt.title('normalized_strategy' + period)
+
+        plt.savefig(self.path_results + 'normalized_strategy.png')
         plt.clf()
 
         # Global Win rate
@@ -234,11 +249,5 @@ class Benchmark:
             df.loc[(df['period'] == self.period) & (df['strategy'] == strategy), 'profit%'] = profit_percent
             df.loc[(df['period'] == self.period) & (df['strategy'] == strategy), 'win_rate'] = global_win_rate
 
-            ''' CEDE Comment: Alternative methode
-            df['total_transaction'] = np.where( (df['period'] == self.period) & (df['strategy'] == strategy),
-                                                transaction_total,
-                                                df['total_transaction']
-                                                )
-            '''
         return df
 

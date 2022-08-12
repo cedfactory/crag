@@ -9,7 +9,6 @@ from datetime import datetime
 import concurrent.futures
 from dotenv import load_dotenv
 
-
 _usage_str = """
 Options:
     --record <csvfile>
@@ -233,68 +232,89 @@ def crag_test_scenario_for_period(df, ds, period, auto_test_directory, list_inte
     df.to_csv(period + "_output.csv")
 
 if __name__ == '__main__':
+    # Bear market historical dates
+    # https://cointelegraph.com/news/a-brief-history-of-bitcoin-crashes-and-bear-markets-2009-2022
     # INFO:
-    # BULLRUN FROM 2020-10-01 TO 2022-04-01
+    # older data available for FTX is 2019-07-21
+    # BEARMARKET FROM 2011-06-01 TO 2013-02-01
+    # BEARMARKET FROM 2013-11-01 TO 2017-01-01
+    # BEARMARKET FROM 2017-12-01 TO 2020-12-01
     # BEARMARKET FROM 2018-01-01 TO 2020-09-01
+    # BEARMARKET FROM 2021-03-01 TO 2021-10-01
+    # BEARMARKET FROM 2021-11-01 TO 2022-08-08
+    #
+    # BULLRUN FROM 2020-10-01 TO 2022-04-01
     ##########################################
-    params = {"start": '2022-01-01',  # YYYY-MM-DD
-              "end": '2022-08-06',  # YYYY-MM-DD
-              "split": 1,
-              "interval": '1h',
-              # "startegies": ['StrategySuperReversal', 'StrategyTrix', 'StrategyCryptobot'],
-              # "startegies": ['StrategySuperReversal', 'StrategyCryptobot'],
-              "startegies": ['StrategySuperReversal'],
-              # "startegies": ['StrategyCryptobot'],
-              # "sl": [0, -5, -10],
-              # "tp": [0, 10, 20]
-              "sl": [0],
-              "tp": [0]
-              }
+    lst_bearmarket =[# ['2011-06-01', '2013-02-01'],
+                     # ['2013-11-01', '2017-01-01'],
+                     # ['2017-12-01', '2020-12-01'],
+                     # ['2019-07-21', '2020-09-01'], # OK
+                     # ['2021-03-01', '2021-10-01'], # OK
+                     ['2021-11-01', '2022-08-08']
+    ]
+    path_initial_dir = os.getcwd()
+    for interval in lst_bearmarket:
+        os.chdir(path_initial_dir)
+        params = {"start": interval[0],  # YYYY-MM-DD
+                  "end": interval[1],  # YYYY-MM-DD
+                  # "start": '2022-01-01',  # YYYY-MM-DD
+                  # "end": '2022-08-08',  # YYYY-MM-DD
+                  "split": 1,
+                  "interval": '1h',
+                  # "startegies": ['StrategySuperReversal', 'StrategyTrix', 'StrategyCryptobot'],
+                  "startegies": ['StrategySuperReversal', 'StrategyCryptobot'],
+                  # "startegies": ['StrategySuperReversal'],
+                  # "startegies": ['StrategyCryptobot'],
+                  # "sl": [0, -5, -10],
+                  # "tp": [0, 10, 20]
+                  "sl": [0],
+                  "tp": [0]
+                  }
 
-    if len(sys.argv) >= 2:
-        if len(sys.argv) == 2 and (sys.argv[1] == "--record"):
-            crag_record()
-        elif len(sys.argv) > 2 and (sys.argv[1] == "--simulation"):
-            strategy_name = sys.argv[2]
-            crag_simulation(strategy_name)
-        elif len(sys.argv) > 2 and (sys.argv[1] == "--live"):
-            strategy_name = sys.argv[2]
-            crag_live(strategy_name)
-        elif len(sys.argv) >= 2 and (sys.argv[1] == "--ftx"):
-            crag_ftx()
-        elif len(sys.argv) >= 2 and (sys.argv[1] == "--analyse"):
-            crag_analyse_results()
-        elif len(sys.argv) >= 2 and (sys.argv[1] == "--benchmark"):
-            crag_benchmark_results(params)
-        elif len(sys.argv) >= 2 and (sys.argv[1] == "--scenario"):
-            df_test_plan = automatic_test_plan.build_automatic_test_plan(params)
-            crag_test_scenario(df_test_plan)
-        elif len(sys.argv) > 2 and (sys.argv[1] == "--profiler"):
-            strategy_name = sys.argv[2]
+        if len(sys.argv) >= 2:
+            if len(sys.argv) == 2 and (sys.argv[1] == "--record"):
+                crag_record()
+            elif len(sys.argv) > 2 and (sys.argv[1] == "--simulation"):
+                strategy_name = sys.argv[2]
+                crag_simulation(strategy_name)
+            elif len(sys.argv) > 2 and (sys.argv[1] == "--live"):
+                strategy_name = sys.argv[2]
+                crag_live(strategy_name)
+            elif len(sys.argv) >= 2 and (sys.argv[1] == "--ftx"):
+                crag_ftx()
+            elif len(sys.argv) >= 2 and (sys.argv[1] == "--analyse"):
+                crag_analyse_results()
+            elif len(sys.argv) >= 2 and (sys.argv[1] == "--benchmark"):
+                crag_benchmark_results(params)
+            elif len(sys.argv) >= 2 and (sys.argv[1] == "--scenario"):
+                df_test_plan = automatic_test_plan.build_automatic_test_plan(params)
+                crag_test_scenario(df_test_plan)
+            elif len(sys.argv) > 2 and (sys.argv[1] == "--profiler"):
+                strategy_name = sys.argv[2]
 
-            #cProfile.run('crag_simulation(strategy_name)', 'simulation.prof')
+                #cProfile.run('crag_simulation(strategy_name)', 'simulation.prof')
 
-            start = datetime.now()
+                start = datetime.now()
 
-            # ref : https://www.machinelearningplus.com/python/cprofile-how-to-profile-your-python-code/
-            profiler = cProfile.Profile()
-            profiler.enable()
-            crag_simulation(strategy_name)
-            profiler.disable()
-            stats = pstats.Stats(profiler).sort_stats('cumtime')
-            stats.strip_dirs() # removes all leading path information from file names
-            stats.print_stats()
-            stats.dump_stats('stats_dump.dat')
+                # ref : https://www.machinelearningplus.com/python/cprofile-how-to-profile-your-python-code/
+                profiler = cProfile.Profile()
+                profiler.enable()
+                crag_simulation(strategy_name)
+                profiler.disable()
+                stats = pstats.Stats(profiler).sort_stats('cumtime')
+                stats.strip_dirs() # removes all leading path information from file names
+                stats.print_stats()
+                stats.dump_stats('stats_dump.dat')
 
-            end = datetime.now()
-            elapsed_time = str(end - start)
-            print(elapsed_time)
+                end = datetime.now()
+                elapsed_time = str(end - start)
+                print(elapsed_time)
 
-            # to visualize stats_dump.dat
-            # gprof2dot -f pstats stats_dump.dat | dot -Tpng -o output.png
+                # to visualize stats_dump.dat
+                # gprof2dot -f pstats stats_dump.dat | dot -Tpng -o output.png
 
-            
+
+            else:
+                _usage()
         else:
             _usage()
-    else:
-        _usage()
