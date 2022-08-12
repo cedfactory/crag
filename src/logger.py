@@ -16,18 +16,21 @@ class ILogger(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def log(self, msg, header=""):
+    def log(self, msg, header="", author=""):
         pass
 
 class LoggerConsole(ILogger):
     def __init__(self, params=None):
         pass
 
-    def log(self, msg, header=""):
+    def log(self, msg, header="", author=""):
+        content = ""
+        if author != "":
+            content = content + "[{}] ".format(author)
         if header != "":
-            print("{} : {}".format(header, msg))
-        else:
-            print(msg)
+            content = content + "[{}] ".format(header)
+        content = content + msg
+        print(content)
 
 class LoggerFile(ILogger):
     def __init__(self, params=None):
