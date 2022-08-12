@@ -110,11 +110,12 @@ class RealTimeStrategy(metaclass=ABCMeta):
         df_result = pd.DataFrame(data)
         
         if self.logger != None and len(df_result) > 0:
-            self.logger.log(df_result, header="get_df_buying_symbols", author=self.get_name())
+            self.logger.log(df_result, header="get_df_selling_symbols", author=self.get_name())
          
         return df_result
 
-    def get_df_forced_selling_symbols(self, lst_symbols):
+    @staticmethod
+    def get_df_forced_selling_symbols(lst_symbols):
         lst_stimulus = ['SELL'] * len(lst_symbols)
         data = {'symbol': lst_symbols, 'stimulus': lst_stimulus}
         df_result = pd.DataFrame(data)
@@ -151,6 +152,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
     # get_df_selling_symbols and get_df_forced_exit_selling_symbols
     # could be merged in one...
+    '''
     def get_df_forced_exit_selling_symbols(self, lst_symbols):
         data = {'symbol':[], 'stimulus':[]}
         if hasattr(self, 'df_current_data'):
@@ -160,7 +162,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
         df_result = pd.DataFrame(data)
         return df_result
-
+    '''
 
     @staticmethod
     def __get_strategies_list_from_class(strategy):

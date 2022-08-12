@@ -8,6 +8,7 @@ import cProfile,pstats
 from datetime import datetime
 import concurrent.futures
 from dotenv import load_dotenv
+import xml.etree.cElementTree as ET
 
 _usage_str = """
 Options:
@@ -60,7 +61,29 @@ def crag_simulation(strategy_name):
     bot.export_history("sim_broker_history.csv")
     bot.export_status()
 
-def crag_live(strategy_name):
+
+def crag_live(configuration_file):
+    tree = ET.parse(configuration_file)
+    root = tree.getroot()
+    if root.tag != "configuration":
+        print("!!! tag {} encountered. expecting configuration".format(root.tag))
+        return
+
+    strategy_node = root.find("strategy")
+    strategy_name = strategy_node.get("name", None)
+
+    broker_node = root.find("broker")
+    broker_name = broker_node.get("name", None)
+    broker_simulation = broker_node.get("simulation", False)
+    if broker_simulation == "1":
+        broker_simulation = True
+    elif broker_simulation == "0":
+        broker_simulation = False
+
+    crag_node = root.find("crag")
+    crag_interval = crag_node.get("interval", 10)
+    crag_interval = int(crag_interval)
+
     crag_discord_bot = _initialize_crag_discord_bot()
     params = {"logger":crag_discord_bot}
     available_strategies = rtstr.RealTimeStrategy.get_strategies_list()
@@ -71,9 +94,11 @@ def crag_live(strategy_name):
         print("available strategies : ", available_strategies)
         return
 
-    my_broker = broker_ftx.BrokerFTX({'account':'test_bot', 'simulation':True})
+    my_broker = None
+    if broker_name == "ftx":
+        my_broker = broker_ftx.BrokerFTX({'account':'test_bot', 'simulation':broker_simulation})
 
-    params = {'broker':my_broker, 'rtstr':my_strategy, 'interval':5, 'logger':crag_discord_bot}
+    params = {'broker':my_broker, 'rtstr':my_strategy, 'interval':crag_interval, 'logger':crag_discord_bot}
     bot = crag.Crag(params)
     bot.run()
 
@@ -271,26 +296,26 @@ if __name__ == '__main__':
                   "tp": [0]
                   }
 
-        if len(sys.argv) >= 2:
-            if len(sys.argv) == 2 and (sys.argv[1] == "--record"):
-                crag_record()
-            elif len(sys.argv) > 2 and (sys.argv[1] == "--simulation"):
-                strategy_name = sys.argv[2]
-                crag_simulation(strategy_name)
-            elif len(sys.argv) > 2 and (sys.argv[1] == "--live"):
-                strategy_name = sys.argv[2]
-                crag_live(strategy_name)
-            elif len(sys.argv) >= 2 and (sys.argv[1] == "--ftx"):
-                crag_ftx()
-            elif len(sys.argv) >= 2 and (sys.argv[1] == "--analyse"):
-                crag_analyse_results()
-            elif len(sys.argv) >= 2 and (sys.argv[1] == "--benchmark"):
-                crag_benchmark_results(params)
-            elif len(sys.argv) >= 2 and (sys.argv[1] == "--scenario"):
-                df_test_plan = automatic_test_plan.build_automatic_test_plan(params)
-                crag_test_scenario(df_test_plan)
-            elif len(sys.argv) > 2 and (sys.argv[1] == "--profiler"):
-                strategy_name = sys.argv[2]
+    if len(sys.argv) >= 2:
+        if len(sys.argv) == 2 and (sys.argv[1] == "--record"):
+            crag_record()
+        elif len(sys.argv) > 2 and (sys.argv[1] == "--simulation"):
+            strategy_name = sys.argv[2]
+            crag_simulation(strategy_name)
+        elif len(sys.argv) > 2 and (sys.argv[1] == "--live"):
+            configuration_file = sys.argv[2]
+            crag_live(configuration_file)
+        elif len(sys.argv) >= 2 and (sys.argv[1] == "--ftx"):
+            crag_ftx()
+        elif len(sys.argv) >= 2 and (sys.argv[1] == "--analyse"):
+            crag_analyse_results()
+        elif len(sys.argv) >= 2 and (sys.argv[1] == "--benchmark"):
+            crag_benchmark_results(params)
+        elif len(sys.argv) >= 2 and (sys.argv[1] == "--scenario"):
+            df_test_plan = automatic_test_plan.build_automatic_test_plan(params)
+            crag_test_scenario(df_test_plan)
+        elif len(sys.argv) > 2 and (sys.argv[1] == "--profiler"):
+            strategy_name = sys.argv[2]
 
                 #cProfile.run('crag_simulation(strategy_name)', 'simulation.prof')
 
