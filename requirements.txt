@@ -19,3 +19,4 @@ graphviz==0.20
 gprof2dot==2021.2.21
 discord
 discord.py
+yfinance==0.1.63
