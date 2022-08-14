@@ -112,7 +112,7 @@ class BrokerFTX(broker.Broker):
                 return False
 
             symbol = trade.symbol
-            amount = trade.net_price
+            amount = trade.net_price / trade.symbol_price
             try:
                 order_structure = self.ftx_exchange.create_order(symbol, "market", side, amount)
                 print(order_structure)
