@@ -76,6 +76,15 @@ class BrokerFTX(broker.Broker):
         return result
     
     @authentication_required
+    def get_portfolio_value(self):
+        balance = self.get_balance()
+        portfolio_value = 0
+        for coin in balance:
+            #print("{}: {}".format(coin, balance[coin]["usdValue"]))
+            portfolio_value += balance[coin]["usdValue"]
+        return portfolio_value
+
+    @authentication_required
     def get_positions(self):
         result = []
         if self.ftx_exchange:

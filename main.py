@@ -139,12 +139,8 @@ def crag_ftx():
     print("### my trades ###")
     my_broker_ftx.export_history()
 
-    print("### available ###")
-    cryptocash = 0
-    for coin in balance:
-        print("{}: {}".format(coin, balance[coin]["usdValue"]))
-        cryptocash += balance[coin]["usdValue"]
-    print("total : {}".format(cryptocash))
+    print("### portfolio value ###")
+    print("{}".format(my_broker_ftx.get_portfolio_value()))
 
     print("### sell everything ###")
     #my_broker_ftx.sell_everything()

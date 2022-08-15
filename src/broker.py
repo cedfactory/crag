@@ -24,6 +24,10 @@ class Broker(metaclass = ABCMeta):
     def get_cash(self):
         return self.cash
 
+    def get_portfolio_value(self):
+        # todo : to implement
+        return self.cash
+
     def get_current_datetime(self):
         if self.rtdp:
             return self.rtdp.get_current_datetime()

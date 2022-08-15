@@ -12,8 +12,10 @@ class Crag:
         self.interval = 10
         self.logger = None
         self.clear_unused_data = True
+        self.original_portfolio_value = 0
         if params:
             self.broker = params.get("broker", self.broker)
+            self.original_portfolio_value = self.broker.get_portfolio_value()
             self.rtstr = params.get("rtstr", self.rtstr)
             self.interval = params.get("interval", self.interval)
             self.logger = params.get("logger", self.logger)
@@ -66,6 +68,10 @@ class Crag:
         self.export_history(self.export_filename)
 
     def step(self):
+        msg = "original portfolio value = {:.2f}\n".format(self.original_portfolio_value)
+        msg += "current portfolio value = {:.2f}\n".format(self.broker.get_portfolio_value())
+        msg += "cash = {:.2f}".format(self.broker.get_cash())
+        self.log(msg, "step")
         if not self.zero_print:
             print("[Crag] ⌛")
 
