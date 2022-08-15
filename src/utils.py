@@ -60,8 +60,10 @@ def fdp_request(params, multithreading = True):
             for future in concurrent.futures.as_completed(futures):
                 current_symbol = futures[future]
                 res = future.result()
-                final_result["result"][current_symbol] = res["result"][current_symbol]
-        
+                if res["status"] == "ko":
+                    final_result["result"][current_symbol] = res
+                else:
+                    final_result["result"][current_symbol] = res["result"][current_symbol]
 
     return final_result
 
