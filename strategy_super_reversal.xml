@@ -1,0 +1,5 @@
+<configuration>
+    <strategy name="StrategySuperReversal" />
+    <broker name="ftx" simulation="1" />
+    <crag interval="3600" />
+</configuration>
