@@ -125,7 +125,7 @@ def crag_benchmark_scenario(df, start_date, end_date, period):
     my_benchmark.set_benchmark_df_results(df)
 
 def crag_ftx():
-    my_broker_ftx = broker_ftx.BrokerFTX()
+    my_broker_ftx = broker_ftx.BrokerFTX({'account':'test_bot', 'simulation':0})
     print("authentification : {}".format(my_broker_ftx.authentificated))
 
     print("### balance ###")
@@ -138,6 +138,18 @@ def crag_ftx():
 
     print("### my trades ###")
     my_broker_ftx.export_history()
+
+    print("### available ###")
+    cash = my_broker_ftx.get_cash()
+    print("cash : ", cash)
+    cryptocash = 0
+    for coin in balance:
+        print("{}: {}".format(coin, balance[coin]["usdValue"]))
+        cryptocash += balance[coin]["usdValue"]
+    print("total : {}".format(cash + cryptocash))
+
+    print("### sell everything ###")
+    #my_broker_ftx.sell_everything()
 
 
 def crag_simulation_scenario(strategy_name, start_date, end_date, interval, sl, tp, working_directory):

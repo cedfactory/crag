@@ -69,8 +69,8 @@ class BrokerFTX(broker.Broker):
         if self.ftx_exchange:
             try:
                 balance = self.ftx_exchange.fetch_balance()
-                print(balance)
-                result = {coin['coin']:float(coin['total']) for coin in balance["info"]["result"] if coin['total'] != "0.0"}
+                #print(balance)
+                result = {coin['coin']:{"availableForWithdrawal":float(coin['total']), "usdValue":float(coin["usdValue"])} for coin in balance["info"]["result"] if coin['total'] != "0.0"}
             except BaseException as err:
                 print("[BrokerFTX::get_balance] An error occured : {}".format(err))
         return result
@@ -121,6 +121,23 @@ class BrokerFTX(broker.Broker):
             return True
         return False
 
+    @authentication_required
+    def sell_everything(self):
+        print("cash",self.get_cash())
+        my_balance = self.get_balance()
+        print(my_balance)
+        for coin in my_balance:
+            if coin == "EUR" or coin == "USD":
+                continue
+            print("{} : {}".format(coin, my_balance[coin]["availableForWithdrawal"]))
+            try:
+                order_structure = self.ftx_exchange.create_order(coin+"/USD", "market", "sell", my_balance[coin]["availableForWithdrawal"])
+                #print(order_structure)
+            except BaseException as err:
+                print("[BrokerFTX::execute_trade] An error occured : {}".format(err))
+
+        return True
+
     def _format_row(self, current_trade):
         datetime = current_trade['datetime']
         symbol = current_trade['symbol']
@@ -143,6 +160,7 @@ class BrokerFTX(broker.Broker):
                         f.write(self._format_row(current_trade)+'\n')
                     f.close()
             else:
+                print("datetime;symbol;side;price;amount;cost;fee_cost;fee_rate")
                 for current_trade in my_trades:
                     print(self._format_row(current_trade))
 
