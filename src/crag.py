@@ -186,6 +186,7 @@ class Crag:
         df_buying_symbols.drop(df_buying_symbols[df_buying_symbols['size'] == 0].index, inplace=True)
         if current_datetime == self.final_datetime:
             df_buying_symbols.drop(df_buying_symbols.index, inplace=True)
+        symbols_bought = {"symbol":[], "size":[], "percent":[], "gross_price":[]}
         for symbol in df_buying_symbols.index.to_list():
             current_trade = trade.Trade(current_datetime)
             current_trade.type = "BUY"
@@ -231,9 +232,13 @@ class Crag:
                     trades.append(current_trade)
                     self.current_trades.append(current_trade)
 
-                    msg = "{} {} {:.2f}".format(current_trade.type, current_trade.symbol, current_trade.gross_price)
-                    self.log(msg, "symbol bought")
-                    
+                    symbols_bought["symbol"].append(current_trade.symbol)
+                    symbols_bought["size"].append(current_trade.gross_size)
+                    symbols_bought["percent"].append(df_buying_symbols["percent"][current_trade.symbol])
+                    symbols_bought["gross_price"].append(current_trade.gross_price)
+        df_symbols_bought = pd.DataFrame(symbols_bought)
+        self.log(df_symbols_bought, "symbols bought")
+
         # Clear the current_trades for optimization
         lst_buy_trades = []
         for current_trade in self.current_trades:
