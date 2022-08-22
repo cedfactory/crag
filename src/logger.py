@@ -16,14 +16,14 @@ class ILogger(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def log(self, msg, header="", author=""):
+    def log(self, msg, header="", author="", attachments=[]):
         pass
 
 class LoggerConsole(ILogger):
     def __init__(self, params=None):
         pass
 
-    def log(self, msg, header="", author=""):
+    def log(self, msg, header="", author="", attachments=[]):
         content = ""
         if author != "":
             content = content + "[{}] ".format(author)
@@ -45,7 +45,7 @@ class LoggerFile(ILogger):
         else:
             pathlib.Path(self.filename).touch()
 
-    def log(self, msg, header="", author=""):
+    def log(self, msg, header="", author="", attachments=[]):
         if self.filename != "":
             with open(self.filename, 'a') as f:
                 content = ""
@@ -104,10 +104,17 @@ class LoggerDiscordBot(ILogger):
 
         return data
 
-    def log_webhook(self, msg, header, author):
+    def log_webhook(self, msg, header, author, attachments=[]):
         # https://gist.github.com/Bilka2/5dd2ca2b6e9f3573e0c2defe5d3031b2
         data = self._prepare_data_to_post(msg, header, author)
-        result = requests.post(self.webhook, json = data)
+
+        files = None
+        # todo : manage several attachments
+        if len(attachments) >= 1:
+            files = {
+                'file': (attachments[0], open(attachments[0], 'rb')),
+            }
+        result = requests.post(self.webhook, json = data, files = files)
         try:
             result.raise_for_status()
         except requests.exceptions.HTTPError as err:
@@ -115,7 +122,7 @@ class LoggerDiscordBot(ILogger):
         else:
             print("Payload delivered successfully, code {}.".format(result.status_code))
 
-    def log_post(self, msg, header="", author=""):
+    def log_post(self, msg, header="", author="", attachments=[]):
         # https://stackoverflow.com/questions/69160500/discord-py-send-messages-outside-of-events
         if self.token is None or self.channel_id is None:
             return
@@ -136,8 +143,8 @@ class LoggerDiscordBot(ILogger):
         content = content + msg
         r = requests.post(SEND_URL.format(id=self.channel_id), headers=headers, json={"content": content})
 
-    def log(self, msg, header="", author=""):
+    def log(self, msg, header="", author="", attachments=[]):
         if self.webhook != "":
-            self.log_webhook(msg, header, author)
+            self.log_webhook(msg, header, author, attachments)
         else:
-            self.log_post(msg, header, author)
+            self.log_post(msg, header, author, attachments)
