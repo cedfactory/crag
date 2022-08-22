@@ -100,7 +100,8 @@ class BrokerFTX(broker.Broker):
 
     @authentication_required
     def get_commission(self, symbol):
-        return 0.0007
+        # https://docs.ftx.com/#execution-report-8
+        return 0.0067307233
 
     def get_info(self):
         return None, None, None
