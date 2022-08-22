@@ -9,7 +9,7 @@ class Crag:
         self.broker = None
         self.rtstr = None
         self.working_directory = None
-        self.interval = 10
+        self.interval = 1
         self.logger = None
         self.clear_unused_data = True
         self.original_portfolio_value = 0
@@ -47,12 +47,12 @@ class Crag:
         if self.working_directory != None:
             self.export_filename = os.path.join(self.working_directory, self.export_filename)
 
-    def log(self, msg, header=""):
+    def log(self, msg, header="", attachments=[]):
         if self.logger:
-            self.logger.log(msg, header=header, author=type(self).__name__)
+            self.logger.log(msg, header=header, author=type(self).__name__, attachments=attachments)
 
 
-    def run(self):
+    def run(self, queue=None):
         msg_broker_info = "{}\nCash : {}".format(type(self.broker).__name__, self.broker.get_cash())
         msh_strategy_info = "Running with {}".format(type(self.rtstr).__name__)
         msg = msg_broker_info + "\n" + msh_strategy_info
@@ -62,7 +62,18 @@ class Crag:
             done = not self.step()
             if done:
                 break
-            # time.sleep(self.interval)
+            start = time.time()
+            while True:
+                if queue:
+                    data = queue.get()
+                    print(data)
+                    if data == "stop":
+                        self.export_history(self.export_filename)
+                        self.log(msg="> {}".format(self.export_filename), header="stopping", attachments=[self.export_filename])
+                        return
+                end = time.time()
+                if end - start > self.interval:
+                    break
             self.broker.tick() # increment
 
         self.export_history(self.export_filename)
