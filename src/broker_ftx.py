@@ -157,7 +157,7 @@ class BrokerFTX(broker.Broker):
         cost = current_trade['cost']
         fee_cost = current_trade['fee']['cost']
         fee_rate = current_trade['fee']['rate']
-        return "{};{};{};{};{};{};{};{}".format(datetime,symbol,side,price,amount,cost,fee_cost,fee_rate)
+        return "{},{},{},{},{},{},{},{}".format(datetime,symbol,side,price,amount,cost,fee_cost,fee_rate)
 
     @authentication_required
     def export_history(self, target=None):
@@ -165,7 +165,7 @@ class BrokerFTX(broker.Broker):
         if len(my_trades) > 0:
             if target and target.endswith(".csv"):
                 with open(target, 'w', newline='') as f:
-                    f.write("datetime;symbol;side;price;amount;cost;fee_cost;fee_rate\n")
+                    f.write("datetime,symbol,side,price,amount,cost,fee_cost,fee_rate\n")
                     for current_trade in my_trades:
                         f.write(self._format_row(current_trade)+'\n')
                     f.close()
