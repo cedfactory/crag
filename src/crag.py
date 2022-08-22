@@ -65,12 +65,14 @@ class Crag:
             start = time.time()
             while True:
                 if queue:
-                    data = queue.get()
-                    print(data)
-                    if data == "stop":
-                        self.export_history(self.export_filename)
-                        self.log(msg="> {}".format(self.export_filename), header="stopping", attachments=[self.export_filename])
-                        return
+                    try:
+                        data = queue.get(block=False)
+                        if data == "stop":
+                            self.export_history(self.export_filename)
+                            self.log(msg="> {}".format(self.export_filename), header="stopping", attachments=[self.export_filename])
+                            return
+                    except BaseException as e:
+                        pass
                 end = time.time()
                 if end - start > self.interval:
                     break
