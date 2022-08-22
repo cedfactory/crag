@@ -9,6 +9,9 @@ from datetime import datetime
 import concurrent.futures
 from dotenv import load_dotenv
 import xml.etree.cElementTree as ET
+import simon
+from queue import Queue
+from threading import Thread
 
 _usage_str = """
 Options:
@@ -61,6 +64,9 @@ def crag_simulation(strategy_name):
     bot.export_history("sim_broker_history.csv")
     bot.export_status()
 
+def launch_simon_in_thread(out_q):
+    simon.launch_simon(out_q)
+    
 
 def crag_live(configuration_file):
     tree = ET.parse(configuration_file)
@@ -100,7 +106,13 @@ def crag_live(configuration_file):
 
     params = {'broker':my_broker, 'rtstr':my_strategy, 'interval':crag_interval, 'logger':crag_discord_bot}
     bot = crag.Crag(params)
-    bot.run()
+    
+    
+    q = Queue()
+    thread2 = Thread(target=bot.run, args=(q,))
+    thread2.start()
+    launch_simon_in_thread(q)
+    
 
     # DEBUG CEDE
     # bot.export_history("broker_history.csv")
