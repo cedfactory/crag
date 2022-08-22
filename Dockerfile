@@ -11,5 +11,7 @@ RUN apt-get install -y wget python3-pip graphviz
 
 COPY requirements.txt /
 RUN pip install -r requirements.txt
+RUN pip install discord==1.7.3
+RUN pip install discord.py==1.7.3
 
 WORKDIR "/mnt"
