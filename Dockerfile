@@ -6,7 +6,7 @@ LABEL version="0.1"
 RUN echo "Acquire::Check-Valid-Until \"false\";\nAcquire::Check-Date \"false\";" | cat > /etc/apt/apt.conf.d/10no--check-valid-until
 
 RUN apt-get update
-RUN apt-get install -y wget python3-pip graphviz
+RUN apt-get install -y wget python3-pip graphviz rabbitmq-server
 #RUN pip install --upgrade pip
 
 COPY requirements.txt /

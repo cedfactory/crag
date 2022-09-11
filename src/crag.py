@@ -2,7 +2,14 @@ import os
 import time
 import pandas as pd
 from . import trade,rtstr
+import pika
+import threading
 
+# to launch crag as a rabbitmq receiver :
+# > apt-get install rabbitmq-server
+# > systemctl enable rabbitmq-server
+# > systemctl start rabbitmq-server
+# reference : https://medium.com/analytics-vidhya/how-to-use-rabbitmq-with-python-e0ccfe7fa959
 class Crag:
     def __init__(self, params = None):
 
@@ -47,12 +54,37 @@ class Crag:
         if self.working_directory != None:
             self.export_filename = os.path.join(self.working_directory, self.export_filename)
 
+        # rabbitmq connection
+        try:
+            connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+            channel = connection.channel()
+            channel.queue_declare(queue='crag')
+
+            def callback(ch, method, properties, body):
+                print(" [x] Received {}".format(body))
+                if body.decode() == "stop":
+                    print(body)
+                    print(self.export_filename)
+                    self.export_history(self.export_filename)
+                    self.log(msg="> {}".format(self.export_filename), header="stopping", attachments=[self.export_filename])
+                    os._exit(0)
+
+            channel.basic_consume(queue='crag', on_message_callback=callback, auto_ack=True)
+            
+            #channel.start_consuming()
+            thread = threading.Thread(name='t', target=channel.start_consuming, args=())
+            thread.setDaemon(True)
+            thread.start()
+        except:
+            print("Problem encountered while configuring the rabbitmq receiver")
+
+
     def log(self, msg, header="", attachments=[]):
         if self.logger:
             self.logger.log(msg, header=header, author=type(self).__name__, attachments=attachments)
 
 
-    def run(self, queue=None):
+    def run(self):
         msg_broker_info = "{}\nCash : {}".format(type(self.broker).__name__, self.broker.get_cash())
         msh_strategy_info = "Running with {}".format(type(self.rtstr).__name__)
         msg = msg_broker_info + "\n" + msh_strategy_info
@@ -64,15 +96,6 @@ class Crag:
                 break
             start = time.time()
             while True:
-                if queue:
-                    try:
-                        data = queue.get(block=False)
-                        if data == "stop":
-                            self.export_history(self.export_filename)
-                            self.log(msg="> {}".format(self.export_filename), header="stopping", attachments=[self.export_filename])
-                            return
-                    except BaseException as e:
-                        pass
                 end = time.time()
                 if end - start > self.interval:
                     break

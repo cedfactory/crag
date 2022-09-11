@@ -2,13 +2,13 @@ import discord
 from discord.ext import commands
 import os
 from dotenv import load_dotenv
+import pika
 import pandas as pd
 from src import broker_ftx
 
 class BotSimon(commands.Bot):
-    def __init__(self, queue=None):
+    def __init__(self):
         super().__init__(command_prefix="/")
-        self.queue = queue
         
         @self.command(name="hello")
         async def custom_command(ctx):
@@ -46,18 +46,22 @@ class BotSimon(commands.Bot):
 
         @self.command(name="stop_crag")
         async def custom_command(ctx, *args):
-            if self.queue:
-                self.queue.put("stop")
+            connection = pika.BlockingConnection(pika.ConnectionParameters('127.0.0.1'))
+            channel = connection.channel()
+            channel.queue_declare(queue='crag')
+            channel.basic_publish(exchange='', routing_key='crag', body='stop')
+            connection.close()
+
             embed=discord.Embed(title="stop crag", description="stop crag", color=0xFF5733)
             await ctx.channel.send(embed=embed)
         
     async def on_ready(self):
         print("bot is ready")
 
-def launch_simon(queue=None):
+def launch_simon():
     load_dotenv()
     token = os.getenv("SIMON_DISCORD_BOT_TOKEN")
-    bot = BotSimon(queue)
+    bot = BotSimon()
     bot.run(token)
   
 
