@@ -9,6 +9,8 @@ import threading
 # > apt-get install rabbitmq-server
 # > systemctl enable rabbitmq-server
 # > systemctl start rabbitmq-server
+# systemctl is not provided by WSL :
+# > service rabbitmq-server start
 # reference : https://medium.com/analytics-vidhya/how-to-use-rabbitmq-with-python-e0ccfe7fa959
 class Crag:
     def __init__(self, params = None):
