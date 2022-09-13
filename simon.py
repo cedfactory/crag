@@ -43,20 +43,27 @@ class BotSimon(commands.Bot):
 
             embed=discord.Embed(title=subaccount, description=msg, color=0xFF5733)
             await ctx.channel.send(embed=embed)
-
-        @self.command(name="stop_crag")
+            
+        @self.command(name="crag")
         async def custom_command(ctx, *args):
-            connection = pika.BlockingConnection(pika.ConnectionParameters('127.0.0.1'))
-            channel = connection.channel()
-            channel.queue_declare(queue='crag')
-            channel.basic_publish(exchange='', routing_key='crag', body='stop')
-            connection.close()
+            if len(args) != 1:
+                embed=discord.Embed(title="crag", description="missing argument", color=0xFF5733)
+                await ctx.channel.send(embed=embed)
+            else:
+                message = args[0]
+                self.send_message_to_crag(message)
+                embed=discord.Embed(title="crag {}".format(message), description="crag {}".format(message), color=0xFF5733)
+                await ctx.channel.send(embed=embed)
 
-            embed=discord.Embed(title="stop crag", description="stop crag", color=0xFF5733)
-            await ctx.channel.send(embed=embed)
-        
     async def on_ready(self):
         print("bot is ready")
+
+    def send_message_to_crag(self, message):
+        connection = pika.BlockingConnection(pika.ConnectionParameters('127.0.0.1'))
+        channel = connection.channel()
+        channel.queue_declare(queue='crag')
+        channel.basic_publish(exchange='', routing_key='crag', body=message)
+        connection.close()
 
 def launch_simon():
     load_dotenv()

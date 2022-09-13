@@ -62,14 +62,16 @@ class Crag:
             channel = connection.channel()
             channel.queue_declare(queue='crag')
 
-            def callback(ch, method, properties, body):
-                print(" [x] Received {}".format(body))
-                if body.decode() == "stop":
-                    print(body)
-                    print(self.export_filename)
+            def callback(ch, method, properties, bbody):
+                print(" [x] Received {}".format(bbody))
+                body = bbody.decode()
+                if body == "history" or body == "stop":
                     self.export_history(self.export_filename)
-                    self.log(msg="> {}".format(self.export_filename), header="stopping", attachments=[self.export_filename])
-                    os._exit(0)
+                    self.log(msg="> {}".format(self.export_filename), header="{}".format(body), attachments=[self.export_filename])
+                    if body == "stop":
+                        os._exit(0)
+                else:
+                    self.log(msg="> {} : unknown message".format(body))
 
             channel.basic_consume(queue='crag', on_message_callback=callback, auto_ack=True)
             
