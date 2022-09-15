@@ -102,9 +102,11 @@ class rtctrl():
         else:
             roi_percent = 0
         asset_percent = self.df_rtctrl['wallet_%'].sum()
+
+        summary = "{} roi: {:.2f}% cash: $ {:.2f} portfolio: {:.2f} wallet: $ {:.2f} asset: {:.2f}%".format(self.time, roi_percent, wallet_cash, portfolio, wallet_value, asset_percent)
         if self.verbose:
             print(self.df_rtctrl)
-            print("{} roi: {:.2f}% cash: $ {:.2f} portfolio: {:.2f} wallet: $ {:.2f} asset: {:.2f}%".format(self.time, roi_percent, wallet_cash, portfolio, wallet_value, asset_percent))
+            print(summary)
 
         if self.record_tracking:
             df_new_line = pd.DataFrame([[self.time, roi_percent, wallet_cash, portfolio, wallet_value, asset_percent]], columns=self.get_df_header_tracking())
@@ -119,3 +121,5 @@ class rtctrl():
                 self.df_rtctrl_tracking.reset_index(drop=True, inplace=True)
 
                 self.df_rtctrl_tracking.to_csv(self.export_filename)
+        
+        return summary

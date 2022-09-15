@@ -72,13 +72,21 @@ class Crag:
                         os._exit(0)
                 elif body == "rtctrl":
                     rtctrl = self.rtstr.get_rtctrl()
-                    if rtctrl and isinstance(rtctrl, pd.DataFrame):
-                        filename = "rtctrl.csv"
-                        rtctrl.to_csv(filename)
-                        self.log(msg="> {}".format(filename), header="{}".format(body), attachments=[filename])
-                        os.remove(filename)
-                    else:
-                        self.log("rtctrl is not a dataframe", header="{}".format(body))
+                    if rtctrl:
+                        summary = rtctrl.display_summary_info()
+                        df_rtctrl = rtctrl.df_rtctrl
+                        if isinstance(df_rtctrl, pd.DataFrame):
+                            filename = "rtctrl.csv"
+                            df_rtctrl.to_csv(filename)
+                            self.log(msg="> {}".format(filename), header="{}".format(body), attachments=[filename])
+                            os.remove(filename)
+                        else:
+                            self.log("rtctrl is not a dataframe", header="{}".format(body))
+                elif body == "rtctrl_summary":
+                    rtctrl = self.rtstr.get_rtctrl()
+                    if rtctrl:
+                        summary = rtctrl.display_summary_info()
+                        self.log(msg=summary, header="{}".format(body))
                 else:
                     self.log(msg="> {} : unknown message".format(body))
 
