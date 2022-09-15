@@ -1,7 +1,7 @@
 import os
 import time
 import pandas as pd
-from . import trade,rtstr
+from . import trade,rtstr,utils
 import pika
 import threading
 
@@ -89,7 +89,7 @@ class Crag:
 
 
     def run(self):
-        msg_broker_info = "{}\nCash : {}".format(type(self.broker).__name__, self.broker.get_cash())
+        msg_broker_info = "{}\nCash : $ {}".format(type(self.broker).__name__, utils.KeepNDecimals(self.broker.get_cash(), 2))
         msh_strategy_info = "Running with {}".format(type(self.rtstr).__name__)
         msg = msg_broker_info + "\n" + msh_strategy_info
         self.log(msg, "run")
@@ -108,9 +108,9 @@ class Crag:
         self.export_history(self.export_filename)
 
     def step(self):
-        msg = "original portfolio value = {:.2f}\n".format(self.original_portfolio_value)
-        msg += "current portfolio value = {:.2f}\n".format(self.broker.get_portfolio_value())
-        msg += "cash = {:.2f}".format(self.broker.get_cash())
+        msg = "original portfolio value : $ {}\n".format(utils.KeepNDecimals(self.original_portfolio_value, 2))
+        msg += "current portfolio value : $ {}\n".format(utils.KeepNDecimals(self.broker.get_portfolio_value(), 2))
+        msg += "current cash = {}".format(utils.KeepNDecimals(self.broker.get_cash(), 2))
         self.log(msg, "step")
         if not self.zero_print:
             print("[Crag] ⌛")
@@ -279,9 +279,9 @@ class Crag:
                     self.current_trades.append(current_trade)
 
                     symbols_bought["symbol"].append(current_trade.symbol)
-                    symbols_bought["size"].append(current_trade.gross_size)
-                    symbols_bought["percent"].append(df_buying_symbols["percent"][current_trade.symbol])
-                    symbols_bought["gross_price"].append(current_trade.gross_price)
+                    symbols_bought["size"].append(utils.KeepNDecimals(current_trade.gross_size))
+                    symbols_bought["percent"].append(utils.KeepNDecimals(df_buying_symbols["percent"][current_trade.symbol]))
+                    symbols_bought["gross_price"].append(utils.KeepNDecimals(current_trade.gross_price))
         df_symbols_bought = pd.DataFrame(symbols_bought)
         self.log(df_symbols_bought, "symbols bought")
 
@@ -290,7 +290,7 @@ class Crag:
         for current_trade in self.current_trades:
             if current_trade.type == "BUY":
                 lst_buy_trades.append(current_trade)
-        self.log("current cash {}".format(self.broker.get_cash()), "trade")
+        self.log("current cash : $ {}".format(self.broker.get_cash()), "trade")
 
     def export_status(self):
         return self.broker.export_status()

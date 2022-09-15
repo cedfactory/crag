@@ -84,3 +84,5 @@ def normalize(df):
         result[feature_name] = result[feature_name] - result[feature_name][0]
     return result
 
+def KeepNDecimals(value, n=3):
+    return "{:.{}f}".format(value, n)
