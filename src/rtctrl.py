@@ -93,7 +93,7 @@ class rtctrl():
             self.wallet_value = self.wallet_cash
         self.df_rtctrl['wallet_%'] = 100 * self.df_rtctrl['portfolio_value'] / self.df_rtctrl['wallet_value']
 
-    def display_summary_info(self, record_info):
+    def display_summary_info(self, record_info=None):
         wallet_cash = self.wallet_cash
         portfolio = self.df_rtctrl['actual_net_price'].sum()
         wallet_value = self.wallet_value
@@ -104,7 +104,7 @@ class rtctrl():
         asset_percent = self.df_rtctrl['wallet_%'].sum()
         if self.verbose:
             print(self.df_rtctrl)
-            print("{} roi: {:.2f}% cash: {:.2f} portfolio: {:.2f} wallet: {:.2f} asset: {:.2f}%".format(self.time, roi_percent, wallet_cash, portfolio, wallet_value, asset_percent))
+            print("{} roi: {:.2f}% cash: $ {:.2f} portfolio: {:.2f} wallet: $ {:.2f} asset: {:.2f}%".format(self.time, roi_percent, wallet_cash, portfolio, wallet_value, asset_percent))
 
         if self.record_tracking:
             df_new_line = pd.DataFrame([[self.time, roi_percent, wallet_cash, portfolio, wallet_value, asset_percent]], columns=self.get_df_header_tracking())

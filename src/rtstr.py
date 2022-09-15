@@ -22,12 +22,16 @@ class RealTimeStrategy(metaclass=ABCMeta):
         if self.TP == 0:     # TP == 0 => mean no TP
             self.TP = 1000
 
+        self.rtctrl = None
         self.SPLIT = 5           # Asset Split %
         self.MAX_POSITION = 5    # Asset Overall Percent Size
         self.match_full_position = True
 
     def get_name(self):
         return type(self).__name__
+
+    def get_rtctrl(self):
+        return self.rtctrl
 
     @abstractmethod
     def get_data_description(self):

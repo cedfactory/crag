@@ -70,6 +70,15 @@ class Crag:
                     self.log(msg="> {}".format(self.export_filename), header="{}".format(body), attachments=[self.export_filename])
                     if body == "stop":
                         os._exit(0)
+                elif body == "rtctrl":
+                    rtctrl = self.rtstr.get_rtctrl()
+                    if rtctrl and isinstance(rtctrl, pd.DataFrame):
+                        filename = "rtctrl.csv"
+                        rtctrl.to_csv(filename)
+                        self.log(msg="> {}".format(filename), header="{}".format(body), attachments=[filename])
+                        os.remove(filename)
+                    else:
+                        self.log("rtctrl is not a dataframe", header="{}".format(body))
                 else:
                     self.log(msg="> {} : unknown message".format(body))
 
