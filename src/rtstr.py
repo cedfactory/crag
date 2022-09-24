@@ -24,7 +24,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
         self.rtctrl = None
         self.SPLIT = 5           # Asset Split %
-        self.MAX_POSITION = 5    # Asset Overall Percent Size
+        self.MAX_POSITION = 100    # Asset Overall Percent Size
         self.match_full_position = True
 
     def get_name(self):
@@ -49,13 +49,15 @@ class RealTimeStrategy(metaclass=ABCMeta):
         pass
 
     def get_df_buying_symbols(self):
-        data = {'symbol':[], 'size':[], 'percent':[]}
+        data = {'symbol':[], 'stimulus':[], 'size':[], 'percent':[], 'gridzone':[]}
         for symbol in self.df_current_data.index.to_list():
             if self.condition_for_buying(symbol) == True:
-                size, percent = self.get_symbol_buying_size(symbol)
+                size, percent, zone = self.get_symbol_buying_size(symbol)
                 data['symbol'].append(symbol)
+                data["stimulus"].append("BUY")
                 data['size'].append(size)
                 data['percent'].append(percent)
+                data['gridzone'].append(zone)
 
         df_result = pd.DataFrame(data)
         df_result.reset_index(inplace=True, drop=True)
@@ -67,6 +69,8 @@ class RealTimeStrategy(metaclass=ABCMeta):
             
         return df_result
 
+    # Comment: Avoid to buy more than MAX_POSITION of one asset
+    #          Re ajust the % to buy in order to match MAX_POSITION
     def get_df_selling_symbols_common(self, df_result):
         if not self.rtctrl or len(self.rtctrl.df_rtctrl) == 0:
             return df_result
@@ -100,11 +104,15 @@ class RealTimeStrategy(metaclass=ABCMeta):
         return df_result
 
     def get_df_selling_symbols(self, lst_symbols, df_sl_tp):
-        data = {'symbol':[], 'stimulus':[]}
+        data = {'symbol':[], 'stimulus':[], 'size':[], 'percent':[], 'gridzone':[]}
         for symbol in self.df_current_data.index.to_list():
             if self.condition_for_selling(symbol, df_sl_tp):
-                data["symbol"].append(symbol)
+                size, percent, zone = self.get_symbol_selling_size(symbol)
+                data['symbol'].append(symbol)
                 data["stimulus"].append("SELL")
+                data['size'].append(size)
+                data['percent'].append(percent)
+                data['gridzone'].append(zone) # CEDE: Previous zone engaged
 
                 if(isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] > self.TP):
                     print('TAKE PROFIT: ', symbol, ": ", df_sl_tp['roi_sl_tp'][symbol])
@@ -118,11 +126,25 @@ class RealTimeStrategy(metaclass=ABCMeta):
          
         return df_result
 
+    def set_lower_zone_unengaged_position(self, zone_position):
+        return True
+
+    def set_zone_engaged(self, price):
+        return True
+
+    def get_lower_zone_buy_engaged(self, zone):
+        return -1
+
     @staticmethod
-    def get_df_forced_selling_symbols(lst_symbols):
+    def get_df_forced_selling_symbols(lst_symbols, df_rtctrl):
+        lst_symbols = df_rtctrl['symbol'].tolist()
+        lst_size = df_rtctrl['size'].tolist()
         lst_stimulus = ['SELL'] * len(lst_symbols)
-        data = {'symbol': lst_symbols, 'stimulus': lst_stimulus}
+        lst_percent = [0] * len(lst_symbols)
+        data = {'symbol': lst_symbols, 'stimulus': lst_stimulus, 'size': lst_size, 'percent': lst_percent}
+
         df_result = pd.DataFrame(data)
+
         return df_result
 
     def update(self, current_datetime, current_trades, broker_cash, prices_symbols, record_info, final_date):
@@ -132,11 +154,11 @@ class RealTimeStrategy(metaclass=ABCMeta):
         
     def get_symbol_buying_size(self, symbol):
         if not symbol in self.rtctrl.prices_symbols or self.rtctrl.prices_symbols[symbol] < 0: # first init at -1
-            return 0, 0
+            return 0, 0, 0
 
         available_cash = self.rtctrl.wallet_cash
         if available_cash == 0:
-            return 0, 0
+            return 0, 0, 0
 
         wallet_value = available_cash
 
@@ -149,7 +171,33 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
         percent =  cash_to_buy * 100 / wallet_value
 
-        return size, percent
+        gridzone = None
+
+        return size, percent, gridzone
+
+    def get_symbol_selling_size(self, symbol):
+        if not symbol in self.rtctrl.prices_symbols or self.rtctrl.prices_symbols[symbol] < 0: # first init at -1
+            return 0, 0, 0
+
+        available_cash = self.rtctrl.wallet_cash
+        if available_cash == 0:
+            return 0, 0, 0
+
+        wallet_value = available_cash
+
+        cash_to_buy = wallet_value * self.SPLIT / 100
+
+        if cash_to_buy > available_cash:
+            cash_to_buy = available_cash
+
+        size = cash_to_buy / self.rtctrl.prices_symbols[symbol]
+
+        percent =  cash_to_buy * 100 / wallet_value
+
+        gridzone = None
+
+        return size, percent, gridzone
+
 
     def get_portfolio_value(self):
         return self.rtctrl.df_rtctrl['portfolio_value'].sum()
@@ -167,6 +215,9 @@ class RealTimeStrategy(metaclass=ABCMeta):
         df_result = pd.DataFrame(data)
         return df_result
     '''
+
+    def get_selling_limit(self, trades):
+        return len(trades)
 
     @staticmethod
     def __get_strategies_list_from_class(strategy):
@@ -206,3 +257,4 @@ class RealTimeStrategy(metaclass=ABCMeta):
     @staticmethod
     def get_strategy_from_name(name, params=None):
         return RealTimeStrategy.__get_strategy_from_name(RealTimeStrategy, name, params)
+
