@@ -19,8 +19,8 @@ class Trade:
         print("   gross price : {:.3f}".format(self.gross_price))
 
     def get_csv_header(self):
-        return ["transaction_id", "time", "buying_time","type", 'sell_id', "stimulus", "symbol", "buying_price","symbol_price", "net_size", "net_price", "buying_fees", "selling_fees", "gross_price", "transaction_roi%", "remaining_cash", "portfolio_value", "wallet_value", "wallet_roi%"]
+        return ["transaction_id", "time", "buying_time","type", 'sell_id', "stimulus", "symbol", "buying_price", "symbol_price", "net_size", "net_price", "buying_fees", "selling_fees", "gross_price", "transaction_roi%", "remaining_cash", "portfolio_value", "wallet_value", "wallet_roi%", "gridzone"]
 
     def get_csv_row(self):
-        return [self.id, self.time, self.buying_time,self.type, self.sell_id,self.stimulus, self.symbol, self.buying_price, self.symbol_price, self.net_size, self.net_price, self.buying_fee, self.selling_fee, self.gross_price, self.roi, self.cash, self.portfolio_value, self.wallet_value, self.wallet_roi]
+        return [self.id, self.time, self.buying_time,self.type, self.sell_id,self.stimulus, self.symbol, self.buying_price, self.symbol_price, self.net_size, self.net_price, self.buying_fee, self.selling_fee, self.gross_price, self.roi, self.cash, self.portfolio_value, self.wallet_value, self.wallet_roi, self.gridzone]
 
