@@ -24,7 +24,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
         self.rtctrl = None
         self.SPLIT = 5           # Asset Split %
-        self.MAX_POSITION = 100    # Asset Overall Percent Size
+        self.MAX_POSITION = 5    # Asset Overall Percent Size
         self.match_full_position = True
 
     def get_name(self):

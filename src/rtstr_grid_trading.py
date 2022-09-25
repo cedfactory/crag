@@ -14,11 +14,13 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
     def __init__(self, params=None):
         super().__init__(params)
 
+        self.MAX_POSITION = 100    # Asset Overall Percent Size
+
         self.rtctrl = rtctrl.rtctrl(params=params)
 
         self.zero_print = True
 
-        self.grid = Grid_Level_Position(params=params)
+        self.grid = GridLevelPosition(params=params)
 
         self.previous_zone_position = 0
         self.zone_position = 0
@@ -38,7 +40,7 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
 
     def condition_for_buying(self, symbol):
         self.previous_zone_position = self.grid.get_previous_zone_position()
-        self.zone_position = self.grid.get_current_zone_position(self.df_current_data['close'][symbol])
+        self.zone_position = self.grid.get_zone_position(self.df_current_data['close'][symbol])
 
         if ((self.zone_position > self.previous_zone_position)
                 and (not(self.grid.zone_buy_engaged(self.df_current_data['close'][symbol])))\
@@ -49,7 +51,7 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
         else:
             buying_signal = False
 
-        self.grid.set_zone_position(self.df_current_data['close'][symbol])
+        self.grid.set_previous_zone_position(self.df_current_data['close'][symbol])
         return buying_signal
 
     def set_zone_engaged(self, price):
@@ -60,7 +62,7 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
 
     def condition_for_selling(self, symbol, df_sl_tp):
         self.previous_zone_position = self.grid.get_previous_zone_position()
-        self.zone_position = self.grid.get_current_zone_position(self.df_current_data['close'][symbol])
+        self.zone_position = self.grid.get_zone_position(self.df_current_data['close'][symbol])
 
         if ((self.zone_position < self.previous_zone_position)
                 and (self.grid.lower_zone_buy_engaged(self.df_current_data['close'][symbol]))\
@@ -104,7 +106,7 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
         size = cash_to_buy / self.rtctrl.prices_symbols[symbol]
 
         percent = cash_to_buy * 100 / wallet_value
-        return size, percent, self.grid.get_current_zone_position(self.rtctrl.prices_symbols[symbol])
+        return size, percent, self.grid.get_zone_position(self.rtctrl.prices_symbols[symbol])
 
     def get_symbol_selling_size(self, symbol):
         size, percent, zone = self.get_symbol_buying_size(symbol)
@@ -114,18 +116,16 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
     def get_lower_zone_buy_engaged(self, zone):
         return self.grid.get_lower_zone_buy_engaged(zone)
 
-class Grid_Level_Position():
+class GridLevelPosition():
 
     def __init__(self, params=None):
-        # param:
         outbound_zone_max = 100000
         outbound_zone_min = 10000
         self.UpperPriceLimit = 25000
         self.LowerPriceLimit = 15000
-
-        self.grid_step = 0
+        self.grid_step = .5 # percent
         if params:
-            self.grid_step = params.get("grid_step", self.grid_step) # 1%
+            self.grid_step = params.get("grid_step", self.grid_step)
 
         GridLen = self.UpperPriceLimit - self.LowerPriceLimit
         GridStep = int(GridLen * self.grid_step / 100)
@@ -144,12 +144,11 @@ class Grid_Level_Position():
         lst_end_zone = lst_zone_limit.copy()
         lst_end_zone.append(outbound_zone_max)
 
-        lst_zone_id = []
-        for i in range(len(lst_start_zone)):
-            lst_zone_id.append('zone_' + str(i))
+        lst_zone_id = ['zone_' + str(i) for i in range(len(lst_start_zone))]
 
         lst_start_zone.reverse()
         lst_end_zone.reverse()
+
         self.df_grid = pd.DataFrame()
         self.df_grid['zone_id'] = lst_zone_id
         self.df_grid['start'] = lst_start_zone
@@ -162,11 +161,8 @@ class Grid_Level_Position():
 
         self.grid_size = len(self.df_grid)
 
-    def get_current_zone_position(self, price):
-        zone_position = self.df_grid[(self.df_grid['start'] < price)
-                                     & (self.df_grid['end'] >= price) ].index[0]
-        return zone_position
-
+    def get_zone_position(self, price):
+        return self.df_grid[(self.df_grid['start'] < price) & (self.df_grid['end'] >= price)].index[0]
 
     def get_previous_zone_position(self):
         if len(self.df_grid[(self.df_grid['previous_position'] != 0)].index) == 0:
@@ -175,24 +171,19 @@ class Grid_Level_Position():
             previous_zone_position = self.df_grid[(self.df_grid['previous_position'] != 0)].index[0]
         return previous_zone_position
 
-    def set_zone_position(self, price):
+    def set_previous_zone_position(self, price):
         self.df_grid['previous_position'] = 0
-
-        zone_position = self.df_grid[(self.df_grid['start'] < price)
-                                     & (self.df_grid['end'] >= price) ].index[0]
-
+        zone_position = self.get_zone_position(price)
         self.df_grid.loc[zone_position, 'previous_position'] = 1
 
     def set_zone_engaged(self, price):
-        zone_position = self.df_grid[(self.df_grid['start'] < price)
-                                     & (self.df_grid['end'] >= price)].index[0]
+        zone_position = self.get_zone_position(price)
 
         self.df_grid.loc[zone_position, 'zone_engaged'] = True
         self.df_grid.loc[zone_position, 'buying_value'] = price
 
     def set_lower_zone_unengaged(self, price):
-        zone_position = self.df_grid[(self.df_grid['start'] < price)
-                                     & (self.df_grid['end'] >= price)].index[0]
+        zone_position = self.get_zone_position(price)
 
         self.df_grid.loc[zone_position, 'zone_engaged'] = False
         self.df_grid.loc[zone_position, 'buying_value'] = 0
@@ -202,21 +193,13 @@ class Grid_Level_Position():
         self.df_grid.loc[zone_position, 'buying_value'] = 0
 
     def zone_buy_engaged(self, price):
-        zone_position = self.df_grid[(self.df_grid['start'] < price)
-                                     & (self.df_grid['end'] >= price)].index[0]
-
+        zone_position = self.get_zone_position(price)
         return self.df_grid.loc[zone_position, 'zone_engaged']
 
     def lower_zone_buy_engaged(self, price):
-        zone_position = self.df_grid[(self.df_grid['start'] < price)
-                                     & (self.df_grid['end'] >= price)].index[0]
-
+        zone_position = self.get_zone_position(price)
         engaged_zone_position = self.get_lower_zone_buy_engaged(zone_position)
-
-        if engaged_zone_position != -1:
-            return True
-        else:
-            return False
+        return engaged_zone_position != -1
 
         # return self.df_grid.loc[zone_position-1, 'zone_engaged']
 

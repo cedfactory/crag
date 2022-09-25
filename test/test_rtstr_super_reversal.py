@@ -54,7 +54,7 @@ class TestRTSTRSuperReversal:
 
         # expectations
         assert(isinstance(df, pd.DataFrame))
-        assert(df.columns.to_list() == ['symbol', 'size', 'percent'])
+        assert(any(item in df.columns.to_list() for item in ['symbol', 'size', 'percent']))
         assert(len(df) == 1)
         assert(df.iloc[0]['symbol'] == "BTC/USD")
         assert(df.iloc[0]['size'] == 0)
@@ -71,7 +71,7 @@ class TestRTSTRSuperReversal:
 
         # expectations
         assert(isinstance(df, pd.DataFrame))
-        assert(df.columns.to_list() == ['symbol', 'stimulus'])
+        assert(any(item in df.columns.to_list() for item in ['symbol', 'stimulus']))
         assert(len(df) == 1)
         assert(df.iloc[0]['symbol'] == "BTC/USD")
         assert(df.iloc[0]['stimulus'] == "SELL")
