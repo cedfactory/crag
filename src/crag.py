@@ -4,6 +4,7 @@ import pandas as pd
 from . import trade,rtstr,utils
 import pika
 import threading
+import pickle
 
 # to launch crag as a rabbitmq receiver :
 # > apt-get install rabbitmq-server
@@ -39,6 +40,7 @@ class Crag:
         self.wallet_value = 0
 
         self.zero_print = True
+        self.flush_current_trade = False
 
         if self.rtstr != None:
             self.strategy_name, self.str_sl, self.str_tp = self.rtstr.get_info()
@@ -53,8 +55,11 @@ class Crag:
                                + "_" + str(self.str_sl)\
                                + "_" + str(self.str_tp)\
                                + ".csv"
+        self.backup_filename = 'crag_backup.pickle'
+
         if self.working_directory != None:
             self.export_filename = os.path.join(self.working_directory, self.export_filename)
+            self.backup_filename = os.path.join(self.working_directory, self.backup_filename)
 
         # rabbitmq connection
         try:
@@ -121,6 +126,7 @@ class Crag:
                 if end - start > self.interval:
                     break
             self.broker.tick() # increment
+            self.backup_crag() # backup for reboot
 
         self.export_history(self.export_filename)
 
@@ -174,7 +180,12 @@ class Crag:
         sell_trade.stimulus = df_selling_symbols["stimulus"][bought_trade.symbol]
         sell_trade.symbol = bought_trade.symbol
         sell_trade.symbol_price = self.broker.get_value(bought_trade.symbol)
-        sell_trade.gross_size = bought_trade.net_size         # Sell Net_size = bought_trade.Gross size
+
+        # Clear one trade position partialy
+        sell_trade.gross_size = df_selling_symbols['size'][sell_trade.symbol]
+        # Clear one trade position totaly
+        sell_trade.gross_size = bought_trade.net_size
+
         sell_trade.gross_price = sell_trade.gross_size * sell_trade.symbol_price
         sell_trade.net_price = sell_trade.gross_price - sell_trade.gross_price * self.broker.get_commission(bought_trade.symbol)
         sell_trade.net_size = round(sell_trade.net_price / sell_trade.symbol_price, 8)
@@ -200,22 +211,35 @@ class Crag:
         self.update_df_roi_sl_tp(lst_symbols)
         if current_datetime == self.final_datetime:
             # final step - force all the symbols to be sold
-            df_selling_symbols = rtstr.RealTimeStrategy.get_df_forced_selling_symbols(lst_symbols)
+            df_selling_symbols = rtstr.RealTimeStrategy.get_df_forced_selling_symbols(lst_symbols, self.rtstr.get_rtctrl().df_rtctrl)
+            self.flush_current_trade = True
+            trade_sell_limit = len(self.current_trades)
         else:
             # identify symbols to sell
             df_selling_symbols = self.rtstr.get_df_selling_symbols(lst_symbols, self.df_portfolio_status)
-        list_symbols_to_sell = df_selling_symbols.symbol.to_list()
+            trade_sell_limit = self.rtstr.get_selling_limit(self.current_trades)
 
+        list_symbols_to_sell = df_selling_symbols.symbol.to_list()
         df_selling_symbols.set_index("symbol", inplace=True)
 
+        sell_counter = 0
         for current_trade in self.current_trades:
-            if current_trade.type == "BUY" and current_trade.symbol in list_symbols_to_sell and df_selling_symbols["stimulus"][current_trade.symbol] != "HOLD":
+            if current_trade.type == "BUY" and current_trade.symbol in list_symbols_to_sell \
+                    and df_selling_symbols["stimulus"][current_trade.symbol] != "HOLD"\
+                    and (self.flush_current_trade
+                         or ((sell_counter < trade_sell_limit)
+                             and (current_trade.gridzone == self.rtstr.get_lower_zone_buy_engaged(df_selling_symbols["gridzone"][current_trade.symbol])))):
                 sell_trade = self._prepare_sell_trade_from_bought_trade(current_trade, current_datetime, df_selling_symbols)
                 done = self.broker.execute_trade(sell_trade)
                 if done:
+                    sell_counter = sell_counter + 1
                     current_trade.type = "SOLD"
                     self.cash = self.broker.get_cash()
                     sell_trade.cash = self.cash
+
+                    # Update grid strategy
+                    self.rtstr.set_lower_zone_unengaged_position(current_trade.gridzone)
+                    sell_trade.gridzone = current_trade.gridzone
 
                     # Portfolio Size/Value Update
 
@@ -249,7 +273,7 @@ class Crag:
         df_buying_symbols.drop(df_buying_symbols[df_buying_symbols['size'] == 0].index, inplace=True)
         if current_datetime == self.final_datetime:
             df_buying_symbols.drop(df_buying_symbols.index, inplace=True)
-        symbols_bought = {"symbol":[], "size":[], "percent":[], "gross_price":[]}
+        symbols_bought = {"symbol":[], "size":[], "percent":[], "gross_price":[], "gridzone":[]}
         for symbol in df_buying_symbols.index.to_list():
             current_trade = trade.Trade(current_datetime)
             current_trade.type = "BUY"
@@ -262,6 +286,7 @@ class Crag:
 
             current_trade.symbol_price = self.broker.get_value(symbol)
             current_trade.buying_price = current_trade.symbol_price
+            current_trade.gridzone = df_buying_symbols["gridzone"][symbol]
 
             current_trade.commission = self.broker.get_commission(current_trade.symbol)
             current_trade.gross_size = df_buying_symbols["size"][symbol]  # Gross size
@@ -278,6 +303,9 @@ class Crag:
                 if done:
                     self.cash = self.broker.get_cash()
                     current_trade.cash = self.cash
+
+                    # Update grid strategy
+                    self.rtstr.set_zone_engaged(current_trade.symbol_price)
 
                     # Portfolio Size/Value Update
                     self.df_portfolio_status.at[symbol, 'portfolio_size'] = self.df_portfolio_status.at[symbol, 'portfolio_size'] + current_trade.net_size
@@ -299,6 +327,7 @@ class Crag:
                     symbols_bought["size"].append(utils.KeepNDecimals(current_trade.gross_size))
                     symbols_bought["percent"].append(utils.KeepNDecimals(df_buying_symbols["percent"][current_trade.symbol]))
                     symbols_bought["gross_price"].append(utils.KeepNDecimals(current_trade.gross_price))
+                    symbols_bought["gridzone"].append(df_buying_symbols["gridzone"][current_trade.symbol])
         df_symbols_bought = pd.DataFrame(symbols_bought)
         self.log(df_symbols_bought, "symbols bought")
 
@@ -322,3 +351,7 @@ class Crag:
                 self.df_portfolio_status.at[symbol, 'roi_sl_tp'] = 0
             else:
                 self.df_portfolio_status.at[symbol, 'roi_sl_tp'] = 100 * (self.df_portfolio_status.at[symbol, 'value'] / self.df_portfolio_status.at[symbol, 'buying_value'] - 1)
+
+    def backup_crag(self):
+        with open(self.backup_filename, 'wb') as file:
+            pickle.dump(self, file)

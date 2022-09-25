@@ -1,9 +1,11 @@
-from src import rtdp,rtdp_simulation,broker_simulation,broker_ftx,crag,rtstr,rtstr_super_reversal,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC,analyser,benchmark,automatic_test_plan
+from src import rtdp,rtdp_simulation,broker_simulation,broker_ftx,crag,rtstr,rtstr_grid_trading, rtstr_super_reversal,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC,analyser,benchmark,automatic_test_plan
 from src import logger
+from src import debug
 import pandas as pd
 import os, sys
 import shutil
 import fnmatch
+import pickle
 import cProfile,pstats
 from datetime import datetime
 import concurrent.futures
@@ -56,6 +58,9 @@ def crag_simulation(strategy_name):
     crag_params = {'broker':simu_broker, 'rtstr':strategy}
     bot = crag.Crag(crag_params)
 
+    if debug.REBOOT:
+        bot = load_crag_for_reboot('../sys/crag_backup.pickle')
+
     bot.run()
 
     bot.export_history("sim_broker_history.csv")
@@ -100,6 +105,10 @@ def crag_live(configuration_file):
 
     params = {'broker':my_broker, 'rtstr':my_strategy, 'interval':crag_interval, 'logger':crag_discord_bot}
     bot = crag.Crag(params)
+
+    if debug.REBOOT:
+        bot = load_crag_for_reboot('../sys/crag_backup.pickle')
+
     bot.run()
     
     # DEBUG CEDE
@@ -146,13 +155,19 @@ def crag_ftx():
     #my_broker_ftx.sell_everything()
 
 
-def crag_simulation_scenario(strategy_name, start_date, end_date, interval, sl, tp, working_directory):
+def crag_simulation_scenario(strategy_name, start_date, end_date, interval, sl, tp, share_size, grid_step, working_directory):
     available_strategies = rtstr.RealTimeStrategy.get_strategies_list()
 
     os.chdir(working_directory)
     strategy_suffix = "_" + strategy_name + "_" + start_date + "_" + end_date + "_" + interval + "_sl" + str(sl) + "_tp" + str(tp)
     if strategy_name in available_strategies:
-        strategy = rtstr.RealTimeStrategy.get_strategy_from_name(strategy_name, {"rtctrl_verbose": False, "sl": sl, "tp": tp, "suffix": strategy_suffix, "working_directory": working_directory})
+        strategy = rtstr.RealTimeStrategy.get_strategy_from_name(strategy_name, {"rtctrl_verbose": False,
+                                                                                 "sl": sl,
+                                                                                 "tp": tp,
+                                                                                 "suffix": strategy_suffix,
+                                                                                 "share_size": share_size,
+                                                                                 "grid_step": grid_step,
+                                                                                 "working_directory": working_directory})
     else:
         print("💥 missing known strategy ({})".format(strategy_name))
         print("available strategies : ", available_strategies)
@@ -163,6 +178,9 @@ def crag_simulation_scenario(strategy_name, start_date, end_date, interval, sl, 
 
     crag_params = {'broker':simu_broker, 'rtstr':strategy, "working_directory": working_directory}
     bot = crag.Crag(crag_params)
+
+    if debug.REBOOT:
+        bot = load_crag_for_reboot('../sys/crag_backup.pickle')
 
     bot.run()
 
@@ -184,6 +202,10 @@ def crag_test_scenario(df):
     list_tp = list(set(list_tp))
     list_sl = df['sl'].to_list()
     list_sl = list(set(list_sl))
+    list_share_size = df['share_size'].to_list()
+    list_share_size = list(set(list_share_size))
+    list_grid_step = df['grid_step'].to_list()
+    list_grid_step = list(set(list_grid_step))
 
     auto_test_directory = os.path.join(os.getcwd(), "./automatic_test_results")
     os.chdir(auto_test_directory)
@@ -205,35 +227,49 @@ def crag_test_scenario(df):
     os.chdir(auto_test_directory)
     print("recorder completed: ", os.getcwd())
 
-    # multithreading
-    with concurrent.futures.ThreadPoolExecutor(max_workers=len(list_periods)) as executor:
-        futures = []
+    if(debug.MULTITHREADING == False):
         for period in list_periods:
-            futures.append(
-                executor.submit(
-                    crag_test_scenario_for_period,
-                    df, ds, period, auto_test_directory, list_interval, list_strategy, list_sl, list_tp
+            crag_test_scenario_for_period(df, ds, period, auto_test_directory, list_interval, list_strategy, list_sl, list_tp, list_share_size, list_grid_step)
+    else:
+        # multithreading
+        with concurrent.futures.ThreadPoolExecutor(max_workers=len(list_periods)) as executor:
+            futures = []
+            for period in list_periods:
+                futures.append(
+                    executor.submit(
+                        crag_test_scenario_for_period,
+                        df, ds, period, auto_test_directory, list_interval, list_strategy, list_sl, list_tp, list_tp, list_share_size, list_grid_step
+                    )
                 )
-            )
 
-def crag_test_scenario_for_period(df, ds, period, auto_test_directory, list_interval, list_strategy, list_sl, list_tp):
+def crag_test_scenario_for_period(df, ds, period, auto_test_directory, list_interval, list_strategy, list_sl, list_tp, lst_share_size, lst_grid_step):
     start_date = period[0:10]
     end_date = period[11:21]
 
     strategy_directory = os.path.join(auto_test_directory, "./" + period)
     os.chdir(strategy_directory)
 
-    # multithreading
-    with concurrent.futures.ThreadPoolExecutor(max_workers=len(list_strategy) * len(list_sl) * len(list_tp)) as executor:
-        futures = []
+    if(debug.MULTITHREADING == False):
         for strategy in list_strategy:
             for sl in list_sl:
                 for tp in list_tp:
-                    futures.append(
-                        executor.submit(crag_simulation_scenario,
-                                        strategy, start_date, end_date, list_interval[0], sl, tp, strategy_directory
-                                        )
-                    )
+                    for share_size in lst_share_size:
+                        for grid_step in lst_grid_step:
+                            crag_simulation_scenario(strategy, start_date, end_date, list_interval[0], sl, tp, share_size, grid_step, strategy_directory)
+    else:
+        # multithreading
+        with concurrent.futures.ThreadPoolExecutor(max_workers=len(list_strategy) * len(list_sl) * len(list_tp)) as executor:
+            futures = []
+            for strategy in list_strategy:
+                for sl in list_sl:
+                    for tp in list_tp:
+                        for share_size in lst_share_size:
+                            for grid_step in lst_grid_step:
+                                futures.append(
+                                    executor.submit(crag_simulation_scenario,
+                                                    strategy, start_date, end_date, list_interval[0], sl, tp, share_size, grid_step, strategy_directory
+                                                    )
+                                )
 
     list_output_filename = []
     for file in os.listdir("./"):
@@ -262,6 +298,14 @@ def crag_test_scenario_for_period(df, ds, period, auto_test_directory, list_inte
     print(os.getcwd())
     df.to_csv(period + "_output.csv")
 
+def load_crag_for_reboot(filename):
+    with open(filename, 'rb') as file:
+        crag = pickle.load(file)
+    return crag
+
+def crag_setup_reboot():
+    debug.REBOOT = True
+
 if __name__ == '__main__':
     # Bear market historical dates
     # https://cointelegraph.com/news/a-brief-history-of-bitcoin-crashes-and-bear-markets-2009-2022
@@ -281,8 +325,10 @@ if __name__ == '__main__':
                      # ['2017-12-01', '2020-12-01'],
                      # ['2019-07-21', '2020-09-01'], # OK
                      # ['2021-03-01', '2021-10-01'], # OK
-                     ['2021-11-01', '2022-08-08']
+                     # ['2021-11-01', '2022-08-08'],
+                     ['2022-06-15', '2022-09-18']
     ]
+
     path_initial_dir = os.getcwd()
     for interval in lst_bearmarket:
         os.chdir(path_initial_dir)
@@ -291,16 +337,24 @@ if __name__ == '__main__':
                   # "start": '2022-01-01',  # YYYY-MM-DD
                   # "end": '2022-08-08',  # YYYY-MM-DD
                   "split": 1,
+                  # "interval": '1h',
                   "interval": '1h',
                   # "startegies": ['StrategySuperReversal', 'StrategyTrix', 'StrategyCryptobot'],
-                  "startegies": ['StrategySuperReversal', 'StrategyCryptobot'],
+                  # "startegies": ['StrategySuperReversal', 'StrategyCryptobot'],
                   # "startegies": ['StrategySuperReversal'],
                   # "startegies": ['StrategyCryptobot'],
+                  "startegies": ['StrategyGridTrading'],
                   # "sl": [0, -5, -10],
                   # "tp": [0, 10, 20]
                   "sl": [0],
-                  "tp": [0]
+                  "tp": [0],
+                  "share_size": [10],
+                  "grid_step": [0.5]
                   }
+
+    if len(sys.argv) >= 2:
+        if len(sys.argv) == 3 and (sys.argv[2] == "--reboot"):
+            crag_setup_reboot()
 
     if len(sys.argv) >= 2:
         if len(sys.argv) == 2 and (sys.argv[1] == "--record"):
