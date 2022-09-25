@@ -113,8 +113,15 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
         zone = self.grid.get_lower_zone_buy_engaged(zone)
         return size, percent, zone
 
-    def get_lower_zone_buy_engaged(self, zone):
+    def get_lower_zone_buy_engaged(self, symbol):
+        zone = self.grid.get_zone_position(self.rtctrl.prices_symbols[symbol])
         return self.grid.get_lower_zone_buy_engaged(zone)
+
+    def get_selling_limit(self, trades):
+        # number of sell performed during one cycle
+        strategy_1 = 1
+        strategy_all = len(trades)
+        return strategy_1
 
 class GridLevelPosition():
 
@@ -216,9 +223,3 @@ class GridLevelPosition():
             df2 = df_grid.loc[(self.df_grid['zone_engaged'])]
             first_lower_position = df2.zone_engaged.isnull().index[0]
         return first_lower_position
-
-    def get_selling_limit(self, trades):
-        # number of sell performed during one cycle
-        strategy_1 = 1
-        strategy_all = len(trades)
-        return strategy_1

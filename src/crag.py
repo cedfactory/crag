@@ -192,6 +192,14 @@ class Crag:
         sell_trade.buying_fee = bought_trade.buying_fee
         sell_trade.selling_fee = sell_trade.gross_price - sell_trade.net_price
         sell_trade.roi = 100 * (sell_trade.net_price - bought_trade.gross_price) / bought_trade.gross_price
+
+        # CEDE DEBUG: to be removed once fixed
+        if (sell_trade.symbol_price - sell_trade.buying_price) < 0:
+            print('GRID BUG')
+        if sell_trade.roi < 0:
+            print('NEGATIVE TRADE DUE TO FEES: ', sell_trade.net_price - bought_trade.gross_price, "$")
+            print('BUYING AT: $', sell_trade.buying_price, ' SELLING AT: $', sell_trade.symbol_price)
+
         return sell_trade
 
     def trade(self):
@@ -209,7 +217,7 @@ class Crag:
         lst_symbols = [current_trade.symbol for current_trade in self.current_trades if current_trade.type == "BUY"]
         lst_symbols = list(set(lst_symbols))
         self.update_df_roi_sl_tp(lst_symbols)
-        if current_datetime == self.final_datetime:
+        if current_datetime >= self.final_datetime:
             # final step - force all the symbols to be sold
             df_selling_symbols = rtstr.RealTimeStrategy.get_df_forced_selling_symbols(lst_symbols, self.rtstr.get_rtctrl().df_rtctrl)
             self.flush_current_trade = True
@@ -228,7 +236,7 @@ class Crag:
                     and df_selling_symbols["stimulus"][current_trade.symbol] != "HOLD"\
                     and (self.flush_current_trade
                          or ((sell_counter < trade_sell_limit)
-                             and (current_trade.gridzone == self.rtstr.get_lower_zone_buy_engaged(df_selling_symbols["gridzone"][current_trade.symbol])))):
+                             and (current_trade.gridzone >= self.rtstr.get_lower_zone_buy_engaged(current_trade.symbol)))):
                 sell_trade = self._prepare_sell_trade_from_bought_trade(current_trade, current_datetime, df_selling_symbols)
                 done = self.broker.execute_trade(sell_trade)
                 if done:
