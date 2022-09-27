@@ -49,7 +49,7 @@ class TestSimBroker:
         fake_trade.wallet_roi = 1
         fake_trade.commission = fake_trade.net_price * 0.04
         fake_trade.gross_price = fake_trade.net_price + fake_trade.commission
-        fake_trade.gridzone = None # TO RESTORE : trade shouldn not contains this last element (gridzone)
+        fake_trade.gridzone = -1 # TO RESTORE : trade shouldn not contains this last element (gridzone)
         return fake_trade
 
     def test_execute_trade_ok(self):
@@ -91,7 +91,7 @@ class TestSimBroker:
         lines=[ ["", "transaction_id", "time", "buying_time", "type", "sell_id", "stimulus", "symbol", "buying_price", "symbol_price", "net_size", "net_price", "buying_fees", "selling_fees", "gross_price", "transaction_roi%", "remaining_cash", "portfolio_value", "wallet_value", "wallet_roi%"],
                 ["BUY", "", "", "ETH/USD", "1", "1", "2", "2", "0.07", "0.07", "2.08", "0.05", "90", "110", "110", "1"] ]
         lines[0].append("gridzone") # TO RESTORE : trade shouldn not contains this last element (gridzone)
-        lines[1].append("") # TO RESTORE : trade shouldn not contains this last element (gridzone)
+        lines[1].append("-1") # TO RESTORE : trade shouldn not contains this last element (gridzone)
         with open(history_file_generated) as csvfile:
             csvreader = csv.reader(csvfile, delimiter=';')
             header = next(csvreader)

@@ -32,7 +32,7 @@ class TestCrag:
         # expectations
         assert(len(bot.current_trades) == 1)
         expected_trade = [0, '2021-01-17 15:00:00', '', 'BUY', '', '', 'AAVE/USD', 189.53, 189.53, 2.63625811, 499.65, 0.35000000000002274, '', 500.0, '', 9500.0, 499.65, 9999.65, -0.003500000000003638]
-        expected_trade.append(None) # TO RESTORE : trade shouldn not contains this last element (gridzone)
+        expected_trade.append(-1) # TO RESTORE : trade shouldn not contains this last element (gridzone)
         assert(bot.current_trades[0].get_csv_row()[1:] == expected_trade[1:])
         #assert(bot.current_trades[1].get_csv_row()[1:] == trade2[1:])
         

@@ -171,7 +171,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
         percent =  cash_to_buy * 100 / wallet_value
 
-        gridzone = None
+        gridzone = -1
 
         return size, percent, gridzone
 
@@ -194,7 +194,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
         percent =  cash_to_buy * 100 / wallet_value
 
-        gridzone = None
+        gridzone = -1
 
         return size, percent, gridzone
 
