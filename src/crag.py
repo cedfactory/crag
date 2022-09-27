@@ -117,14 +117,17 @@ class Crag:
         self.log(msg, "run")
         done = False
         while not done:
+            start = time.time()
             done = not self.step()
             if done:
                 break
-            start = time.time()
-            while True:
-                end = time.time()
-                if end - start > self.interval:
-                    break
+            end = time.time()
+            sleeping_time = self.interval - (end - start)
+            if sleeping_time >= 0:
+                time.sleep(self.interval - (end - start))
+            else:
+                self.log("warning : time elapsed for the step ({}) is greater than the interval ({})".format(end - start, self.interval))
+
             self.broker.tick() # increment
             self.backup_crag() # backup for reboot
 
@@ -217,7 +220,7 @@ class Crag:
         lst_symbols = [current_trade.symbol for current_trade in self.current_trades if current_trade.type == "BUY"]
         lst_symbols = list(set(lst_symbols))
         self.update_df_roi_sl_tp(lst_symbols)
-        if current_datetime >= self.final_datetime:
+        if self.final_datetime and current_datetime >= self.final_datetime:
             # final step - force all the symbols to be sold
             df_selling_symbols = rtstr.RealTimeStrategy.get_df_forced_selling_symbols(lst_symbols, self.rtstr.get_rtctrl().df_rtctrl)
             self.flush_current_trade = True
