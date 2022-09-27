@@ -26,8 +26,17 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
         self.zone_position = 0
 
         self.share_size = 0
+        self.global_tp = 10000
         if params:
             self.share_size = params.get("share_size", self.share_size)
+            self.global_tp = params.get("global_tp", self.global_tp)
+
+        if self.global_tp == 0:
+            self.global_tp = 10000
+        self.net_size = 0.0
+        self.global_tp_net = -1000
+        self.tp_sl_abort = False
+
 
     def get_data_description(self):
         ds = rtdp.DataDescription()
@@ -39,11 +48,14 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
         return "StrategyGridTrading", self.str_sl, self.str_tp
 
     def condition_for_buying(self, symbol):
+        if self.tp_sl_abort:
+            return False
+
         self.previous_zone_position = self.grid.get_previous_zone_position()
         self.zone_position = self.grid.get_zone_position(self.df_current_data['close'][symbol])
 
         if ((self.zone_position > self.previous_zone_position)
-                and (not(self.grid.zone_buy_engaged(self.df_current_data['close'][symbol])))\
+                and (not(self.grid.zone_buy_engaged(self.df_current_data['close'][symbol]))) \
                 and (self.previous_zone_position != -1)):
             buying_signal = True
             # Engage the zone proceed in Crag
@@ -61,17 +73,29 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
         self.grid.set_lower_zone_unengaged_position(zone_position)
 
     def condition_for_selling(self, symbol, df_sl_tp):
+        if self.tp_sl_abort:
+            return True
+
         self.previous_zone_position = self.grid.get_previous_zone_position()
         self.zone_position = self.grid.get_zone_position(self.df_current_data['close'][symbol])
 
         if ((self.zone_position < self.previous_zone_position)
-                and (self.grid.lower_zone_buy_engaged(self.df_current_data['close'][symbol]))\
-                and (self.previous_zone_position != -1)):
+            and (self.grid.lower_zone_buy_engaged(self.df_current_data['close'][symbol]))
+            and (self.previous_zone_position != -1)) \
+                or ((isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] > self.TP)
+                    or (isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] < self.SL)):
             selling_signal = True
-            # Unengage the zone proceed in Crag
-            # self.grid.set_lower_zone_unengaged(self.df_current_data['close'][symbol])
         else:
             selling_signal = False
+
+        if self.rtctrl.wallet_value >= self.rtctrl.init_cash_value + self.rtctrl.init_cash_value * self.global_tp / 100:
+            self.global_tp = (self.rtctrl.wallet_value - self.rtctrl.init_cash_value) * 100 / self.rtctrl.init_cash_value
+            self.global_tp_net = self.global_tp - self.net_size
+            print("global_tp: ", round(self.global_tp, 2), " net_tp: ", round(self.global_tp_net, 2), "protfolio: $", self.rtctrl.wallet_value)
+
+        if self.rtctrl.wallet_value <= self.rtctrl.init_cash_value + self.rtctrl.init_cash_value * self.global_tp_net / 100:
+            self.tp_sl_abort = True
+            print("abort: $", self.rtctrl.wallet_value)
 
         return selling_signal
 

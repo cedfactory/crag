@@ -196,11 +196,12 @@ class Crag:
         sell_trade.selling_fee = sell_trade.gross_price - sell_trade.net_price
         sell_trade.roi = 100 * (sell_trade.net_price - bought_trade.gross_price) / bought_trade.gross_price
 
-        # CEDE DEBUG: to be removed once fixed
-        if (sell_trade.symbol_price - sell_trade.buying_price) < 0:
-            print('GRID BUG')
+        # CEDE DEBUG TRACES
         if sell_trade.roi < 0:
-            print('NEGATIVE TRADE DUE TO FEES: ', sell_trade.net_price - bought_trade.gross_price, "$")
+            if (sell_trade.symbol_price - sell_trade.buying_price) < 0:
+                print('NEGATIVE TRADE: $', sell_trade.net_price - bought_trade.gross_price)
+            else:
+                print('NEGATIVE TRADE DUE TO FEES: $', sell_trade.net_price - bought_trade.gross_price)
             print('BUYING AT: $', sell_trade.buying_price, ' SELLING AT: $', sell_trade.symbol_price)
 
         return sell_trade
