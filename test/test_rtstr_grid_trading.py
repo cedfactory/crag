@@ -62,13 +62,24 @@ class TestGridLevelPosition:
 
 class TestRTSTRGridTrading:
 
-    def ttest_constructor(self):
+    def test_constructor(self):
         # action
         strategy = rtstr_grid_trading.StrategyGridTrading()
 
         # expectations
         assert(strategy.SL == -1000)
         assert(strategy.TP == 1000)
-        assert(strategy.MAX_POSITION == 5)
+        assert(strategy.MAX_POSITION == 100)
         assert(strategy.SPLIT == 5)
         assert(strategy.match_full_position == True)
+
+    def test_get_data_description(self):
+        # context
+        strategy = rtstr_grid_trading.StrategyGridTrading()
+
+        # action
+        ds = strategy.get_data_description()
+
+        # expectations
+        assert(ds.symbols == ["BTC/USD"])
+        assert(not set(list(ds.features.keys())) ^ set(["close"]))
