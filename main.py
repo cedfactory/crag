@@ -79,6 +79,7 @@ def crag_live(configuration_file):
 
     broker_node = root.find("broker")
     broker_name = broker_node.get("name", None)
+    account_name = broker_node.get("account", None)
     broker_simulation = broker_node.get("simulation", False)
     if broker_simulation == "1":
         broker_simulation = True
@@ -101,7 +102,7 @@ def crag_live(configuration_file):
 
     my_broker = None
     if broker_name == "ftx":
-        my_broker = broker_ftx.BrokerFTX({'account':'test_bot', 'simulation':broker_simulation})
+        my_broker = broker_ftx.BrokerFTX({'account':account_name, 'simulation':broker_simulation})
 
     params = {'broker':my_broker, 'rtstr':my_strategy, 'interval':crag_interval, 'logger':crag_discord_bot}
     bot = crag.Crag(params)
