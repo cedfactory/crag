@@ -170,6 +170,8 @@ class Crag:
         # execute trading
         self.trade()
 
+        self.rtstr.log_current_info()
+
         return True
 
     def export_history(self, target=None):
@@ -349,7 +351,6 @@ class Crag:
         for current_trade in self.current_trades:
             if current_trade.type == "BUY":
                 lst_buy_trades.append(current_trade)
-        self.log("current cash : $ {}".format(self.broker.get_cash()), "trade")
 
     def export_status(self):
         return self.broker.export_status()

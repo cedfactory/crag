@@ -1,6 +1,6 @@
 import pandas as pd
-
-from . import rtdp, rtstr, utils, rtctrl
+import os
+from . import rtdp, rtstr, rtctrl
 
 class StrategyGridTrading(rtstr.RealTimeStrategy):
 
@@ -30,12 +30,17 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
         self.global_tp_net = -1000
         self.tp_sl_abort = False
 
-
     def get_data_description(self):
         ds = rtdp.DataDescription()
         ds.symbols = ["BTC/USD"]
         ds.features = { "close" : None }
         return ds
+
+    def log_current_info(self):
+        csvfilename = "df_grid.csv"
+        self.grid.df_grid.to_csv(csvfilename, sep=',')
+        self.log(msg="> df_grid", header="StrategyGridTrading::log_current_info", attachments=[csvfilename])
+        os.remove(csvfilename)
 
     def get_info(self):
         return "StrategyGridTrading", self.str_sl, self.str_tp
