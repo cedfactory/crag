@@ -73,6 +73,7 @@ class Crag:
                 if body == "history" or body == "stop":
                     self.export_history(self.export_filename)
                     self.log(msg="> {}".format(self.export_filename), header="{}".format(body), attachments=[self.export_filename])
+                    os.remove(self.export_filename)
                     if body == "stop":
                         os._exit(0)
                 elif body == "rtctrl":
