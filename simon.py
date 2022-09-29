@@ -17,12 +17,12 @@ class BotSimon(commands.Bot):
         
         @self.command(name="balance")
         async def custom_command(ctx, *args):
-            subaccount = "test_bot"
+            account = "test_bot"
             if len(args) >= 1:
-                subaccount = args[0]
+                account = args[0]
 
             # get balance from the broker
-            my_broker_ftx = broker_ftx.BrokerFTX({'account':'test_bot', 'simulation':1})
+            my_broker_ftx = broker_ftx.BrokerFTX({'account':account, 'simulation':1})
             balance = my_broker_ftx.get_balance()
 
             # convert data into dataframe
@@ -41,7 +41,7 @@ class BotSimon(commands.Bot):
             msg = '```' + msg + '```'
             msg += "Total : {:2f}".format(value)
 
-            embed=discord.Embed(title=subaccount, description=msg, color=0xFF5733)
+            embed=discord.Embed(title=account, description=msg, color=0xFF5733)
             await ctx.channel.send(embed=embed)
             
         @self.command(name="crag")
