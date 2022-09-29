@@ -93,7 +93,7 @@ class TestSimBroker:
         lines[0].append("gridzone") # TO RESTORE : trade shouldn not contains this last element (gridzone)
         lines[1].append("-1") # TO RESTORE : trade shouldn not contains this last element (gridzone)
         with open(history_file_generated) as csvfile:
-            csvreader = csv.reader(csvfile, delimiter=';')
+            csvreader = csv.reader(csvfile, delimiter=',')
             header = next(csvreader)
             assert(header == lines[0])
             

@@ -138,7 +138,7 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
             df = features.add_features(df, data_description.features)
             if not os.path.exists(self.data_directory):
                 os.makedirs(self.data_directory)
-            df.to_csv(self.data_directory+'/'+formatted_symbol+".csv", sep=";")
+            df.to_csv(self.data_directory+'/'+formatted_symbol+".csv", sep=',')
 
     def record_for_data_scenario(self, data_description, start_date, end_date, interval):
         symbols = ','.join(data_description.symbols)
@@ -161,7 +161,7 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
             df = features.add_features(df, data_description.features)
             if not os.path.exists(self.data_directory):
                 os.makedirs(self.data_directory)
-            df.to_csv(self.data_directory+'/'+formatted_symbol+".csv", sep=";")
+            df.to_csv(self.data_directory+'/'+formatted_symbol+".csv", sep=',')
 
         list_dates = []
         directory = os.getcwd()
@@ -171,9 +171,9 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
             strs = file.split('.')
             symbol = strs[0].replace("_", "/")
             if symbol in rtdp.default_symbols and strs[1] == "csv":
-                # df = pd.read_csv(self.data_directory + "/" + file, sep=";")
+                # df = pd.read_csv(self.data_directory + "/" + file, sep=',')
                 csv_filename = os.path.join(self.data_directory, file)
-                df = pd.read_csv(csv_filename, sep=";", low_memory=False)
+                df = pd.read_csv(csv_filename, sep=',', low_memory=False)
                 self.data[symbol] = df
                 list_dates.extend(self.data[symbol]['timestamp'].to_list())
                 list_dates = list(set(list_dates))

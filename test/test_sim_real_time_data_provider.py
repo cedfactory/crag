@@ -130,7 +130,7 @@ class TestSimRealTimeDataProvider:
        'VMC_WAVE1', 'VMC_WAVE2', 'MONEY_FLOW', 'ema_short_vmc', 'ema_long_vmc',
        'CHOP', 'n1_VMC_WAVE1', 'n1_VMC_WAVE2']
 
-        df = pd.read_csv(expected_filename, delimiter=';')
+        df = pd.read_csv(expected_filename, delimiter=',')
         assert(isinstance(df, pd.DataFrame))
         assert(df.columns.to_list() == expected_columns)
 

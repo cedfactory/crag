@@ -58,7 +58,7 @@ class SimBroker(broker.Broker):
                 for trade in self.trades:
                     list_trade_row = trade.get_csv_row()
                     df.loc[len(df)] = list_trade_row
-            df.to_csv(target, sep=';')
+            df.to_csv(target, sep=',')
 
     def export_status(self):
         print("Status :")

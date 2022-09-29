@@ -37,7 +37,7 @@ class Analyser:
 
         self.df_analyser_result = pd.DataFrame(columns=self.get_df_result_header())
 
-        self.df_transaction_records = pd.read_csv(self.path + 'sim_broker_history.csv', delimiter=';')
+        self.df_transaction_records = pd.read_csv(self.path + 'sim_broker_history.csv', delimiter=',')
         self.df_wallet_records = pd.read_csv(self.path + 'wallet_tracking_records.csv')
 
         self.df_trades = self.df_transaction_records.copy()
@@ -300,7 +300,7 @@ class Analyser:
         df_symbol_data['time'] = self.df_wallet_records['time']
         for symbol in self.list_symbols:
             symbol = symbol.replace("/", "_")
-            # df = pd.read_csv(self.path_symbol_data + symbol + '.csv', sep=";")
+            # df = pd.read_csv(self.path_symbol_data + symbol + '.csv', sep=',')
             df = pd.read_csv(self.path_symbol_data + symbol + '.csv')
             df_symbol_data[symbol] = df['close']
         df_symbol_data.dropna(inplace=True)

@@ -54,7 +54,7 @@ class Benchmark:
             self.list_sl.append(sl)
             self.list_tp.append(tp)
             if prefixe.split("_")[0] == 'sim':
-                df_data = pd.read_csv(self.path_benchmark + csv_file, delimiter=';')
+                df_data = pd.read_csv(self.path_benchmark + csv_file, delimiter=',')
             elif prefixe.split("_")[0] == 'wallet':
                 df_data = pd.read_csv(self.path_benchmark + csv_file)
             df_data['strategy'] = strategy
