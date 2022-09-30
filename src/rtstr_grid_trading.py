@@ -18,7 +18,7 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
         self.previous_zone_position = 0
         self.zone_position = 0
 
-        self.share_size = 0
+        self.share_size = 10
         self.global_tp = 10000
         if params:
             self.share_size = params.get("share_size", self.share_size)
