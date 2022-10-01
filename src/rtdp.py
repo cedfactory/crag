@@ -83,9 +83,26 @@ class RealTimeDataProvider(IRealTimeDataProvider):
         pass
 
     def get_current_data(self, data_description):
+        
+        # hack : in the case where we want only the close value, we return the current value of the symbol
+        if data_description.features == ["close"]:
+            import ccxt
+            data = {"symbol":[], "close":[]}
+            exchange = ccxt.ftx()
+            for symbol in data_description.symbols:
+                ticker = exchange.fetch_ticker(symbol)
+                currentValue = (float(ticker['info']['ask']) + float(ticker['info']['bid'])) / 2
+                data["symbol"].append(symbol)
+                data["close"].append(currentValue)
+
+            df_result = pd.DataFrame(data)
+            df_result.set_index("symbol", inplace=True)
+            return df_result
+
+
         symbols = ','.join(data_description.symbols)
         symbols = symbols.replace('/','_')
-        params = { "service":"history", "exchange":"ftx", "symbol":symbols, "start":"2022-06-01", "interval": "1h" }
+        params = { "service":"history", "exchange":"ftx", "symbol":symbols, "start":"2022-08-01", "interval": "1h" }
         response_json = utils.fdp_request(params)
 
         data = {feature: [] for feature in data_description.features}
