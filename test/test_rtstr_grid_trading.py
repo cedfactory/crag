@@ -67,6 +67,8 @@ class TestRTSTRGridTrading:
         strategy = rtstr_grid_trading.StrategyGridTrading()
 
         # expectations
+        assert(strategy.share_size == 10)
+        assert(strategy.global_tp == 10000)
         assert(strategy.SL == -1000)
         assert(strategy.TP == 1000)
         assert(strategy.MAX_POSITION == 100)
