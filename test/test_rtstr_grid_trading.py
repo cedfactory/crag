@@ -85,3 +85,50 @@ class TestRTSTRGridTrading:
         # expectations
         assert(ds.symbols == ["BTC/USD"])
         assert(not set(list(ds.features.keys())) ^ set(["close"]))
+
+    def _initialize_current_data(self, strategy, data):
+        ds = strategy.get_data_description()
+        df_current_data = pd.DataFrame(data=data)
+        df_current_data.set_index("symbol", inplace=True)
+        strategy.set_current_data(df_current_data)
+        return strategy
+
+    def test_get_df_buying_symbols(self):
+        # context
+        strategy = rtstr_grid_trading.StrategyGridTrading()
+        data = {"index":[0], "symbol":["BTC/USD"], "close":[20000.]}
+        strategy = self._initialize_current_data(strategy, data)
+        strategy.grid.set_previous_zone_position(22000.)
+
+        # action
+        df = strategy.get_df_buying_symbols()
+
+        # expectations
+        assert(isinstance(df, pd.DataFrame))
+        assert(any(item in df.columns.to_list() for item in ['symbol', 'size', 'percent']))
+        assert(len(df) == 1)
+        assert(df.iloc[0]['symbol'] == "BTC/USD")
+        assert(df.iloc[0]['size'] == 0)
+        assert(df.iloc[0]['percent'] == 0)
+        assert(df.iloc[0]['gridzone'] == 0)
+
+    def test_get_df_selling_symbols(self):
+        # context
+        strategy = rtstr_grid_trading.StrategyGridTrading()
+        data = {"index":[0], "symbol":["BTC/USD"], "close":[20000.]}
+        strategy = self._initialize_current_data(strategy, data)
+        strategy.grid.set_previous_zone_position(19000.)
+        # set init_cash_value
+        strategy.rtctrl.update_rtctrl("not_final_time", [], 100, [], "final_time")
+        # set engaged level zone
+        strategy.grid.set_zone_engaged(19000.)
+
+        # action
+        df = strategy.get_df_selling_symbols([], None)
+
+        # expectations
+        assert(isinstance(df, pd.DataFrame))
+        assert(any(item in df.columns.to_list() for item in ['symbol', 'stimulus']))
+        assert(len(df) == 1)
+        assert(df.iloc[0]['symbol'] == "BTC/USD")
+        assert(df.iloc[0]['stimulus'] == "SELL")
