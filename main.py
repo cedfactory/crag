@@ -179,11 +179,7 @@ def crag_test_scenario(df):
     os.chdir(auto_test_directory)
     print("recorder completed: ", os.getcwd())
 
-    if(debug.MULTITHREADING == False):
-        for period in list_periods:
-            crag_test_scenario_for_period(df, ds, period, auto_test_directory, list_interval, list_strategy, list_sl, list_tp, list_share_size, list_grid_step, list_global_tp)
-    else:
-        # multithreading
+    if False: # multithreading
         with concurrent.futures.ThreadPoolExecutor(max_workers=len(list_periods)) as executor:
             futures = []
             for period in list_periods:
@@ -193,6 +189,9 @@ def crag_test_scenario(df):
                         df, ds, period, auto_test_directory, list_interval, list_strategy, list_sl, list_tp, list_tp, list_share_size, list_grid_step
                     )
                 )
+    else:
+        for period in list_periods:
+            crag_test_scenario_for_period(df, ds, period, auto_test_directory, list_interval, list_strategy, list_sl, list_tp, list_share_size, list_grid_step, list_global_tp)
 
 def crag_test_scenario_for_period(df, ds, period, auto_test_directory, list_interval, list_strategy, list_sl, list_tp, lst_share_size, lst_grid_step, lst_global_tp):
     start_date = period[0:10]
@@ -201,16 +200,7 @@ def crag_test_scenario_for_period(df, ds, period, auto_test_directory, list_inte
     strategy_directory = os.path.join(auto_test_directory, "./" + period)
     os.chdir(strategy_directory)
 
-    if(debug.MULTITHREADING == False):
-        for strategy in list_strategy:
-            for sl in list_sl:
-                for tp in list_tp:
-                    for share_size in lst_share_size:
-                        for grid_step in lst_grid_step:
-                            for global_tp in lst_global_tp:
-                                crag_simulation_scenario(strategy, start_date, end_date, list_interval[0], sl, tp, share_size, grid_step, global_tp, strategy_directory)
-    else:
-        # multithreading
+    if False: # multithreading
         with concurrent.futures.ThreadPoolExecutor(max_workers=len(list_strategy) * len(list_sl) * len(list_tp)) as executor:
             futures = []
             for strategy in list_strategy:
@@ -224,6 +214,15 @@ def crag_test_scenario_for_period(df, ds, period, auto_test_directory, list_inte
                                                         strategy, start_date, end_date, list_interval[0], sl, tp, share_size, grid_step, global_tp, strategy_directory
                                                         )
                                     )
+    else:
+        for strategy in list_strategy:
+            for sl in list_sl:
+                for tp in list_tp:
+                    for share_size in lst_share_size:
+                        for grid_step in lst_grid_step:
+                            for global_tp in lst_global_tp:
+                                crag_simulation_scenario(strategy, start_date, end_date, list_interval[0], sl, tp, share_size, grid_step, global_tp, strategy_directory)
+
 
     list_output_filename = []
     for file in os.listdir("./"):
