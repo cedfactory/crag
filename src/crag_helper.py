@@ -2,11 +2,11 @@ from src import rtdp,rtdp_simulation
 from src import broker_simulation,broker_ftx
 from src import crag
 from src import rtstr,rtstr_grid_trading, rtstr_super_reversal,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC
-from src import analyser,benchmark,automatic_test_plan
 from src import logger
 import xml.etree.cElementTree as ET
 from dotenv import load_dotenv
 import os
+import pickle
 
 def _initialize_crag_discord_bot():
     load_dotenv()
@@ -55,3 +55,9 @@ def initialization_from_configuration_file(configuration_file):
     params = {'broker':my_broker, 'rtstr':my_strategy, 'interval':crag_interval, 'logger':crag_discord_bot}
     bot = crag.Crag(params)
     return bot
+
+def initialization_from_pickle(picklefilename):
+    with open(picklefilename, 'rb') as file:
+        bot = pickle.load(file)
+    return bot
+

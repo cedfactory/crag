@@ -6,7 +6,6 @@ import pandas as pd
 import os, sys
 import shutil
 import fnmatch
-import pickle
 import cProfile,pstats
 from datetime import datetime
 import concurrent.futures
@@ -50,9 +49,6 @@ def crag_simulation(strategy_name):
     crag_params = {'broker':simu_broker, 'rtstr':strategy}
     bot = crag.Crag(crag_params)
 
-    if debug.REBOOT:
-        bot = load_crag_for_reboot('../sys/crag_backup.pickle')
-
     bot.run()
 
     bot.export_history("sim_broker_history.csv")
@@ -61,15 +57,15 @@ def crag_simulation(strategy_name):
 
 def crag_live(configuration_file):
     bot = crag_helper.initialization_from_configuration_file(configuration_file)
-
-    if debug.REBOOT:
-        bot = load_crag_for_reboot('../sys/crag_backup.pickle')
-
     bot.run()
-    
-    # DEBUG CEDE
-    # bot.export_history("broker_history.csv")
+    # bot.export_history("broker_history.csv") # DEBUG CEDE
     bot.export_status()
+
+def crag_reboot(picklefilename):
+    bot = crag_helper.initialization_from_pickle(picklefilename)
+    bot.run()
+    # bot.export_history("broker_history.csv")
+    bot.export_status() # DEBUG CEDE
 
 def crag_analyse_results():
     params = {}
@@ -135,9 +131,6 @@ def crag_simulation_scenario(strategy_name, start_date, end_date, interval, sl, 
 
     crag_params = {'broker':simu_broker, 'rtstr':strategy, "working_directory": working_directory}
     bot = crag.Crag(crag_params)
-
-    if debug.REBOOT:
-        bot = load_crag_for_reboot('../sys/crag_backup.pickle')
 
     bot.run()
 
@@ -259,14 +252,6 @@ def crag_test_scenario_for_period(df, ds, period, auto_test_directory, list_inte
     print(os.getcwd())
     df.to_csv(period + "_output.csv")
 
-def load_crag_for_reboot(filename):
-    with open(filename, 'rb') as file:
-        crag = pickle.load(file)
-    return crag
-
-def crag_setup_reboot():
-    debug.REBOOT = True
-
 if __name__ == '__main__':
     # Bear market historical dates
     # https://cointelegraph.com/news/a-brief-history-of-bitcoin-crashes-and-bear-markets-2009-2022
@@ -317,18 +302,14 @@ if __name__ == '__main__':
                   }
 
     if len(sys.argv) >= 2:
-        if len(sys.argv) == 3 and (sys.argv[2] == "--reboot"):
-            crag_setup_reboot()
-
-    if len(sys.argv) >= 2:
         if len(sys.argv) == 2 and (sys.argv[1] == "--record"):
             crag_record()
         elif len(sys.argv) > 2 and (sys.argv[1] == "--simulation"):
-            strategy_name = sys.argv[2]
-            crag_simulation(strategy_name)
+            crag_simulation(sys.argv[2])
+        elif len(sys.argv) > 2 and (sys.argv[1] == "--reboot"):
+            crag_reboot(sys.argv[2])
         elif len(sys.argv) > 2 and (sys.argv[1] == "--live"):
-            configuration_file = sys.argv[2]
-            crag_live(configuration_file)
+            crag_live(sys.argv[2])
         elif len(sys.argv) >= 2 and (sys.argv[1] == "--ftx"):
             crag_ftx()
         elif len(sys.argv) >= 2 and (sys.argv[1] == "--analyse"):

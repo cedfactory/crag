@@ -130,7 +130,7 @@ class Crag:
                 self.log("warning : time elapsed for the step ({}) is greater than the interval ({})".format(end - start, self.interval))
 
             self.broker.tick() # increment
-            self.backup_crag() # backup for reboot
+            self.backup() # backup for reboot
 
         self.export_history(self.export_filename)
 
@@ -366,6 +366,7 @@ class Crag:
             else:
                 self.df_portfolio_status.at[symbol, 'roi_sl_tp'] = 100 * (self.df_portfolio_status.at[symbol, 'value'] / self.df_portfolio_status.at[symbol, 'buying_value'] - 1)
 
-    def backup_crag(self):
+    def backup(self):
         with open(self.backup_filename, 'wb') as file:
+            print("[crah::backup]", self.backup_filename)
             pickle.dump(self, file)

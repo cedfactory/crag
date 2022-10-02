@@ -64,3 +64,28 @@ class TestCrag:
 
         # cleaning
         os.remove(filename)
+
+    #
+    # Backup
+    #
+    def test_backup(self):
+        # context : create the configruation file
+        filename = self._write_file('''<configuration>
+            <strategy name="StrategyGridTrading" />
+            <broker name="ftx" account="test_bot" simulation="1" />
+            <crag interval="20" />
+        </configuration>''')
+        bot = crag_helper.initialization_from_configuration_file(filename)
+        bot.backup()
+
+        # action
+        bot = crag_helper.initialization_from_pickle("crag_backup.pickle")
+
+        # expectations
+        assert(bot.broker != None)
+        assert(bot.rtstr.get_name() == "StrategyGridTrading")
+        assert(bot.interval == 20)
+
+        # cleaning
+        os.remove(filename)
+        os.remove("crag_backup.pickle")
