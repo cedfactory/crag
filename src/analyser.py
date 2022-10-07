@@ -107,7 +107,6 @@ class Analyser:
         print('total trades on the period: ', self.nb_transaction)
         print('global Win rate: ', self.positive_trades,'%')
         print("worst drawdown days: -{}%".format(self.max_days_drawdown))
-        # print('negative trades executed: ', self.negative_trades,'%')
         print('best trades executed: ', self.best_transaction,'%      ', self.best_transaction_val, '$')
         print('worst trades executed: ', self.worst_transaction,'%      ', self.worst_transaction_val, '$')
         print('average profit per trades: ', self.mean_transaction,'%      ', self.mean_transaction_val,'$')

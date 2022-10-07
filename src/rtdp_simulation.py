@@ -44,7 +44,8 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
             symbol = strs[0].replace("_", "/")
             if symbol in rtdp.default_symbols and strs[1] == "csv":
                 csv_filename = os.path.join(self.data_directory, file)
-                df = pd.read_csv(csv_filename, low_memory=False, sep=";")
+                # df = pd.read_csv(csv_filename, low_memory=False, sep=";")
+                df = pd.read_csv(csv_filename, low_memory=False)
                 self.data[symbol] = df
                 # WARNING CEDE TEMPORARY WORK AROUND
                 # self.data[symbol] = df.iloc[:-1, :]

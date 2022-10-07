@@ -206,7 +206,9 @@ class Crag:
             else:
                 print('NEGATIVE TRADE DUE TO FEES: $', sell_trade.net_price - bought_trade.gross_price)
             print('BUYING AT: $', sell_trade.buying_price, ' SELLING AT: $', sell_trade.symbol_price)
-
+        # CEDE TRACES FOR DEBUG
+        # else:
+        #     print('POSITIVE TRADE: $', sell_trade.net_price - bought_trade.gross_price)
         return sell_trade
 
     def trade(self):
@@ -243,7 +245,8 @@ class Crag:
                     and df_selling_symbols["stimulus"][current_trade.symbol] != "HOLD"\
                     and (self.flush_current_trade
                          or ((sell_counter < trade_sell_limit)
-                             and (current_trade.gridzone >= self.rtstr.get_lower_zone_buy_engaged(current_trade.symbol)))):
+                             # and (current_trade.gridzone >= self.rtstr.get_lower_zone_buy_engaged(current_trade.symbol)))):
+                             and (current_trade.gridzone > self.rtstr.get_lower_zone_buy_engaged(current_trade.symbol)))): # MODIF CEDE TO BE TESTED IN LIVE
                 sell_trade = self._prepare_sell_trade_from_bought_trade(current_trade, current_datetime, df_selling_symbols)
                 done = self.broker.execute_trade(sell_trade)
                 if done:
@@ -368,5 +371,5 @@ class Crag:
 
     def backup(self):
         with open(self.backup_filename, 'wb') as file:
-            print("[crah::backup]", self.backup_filename)
+            # print("[crah::backup]", self.backup_filename)
             pickle.dump(self, file)

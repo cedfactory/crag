@@ -54,6 +54,9 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
         if self.tp_sl_abort:
             return False
 
+        if self.grid.get_zone_position(self.df_current_data['close'][symbol]) == -1:
+            return False
+
         self.previous_zone_position = self.grid.get_previous_zone_position()
         self.zone_position = self.grid.get_zone_position(self.df_current_data['close'][symbol])
 
@@ -78,6 +81,9 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
     def condition_for_selling(self, symbol, df_sl_tp):
         if self.tp_sl_abort:
             return True
+
+        if self.grid.get_zone_position(self.df_current_data['close'][symbol]) == -1:
+            return False
 
         self.previous_zone_position = self.grid.get_previous_zone_position()
         self.zone_position = self.grid.get_zone_position(self.df_current_data['close'][symbol])
@@ -158,8 +164,10 @@ class GridLevelPosition():
         self.UpperPriceLimit = 25000
         self.LowerPriceLimit = 15000
         self.grid_step = .5 # percent
+        self.grid_threshold = 0
         if params:
             self.grid_step = params.get("grid_step", self.grid_step)
+            self.grid_threshold = params.get("grid_threshold", self.grid_threshold)
 
         GridLen = self.UpperPriceLimit - self.LowerPriceLimit
         GridStep = int(GridLen * self.grid_step / 100)
@@ -196,7 +204,11 @@ class GridLevelPosition():
         self.grid_size = len(self.df_grid)
 
     def get_zone_position(self, price):
-        return self.df_grid[(self.df_grid['start'] < price) & (self.df_grid['end'] >= price)].index[0]
+        try:
+            zone = self.df_grid[( (self.df_grid['start'] + self.df_grid['start'] * self.grid_threshold / 100) < price) & ( (self.df_grid['end'] - self.df_grid['end'] * self.grid_threshold / 100) >= price)].index[0]
+        except:
+            zone = -1
+        return zone
 
     def get_previous_zone_position(self):
         if len(self.df_grid[(self.df_grid['previous_position'] != 0)].index) == 0:
@@ -241,7 +253,6 @@ class GridLevelPosition():
         first_lower_position = -1
 
         df_grid = self.df_grid.copy()
-        #df_grid = df_grid[zone_position:]
         df_grid = df_grid.iloc[zone_position+1:,:]
         lower_position_exist = df_grid['zone_engaged'].sum()
 

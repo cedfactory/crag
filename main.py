@@ -1,7 +1,7 @@
 from src import rtdp,rtdp_simulation,broker_simulation,broker_ftx,rtstr,rtstr_grid_trading, rtstr_super_reversal,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC,analyser,benchmark,automatic_test_plan
 from src import crag,crag_helper
 from src import logger
-from src import debug
+# from src import debug
 import pandas as pd
 import os, sys
 import shutil
@@ -107,11 +107,11 @@ def crag_ftx():
     #my_broker_ftx.sell_everything()
 
 
-def crag_simulation_scenario(strategy_name, start_date, end_date, interval, sl, tp, share_size, grid_step, global_tp, working_directory):
+def crag_simulation_scenario(strategy_name, start_date, end_date, interval, sl, tp, share_size, grid_step, global_tp, grid_threshold, working_directory):
     available_strategies = rtstr.RealTimeStrategy.get_strategies_list()
 
     os.chdir(working_directory)
-    strategy_suffix = "_" + strategy_name + "_" + start_date + "_" + end_date + "_" + interval + "_sl" + str(sl) + "_tp" + str(tp) + "_ss" + str(share_size) + "_gs" + str(grid_step) + "_gtp" + str(global_tp)
+    strategy_suffix = "_" + strategy_name + "_" + start_date + "_" + end_date + "_" + interval + "_sl" + str(sl) + "_tp" + str(tp) + "_ss" + str(share_size) + "_gs" + str(grid_step) + "_gtp" + str(global_tp) + "_thrh" + str(grid_threshold)
     if strategy_name in available_strategies:
         strategy = rtstr.RealTimeStrategy.get_strategy_from_name(strategy_name, {"rtctrl_verbose": False,
                                                                                  "sl": sl,
@@ -120,6 +120,7 @@ def crag_simulation_scenario(strategy_name, start_date, end_date, interval, sl, 
                                                                                  "share_size": share_size,
                                                                                  "grid_step": grid_step,
                                                                                  "global_tp": global_tp,
+                                                                                 "grid_threshold": grid_threshold,
                                                                                  "working_directory": working_directory})
     else:
         print("💥 missing known strategy ({})".format(strategy_name))
@@ -158,6 +159,8 @@ def crag_test_scenario(df):
     list_grid_step = list(set(list_grid_step))
     list_global_tp = df['global_tp'].to_list()
     list_global_tp = list(set(list_global_tp))
+    list_grid_threshold = df['grid_threshold'].to_list()
+    list_grid_threshold = list(set(list_grid_threshold))
 
     auto_test_directory = os.path.join(os.getcwd(), "./automatic_test_results")
     os.chdir(auto_test_directory)
@@ -186,14 +189,14 @@ def crag_test_scenario(df):
                 futures.append(
                     executor.submit(
                         crag_test_scenario_for_period,
-                        df, ds, period, auto_test_directory, list_interval, list_strategy, list_sl, list_tp, list_tp, list_share_size, list_grid_step
+                        df, ds, period, auto_test_directory, list_interval, list_strategy, list_sl, list_tp, list_tp, list_share_size, list_grid_step, grid_threshold
                     )
                 )
     else:
         for period in list_periods:
-            crag_test_scenario_for_period(df, ds, period, auto_test_directory, list_interval, list_strategy, list_sl, list_tp, list_share_size, list_grid_step, list_global_tp)
+            crag_test_scenario_for_period(df, ds, period, auto_test_directory, list_interval, list_strategy, list_sl, list_tp, list_share_size, list_grid_step, list_global_tp, list_grid_threshold)
 
-def crag_test_scenario_for_period(df, ds, period, auto_test_directory, list_interval, list_strategy, list_sl, list_tp, lst_share_size, lst_grid_step, lst_global_tp):
+def crag_test_scenario_for_period(df, ds, period, auto_test_directory, list_interval, list_strategy, list_sl, list_tp, lst_share_size, lst_grid_step, lst_global_tp, lst_grid_threshold):
     start_date = period[0:10]
     end_date = period[11:21]
 
@@ -209,11 +212,12 @@ def crag_test_scenario_for_period(df, ds, period, auto_test_directory, list_inte
                         for share_size in lst_share_size:
                             for grid_step in lst_grid_step:
                                 for global_tp in lst_global_tp:
-                                    futures.append(
-                                        executor.submit(crag_simulation_scenario,
-                                                        strategy, start_date, end_date, list_interval[0], sl, tp, share_size, grid_step, global_tp, strategy_directory
-                                                        )
-                                    )
+                                    for grid_threshold in lst_grid_threshold:
+                                        futures.append(
+                                            executor.submit(crag_simulation_scenario,
+                                                            strategy, start_date, end_date, list_interval[0], sl, tp, share_size, grid_step, global_tp, grid_threshold, strategy_directory
+                                                            )
+                                        )
     else:
         for strategy in list_strategy:
             for sl in list_sl:
@@ -221,7 +225,8 @@ def crag_test_scenario_for_period(df, ds, period, auto_test_directory, list_inte
                     for share_size in lst_share_size:
                         for grid_step in lst_grid_step:
                             for global_tp in lst_global_tp:
-                                crag_simulation_scenario(strategy, start_date, end_date, list_interval[0], sl, tp, share_size, grid_step, global_tp, strategy_directory)
+                                for grid_threshold in lst_grid_threshold:
+                                    crag_simulation_scenario(strategy, start_date, end_date, list_interval[0], sl, tp, share_size, grid_step, global_tp, grid_threshold, strategy_directory)
 
 
     list_output_filename = []
@@ -297,7 +302,8 @@ if __name__ == '__main__':
                   # "share_size": [10, 20],
                   # "grid_step": [0.5, 1, 2, 5]
                   "share_size": [10],
-                  "grid_step": [0.5]
+                  "grid_step": [0.5],
+                  "grid_threshold": [0.08, 0.1]
                   }
 
     if len(sys.argv) >= 2:
