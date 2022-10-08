@@ -49,7 +49,9 @@ class TestCrag:
     def test_initialization_from_configuration_file_ok(self):
         # context : create the configruation file
         filename = self._write_file('''<configuration>
-            <strategy name="StrategyGridTrading" />
+            <strategy name="StrategyGridTrading">
+                <params share_size="12" global_tp="15000" grid_step="1." grid_threshold=".8" upper_grid="25000" />
+            </strategy>
             <broker name="ftx" account="test_bot" simulation="1" />
             <crag interval="20" />
         </configuration>''')
@@ -60,6 +62,10 @@ class TestCrag:
         # expectations
         assert(bot.broker != None)
         assert(bot.rtstr.get_name() == "StrategyGridTrading")
+        assert(bot.rtstr.share_size == 12)
+        assert(bot.rtstr.global_tp == 15000)
+        assert(bot.rtstr.grid.grid_threshold == .8)
+        assert(bot.rtstr.grid.UpperPriceLimit == 25000)
         assert(bot.interval == 20)
 
         # cleaning

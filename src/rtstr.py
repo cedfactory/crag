@@ -27,6 +27,9 @@ class RealTimeStrategy(metaclass=ABCMeta):
         self.MAX_POSITION = 5    # Asset Overall Percent Size
         self.match_full_position = True
 
+    def log_info(self):
+        pass
+
     def log_current_info(self):
         pass
 

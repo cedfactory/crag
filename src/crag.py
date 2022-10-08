@@ -116,6 +116,7 @@ class Crag:
         msh_strategy_info = "Running with {}".format(type(self.rtstr).__name__)
         msg = msg_broker_info + "\n" + msh_strategy_info
         self.log(msg, "run")
+        self.rtstr.log_info()
         done = False
         while not done:
             start = time.time()

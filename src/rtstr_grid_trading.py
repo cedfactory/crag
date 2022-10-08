@@ -22,7 +22,11 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
         self.global_tp = 10000
         if params:
             self.share_size = params.get("share_size", self.share_size)
+            if isinstance(self.share_size, str):
+                self.share_size = int(self.share_size)
             self.global_tp = params.get("global_tp", self.global_tp)
+            if isinstance(self.global_tp, str):
+                self.global_tp = int(self.global_tp)
 
         if self.global_tp == 0:
             self.global_tp = 10000
@@ -35,6 +39,15 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
         ds.symbols = ["BTC/USD"]
         ds.features = { "close" : None }
         return ds
+
+    def log_info(self):
+        str = ""
+        str += "share_size = {}\n".format(self.share_size)
+        str += "global_tp = {}\n".format(self.global_tp)
+        str += "grid.grid_step = {}\n".format(self.grid.grid_step)
+        str += "grid.grid_threshold = {}\n".format(self.grid.grid_threshold)
+        str += "grid.upper_grid = {}\n".format(self.grid.UpperPriceLimit)
+        self.log(msg=str, header="StrategyGridTrading::log_info")
 
     def log_current_info(self):
         csvfilename = "df_grid.csv"
@@ -170,8 +183,14 @@ class GridLevelPosition():
         self.grid_threshold = 0
         if params:
             self.grid_step = params.get("grid_step", self.grid_step)
+            if isinstance(self.grid_step, str):
+                self.grid_step = float(self.grid_step)
             self.grid_threshold = params.get("grid_threshold", self.grid_threshold)
+            if isinstance(self.grid_threshold, str):
+                self.grid_threshold = float(self.grid_threshold)
             self.UpperPriceLimit = params.get("upper_grid", self.UpperPriceLimit)
+            if isinstance(self.UpperPriceLimit, str):
+                self.UpperPriceLimit = float(self.UpperPriceLimit)
 
         GridLen = self.UpperPriceLimit - self.LowerPriceLimit
         GridStep = int(GridLen * self.grid_step / 100)

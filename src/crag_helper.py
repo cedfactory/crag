@@ -24,6 +24,11 @@ def initialization_from_configuration_file(configuration_file):
 
     strategy_node = root.find("strategy")
     strategy_name = strategy_node.get("name", None)
+    params_node = list(strategy_node.iter('params'))
+    params = {}
+    if len(params_node) == 1:
+        for name, value in params_node[0].attrib.items():
+            params[name] = value
 
     broker_node = root.find("broker")
     broker_name = broker_node.get("name", None)
@@ -39,7 +44,7 @@ def initialization_from_configuration_file(configuration_file):
     crag_interval = int(crag_interval)
 
     crag_discord_bot = _initialize_crag_discord_bot()
-    params = {"logger":crag_discord_bot}
+    params["logger"] = crag_discord_bot
     available_strategies = rtstr.RealTimeStrategy.get_strategies_list()
     if strategy_name in available_strategies:
         my_strategy = rtstr.RealTimeStrategy.get_strategy_from_name(strategy_name, params)
