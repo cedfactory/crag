@@ -74,7 +74,8 @@ class RealTimeStrategy(metaclass=ABCMeta):
         
         df_result = self.get_df_selling_symbols_common(df_result)
         
-        self.log(df_result, header="get_df_buying_symbols")
+        if not df_result.empty:
+            self.log(df_result, header="get_df_buying_symbols")
             
         return df_result
 

@@ -348,7 +348,9 @@ class Crag:
                     symbols_bought["gross_price"].append(utils.KeepNDecimals(current_trade.gross_price))
                     symbols_bought["gridzone"].append(df_buying_symbols["gridzone"][current_trade.symbol])
         df_symbols_bought = pd.DataFrame(symbols_bought)
-        self.log(df_symbols_bought, "symbols bought")
+
+        if not df_symbols_bought.empty:
+            self.log(df_symbols_bought, "symbols bought")
 
         # Clear the current_trades for optimization
         lst_buy_trades = []
