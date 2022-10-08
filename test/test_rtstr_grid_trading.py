@@ -13,12 +13,12 @@ class TestGridLevelPosition:
         gridLevel = rtstr_grid_trading.GridLevelPosition(params=params)
         
         # expectations
-        assert(gridLevel.UpperPriceLimit == 25000)
+        assert(gridLevel.UpperPriceLimit == 20500)
         assert(gridLevel.LowerPriceLimit == 15000)
         expected_data = {
             "zone_id":["zone_0", "zone_1", "zone_2", "zone_3", "zone_4", "zone_5"],
-            "start":[25000, 22500, 20000, 17500, 15000, 10000],
-            "end": [100000, 25000, 22500, 20000, 17500, 15000],
+            "start":[20500, 19125, 17750, 16375, 15000, 10000],
+            "end": [100000, 20500, 19125, 17750, 16375, 15000],
             "previous_position": [0, 0, 0, 0, 0, 0],
             "actual_position": [0, 0, 0, 0, 0, 0],
             "zone_engaged": [False, False, False, False, False, False],
@@ -58,7 +58,7 @@ class TestGridLevelPosition:
 
         # expectations 2
         previous_zone_position = gridLevel.get_previous_zone_position()
-        assert(previous_zone_position == 2)
+        assert(previous_zone_position == 1)
 
 class TestRTSTRGridTrading:
 
