@@ -148,7 +148,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
         return -1
 
     @staticmethod
-    def get_df_forced_selling_symbols(lst_symbols, df_rtctrl):
+    def get_df_forced_selling_symbols(selection_symbols, df_rtctrl):
         lst_symbols = df_rtctrl['symbol'].tolist()
         lst_size = df_rtctrl['size'].tolist()
         lst_stimulus = ['SELL'] * len(lst_symbols)
