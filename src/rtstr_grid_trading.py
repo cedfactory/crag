@@ -41,13 +41,13 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
         return ds
 
     def log_info(self):
-        str = ""
-        str += "share_size = {}\n".format(self.share_size)
-        str += "global_tp = {}\n".format(self.global_tp)
-        str += "grid.grid_step = {}\n".format(self.grid.grid_step)
-        str += "grid.grid_threshold = {}\n".format(self.grid.grid_threshold)
-        str += "grid.upper_grid = {}\n".format(self.grid.UpperPriceLimit)
-        self.log(msg=str, header="StrategyGridTrading::log_info")
+        info = ""
+        info += "share_size = {}\n".format(self.share_size)
+        info += "global_tp = {}\n".format(self.global_tp)
+        info += "grid.grid_step = {}\n".format(self.grid.grid_step)
+        info += "grid.grid_threshold = {}\n".format(self.grid.grid_threshold)
+        info += "grid.upper_grid = {}\n".format(self.grid.UpperPriceLimit)
+        self.log(msg=info, header="StrategyGridTrading::log_info")
 
     def log_current_info(self):
         csvfilename = "df_grid.csv"
