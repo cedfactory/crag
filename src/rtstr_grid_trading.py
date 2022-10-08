@@ -51,6 +51,9 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
         return "StrategyGridTrading", self.str_sl, self.str_tp
 
     def condition_for_buying(self, symbol):
+        # if self.df_current_data['close'][symbol] <= self.grid.get_UpperPriceLimit():
+        #    print('IN')
+
         if self.tp_sl_abort:
             return False
 
@@ -161,13 +164,14 @@ class GridLevelPosition():
     def __init__(self, params=None):
         outbound_zone_max = 100000
         outbound_zone_min = 10000
-        self.UpperPriceLimit = 25000
+        self.UpperPriceLimit = 20500
         self.LowerPriceLimit = 15000
         self.grid_step = .5 # percent
         self.grid_threshold = 0
         if params:
             self.grid_step = params.get("grid_step", self.grid_step)
             self.grid_threshold = params.get("grid_threshold", self.grid_threshold)
+            self.UpperPriceLimit = params.get("upper_grid", self.UpperPriceLimit)
 
         GridLen = self.UpperPriceLimit - self.LowerPriceLimit
         GridStep = int(GridLen * self.grid_step / 100)
@@ -261,3 +265,6 @@ class GridLevelPosition():
             df2 = df_grid.loc[(self.df_grid['zone_engaged'])]
             first_lower_position = df2.zone_engaged.isnull().index[0]
         return first_lower_position
+
+    def get_UpperPriceLimit(self):
+        return self.UpperPriceLimit

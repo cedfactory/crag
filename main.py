@@ -107,11 +107,11 @@ def crag_ftx():
     #my_broker_ftx.sell_everything()
 
 
-def crag_simulation_scenario(strategy_name, start_date, end_date, interval, sl, tp, share_size, grid_step, global_tp, grid_threshold, working_directory):
+def crag_simulation_scenario(strategy_name, start_date, end_date, interval, sl, tp, share_size, grid_step, global_tp, grid_threshold, upper_grid, working_directory):
     available_strategies = rtstr.RealTimeStrategy.get_strategies_list()
 
     os.chdir(working_directory)
-    strategy_suffix = "_" + strategy_name + "_" + start_date + "_" + end_date + "_" + interval + "_sl" + str(sl) + "_tp" + str(tp) + "_ss" + str(share_size) + "_gs" + str(grid_step) + "_gtp" + str(global_tp) + "_thrh" + str(grid_threshold)
+    strategy_suffix = "_" + strategy_name + "_" + start_date + "_" + end_date + "_" + interval + "_sl" + str(sl) + "_tp" + str(tp) + "_ss" + str(share_size) + "_gs" + str(grid_step) + "_gtp" + str(global_tp) + "_thrh" + str(grid_threshold) + "_limit" + str(upper_grid)
     if strategy_name in available_strategies:
         strategy = rtstr.RealTimeStrategy.get_strategy_from_name(strategy_name, {"rtctrl_verbose": False,
                                                                                  "sl": sl,
@@ -121,6 +121,7 @@ def crag_simulation_scenario(strategy_name, start_date, end_date, interval, sl, 
                                                                                  "grid_step": grid_step,
                                                                                  "global_tp": global_tp,
                                                                                  "grid_threshold": grid_threshold,
+                                                                                 "upper_grid": upper_grid,
                                                                                  "working_directory": working_directory})
     else:
         print("💥 missing known strategy ({})".format(strategy_name))
@@ -161,6 +162,8 @@ def crag_test_scenario(df):
     list_global_tp = list(set(list_global_tp))
     list_grid_threshold = df['grid_threshold'].to_list()
     list_grid_threshold = list(set(list_grid_threshold))
+    list_upper_grid = df['upper_grid'].to_list()
+    list_upper_grid = list(set(list_upper_grid))
 
     auto_test_directory = os.path.join(os.getcwd(), "./automatic_test_results")
     os.chdir(auto_test_directory)
@@ -189,14 +192,14 @@ def crag_test_scenario(df):
                 futures.append(
                     executor.submit(
                         crag_test_scenario_for_period,
-                        df, ds, period, auto_test_directory, list_interval, list_strategy, list_sl, list_tp, list_tp, list_share_size, list_grid_step, grid_threshold
+                        df, ds, period, auto_test_directory, list_interval, list_strategy, list_sl, list_tp, list_tp, list_share_size, list_grid_step, grid_threshold, upper_grid
                     )
                 )
     else:
         for period in list_periods:
-            crag_test_scenario_for_period(df, ds, period, auto_test_directory, list_interval, list_strategy, list_sl, list_tp, list_share_size, list_grid_step, list_global_tp, list_grid_threshold)
+            crag_test_scenario_for_period(df, ds, period, auto_test_directory, list_interval, list_strategy, list_sl, list_tp, list_share_size, list_grid_step, list_global_tp, list_grid_threshold, list_upper_grid)
 
-def crag_test_scenario_for_period(df, ds, period, auto_test_directory, list_interval, list_strategy, list_sl, list_tp, lst_share_size, lst_grid_step, lst_global_tp, lst_grid_threshold):
+def crag_test_scenario_for_period(df, ds, period, auto_test_directory, list_interval, list_strategy, list_sl, list_tp, lst_share_size, lst_grid_step, lst_global_tp, lst_grid_threshold, lst_upper_grid):
     start_date = period[0:10]
     end_date = period[11:21]
 
@@ -213,11 +216,12 @@ def crag_test_scenario_for_period(df, ds, period, auto_test_directory, list_inte
                             for grid_step in lst_grid_step:
                                 for global_tp in lst_global_tp:
                                     for grid_threshold in lst_grid_threshold:
-                                        futures.append(
-                                            executor.submit(crag_simulation_scenario,
-                                                            strategy, start_date, end_date, list_interval[0], sl, tp, share_size, grid_step, global_tp, grid_threshold, strategy_directory
-                                                            )
-                                        )
+                                        for upper_grid in lst_upper_grid:
+                                            futures.append(
+                                                executor.submit(crag_simulation_scenario,
+                                                                strategy, start_date, end_date, list_interval[0], sl, tp, share_size, grid_step, global_tp, grid_threshold, upper_grid, strategy_directory
+                                                                )
+                                            )
     else:
         for strategy in list_strategy:
             for sl in list_sl:
@@ -226,8 +230,8 @@ def crag_test_scenario_for_period(df, ds, period, auto_test_directory, list_inte
                         for grid_step in lst_grid_step:
                             for global_tp in lst_global_tp:
                                 for grid_threshold in lst_grid_threshold:
-                                    crag_simulation_scenario(strategy, start_date, end_date, list_interval[0], sl, tp, share_size, grid_step, global_tp, grid_threshold, strategy_directory)
-
+                                    for upper_grid in lst_upper_grid:
+                                        crag_simulation_scenario(strategy, start_date, end_date, list_interval[0], sl, tp, share_size, grid_step, global_tp, grid_threshold, upper_grid,strategy_directory)
 
     list_output_filename = []
     for file in os.listdir("./"):
@@ -276,7 +280,7 @@ if __name__ == '__main__':
                      # ['2019-07-21', '2020-09-01'], # OK
                      # ['2021-03-01', '2021-10-01'], # OK
                      # ['2021-11-01', '2022-08-08'],
-                     ['2022-06-15', '2022-09-18']
+                     ['2022-06-15', '2022-10-08']
     ]
 
     path_initial_dir = os.getcwd()
@@ -298,12 +302,13 @@ if __name__ == '__main__':
                   # "tp": [0, 10, 20]
                   "sl": [0],
                   "tp": [0],
-                  "global_tp": [10],
+                  "global_tp": [0],
                   # "share_size": [10, 20],
                   # "grid_step": [0.5, 1, 2, 5]
                   "share_size": [10],
-                  "grid_step": [0.5],
-                  "grid_threshold": [0.08, 0.1]
+                  "grid_step": [1],
+                  "grid_threshold": [0.08],
+                  "upper_grid": [21500, 21000, 20500, 20000, 19500]
                   }
 
     if len(sys.argv) >= 2:
