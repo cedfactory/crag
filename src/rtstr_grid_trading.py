@@ -64,9 +64,6 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
         return "StrategyGridTrading", self.str_sl, self.str_tp
 
     def condition_for_buying(self, symbol):
-        # if self.df_current_data['close'][symbol] <= self.grid.get_UpperPriceLimit():
-        #    print('IN')
-
         if self.tp_sl_abort:
             return False
 
@@ -284,6 +281,3 @@ class GridLevelPosition():
             df2 = df_grid.loc[(self.df_grid['zone_engaged'])]
             first_lower_position = df2.zone_engaged.isnull().index[0]
         return first_lower_position
-
-    def get_UpperPriceLimit(self):
-        return self.UpperPriceLimit

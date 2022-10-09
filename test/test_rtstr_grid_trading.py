@@ -132,3 +132,22 @@ class TestRTSTRGridTrading:
         assert(len(df) == 1)
         assert(df.iloc[0]['symbol'] == "BTC/USD")
         assert(df.iloc[0]['stimulus'] == "SELL")
+
+    def test_get_symbol_buying_size(self):
+        # context
+        strategy = rtstr_grid_trading.StrategyGridTrading()
+        data = {"index":[0], "symbol":["BTC/USD"], "close":[20000.]}
+        strategy = self._initialize_current_data(strategy, data)
+        strategy.grid.set_previous_zone_position(19000.)
+        prices_symbols = {'BTC/USD': 0.01}
+        strategy.rtctrl.update_rtctrl("not_final_time", [], 100, prices_symbols, "final_time")
+        # set engaged level zone
+        strategy.grid.set_zone_engaged(19000.)
+
+        #action
+        size, percent, zone_position = strategy.get_symbol_buying_size("BTC/USD")
+        
+        # expectations
+        assert(size == pytest.approx(0.000487, abs=1e-6))
+        assert(percent == pytest.approx(4.87e-06, abs=1e-6))
+        assert(zone_position == -1)
