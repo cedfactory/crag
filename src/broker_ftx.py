@@ -15,7 +15,7 @@ class BrokerFTX(broker.Broker):
         self.rtdp = rtdp.RealTimeDataProvider(params)
         self.trades = []
         self.simulation = False
-        account = "Main Account"
+        account = ""
         if params:
             self.simulation = params.get("simulation", self.simulation)
             account = params.get("account", account)
@@ -26,13 +26,13 @@ class BrokerFTX(broker.Broker):
         load_dotenv()
         ftx_api_key = os.getenv("FTX_API_KEY")
         ftx_api_secret = os.getenv("FTX_API_SECRET")
-        self.ftx_exchange = ccxt.ftx({
-            'headers': {
-                'FTX-SUBACCOUNT': account,
-            },
+        params = {
             'apiKey': ftx_api_key,
             'secret': ftx_api_secret
-            })
+            }
+        if account != "":
+            params["headers"] = {"FTX-SUBACCOUNT": account}
+        self.ftx_exchange = ccxt.ftx(params)
         # check authentification
         try:
             authentificated = self.ftx_exchange.check_required_credentials()
