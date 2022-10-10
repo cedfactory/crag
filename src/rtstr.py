@@ -111,8 +111,6 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
         df_result.reset_index(inplace=True, drop=True)
 
-        self.log(df_result, header="get_df_selling_symbols_common")
-
         return df_result
 
     def get_df_selling_symbols(self, lst_symbols, df_sl_tp):

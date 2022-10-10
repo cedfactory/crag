@@ -175,9 +175,9 @@ class GridLevelPosition():
         outbound_zone_max = 100000
         outbound_zone_min = 10000
         self.UpperPriceLimit = 20500
-        self.LowerPriceLimit = 15000
-        self.grid_step = .5 # percent
-        self.grid_threshold = 0
+        self.LowerPriceLimit = 19700
+        self.grid_step = 1. # percent
+        self.grid_threshold = 0.08
         if params:
             self.grid_step = params.get("grid_step", self.grid_step)
             if isinstance(self.grid_step, str):

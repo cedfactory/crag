@@ -14,11 +14,11 @@ class TestGridLevelPosition:
         
         # expectations
         assert(gridLevel.UpperPriceLimit == 20500)
-        assert(gridLevel.LowerPriceLimit == 15000)
+        assert(gridLevel.LowerPriceLimit == 19700)
         expected_data = {
             "zone_id":["zone_0", "zone_1", "zone_2", "zone_3", "zone_4", "zone_5"],
-            "start":[20500, 19125, 17750, 16375, 15000, 10000],
-            "end": [100000, 20500, 19125, 17750, 16375, 15000],
+            "start":[20500, 20300, 20100, 19900, 19700, 10000],
+            "end": [100000, 20500, 20300, 20100, 19900, 19700],
             "previous_position": [0, 0, 0, 0, 0, 0],
             "actual_position": [0, 0, 0, 0, 0, 0],
             "zone_engaged": [False, False, False, False, False, False],
@@ -34,10 +34,10 @@ class TestGridLevelPosition:
         gridLevel = rtstr_grid_trading.GridLevelPosition(params=params)
 
         # action
-        zone_position = gridLevel.get_zone_position(15550)
+        zone_position = gridLevel.get_zone_position(19999)
 
         # expectations
-        assert(zone_position == 4)
+        assert(zone_position == 3)
 
     def test_get_set_previous_zone_position(self):
          # context
@@ -47,14 +47,14 @@ class TestGridLevelPosition:
         assert(previous_zone_position == -1)
 
         # action 1
-        gridLevel.set_previous_zone_position(15550)
+        gridLevel.set_previous_zone_position(19999)
 
         # expectations 1
         previous_zone_position = gridLevel.get_previous_zone_position()
-        assert(previous_zone_position == 4)
+        assert(previous_zone_position == 3)
 
         # action 2
-        gridLevel.set_previous_zone_position(20500)
+        gridLevel.set_previous_zone_position(20400)
 
         # expectations 2
         previous_zone_position = gridLevel.get_previous_zone_position()
@@ -95,10 +95,10 @@ class TestRTSTRGridTrading:
 
     def test_get_df_buying_symbols(self):
         # context
-        strategy = rtstr_grid_trading.StrategyGridTrading()
-        data = {"index":[0], "symbol":["BTC/USD"], "close":[20000.]}
+        strategy = rtstr_grid_trading.StrategyGridTrading({"grid_threshold":0.})
+        data = {"index":[0], "symbol":["BTC/USD"], "close":[19000.]}
         strategy = self._initialize_current_data(strategy, data)
-        strategy.grid.set_previous_zone_position(22000.)
+        strategy.grid.set_previous_zone_position(20000.)
 
         # action
         df = strategy.get_df_buying_symbols()
@@ -114,7 +114,7 @@ class TestRTSTRGridTrading:
 
     def test_get_df_selling_symbols(self):
         # context
-        strategy = rtstr_grid_trading.StrategyGridTrading()
+        strategy = rtstr_grid_trading.StrategyGridTrading({"grid_threshold":0.})
         data = {"index":[0], "symbol":["BTC/USD"], "close":[20000.]}
         strategy = self._initialize_current_data(strategy, data)
         strategy.grid.set_previous_zone_position(19000.)
