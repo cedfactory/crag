@@ -23,6 +23,7 @@ class Crag:
         self.logger = None
         self.clear_unused_data = True
         self.original_portfolio_value = 0
+        self.id = ""
         if params:
             self.broker = params.get("broker", self.broker)
             self.original_portfolio_value = self.broker.get_portfolio_value()
@@ -30,6 +31,7 @@ class Crag:
             self.interval = params.get("interval", self.interval)
             self.logger = params.get("logger", self.logger)
             self.working_directory = params.get("working_directory", self.working_directory)
+            self.id = params.get("id", self.id)
 
         self.current_trades = []
 
@@ -108,7 +110,7 @@ class Crag:
 
     def log(self, msg, header="", attachments=[]):
         if self.logger:
-            self.logger.log(msg, header=header, author=type(self).__name__, attachments=attachments)
+            self.logger.log(msg, header="["+self.id+"] "+header, author=type(self).__name__, attachments=attachments)
 
 
     def run(self):

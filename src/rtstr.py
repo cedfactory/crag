@@ -10,10 +10,12 @@ class RealTimeStrategy(metaclass=ABCMeta):
         self.SL = 0             # Stop Loss %
         self.TP = 0             # Take Profit %
         self.logger = None
+        self.id = ""
         if params:
             self.SL = params.get("sl", self.SL)
             self.TP = params.get("tp", self.TP)
             self.logger = params.get("logger", self.logger)
+            self.id = params.get("id", self.id)
         self.str_sl = "sl" + str(self.SL)
         self.str_tp = "tp" + str(self.TP)
 
@@ -35,7 +37,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
     def log(self, msg, header="", attachments=[]):
         if self.logger:
-            self.logger.log(msg, header=header, author=type(self).__name__, attachments=attachments)
+            self.logger.log(msg, header="[#"+self.id+"] "+header, author=type(self).__name__, attachments=attachments)
 
     def get_name(self):
         return type(self).__name__
