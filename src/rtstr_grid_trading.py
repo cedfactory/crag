@@ -182,9 +182,15 @@ class GridLevelPosition():
             self.grid_step = params.get("grid_step", self.grid_step)
             if isinstance(self.grid_step, str):
                 self.grid_step = float(self.grid_step)
+
             self.grid_threshold = params.get("grid_threshold", self.grid_threshold)
             if isinstance(self.grid_threshold, str):
                 self.grid_threshold = float(self.grid_threshold)
+
+            self.LowerPriceLimit = params.get("lower_grid", self.LowerPriceLimit)
+            if isinstance(self.LowerPriceLimit, str):
+                self.LowerPriceLimit = float(self.LowerPriceLimit)
+
             self.UpperPriceLimit = params.get("upper_grid", self.UpperPriceLimit)
             if isinstance(self.UpperPriceLimit, str):
                 self.UpperPriceLimit = float(self.UpperPriceLimit)
