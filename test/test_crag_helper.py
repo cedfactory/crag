@@ -52,7 +52,7 @@ class TestCrag:
             <strategy name="StrategyGridTrading">
                 <params share_size="12" global_tp="15000" grid_step="1." grid_threshold=".8" upper_grid="25000" />
             </strategy>
-            <broker name="ftx" account="test_bot" simulation="1" />
+            <broker name="ftx" account="test_bot" leverage="3" simulation="1" />
             <crag interval="20" />
         </configuration>''')
 
@@ -61,6 +61,7 @@ class TestCrag:
 
         # expectations
         assert(bot.broker != None)
+        assert(bot.broker.leverage == 3)
         assert(bot.rtstr.get_name() == "StrategyGridTrading")
         assert(bot.rtstr.share_size == 12)
         assert(bot.rtstr.global_tp == 15000)

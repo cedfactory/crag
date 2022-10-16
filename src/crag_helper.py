@@ -35,6 +35,8 @@ def initialization_from_configuration_file(configuration_file):
     broker_node = root.find("broker")
     broker_name = broker_node.get("name", None)
     account_name = broker_node.get("account", None)
+    leverage = broker_node.get("leverage", 1)
+    leverage = int(leverage)
     broker_simulation = broker_node.get("simulation", False)
     if broker_simulation == "1":
         broker_simulation = True
@@ -58,7 +60,7 @@ def initialization_from_configuration_file(configuration_file):
 
     my_broker = None
     if broker_name == "ftx":
-        my_broker = broker_ftx.BrokerFTX({'account':account_name, 'simulation':broker_simulation})
+        my_broker = broker_ftx.BrokerFTX({"account":account_name, "leverage":leverage, "simulation":broker_simulation})
 
     params = {'broker':my_broker, 'rtstr':my_strategy, "id": crag_id, 'interval':crag_interval, 'logger':crag_discord_bot}
     bot = crag.Crag(params)

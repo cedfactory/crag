@@ -114,9 +114,9 @@ class Crag:
 
 
     def run(self):
-        msg_broker_info = "{}\nCash : $ {}".format(type(self.broker).__name__, utils.KeepNDecimals(self.broker.get_cash(), 2))
-        msh_strategy_info = "Running with {}".format(type(self.rtstr).__name__)
-        msg = msg_broker_info + "\n" + msh_strategy_info
+        msg_broker_info = self.broker.get_summary()
+        msg_strategy_info = "Running with {}".format(type(self.rtstr).__name__)
+        msg = msg_broker_info + "\n" + msg_strategy_info
         self.log(msg, "run")
         self.rtstr.log_info()
         done = False
