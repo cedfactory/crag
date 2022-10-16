@@ -16,7 +16,7 @@ class BrokerFTX(broker.Broker):
         self.trades = []
         self.simulation = False
         account = ""
-        self.leverage = 1
+        self.leverage = 0
         if params:
             self.simulation = params.get("simulation", self.simulation)
             account = params.get("account", account)
