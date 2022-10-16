@@ -54,7 +54,7 @@ class BrokerFTX(broker.Broker):
                 return fn(self, *args, **kwargs)
         return wrapped
 
-    def get_summary(self):
+    def log_info(self):
         info = ""
         info += "{}".format(type(self).__name__)
         info += "\nCash : $ {}".format(utils.KeepNDecimals(self.get_cash(), 2))

@@ -8,7 +8,7 @@ class Broker(metaclass = ABCMeta):
             self.cash = params.get("cash", self.cash)
         self.rtdp = None
 
-    def get_summary():
+    def log_info(self):
         return ""
 
     def tick(self):

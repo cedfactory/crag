@@ -114,7 +114,7 @@ class Crag:
 
 
     def run(self):
-        msg_broker_info = self.broker.get_summary()
+        msg_broker_info = self.broker.log_info()
         msg_strategy_info = "Running with {}".format(type(self.rtstr).__name__)
         msg = msg_broker_info + "\n" + msg_strategy_info
         self.log(msg, "run")
