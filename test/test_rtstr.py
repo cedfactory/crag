@@ -1,6 +1,6 @@
 import pytest
 from . import test_rtctrl
-from src import rtstr,rtstr_bigwill,rtstr_cryptobot,rtstr_super_reversal,rtstr_trix,rtstr_VMC
+from src import rtstr,rtstr_bigwill,rtstr_cryptobot,rtstr_super_reversal,rtstr_trix,rtstr_VMC,rtstr_grid_trading,rtstr_grid_trading_multi,rtstr_balance_trading,rtstr_balance_trading_multi
 import pandas as pd
 
 def update_rtctrl(rtstr):
@@ -20,7 +20,7 @@ class TestRTSTR:
         available_strategies = rtstr.RealTimeStrategy.get_strategies_list()
 
         # expectations
-        expected_strategies = ['StrategyBigWill', 'StrategyCryptobot', 'StrategySuperReversal', 'StrategyTrix', 'StrategyVMC', "StrategyGridTrading", "StrategyBalanceTrading", "StrategyBalanceTradingMulti"]
+        expected_strategies = ['StrategyBigWill', 'StrategyCryptobot', 'StrategySuperReversal', 'StrategyTrix', 'StrategyVMC', "StrategyGridTrading", "StrategyGridTradingMulti", "StrategyBalanceTrading", "StrategyBalanceTradingMulti"]
         assert(set(available_strategies) == set(expected_strategies))
 
     def test_get_strategy_from_name_ok(self):
