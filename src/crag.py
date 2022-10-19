@@ -22,11 +22,18 @@ class Crag:
         self.interval = 1
         self.logger = None
         self.clear_unused_data = True
+        self.start_date = ""
         self.original_portfolio_value = 0
+        self.minimal_portfolio_value = 0
+        self.minimal_portfolio_date = ""
+        self.maximal_portfolio_value = 0
+        self.maximal_portfolio_date = ""
         self.id = ""
         if params:
             self.broker = params.get("broker", self.broker)
             self.original_portfolio_value = self.broker.get_portfolio_value()
+            self.minimal_portfolio_value = self.original_portfolio_value
+            self.maximal_portfolio_value = self.original_portfolio_value
             self.rtstr = params.get("rtstr", self.rtstr)
             self.interval = params.get("interval", self.interval)
             self.logger = params.get("logger", self.logger)
@@ -62,6 +69,11 @@ class Crag:
         if self.working_directory != None:
             self.export_filename = os.path.join(self.working_directory, self.export_filename)
             self.backup_filename = os.path.join(self.working_directory, self.backup_filename)
+
+        self.temp_debug = True
+        if self.temp_debug:
+            self.df_debug_traces = pd.DataFrame(columns=['time', 'cash_dol', ' coin_size', 'coin_dol', 'cash_pct', 'coin_pct', 'total_cash', 'total_pct'])
+
 
         # rabbitmq connection
         try:
@@ -114,6 +126,9 @@ class Crag:
 
 
     def run(self):
+        self.start_date = self.broker.get_current_datetime().strftime('%Y/%m/%d %H:%M:%S')
+        self.minimal_portfolio_date = self.start_date
+        self.maximal_portfolio_date = self.start_date
         msg_broker_info = self.broker.log_info()
         msg_strategy_info = "Running with {}".format(type(self.rtstr).__name__)
         msg = msg_broker_info + "\n" + msg_strategy_info
@@ -138,8 +153,19 @@ class Crag:
         self.export_history(self.export_filename)
 
     def step(self):
-        msg = "original portfolio value : $ {}\n".format(utils.KeepNDecimals(self.original_portfolio_value, 2))
-        msg += "current portfolio value : $ {}\n".format(utils.KeepNDecimals(self.broker.get_portfolio_value(), 2))
+        portfolio_value = self.broker.get_portfolio_value()
+        current_date = self.broker.get_current_datetime().strftime('%Y/%m/%d %H:%M:%S')
+        if portfolio_value < self.minimal_portfolio_value:
+            self.minimal_portfolio_value = portfolio_value
+            self.minimal_portfolio_date = current_date
+        if portfolio_value > self.maximal_portfolio_value:
+            self.maximal_portfolio_value = portfolio_value
+            self.maximal_portfolio_date = current_date
+
+        msg = "original portfolio value : $ {} ({})\n".format(utils.KeepNDecimals(self.original_portfolio_value, 2), self.start_date)
+        msg += "current portfolio value : $ {}\n".format(utils.KeepNDecimals(portfolio_value, 2))
+        msg += "    minimal portfolio value : $ {} ({})\n".format(utils.KeepNDecimals(self.minimal_portfolio_value, 2), self.minimal_portfolio_date)
+        msg += "    maximal portfolio value : $ {} ({})\n".format(utils.KeepNDecimals(self.maximal_portfolio_value, 2), self.maximal_portfolio_date)
         msg += "current cash = {}".format(utils.KeepNDecimals(self.broker.get_cash(), 2))
         self.log(msg, "step")
         if not self.zero_print:
@@ -229,37 +255,36 @@ class Crag:
         lst_symbols = [current_trade.symbol for current_trade in self.current_trades if current_trade.type == "BUY"]
         lst_symbols = list(set(lst_symbols))
         self.update_df_roi_sl_tp(lst_symbols)
+        self.rtstr.reset_selling_limits()
         if self.final_datetime and current_datetime >= self.final_datetime:
             # final step - force all the symbols to be sold
             df_selling_symbols = rtstr.RealTimeStrategy.get_df_forced_selling_symbols(lst_symbols, self.rtstr.get_rtctrl().df_rtctrl)
             self.flush_current_trade = True
-            trade_sell_limit = len(self.current_trades)
+            self.rtstr.force_selling_limits()
         else:
             # identify symbols to sell
             df_selling_symbols = self.rtstr.get_df_selling_symbols(lst_symbols, self.df_portfolio_status)
-            trade_sell_limit = self.rtstr.get_selling_limit(self.current_trades)
+            self.rtstr.set_selling_limits(df_selling_symbols)
 
         list_symbols_to_sell = df_selling_symbols.symbol.to_list()
         df_selling_symbols.set_index("symbol", inplace=True)
 
-        sell_counter = 0
         for current_trade in self.current_trades:
             if current_trade.type == "BUY" and current_trade.symbol in list_symbols_to_sell \
                     and df_selling_symbols["stimulus"][current_trade.symbol] != "HOLD"\
                     and (self.flush_current_trade
-                         or ((sell_counter < trade_sell_limit)
-                             # and (current_trade.gridzone >= self.rtstr.get_lower_zone_buy_engaged(current_trade.symbol)))):
-                             and (current_trade.gridzone > self.rtstr.get_lower_zone_buy_engaged(current_trade.symbol)))): # MODIF CEDE TO BE TESTED IN LIVE
+                         or ((self.rtstr.get_selling_limit(current_trade.symbol))
+                             and (current_trade.gridzone > self.rtstr.get_lower_zone_buy_engaged(current_trade.symbol)))):
                 sell_trade = self._prepare_sell_trade_from_bought_trade(current_trade, current_datetime, df_selling_symbols)
                 done = self.broker.execute_trade(sell_trade)
                 if done:
-                    sell_counter = sell_counter + 1
+                    self.rtstr.count_selling_limits(current_trade.symbol)
                     current_trade.type = "SOLD"
                     self.cash = self.broker.get_cash()
                     sell_trade.cash = self.cash
 
                     # Update grid strategy
-                    self.rtstr.set_lower_zone_unengaged_position(current_trade.gridzone)
+                    self.rtstr.set_lower_zone_unengaged_position(current_trade.symbol, current_trade.gridzone)
                     sell_trade.gridzone = current_trade.gridzone
 
                     # Portfolio Size/Value Update
@@ -326,7 +351,7 @@ class Crag:
                     current_trade.cash = self.cash
 
                     # Update grid strategy
-                    self.rtstr.set_zone_engaged(current_trade.symbol_price)
+                    self.rtstr.set_zone_engaged(current_trade.symbol, current_trade.symbol_price)
 
                     # Portfolio Size/Value Update
                     self.df_portfolio_status.at[symbol, 'portfolio_size'] = self.df_portfolio_status.at[symbol, 'portfolio_size'] + current_trade.net_size
@@ -360,6 +385,28 @@ class Crag:
             if current_trade.type == "BUY":
                 lst_buy_trades.append(current_trade)
 
+        # CEDE: Only for debug purpose
+        if self.temp_debug:
+            total = self.cash + self.df_portfolio_status['value'].sum()
+            coin_size = self.df_portfolio_status['portfolio_size'].sum()
+            print(current_datetime, ' cash : $', round(self.cash, 2), ' coin size : ', round(coin_size, 4), 'portfolio : $', round(self.df_portfolio_status['value'].sum(), 2), ' total : $', round(total))
+            cash_percent = 100 * self.cash / total
+            coin_percent = 100 * self.df_portfolio_status['value'].sum() / total
+            print(current_datetime, ' cash% : %', round(cash_percent,2), ' portfolio : %', round(coin_percent,2), ' total : %', round(cash_percent + coin_percent, 2))
+
+            # add row to end of DataFrame
+            self.df_debug_traces.loc[len(self.df_debug_traces.index)] = [current_datetime,
+                                                                         round(self.cash,2),
+                                                                         round(coin_size, 4),
+                                                                         round(self.df_portfolio_status['value'].sum(),2),
+                                                                         round(cash_percent,2),
+                                                                         round(coin_percent,2),
+                                                                         round(total, 2),
+                                                                         round(cash_percent + coin_percent, 2)]
+            if current_datetime == self.final_datetime:
+                self.export_debug_traces()
+
+
     def export_status(self):
         return self.broker.export_status()
 
@@ -378,3 +425,7 @@ class Crag:
         with open(self.backup_filename, 'wb') as file:
             # print("[crah::backup]", self.backup_filename)
             pickle.dump(self, file)
+
+    def export_debug_traces(self):
+        if self.temp_debug:
+            self.df_debug_traces.to_csv('debug_traces.csv')

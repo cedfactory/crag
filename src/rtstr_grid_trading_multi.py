@@ -2,7 +2,7 @@ import pandas as pd
 import os
 from . import rtdp, rtstr, rtctrl
 
-class StrategyGridTrading(rtstr.RealTimeStrategy):
+class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
 
     def __init__(self, params=None):
         super().__init__(params)
@@ -13,24 +13,20 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
 
         self.zero_print = True
 
-        self.grid = GridLevelPosition(params=params)
+        # Strategy Specifics
+        self.list_symbols = []
+        self.df_grid_multi = pd.DataFrame(columns=['symbol', 'grid', 'previous_zone_position', 'zone_position'])
+        self.df_selling_limits = pd.DataFrame(columns=['symbol', 'selling_limits'])
+        self.limit_sell = 1
+        self.params = params
 
-        self.previous_zone_position = 0
-        self.zone_position = 0
+        self.grid = 0
 
         self.share_size = 10
         self.global_tp = 10000
         if params:
             self.share_size = params.get("share_size", self.share_size)
-            if isinstance(self.share_size, str):
-                self.share_size = int(self.share_size)
             self.global_tp = params.get("global_tp", self.global_tp)
-            if isinstance(self.global_tp, str):
-                self.global_tp = int(self.global_tp)
-
-        self.list_symbols = []
-        self.df_selling_limits = pd.DataFrame(columns=['symbol', 'selling_limits'])
-        self.limit_sell = 1
 
         if self.global_tp == 0:
             self.global_tp = 10000
@@ -40,19 +36,16 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
 
     def get_data_description(self):
         ds = rtdp.DataDescription()
-        ds.symbols = ["BTC/USD"]
-        self.list_symbols = ds.symbols
+        ds.symbols = [
+            "BTC/USD",
+            "ETH/USD",
+            "XRP/USD",
+            "BNB/USD",
+            "FTT/USD"
+        ]
         ds.features = { "close" : None }
+        self.list_symbols = ds.symbols
         return ds
-
-    def log_info(self):
-        info = ""
-        info += "share_size = {}\n".format(self.share_size)
-        info += "global_tp = {}\n".format(self.global_tp)
-        info += "grid.grid_step = {}\n".format(self.grid.grid_step)
-        info += "grid.grid_threshold = {}\n".format(self.grid.grid_threshold)
-        info += "grid.upper_grid = {}\n".format(self.grid.UpperPriceLimit)
-        self.log(msg=info, header="StrategyGridTrading::log_info")
 
     def log_current_info(self):
         csvfilename = "df_grid.csv"
@@ -72,9 +65,10 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
         if self.tp_sl_abort:
             return False
 
-        if len(self.df_selling_limits) == 0:
+        if len(self.df_grid_multi) == 0:
             self.set_df_multi()
 
+        self.grid = self.df_grid_multi.loc[self.df_grid_multi['symbol'] == symbol, "grid"].iloc[0]
         if self.grid.get_zone_position(self.df_current_data['close'][symbol]) == -1:
             return False
 
@@ -92,18 +86,21 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
         return buying_signal
 
     def set_zone_engaged(self, symbol, price):
+        self.grid = self.df_grid_multi.loc[self.df_grid_multi['symbol'] == symbol, "grid"].iloc[0]
         self.grid.set_zone_engaged(price)
 
     def set_lower_zone_unengaged_position(self, symbol, zone_position):
+        self.grid = self.df_grid_multi.loc[self.df_grid_multi['symbol'] == symbol, "grid"].iloc[0]
         self.grid.set_lower_zone_unengaged_position(zone_position)
 
     def condition_for_selling(self, symbol, df_sl_tp):
         if self.tp_sl_abort:
             return True
 
-        if len(self.df_selling_limits) == 0:
+        if len(self.df_grid_multi) == 0:
             self.set_df_multi()
 
+        self.grid = self.df_grid_multi.loc[self.df_grid_multi['symbol'] == symbol, "grid"].iloc[0]
         if self.grid.get_zone_position(self.df_current_data['close'][symbol]) == -1:
             return False
 
@@ -136,6 +133,7 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
         if not symbol in self.rtctrl.prices_symbols or self.rtctrl.prices_symbols[symbol] < 0: # first init at -1
             return 0, 0, 0
 
+        self.grid = self.df_grid_multi.loc[self.df_grid_multi['symbol'] == symbol, "grid"].iloc[0]
         available_cash = self.rtctrl.wallet_cash
         if available_cash == 0:
             return 0, 0, 0
@@ -166,10 +164,13 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
 
     def get_symbol_selling_size(self, symbol):
         size, percent, zone = self.get_symbol_buying_size(symbol)
+
+        self.grid = self.df_grid_multi.loc[self.df_grid_multi['symbol'] == symbol, "grid"].iloc[0]
         zone = self.grid.get_lower_zone_buy_engaged(zone)
         return size, percent, zone
 
     def get_lower_zone_buy_engaged(self, symbol):
+        self.grid = self.df_grid_multi.loc[self.df_grid_multi['symbol'] == symbol, "grid"].iloc[0]
         zone = self.grid.get_zone_position(self.rtctrl.prices_symbols[symbol])
         return self.grid.get_lower_zone_buy_engaged(zone)
 
@@ -197,35 +198,37 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
         self.df_selling_limits['symbol'] = self.list_symbols
         self.df_selling_limits['selling_limits'] = 0
 
+        self.df_grid_multi = pd.DataFrame(columns=['symbol', 'grid', 'previous_zone_position', 'zone_position'])
+        self.df_grid_multi['symbol'] = self.list_symbols
+        self.df_grid_multi['previous_zone_position'] = 0
+        self.df_grid_multi['zone_position'] = 0
+
+        for symbol in self.list_symbols:
+            self.df_grid_multi.loc[self.df_grid_multi['symbol'] == symbol, "grid"] = GridLevelPosition(symbol, params=self.params)
 
 class GridLevelPosition():
-
-    def __init__(self, params=None):
-        outbound_zone_max = 100000
-        outbound_zone_min = 10000
+    def __init__(self, symbol, params=None):
         self.UpperPriceLimit = 20500
-        self.LowerPriceLimit = 19700
-        self.grid_step = 1. # percent
-        self.grid_threshold = 0.08
+        self.grid_step = .5 # percent
+        self.grid_threshold = 0
+        self.df_grid_params = pd.DataFrame()
         if params:
-            self.grid_step = params.get("grid_step", self.grid_step)
-            if isinstance(self.grid_step, str):
-                self.grid_step = float(self.grid_step)
+            self.df_grid_params = params.get("grid_df_params", self.df_grid_params)
 
-            self.grid_threshold = params.get("grid_threshold", self.grid_threshold)
-            if isinstance(self.grid_threshold, str):
-                self.grid_threshold = float(self.grid_threshold)
-
-            self.LowerPriceLimit = params.get("lower_grid", self.LowerPriceLimit)
-            if isinstance(self.LowerPriceLimit, str):
-                self.LowerPriceLimit = float(self.LowerPriceLimit)
-
-            self.UpperPriceLimit = params.get("upper_grid", self.UpperPriceLimit)
-            if isinstance(self.UpperPriceLimit, str):
-                self.UpperPriceLimit = float(self.UpperPriceLimit)
+        self.UpperPriceLimit = self.df_grid_params.loc[self.df_grid_params['symbol'] == symbol, 'UpperPriceLimit'].iloc[0]
+        self.LowerPriceLimit = self.df_grid_params.loc[self.df_grid_params['symbol'] == symbol, 'LowerPriceLimit'].iloc[0]
+        self.OutboundZoneMax = self.df_grid_params.loc[self.df_grid_params['symbol'] == symbol, 'OutboundZoneMax'].iloc[0]
+        self.OutboundZoneMin = self.df_grid_params.loc[self.df_grid_params['symbol'] == symbol, 'OutboundZoneMin'].iloc[0]
+        self.grid_step = self.df_grid_params.loc[self.df_grid_params['symbol'] == symbol, 'grid_step'].iloc[0]
+        self.grid_threshold = self.df_grid_params.loc[self.df_grid_params['symbol'] == symbol, 'grid_threshold'].iloc[0]
 
         GridLen = self.UpperPriceLimit - self.LowerPriceLimit
-        GridStep = int(GridLen * self.grid_step / 100)
+        GridStep = GridLen * self.grid_step / 100
+
+        # CEDE Comment: Alternative solution
+        # GridLen = self.UpperPriceLimit
+        # if GridLen * self.grid_step > 1:
+            # GridStep = int(GridLen * self.grid_step / 100)
 
         zone_limit = self.LowerPriceLimit
         lst_zone_limit = []
@@ -236,10 +239,10 @@ class GridLevelPosition():
         lst_zone_limit.append(self.UpperPriceLimit)
 
         lst_start_zone = lst_zone_limit.copy()
-        lst_start_zone.insert(0, outbound_zone_min)
+        lst_start_zone.insert(0, self.OutboundZoneMin)
 
         lst_end_zone = lst_zone_limit.copy()
-        lst_end_zone.append(outbound_zone_max)
+        lst_end_zone.append(self.OutboundZoneMax)
 
         lst_zone_id = ['zone_' + str(i) for i in range(len(lst_start_zone))]
 
@@ -251,6 +254,9 @@ class GridLevelPosition():
         self.df_grid['start'] = lst_start_zone
         self.df_grid['end'] = lst_end_zone
 
+        self.df_grid['start'] = self.df_grid['start'] + self.df_grid['start'] * self.grid_threshold / 100
+        self.df_grid['end'] = self.df_grid['end'] - self.df_grid['end'] * self.grid_threshold / 100
+
         self.df_grid['previous_position'] = 0
         self.df_grid['actual_position'] = 0
         self.df_grid['zone_engaged'] = False
@@ -260,8 +266,14 @@ class GridLevelPosition():
 
     def get_zone_position(self, price):
         try:
-            zone = self.df_grid[( (self.df_grid['start'] + self.df_grid['start'] * self.grid_threshold / 100) < price)
-                                & ( (self.df_grid['end'] - self.df_grid['end'] * self.grid_threshold / 100) >= price)].index[0]
+            start_debug = (self.df_grid['start']) < price
+            end_debug = ( (self.df_grid['end']) >= price)
+            if len(self.df_grid[( (self.df_grid['start']) < price)
+                                & ( (self.df_grid['end']) >= price)]) > 0:
+                zone = self.df_grid[( (self.df_grid['start']) < price)
+                                    & ( (self.df_grid['end']) >= price)].index[0]
+            else:
+                zone = -1
         except:
             zone = -1
         return zone
@@ -317,3 +329,6 @@ class GridLevelPosition():
             df2 = df_grid.loc[(self.df_grid['zone_engaged'])]
             first_lower_position = df2.zone_engaged.isnull().index[0]
         return first_lower_position
+
+    def get_UpperPriceLimit(self):
+        return self.UpperPriceLimit
