@@ -28,6 +28,10 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
             if isinstance(self.global_tp, str):
                 self.global_tp = int(self.global_tp)
 
+        self.list_symbols = []
+        self.df_selling_limits = pd.DataFrame(columns=['symbol', 'selling_limits'])
+        self.limit_sell = 1
+
         if self.global_tp == 0:
             self.global_tp = 10000
         self.net_size = 0.0
@@ -37,6 +41,7 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
     def get_data_description(self):
         ds = rtdp.DataDescription()
         ds.symbols = ["BTC/USD"]
+        self.list_symbols = ds.symbols
         ds.features = { "close" : None }
         return ds
 
@@ -67,6 +72,9 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
         if self.tp_sl_abort:
             return False
 
+        if len(self.df_selling_limits) == 0:
+            self.set_df_multi()
+
         if self.grid.get_zone_position(self.df_current_data['close'][symbol]) == -1:
             return False
 
@@ -77,23 +85,24 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
                 and (not(self.grid.zone_buy_engaged(self.df_current_data['close'][symbol]))) \
                 and (self.previous_zone_position != -1)):
             buying_signal = True
-            # Engage the zone proceed in Crag
-            # self.grid.set_zone_engaged(self.df_current_data['close'][symbol])
         else:
             buying_signal = False
 
         self.grid.set_previous_zone_position(self.df_current_data['close'][symbol])
         return buying_signal
 
-    def set_zone_engaged(self, price):
+    def set_zone_engaged(self, symbol, price):
         self.grid.set_zone_engaged(price)
 
-    def set_lower_zone_unengaged_position(self, zone_position):
+    def set_lower_zone_unengaged_position(self, symbol, zone_position):
         self.grid.set_lower_zone_unengaged_position(zone_position)
 
     def condition_for_selling(self, symbol, df_sl_tp):
         if self.tp_sl_abort:
             return True
+
+        if len(self.df_selling_limits) == 0:
+            self.set_df_multi()
 
         if self.grid.get_zone_position(self.df_current_data['close'][symbol]) == -1:
             return False
@@ -117,6 +126,7 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
 
         if self.rtctrl.wallet_value <= self.rtctrl.init_cash_value + self.rtctrl.init_cash_value * self.global_tp_net / 100:
             self.tp_sl_abort = True
+            selling_signal = True
             print("abort: $", self.rtctrl.wallet_value)
 
         return selling_signal
@@ -163,11 +173,30 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
         zone = self.grid.get_zone_position(self.rtctrl.prices_symbols[symbol])
         return self.grid.get_lower_zone_buy_engaged(zone)
 
-    def get_selling_limit(self, trades):
-        # number of sell performed during one cycle
-        strategy_1 = 1
-        strategy_all = len(trades)
-        return strategy_1
+    def reset_selling_limits(self):
+        self.df_selling_limits["selling_limits"] = self.limit_sell
+
+    def set_selling_limits(self, df_selling_symbols):
+        for symbol in df_selling_symbols.symbol.tolist():
+            self.df_selling_limits.loc[self.df_selling_limits['symbol'] == symbol, "selling_limits"] = 0
+
+    def force_selling_limits(self):
+        self.df_selling_limits["selling_limits"] = self.limit_sell + 1
+
+    def count_selling_limits(self, symbol):
+        self.df_selling_limits.loc[self.df_selling_limits['symbol'] == symbol, "selling_limits"] = \
+            self.df_selling_limits.loc[self.df_selling_limits['symbol'] == symbol, "selling_limits"].iloc[0] + 1
+
+    def get_selling_limit(self, symbol):
+        if self.df_selling_limits.loc[self.df_selling_limits['symbol'] == symbol, "selling_limits"].iloc[0] < 1:
+            return True
+        else:
+            return False
+
+    def set_df_multi(self):
+        self.df_selling_limits['symbol'] = self.list_symbols
+        self.df_selling_limits['selling_limits'] = 0
+
 
 class GridLevelPosition():
 
@@ -231,7 +260,8 @@ class GridLevelPosition():
 
     def get_zone_position(self, price):
         try:
-            zone = self.df_grid[( (self.df_grid['start'] + self.df_grid['start'] * self.grid_threshold / 100) < price) & ( (self.df_grid['end'] - self.df_grid['end'] * self.grid_threshold / 100) >= price)].index[0]
+            zone = self.df_grid[( (self.df_grid['start'] + self.df_grid['start'] * self.grid_threshold / 100) < price)
+                                & ( (self.df_grid['end'] - self.df_grid['end'] * self.grid_threshold / 100) >= price)].index[0]
         except:
             zone = -1
         return zone

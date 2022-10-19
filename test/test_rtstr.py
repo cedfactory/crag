@@ -20,7 +20,7 @@ class TestRTSTR:
         available_strategies = rtstr.RealTimeStrategy.get_strategies_list()
 
         # expectations
-        expected_strategies = ['StrategyBigWill', 'StrategyCryptobot', 'StrategySuperReversal', 'StrategyTrix', 'StrategyVMC', "StrategyGridTrading"]
+        expected_strategies = ['StrategyBigWill', 'StrategyCryptobot', 'StrategySuperReversal', 'StrategyTrix', 'StrategyVMC', "StrategyGridTrading", "StrategyBalanceTrading", "StrategyBalanceTradingMulti"]
         assert(set(available_strategies) == set(expected_strategies))
 
     def test_get_strategy_from_name_ok(self):
