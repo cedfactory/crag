@@ -28,9 +28,11 @@ class StrategyBalanceTradingMulti(rtstr.RealTimeStrategy):
         # Strategy Specifics
         self.list_symbols = []
         self.symbol_pct = 0.5          #BTC%
+        # CEDE Comment: Merge the 3 df into one unique
         self.df_symbol_pct = pd.DataFrame(columns=['symbol', 'symbol_pct'])
         self.df_balance_symbol = pd.DataFrame(columns=['symbol', 'balance_symbol'])
         self.df_symbol_current_pct = pd.DataFrame(columns=['symbol', 'balance_symbol'])
+
         self.df_selling_limits = pd.DataFrame(columns=['symbol', 'selling_limits'])
 
         self.usd_pct = 0.5             #USD%
