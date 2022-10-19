@@ -38,7 +38,7 @@ class BrokerFTX(broker.Broker):
         # check authentification
         try:
             authentificated = self.ftx_exchange.check_required_credentials()
-            if self.leverage != 1:
+            if self.leverage != 0:
                 response = self.ftx_exchange.private_post_account_leverage({"leverage": self.leverage})
         except ccxt.AuthenticationError as err:
             print("[BrokerFTX] AuthenticationError : ", err)

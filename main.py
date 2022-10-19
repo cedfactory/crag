@@ -1,4 +1,4 @@
-from src import rtdp,rtdp_simulation,broker_simulation,broker_ftx,rtstr,rtstr_grid_trading, rtstr_super_reversal,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC,analyser,benchmark,automatic_test_plan
+from src import rtdp,rtdp_simulation,broker_simulation,broker_ftx,rtstr,rtstr_grid_trading,rtstr_grid_trading_multi,rtstr_balance_trading,rtstr_balance_trading_multi,rtstr_super_reversal,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC,analyser,benchmark,automatic_test_plan
 from src import crag,crag_helper
 from src import logger
 # from src import debug
@@ -122,6 +122,7 @@ def crag_simulation_scenario(strategy_name, start_date, end_date, interval, sl, 
                                                                                  "global_tp": global_tp,
                                                                                  "grid_threshold": grid_threshold,
                                                                                  "upper_grid": upper_grid,
+                                                                                 "grid_df_params": pd.read_csv('../../grid_df_params.csv'),
                                                                                  "working_directory": working_directory})
     else:
         print("💥 missing known strategy ({})".format(strategy_name))
@@ -131,7 +132,10 @@ def crag_simulation_scenario(strategy_name, start_date, end_date, interval, sl, 
     broker_params = {'cash':10000, 'start': start_date, 'end': end_date, "intervals": interval, "working_directory": working_directory}
     simu_broker = broker_simulation.SimBroker(broker_params)
 
-    crag_params = {'broker':simu_broker, 'rtstr':strategy, "working_directory": working_directory}
+    crag_params = {'broker':simu_broker,
+                   'rtstr':strategy,
+                   "working_directory": working_directory
+                   }
     bot = crag.Crag(crag_params)
 
     bot.run()
@@ -176,7 +180,9 @@ def crag_test_scenario(df):
         os.chdir(strategy_directory)
         print("recorder: ",os.getcwd())
 
-        recorder_params = {'start': start_date, 'end': end_date, "intervals": list_interval[0], "working_directory": strategy_directory}
+        recorder_params = {'start': start_date, 'end': end_date,
+                           "intervals": list_interval[0], "working_directory": strategy_directory,
+                           }
         recorder = rtdp_simulation.SimRealTimeDataProvider(recorder_params)
 
         # directory_data_target = os.path.join(strategy_directory, "./data/")
@@ -280,7 +286,7 @@ if __name__ == '__main__':
                      # ['2019-07-21', '2020-09-01'], # OK
                      # ['2021-03-01', '2021-10-01'], # OK
                      # ['2021-11-01', '2022-08-08'],
-                     ['2022-06-15', '2022-10-08']
+                       ['2022-06-15', '2022-10-08']
     ]
 
     path_initial_dir = os.getcwd()
@@ -291,13 +297,16 @@ if __name__ == '__main__':
                   # "start": '2022-01-01',  # YYYY-MM-DD
                   # "end": '2022-08-08',  # YYYY-MM-DD
                   "split": 1,
-                  # "interval": '1h',
                   "interval": '1h',
+                  # "interval": '1d',
                   # "startegies": ['StrategySuperReversal', 'StrategyTrix', 'StrategyCryptobot'],
                   # "startegies": ['StrategySuperReversal', 'StrategyCryptobot'],
                   # "startegies": ['StrategySuperReversal'],
                   # "startegies": ['StrategyCryptobot'],
-                  "startegies": ['StrategyGridTrading'],
+                  # "startegies": ['StrategyGridTrading'],
+                  "startegies": ['StrategyGridTradingMulti'],
+                  # "startegies": ['StrategyBalanceTrading'],
+                  # "startegies": ['StrategyBalanceTradingMulti'],
                   # "sl": [0, -5, -10],
                   # "tp": [0, 10, 20]
                   "sl": [0],
@@ -308,7 +317,7 @@ if __name__ == '__main__':
                   "share_size": [10],
                   "grid_step": [1],
                   "grid_threshold": [0.08],
-                  "upper_grid": [21500, 21000, 20500, 20000, 19500]
+                  "upper_grid": [20000],
                   }
 
     if len(sys.argv) >= 2:

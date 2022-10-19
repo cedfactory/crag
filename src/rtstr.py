@@ -138,14 +138,14 @@ class RealTimeStrategy(metaclass=ABCMeta):
          
         return df_result
 
-    def set_lower_zone_unengaged_position(self, zone_position):
+    def set_lower_zone_unengaged_position(self, symbol, zone_position):
         return True
 
-    def set_zone_engaged(self, price):
+    def set_zone_engaged(self, symbol, price):
         return True
 
     def get_lower_zone_buy_engaged(self, zone):
-        return -1
+        return -10
 
     @staticmethod
     def get_df_forced_selling_symbols(selection_symbols, df_rtctrl):
@@ -228,8 +228,20 @@ class RealTimeStrategy(metaclass=ABCMeta):
         return df_result
     '''
 
-    def get_selling_limit(self, trades):
-        return len(trades)
+    def reset_selling_limits(self):
+        return True
+
+    def force_selling_limits(self):
+        return True
+
+    def get_selling_limit(self, symbol):
+        return True
+
+    def count_selling_limits(self, symbol):
+        return True
+
+    def set_selling_limits(self, symbol):
+        return True
 
     @staticmethod
     def __get_strategies_list_from_class(strategy):
