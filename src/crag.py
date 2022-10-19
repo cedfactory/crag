@@ -359,6 +359,7 @@ class Crag:
             if current_trade.type == "BUY":
                 lst_buy_trades.append(current_trade)
 
+        # CEDE: Only for debug purpose
         if self.temp_debug:
             total = self.cash + self.df_portfolio_status['value'].sum()
             coin_size = self.df_portfolio_status['portfolio_size'].sum()
