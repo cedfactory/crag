@@ -22,11 +22,18 @@ class Crag:
         self.interval = 1
         self.logger = None
         self.clear_unused_data = True
+        self.start_date = ""
         self.original_portfolio_value = 0
+        self.minimal_portfolio_value = 0
+        self.minimal_portfolio_date = ""
+        self.maximal_portfolio_value = 0
+        self.maximal_portfolio_date = ""
         self.id = ""
         if params:
             self.broker = params.get("broker", self.broker)
             self.original_portfolio_value = self.broker.get_portfolio_value()
+            self.minimal_portfolio_value = self.original_portfolio_value
+            self.maximal_portfolio_value = self.original_portfolio_value
             self.rtstr = params.get("rtstr", self.rtstr)
             self.interval = params.get("interval", self.interval)
             self.logger = params.get("logger", self.logger)
@@ -114,6 +121,9 @@ class Crag:
 
 
     def run(self):
+        self.start_date = self.broker.get_current_datetime().strftime('%Y/%m/%d %H:%M:%S')
+        self.minimal_portfolio_date = self.start_date
+        self.maximal_portfolio_date = self.start_date
         msg_broker_info = self.broker.log_info()
         msg_strategy_info = "Running with {}".format(type(self.rtstr).__name__)
         msg = msg_broker_info + "\n" + msg_strategy_info
@@ -138,8 +148,19 @@ class Crag:
         self.export_history(self.export_filename)
 
     def step(self):
-        msg = "original portfolio value : $ {}\n".format(utils.KeepNDecimals(self.original_portfolio_value, 2))
-        msg += "current portfolio value : $ {}\n".format(utils.KeepNDecimals(self.broker.get_portfolio_value(), 2))
+        portfolio_value = self.broker.get_portfolio_value()
+        current_date = self.broker.get_current_datetime().strftime('%Y/%m/%d %H:%M:%S')
+        if portfolio_value < self.minimal_portfolio_value:
+            self.minimal_portfolio_value = portfolio_value
+            self.minimal_portfolio_date = current_date
+        if portfolio_value > self.maximal_portfolio_value:
+            self.maximal_portfolio_value = portfolio_value
+            self.maximal_portfolio_date = current_date
+
+        msg = "original portfolio value : $ {} ({})\n".format(utils.KeepNDecimals(self.original_portfolio_value, 2), self.start_date)
+        msg += "current portfolio value : $ {}\n".format(utils.KeepNDecimals(portfolio_value, 2))
+        msg += "    minimal portfolio value : $ {} ({})\n".format(utils.KeepNDecimals(self.minimal_portfolio_value, 2), self.minimal_portfolio_date)
+        msg += "    maximal portfolio value : $ {} ({})\n".format(utils.KeepNDecimals(self.maximal_portfolio_value, 2), self.maximal_portfolio_date)
         msg += "current cash = {}".format(utils.KeepNDecimals(self.broker.get_cash(), 2))
         self.log(msg, "step")
         if not self.zero_print:
