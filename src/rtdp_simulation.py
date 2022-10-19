@@ -115,7 +115,7 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
         value = df_symbol.iloc[self.scheduler.get_current_position()]['close']
         return value
 
-    def get_current_datetime(self):
+    def get_current_datetime(self, format = None):
         if not self._is_in_dataframe():
             return None
         return self.scheduler.get_current_time()

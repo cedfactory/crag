@@ -68,7 +68,7 @@ class IRealTimeDataProvider(metaclass = ABCMeta):
         pass
 
     @abstractmethod
-    def get_current_datetime(self):
+    def get_current_datetime(self, format = None):
         pass
 
     @abstractmethod
@@ -128,8 +128,11 @@ class RealTimeDataProvider(IRealTimeDataProvider):
     def get_value(self, symbol):
         return None
 
-    def get_current_datetime(self):
-        return datetime.now()
+    def get_current_datetime(self, format = None):
+        current_datetime = datetime.now()
+        if isinstance(current_datetime, datetime) and format != None:
+            current_datetime = current_datetime.strftime(format)
+        return current_datetime
 
     def check_data_description(self, data_description):
         pass

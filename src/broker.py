@@ -31,9 +31,9 @@ class Broker(metaclass = ABCMeta):
         # todo : to implement
         return self.cash
 
-    def get_current_datetime(self):
+    def get_current_datetime(self, format=None):
         if self.rtdp:
-            return self.rtdp.get_current_datetime()
+            return self.rtdp.get_current_datetime(format)
         return None
 
     def get_final_datetime(self):
