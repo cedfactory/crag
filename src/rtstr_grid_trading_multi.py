@@ -78,7 +78,6 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
         if ((self.zone_position > self.previous_zone_position)
                 and (not(self.grid.zone_buy_engaged(self.df_current_data['close'][symbol]))) \
                 and (self.previous_zone_position != -1)):
-            print("BUYING: ", symbol) # CEDE DEBUG
             buying_signal = True
         else:
             buying_signal = False
@@ -113,7 +112,6 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
             and (self.previous_zone_position != -1)) \
                 or ((isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] > self.TP)
                     or (isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] < self.SL)):
-            print("SELLING: ", symbol)  # CEDE DEBUG
             selling_signal = True
         else:
             selling_signal = False
@@ -225,11 +223,12 @@ class GridLevelPosition():
         self.grid_threshold = self.df_grid_params.loc[self.df_grid_params['symbol'] == symbol, 'grid_threshold'].iloc[0]
 
         GridLen = self.UpperPriceLimit - self.LowerPriceLimit
+        GridStep = GridLen * self.grid_step / 100
+
+        # CEDE Comment: Alternative solution
         # GridLen = self.UpperPriceLimit
         # if GridLen * self.grid_step > 1:
             # GridStep = int(GridLen * self.grid_step / 100)
-
-        GridStep = GridLen * self.grid_step / 100
 
         zone_limit = self.LowerPriceLimit
         lst_zone_limit = []
