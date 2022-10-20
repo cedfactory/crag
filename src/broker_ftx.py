@@ -146,6 +146,9 @@ class BrokerFTX(broker.Broker):
                 print(order_structure)
             except BaseException as err:
                 print("[BrokerFTX::execute_trade] An error occured : {}".format(err))
+                print("[BrokerFTX::execute_trade]   -> symbol : {}".format(symbol))
+                print("[BrokerFTX::execute_trade]   -> side :   {}".format(side))
+                print("[BrokerFTX::execute_trade]   -> amount : {}".format(amount))
             return True
         return False
 
