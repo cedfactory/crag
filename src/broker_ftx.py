@@ -114,7 +114,6 @@ class BrokerFTX(broker.Broker):
                 result = self.ftx_exchange.fetch_ticker(symbol)["close"]
             except BaseException as err:
                 print("[BrokerFTX::get_value] An error occured : {}".format(err))
-        print(result)
         return result
 
     @authentication_required
