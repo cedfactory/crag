@@ -15,15 +15,16 @@ class BrokerFTX(broker.Broker):
         self.rtdp = rtdp.RealTimeDataProvider(params)
         self.trades = []
         self.simulation = False
-        account = ""
+        self.account = ""
         self.leverage = 0
         if params:
             self.simulation = params.get("simulation", self.simulation)
-            account = params.get("account", account)
+            self.account = params.get("account", self.account)
             self.leverage = params.get("leverage", self.leverage)
-        self.authentificated = self.authentification(account)
+        if not self.authentification():
+            print("[BrokerFTX] : Problem encountered during authentification")
          
-    def authentification(self, account):
+    def authentification(self):
         authentificated = False
         load_dotenv()
         ftx_api_key = os.getenv("FTX_API_KEY")
@@ -32,8 +33,8 @@ class BrokerFTX(broker.Broker):
             'apiKey': ftx_api_key,
             'secret': ftx_api_secret
             }
-        if account != "":
-            params["headers"] = {"FTX-SUBACCOUNT": account}
+        if self.account != "":
+            params["headers"] = {"FTX-SUBACCOUNT": self.account}
         self.ftx_exchange = ccxt.ftx(params)
         # check authentification
         try:
@@ -47,7 +48,7 @@ class BrokerFTX(broker.Broker):
     def authentication_required(fn):
         """decoration for methods that require authentification"""
         def wrapped(self, *args, **kwargs):
-            if not self.authentificated:
+            if not self.authentification():
                 print("You must be authenticated to use this method {}".format(fn))
                 return None
             else:
@@ -71,7 +72,7 @@ class BrokerFTX(broker.Broker):
                 if 'USD' in balance:
                     result = float(balance['USD']['free'])
             except BaseException as err:
-                print("[BrokerFTX::get_balance] An error occured : {}".format(err))
+                print("[BrokerFTX::get_cash] An error occured : {}".format(err))
         return result
 
     @authentication_required
@@ -105,9 +106,16 @@ class BrokerFTX(broker.Broker):
                 print("[BrokerFTX::get_positions] An error occured : {}".format(err))
         return result
        
+    @authentication_required
     def get_value(self, symbol):
-        ticker = self.ftx_exchange.fetch_ticker(symbol)
-        return ticker["close"]
+        result = None
+        if self.ftx_exchange:
+            try:
+                result = self.ftx_exchange.fetch_ticker(symbol)["close"]
+            except BaseException as err:
+                print("[BrokerFTX::get_value] An error occured : {}".format(err))
+        print(result)
+        return result
 
     @authentication_required
     def get_commission(self, symbol):
