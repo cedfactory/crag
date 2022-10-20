@@ -214,6 +214,8 @@ class GridLevelPosition():
         self.df_grid_params = pd.DataFrame()
         if params:
             self.df_grid_params = params.get("grid_df_params", self.df_grid_params)
+            if isinstance(self.df_grid_params, str):
+                self.df_grid_params = pd.read_csv(self.df_grid_params)
 
         self.UpperPriceLimit = self.df_grid_params.loc[self.df_grid_params['symbol'] == symbol, 'UpperPriceLimit'].iloc[0]
         self.LowerPriceLimit = self.df_grid_params.loc[self.df_grid_params['symbol'] == symbol, 'LowerPriceLimit'].iloc[0]

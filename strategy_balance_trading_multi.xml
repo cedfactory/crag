@@ -1,0 +1,6 @@
+<configuration>
+    <strategy id="room2" name="StrategyBalanceTradingMulti">
+    </strategy>
+    <broker name="ftx" account="room2" simulation="0" />
+    <crag id="room2" interval="60" />
+</configuration>

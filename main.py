@@ -122,7 +122,7 @@ def crag_simulation_scenario(strategy_name, start_date, end_date, interval, sl, 
                                                                                  "global_tp": global_tp,
                                                                                  "grid_threshold": grid_threshold,
                                                                                  "upper_grid": upper_grid,
-                                                                                 "grid_df_params": pd.read_csv('../../grid_df_params.csv'),
+                                                                                 "grid_df_params": '../../grid_df_params.csv',
                                                                                  "working_directory": working_directory})
     else:
         print("💥 missing known strategy ({})".format(strategy_name))
