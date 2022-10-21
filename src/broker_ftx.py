@@ -143,7 +143,6 @@ class BrokerFTX(broker.Broker):
             amount = trade.net_price / trade.symbol_price
             try:
                 order_structure = self.ftx_exchange.create_order(symbol, "market", side, amount)
-                print(order_structure)
             except BaseException as err:
                 print("[BrokerFTX::execute_trade] An error occured : {}".format(err))
                 print("[BrokerFTX::execute_trade]   -> symbol : {}".format(symbol))
