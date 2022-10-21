@@ -86,8 +86,7 @@ def crag_benchmark_scenario(df, start_date, end_date, period):
     my_benchmark.set_benchmark_df_results(df)
 
 def crag_ftx():
-    my_broker_ftx = broker_ftx.BrokerFTX({'account':'test_bot', 'simulation':0})
-    print("authentification : {}".format(my_broker_ftx.authentificated))
+    my_broker_ftx = broker_ftx.BrokerFTX({'account':'room2', 'simulation':0})
 
     print("### balance ###")
     balance = my_broker_ftx.get_balance()
