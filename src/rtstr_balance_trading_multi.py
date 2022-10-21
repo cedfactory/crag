@@ -23,6 +23,9 @@ class StrategyBalanceTradingMulti(rtstr.RealTimeStrategy):
             if isinstance(self.df_size_grid_params, str):
                 self.df_size_grid_params = pd.read_csv(self.df_size_grid_params)
 
+        # add commision 0.08
+        self.df_size_grid_params['balance_min_size'] = self.df_size_grid_params['balance_min_size'] / (1 - 0.008)
+
         if self.global_tp == 0:
             self.global_tp = 10000
         self.net_size = 0.0
