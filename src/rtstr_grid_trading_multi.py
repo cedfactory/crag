@@ -26,7 +26,11 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
         self.global_tp = 10000
         if params:
             self.share_size = params.get("share_size", self.share_size)
+            if isinstance(self.share_size, str):
+                self.share_size = int(self.share_size)
             self.global_tp = params.get("global_tp", self.global_tp)
+            if isinstance(self.global_tp, str):
+                self.global_tp = int(self.global_tp)
 
         if self.global_tp == 0:
             self.global_tp = 10000
