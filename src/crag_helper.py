@@ -23,11 +23,20 @@ def initialization_from_configuration_file(configuration_file):
         return
 
     strategy_node = root.find("strategy")
+    strategy_id = strategy_node.get("id", "")
     strategy_name = strategy_node.get("name", None)
+    params_node = list(strategy_node.iter('params'))
+    params = {}
+    params["id"] = strategy_id
+    if len(params_node) == 1:
+        for name, value in params_node[0].attrib.items():
+            params[name] = value
 
     broker_node = root.find("broker")
     broker_name = broker_node.get("name", None)
     account_name = broker_node.get("account", None)
+    leverage = broker_node.get("leverage", 1)
+    leverage = int(leverage)
     broker_simulation = broker_node.get("simulation", False)
     if broker_simulation == "1":
         broker_simulation = True
@@ -37,9 +46,10 @@ def initialization_from_configuration_file(configuration_file):
     crag_node = root.find("crag")
     crag_interval = crag_node.get("interval", 10)
     crag_interval = int(crag_interval)
+    crag_id = crag_node.get("id", "")
 
     crag_discord_bot = _initialize_crag_discord_bot()
-    params = {"logger":crag_discord_bot}
+    params["logger"] = crag_discord_bot
     available_strategies = rtstr.RealTimeStrategy.get_strategies_list()
     if strategy_name in available_strategies:
         my_strategy = rtstr.RealTimeStrategy.get_strategy_from_name(strategy_name, params)
@@ -50,9 +60,9 @@ def initialization_from_configuration_file(configuration_file):
 
     my_broker = None
     if broker_name == "ftx":
-        my_broker = broker_ftx.BrokerFTX({'account':account_name, 'simulation':broker_simulation})
+        my_broker = broker_ftx.BrokerFTX({"account":account_name, "leverage":leverage, "simulation":broker_simulation})
 
-    params = {'broker':my_broker, 'rtstr':my_strategy, 'interval':crag_interval, 'logger':crag_discord_bot}
+    params = {'broker':my_broker, 'rtstr':my_strategy, "id": crag_id, 'interval':crag_interval, 'logger':crag_discord_bot}
     bot = crag.Crag(params)
     return bot
 

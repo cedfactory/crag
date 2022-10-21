@@ -304,9 +304,9 @@ if __name__ == '__main__':
                   # "startegies": ['StrategySuperReversal'],
                   # "startegies": ['StrategyCryptobot'],
                   # "startegies": ['StrategyGridTrading'],
-                  # "startegies": ['StrategyGridTradingMulti'],
+                  "startegies": ['StrategyGridTradingMulti'],
                   # "startegies": ['StrategyBalanceTrading'],
-                  "startegies": ['StrategyBalanceTradingMulti'],
+                  # "startegies": ['StrategyBalanceTradingMulti'],
                   # "sl": [0, -5, -10],
                   # "tp": [0, 10, 20]
                   "sl": [0],

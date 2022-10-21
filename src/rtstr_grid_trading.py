@@ -22,7 +22,15 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
         self.global_tp = 10000
         if params:
             self.share_size = params.get("share_size", self.share_size)
+            if isinstance(self.share_size, str):
+                self.share_size = int(self.share_size)
             self.global_tp = params.get("global_tp", self.global_tp)
+            if isinstance(self.global_tp, str):
+                self.global_tp = int(self.global_tp)
+
+        self.list_symbols = []
+        self.df_selling_limits = pd.DataFrame(columns=['symbol', 'selling_limits'])
+        self.limit_sell = 1
 
         self.list_symbols = []
         self.df_selling_limits = pd.DataFrame(columns=['symbol', 'selling_limits'])
@@ -40,6 +48,15 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
         self.list_symbols = ds.symbols
         ds.features = { "close" : None }
         return ds
+
+    def log_info(self):
+        info = ""
+        info += "share_size = {}\n".format(self.share_size)
+        info += "global_tp = {}\n".format(self.global_tp)
+        info += "grid.grid_step = {}\n".format(self.grid.grid_step)
+        info += "grid.grid_threshold = {}\n".format(self.grid.grid_threshold)
+        info += "grid.upper_grid = {}\n".format(self.grid.UpperPriceLimit)
+        self.log(msg=info, header="StrategyGridTrading::log_info")
 
     def log_current_info(self):
         csvfilename = "df_grid.csv"
@@ -191,13 +208,25 @@ class GridLevelPosition():
         outbound_zone_max = 100000
         outbound_zone_min = 10000
         self.UpperPriceLimit = 20500
-        self.LowerPriceLimit = 15000
-        self.grid_step = .5 # percent
-        self.grid_threshold = 0
+        self.LowerPriceLimit = 19700
+        self.grid_step = 1. # percent
+        self.grid_threshold = 0.08
         if params:
             self.grid_step = params.get("grid_step", self.grid_step)
+            if isinstance(self.grid_step, str):
+                self.grid_step = float(self.grid_step)
+
             self.grid_threshold = params.get("grid_threshold", self.grid_threshold)
+            if isinstance(self.grid_threshold, str):
+                self.grid_threshold = float(self.grid_threshold)
+
+            self.LowerPriceLimit = params.get("lower_grid", self.LowerPriceLimit)
+            if isinstance(self.LowerPriceLimit, str):
+                self.LowerPriceLimit = float(self.LowerPriceLimit)
+
             self.UpperPriceLimit = params.get("upper_grid", self.UpperPriceLimit)
+            if isinstance(self.UpperPriceLimit, str):
+                self.UpperPriceLimit = float(self.UpperPriceLimit)
 
         GridLen = self.UpperPriceLimit - self.LowerPriceLimit
         GridStep = int(GridLen * self.grid_step / 100)
@@ -292,6 +321,3 @@ class GridLevelPosition():
             df2 = df_grid.loc[(self.df_grid['zone_engaged'])]
             first_lower_position = df2.zone_engaged.isnull().index[0]
         return first_lower_position
-
-    def get_UpperPriceLimit(self):
-        return self.UpperPriceLimit

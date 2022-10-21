@@ -3,7 +3,7 @@
 - externaliser la stratégie (d'achat et de vente)
 '''
 
-from . import broker,rtdp
+from . import broker,rtdp,utils
 import ccxt
 from dotenv import load_dotenv
 import os
@@ -15,10 +15,12 @@ class BrokerFTX(broker.Broker):
         self.rtdp = rtdp.RealTimeDataProvider(params)
         self.trades = []
         self.simulation = False
-        account = "Main Account"
+        account = ""
+        self.leverage = 0
         if params:
             self.simulation = params.get("simulation", self.simulation)
             account = params.get("account", account)
+            self.leverage = params.get("leverage", self.leverage)
         self.authentificated = self.authentification(account)
          
     def authentification(self, account):
@@ -26,16 +28,18 @@ class BrokerFTX(broker.Broker):
         load_dotenv()
         ftx_api_key = os.getenv("FTX_API_KEY")
         ftx_api_secret = os.getenv("FTX_API_SECRET")
-        self.ftx_exchange = ccxt.ftx({
-            'headers': {
-                'FTX-SUBACCOUNT': account,
-            },
+        params = {
             'apiKey': ftx_api_key,
             'secret': ftx_api_secret
-            })
+            }
+        if account != "":
+            params["headers"] = {"FTX-SUBACCOUNT": account}
+        self.ftx_exchange = ccxt.ftx(params)
         # check authentification
         try:
             authentificated = self.ftx_exchange.check_required_credentials()
+            if self.leverage != 0:
+                response = self.ftx_exchange.private_post_account_leverage({"leverage": self.leverage})
         except ccxt.AuthenticationError as err:
             print("[BrokerFTX] AuthenticationError : ", err)
         return authentificated
@@ -49,6 +53,13 @@ class BrokerFTX(broker.Broker):
             else:
                 return fn(self, *args, **kwargs)
         return wrapped
+
+    def log_info(self):
+        info = ""
+        info += "{}".format(type(self).__name__)
+        info += "\nCash : $ {}".format(utils.KeepNDecimals(self.get_cash(), 2))
+        info += "\nLeverage : {}".format(self.leverage)
+        return info
 
     @authentication_required
     def get_cash(self):

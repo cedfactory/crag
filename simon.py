@@ -17,7 +17,7 @@ class BotSimon(commands.Bot):
         
         @self.command(name="balance")
         async def custom_command(ctx, *args):
-            account = "test_bot"
+            account = ""
             if len(args) >= 1:
                 account = args[0]
 
@@ -56,7 +56,7 @@ class BotSimon(commands.Bot):
                 await ctx.channel.send(embed=embed)
 
     async def on_ready(self):
-        print("bot is ready")
+        print("Simon is ready")
 
     def send_message_to_crag(self, message):
         connection = pika.BlockingConnection(pika.ConnectionParameters('127.0.0.1'))

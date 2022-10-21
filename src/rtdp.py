@@ -85,7 +85,7 @@ class RealTimeDataProvider(IRealTimeDataProvider):
     def get_current_data(self, data_description):
         
         # hack : in the case where we want only the close value, we return the current value of the symbol
-        if data_description.features == ["close"]:
+        if data_description.features == {'close': None}:
             import ccxt
             data = {"symbol":[], "close":[]}
             exchange = ccxt.ftx()
