@@ -14,8 +14,10 @@ class StrategyBalanceTradingMulti(rtstr.RealTimeStrategy):
         self.zero_print = True
 
         self.global_tp = 10000
+        self.df_size_grid_params = pd.DataFrame()
         if params:
             self.global_tp = params.get("global_tp", self.global_tp)
+            self.df_size_grid_params = params.get("grid_df_params", self.df_size_grid_params)
 
         if self.global_tp == 0:
             self.global_tp = 10000
@@ -52,7 +54,7 @@ class StrategyBalanceTradingMulti(rtstr.RealTimeStrategy):
             "ETH/USD",
             "XRP/USD",
             "BNB/USD",
-            "FTT/USD"
+            "SOL/USD"
         ]
         ds.features = { "close" : None }
         self.list_symbols = ds.symbols
@@ -166,6 +168,9 @@ class StrategyBalanceTradingMulti(rtstr.RealTimeStrategy):
         percent = 100 * size * self.rtctrl.prices_symbols[symbol] / cash_to_buy
 
         gridzone = -1
+        min_size = self.df_size_grid_params.loc[self.df_size_grid_params['symbol'] == symbol, 'balance_min_size'].iloc[0]
+        if size < min_size:
+            size = min_size
         return size, percent, gridzone
 
     def get_symbol_selling_size(self, symbol):
@@ -190,6 +195,9 @@ class StrategyBalanceTradingMulti(rtstr.RealTimeStrategy):
         percent = 100 * size * self.rtctrl.prices_symbols[symbol] / cash_to_buy
 
         gridzone = -1
+        min_size = self.df_size_grid_params.loc[self.df_size_grid_params['symbol'] == symbol, 'balance_min_size'].iloc[0]
+        if size < min_size:
+            size = min_size
         return size, percent, gridzone
 
     def reset_selling_limits(self):

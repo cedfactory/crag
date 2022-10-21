@@ -24,9 +24,11 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
 
         self.share_size = 10
         self.global_tp = 10000
+        self.df_size_grid_params = pd.DataFrame()
         if params:
             self.share_size = params.get("share_size", self.share_size)
             self.global_tp = params.get("global_tp", self.global_tp)
+            self.df_size_grid_params = params.get("grid_df_params", self.df_size_grid_params)
 
         if self.global_tp == 0:
             self.global_tp = 10000
@@ -41,7 +43,7 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
             "ETH/USD",
             "XRP/USD",
             "BNB/USD",
-            "FTT/USD"
+            "SOL/USD"
         ]
         ds.features = { "close" : None }
         self.list_symbols = ds.symbols
@@ -160,6 +162,9 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
         size = cash_to_buy / self.rtctrl.prices_symbols[symbol]
 
         percent = cash_to_buy * 100 / wallet_value
+        min_size = self.df_size_grid_params.loc[self.df_size_grid_params['symbol'] == symbol, 'balance_min_size'].iloc[0]
+        if size < min_size:
+            size = min_size
         return size, percent, self.grid.get_zone_position(self.rtctrl.prices_symbols[symbol])
 
     def get_symbol_selling_size(self, symbol):
