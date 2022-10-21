@@ -413,6 +413,8 @@ class Crag:
     def update_df_roi_sl_tp(self, lst_symbols):
         for symbol in lst_symbols:
             symbol_price = self.broker.get_value(symbol)
+            if symbol_price == None:
+                continue
             self.df_portfolio_status.at[symbol, 'value'] = self.df_portfolio_status.at[symbol, 'portfolio_size'] * symbol_price
             if self.df_portfolio_status.at[symbol, 'portfolio_size'] == 0 \
                     or self.df_portfolio_status.at[symbol, 'buying_value'] == 0 \
