@@ -1,5 +1,6 @@
 <configuration>
     <strategy id="room2" name="StrategyBalanceTradingMulti">
+        <params grid_df_params="./grid_df_params.csv" />
     </strategy>
     <broker name="ftx" account="room2" simulation="0" />
     <crag id="room2" interval="60" />
