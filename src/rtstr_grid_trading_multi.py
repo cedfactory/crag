@@ -30,6 +30,10 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
             self.global_tp = params.get("global_tp", self.global_tp)
             self.df_size_grid_params = params.get("grid_df_params", self.df_size_grid_params)
 
+        self.df_size_grid_params['balance_min_size'] = self.df_size_grid_params['balance_min_size'] + \
+                                                       self.df_size_grid_params['balance_min_size'] * \
+                                                       self.df_size_grid_params['grid_threshold'] / 100
+
         if self.global_tp == 0:
             self.global_tp = 10000
         self.net_size = 0.0
