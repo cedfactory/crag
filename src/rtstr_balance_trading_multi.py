@@ -20,8 +20,8 @@ class StrategyBalanceTradingMulti(rtstr.RealTimeStrategy):
             if isinstance(self.global_tp, str):
                 self.global_tp = int(self.global_tp)
             self.df_size_grid_params = params.get("grid_df_params", self.df_size_grid_params)
-            if isinstance(self.df_grid_params, str):
-                self.df_grid_params = pd.read_csv(self.df_grid_params)
+            if isinstance(self.df_size_grid_params, str):
+                self.df_size_grid_params = pd.read_csv(self.df_size_grid_params)
 
         if self.global_tp == 0:
             self.global_tp = 10000
