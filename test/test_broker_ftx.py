@@ -9,7 +9,6 @@ class TestBrokerFTX:
         # expectations
         assert(broker.simulation == False)
         assert(len(broker.trades) == 0)
-        assert(broker.authentificated == False)
 
     def test_get_value(self):
         # context
@@ -19,7 +18,7 @@ class TestBrokerFTX:
         value = broker.get_value("BTC/USD")
 
         # expectations
-        assert(value != None)
+        assert(value == None)
 
     def test_get_cash(self):
         # context
