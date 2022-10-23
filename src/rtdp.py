@@ -90,13 +90,19 @@ class RealTimeDataProvider(IRealTimeDataProvider):
             data = {"symbol":[], "close":[]}
             exchange = ccxt.ftx()
             for symbol in data_description.symbols:
-                ticker = exchange.fetch_ticker(symbol)
-                currentValue = (float(ticker['info']['ask']) + float(ticker['info']['bid'])) / 2
-                data["symbol"].append(symbol)
-                data["close"].append(currentValue)
+                for _ in range(3):
+                    try:
+                        ticker = exchange.fetch_ticker(symbol)
+                        currentValue = (float(ticker['info']['ask']) + float(ticker['info']['bid'])) / 2
+                        data["symbol"].append(symbol)
+                        data["close"].append(currentValue)
+                        break
+                    except BaseException as err:
+                        print("[rtdp:get_current_data] can't fetch ticker for {} : {}", symbol, err)
 
             df_result = pd.DataFrame(data)
             df_result.set_index("symbol", inplace=True)
+            print(df_result)
             return df_result
 
 
