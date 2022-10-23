@@ -44,7 +44,7 @@ class StrategyBalanceTradingMulti(rtstr.RealTimeStrategy):
 
         self.df_selling_limits = pd.DataFrame(columns=['symbol', 'selling_limits'])
 
-        self.usd_pct = 0.5             #USD%
+        self.usd_pct = 0.2             #USD%
         self.rebalance_pct = 0.01      #rebalance%
 
         self.price_symbol = 0
