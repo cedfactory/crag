@@ -7,8 +7,6 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
     def __init__(self, params=None):
         super().__init__(params)
 
-        self.MAX_POSITION = 100
-
         self.rtctrl = rtctrl.rtctrl(params=params)
 
         self.zero_print = True
@@ -60,6 +58,13 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
         ds.features = { "close" : None }
         self.list_symbols = ds.symbols
         return ds
+
+    def log_info(self):
+        info = ""
+        info += "MAX_POSITION = {}\n".format(self.MAX_POSITION)
+        info += "share_size = {}\n".format(self.share_size)
+        info += "global_tp = {}\n".format(self.global_tp)
+        self.log(msg=info, header="StrategyGridTradingMulti::log_info")
 
     def log_current_info(self):
         csvfilename = "df_grid.csv"

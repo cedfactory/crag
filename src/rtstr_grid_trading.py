@@ -7,8 +7,6 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
     def __init__(self, params=None):
         super().__init__(params)
 
-        self.MAX_POSITION = 100    # Asset Overall Percent Size
-
         self.rtctrl = rtctrl.rtctrl(params=params)
 
         self.zero_print = True
