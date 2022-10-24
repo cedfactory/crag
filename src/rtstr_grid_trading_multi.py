@@ -7,7 +7,7 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
     def __init__(self, params=None):
         super().__init__(params)
 
-        self.MAX_POSITION = 100    # Asset Overall Percent Size
+        self.MAX_POSITION = 100
 
         self.rtctrl = rtctrl.rtctrl(params=params)
 
@@ -35,6 +35,9 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
             self.df_size_grid_params = params.get("grid_df_params", self.df_size_grid_params)
             if isinstance(self.df_size_grid_params, str):
                 self.df_size_grid_params = pd.read_csv(self.df_size_grid_params)
+            self.MAX_POSITION = params.get("max_pos", self.MAX_POSITION)
+            if isinstance(self.MAX_POSITION, str):
+                self.MAX_POSITION = int(self.MAX_POSITION)
 
         # add commision 0.08
         self.df_size_grid_params['balance_min_size'] = self.df_size_grid_params['balance_min_size'] / (1 - 0.008)
@@ -208,6 +211,9 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
 
         for symbol in self.list_symbols:
             self.df_grid_multi.loc[self.df_grid_multi['symbol'] == symbol, "grid"] = GridLevelPosition(symbol, params=self.params)
+
+        if self.MAX_POSITION == 0:
+            self.MAX_POSITION = 100 / len(self.list_symbols)
 
 class GridLevelPosition():
     def __init__(self, symbol, params=None):

@@ -106,7 +106,7 @@ def crag_ftx():
     #my_broker_ftx.sell_everything()
 
 
-def crag_simulation_scenario(strategy_name, start_date, end_date, interval, sl, tp, share_size, grid_step, global_tp, grid_threshold, upper_grid, working_directory):
+def crag_simulation_scenario(strategy_name, start_date, end_date, interval, sl, tp, share_size, grid_step, global_tp, grid_threshold, upper_grid, max_pos, working_directory):
     available_strategies = rtstr.RealTimeStrategy.get_strategies_list()
 
     os.chdir(working_directory)
@@ -121,6 +121,7 @@ def crag_simulation_scenario(strategy_name, start_date, end_date, interval, sl, 
                                                                                  "global_tp": global_tp,
                                                                                  "grid_threshold": grid_threshold,
                                                                                  "upper_grid": upper_grid,
+                                                                                 "max_pos": max_pos,
                                                                                  "grid_df_params": '../../grid_df_params.csv',
                                                                                  "working_directory": working_directory})
     else:
@@ -167,6 +168,8 @@ def crag_test_scenario(df):
     list_grid_threshold = list(set(list_grid_threshold))
     list_upper_grid = df['upper_grid'].to_list()
     list_upper_grid = list(set(list_upper_grid))
+    list_max_pos = df['max_pos'].to_list()
+    list_max_pos = list(set(list_max_pos))
 
     auto_test_directory = os.path.join(os.getcwd(), "./automatic_test_results")
     os.chdir(auto_test_directory)
@@ -202,9 +205,9 @@ def crag_test_scenario(df):
                 )
     else:
         for period in list_periods:
-            crag_test_scenario_for_period(df, ds, period, auto_test_directory, list_interval, list_strategy, list_sl, list_tp, list_share_size, list_grid_step, list_global_tp, list_grid_threshold, list_upper_grid)
+            crag_test_scenario_for_period(df, ds, period, auto_test_directory, list_interval, list_strategy, list_sl, list_tp, list_share_size, list_grid_step, list_global_tp, list_grid_threshold, list_upper_grid, list_max_pos)
 
-def crag_test_scenario_for_period(df, ds, period, auto_test_directory, list_interval, list_strategy, list_sl, list_tp, lst_share_size, lst_grid_step, lst_global_tp, lst_grid_threshold, lst_upper_grid):
+def crag_test_scenario_for_period(df, ds, period, auto_test_directory, list_interval, list_strategy, list_sl, list_tp, lst_share_size, lst_grid_step, lst_global_tp, lst_grid_threshold, lst_upper_grid, lst_max_pos):
     start_date = period[0:10]
     end_date = period[11:21]
 
@@ -236,7 +239,8 @@ def crag_test_scenario_for_period(df, ds, period, auto_test_directory, list_inte
                             for global_tp in lst_global_tp:
                                 for grid_threshold in lst_grid_threshold:
                                     for upper_grid in lst_upper_grid:
-                                        crag_simulation_scenario(strategy, start_date, end_date, list_interval[0], sl, tp, share_size, grid_step, global_tp, grid_threshold, upper_grid,strategy_directory)
+                                        for max_pos in lst_max_pos:
+                                            crag_simulation_scenario(strategy, start_date, end_date, list_interval[0], sl, tp, share_size, grid_step, global_tp, grid_threshold, upper_grid, max_pos, strategy_directory)
 
     list_output_filename = []
     for file in os.listdir("./"):
@@ -317,6 +321,7 @@ if __name__ == '__main__':
                   "grid_step": [1],
                   "grid_threshold": [0.08],
                   "upper_grid": [20000],
+                  "max_pos": [100],
                   }
 
     if len(sys.argv) >= 2:

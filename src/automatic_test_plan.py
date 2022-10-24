@@ -13,6 +13,7 @@ class AutomaticTestPlan():
                                   'strategy', 'interval', 'sl', 'tp',
                                   'share_size', 'grid_step', 'global_tp', 'grid_threshold', 'upper_grid',
                                   'total_transaction', 'profit$', 'profit%', 'win_rate', 'ath', 'drawdown',
+                                  'max_pos',
                                   'test_id', 'path_results']
         self.df_output_test_plan = pd.DataFrame(columns=self.test_plan_columns)
 
@@ -26,6 +27,7 @@ class AutomaticTestPlan():
         self.list_global_tp = 0
         self.list_grid_threshold = 0
         self.list_upper_grid = 0
+        self.list_max_pos = 0
         if(params):
             self.str_start_date = params.get("start", self.list_strategies)
             self.str_end_date = params.get("end", self.list_strategies)
@@ -38,6 +40,7 @@ class AutomaticTestPlan():
             self.list_global_tp = params.get("global_tp", self.list_global_tp)
             self.list_grid_threshold = params.get("grid_threshold", self.list_grid_threshold)
             self.list_upper_grid = params.get("upper_grid", self.list_upper_grid)
+            self.list_max_pos = params.get("max_pos", self.list_max_pos)
             self.split = params.get("split", self.split)
             self.interval = params.get("interval", self.interval)
 
@@ -66,37 +69,39 @@ class AutomaticTestPlan():
                                     for global_tp in self.list_global_tp:
                                         for grid_threshold in self.list_grid_threshold:
                                             for upper_grid in self.list_upper_grid:
-                                                # add empty row to df
-                                                empty_row = [None] * len(self.df_output_test_plan.columns)
-                                                self.df_output_test_plan.loc[len(self.df_output_test_plan)] = empty_row
-                                                self.df_output_test_plan.reset_index(inplace=True, drop=True)
+                                                for max_pos in self.list_max_pos:
+                                                    # add empty row to df
+                                                    empty_row = [None] * len(self.df_output_test_plan.columns)
+                                                    self.df_output_test_plan.loc[len(self.df_output_test_plan)] = empty_row
+                                                    self.df_output_test_plan.reset_index(inplace=True, drop=True)
 
-                                                self.df_output_test_plan['start'][len(self.df_output_test_plan)-1] = start
-                                                self.df_output_test_plan['end'][len(self.df_output_test_plan)- 1] = end
-                                                self.df_output_test_plan['split'][len(self.df_output_test_plan) - 1] = end - start
-                                                self.df_output_test_plan['interval'][len(self.df_output_test_plan) - 1] = self.interval
-                                                self.df_output_test_plan['strategy'][len(self.df_output_test_plan)- 1] = strategy
-                                                self.df_output_test_plan['sl'][len(self.df_output_test_plan) - 1] = sl
-                                                self.df_output_test_plan['tp'][len(self.df_output_test_plan) - 1] = tp
-                                                self.df_output_test_plan['share_size'][len(self.df_output_test_plan) - 1] = share_size
-                                                self.df_output_test_plan['grid_step'][len(self.df_output_test_plan) - 1] = grid_step
-                                                self.df_output_test_plan['global_tp'][len(self.df_output_test_plan) - 1] = global_tp
-                                                self.df_output_test_plan['grid_threshold'][len(self.df_output_test_plan) - 1] = grid_threshold
-                                                self.df_output_test_plan['upper_grid'][len(self.df_output_test_plan) - 1] = upper_grid
-                                                self.df_output_test_plan['period'][len(self.df_output_test_plan) - 1] = str(start)[0:10] + '_' + str(end)[0:10]
-                                                self.df_output_test_plan['test_id'][len(self.df_output_test_plan) - 1] = str(start)[0:10]+'_'+str(end)[0:10]+'_'+strategy+'_sl'+ str(sl)+'_tp'+str(tp)
-                                                self.df_output_test_plan['path_results'][len(self.df_output_test_plan) - 1] = self.path_results+str(start)[0:10]+'_'+str(end)[0:10]
-                                                if not os.path.exists(self.df_output_test_plan['path_results'][len(self.df_output_test_plan) - 1]):
-                                                    os.makedirs(self.df_output_test_plan['path_results'][len(self.df_output_test_plan) - 1])
-                                                else:
-                                                    shutil.rmtree(self.df_output_test_plan['path_results'][len(self.df_output_test_plan) - 1])
-                                                    os.makedirs(self.df_output_test_plan['path_results'][len(self.df_output_test_plan) - 1])
-                                                if not os.path.exists(self.df_output_test_plan['path_results'][len(self.df_output_test_plan) - 1] + '/data/'):
-                                                    os.makedirs(self.df_output_test_plan['path_results'][len(self.df_output_test_plan) - 1] + '/data/')
-                                                if not os.path.exists(self.df_output_test_plan['path_results'][len(self.df_output_test_plan) - 1] + '/output/'):
-                                                    os.makedirs(self.df_output_test_plan['path_results'][len(self.df_output_test_plan) - 1] + '/output/')
-                                                if not os.path.exists(self.df_output_test_plan['path_results'][len(self.df_output_test_plan) - 1] + '/benchmark/'):
-                                                    os.makedirs(self.df_output_test_plan['path_results'][len(self.df_output_test_plan) - 1] + '/benchmark/')
+                                                    self.df_output_test_plan['start'][len(self.df_output_test_plan)-1] = start
+                                                    self.df_output_test_plan['end'][len(self.df_output_test_plan)- 1] = end
+                                                    self.df_output_test_plan['split'][len(self.df_output_test_plan) - 1] = end - start
+                                                    self.df_output_test_plan['interval'][len(self.df_output_test_plan) - 1] = self.interval
+                                                    self.df_output_test_plan['strategy'][len(self.df_output_test_plan)- 1] = strategy
+                                                    self.df_output_test_plan['sl'][len(self.df_output_test_plan) - 1] = sl
+                                                    self.df_output_test_plan['tp'][len(self.df_output_test_plan) - 1] = tp
+                                                    self.df_output_test_plan['share_size'][len(self.df_output_test_plan) - 1] = share_size
+                                                    self.df_output_test_plan['grid_step'][len(self.df_output_test_plan) - 1] = grid_step
+                                                    self.df_output_test_plan['global_tp'][len(self.df_output_test_plan) - 1] = global_tp
+                                                    self.df_output_test_plan['grid_threshold'][len(self.df_output_test_plan) - 1] = grid_threshold
+                                                    self.df_output_test_plan['upper_grid'][len(self.df_output_test_plan) - 1] = upper_grid
+                                                    self.df_output_test_plan['max_pos'][len(self.df_output_test_plan) - 1] = max_pos
+                                                    self.df_output_test_plan['period'][len(self.df_output_test_plan) - 1] = str(start)[0:10] + '_' + str(end)[0:10]
+                                                    self.df_output_test_plan['test_id'][len(self.df_output_test_plan) - 1] = str(start)[0:10]+'_'+str(end)[0:10]+'_'+strategy+'_sl'+ str(sl)+'_tp'+str(tp)
+                                                    self.df_output_test_plan['path_results'][len(self.df_output_test_plan) - 1] = self.path_results+str(start)[0:10]+'_'+str(end)[0:10]
+                                                    if not os.path.exists(self.df_output_test_plan['path_results'][len(self.df_output_test_plan) - 1]):
+                                                        os.makedirs(self.df_output_test_plan['path_results'][len(self.df_output_test_plan) - 1])
+                                                    else:
+                                                        shutil.rmtree(self.df_output_test_plan['path_results'][len(self.df_output_test_plan) - 1])
+                                                        os.makedirs(self.df_output_test_plan['path_results'][len(self.df_output_test_plan) - 1])
+                                                    if not os.path.exists(self.df_output_test_plan['path_results'][len(self.df_output_test_plan) - 1] + '/data/'):
+                                                        os.makedirs(self.df_output_test_plan['path_results'][len(self.df_output_test_plan) - 1] + '/data/')
+                                                    if not os.path.exists(self.df_output_test_plan['path_results'][len(self.df_output_test_plan) - 1] + '/output/'):
+                                                        os.makedirs(self.df_output_test_plan['path_results'][len(self.df_output_test_plan) - 1] + '/output/')
+                                                    if not os.path.exists(self.df_output_test_plan['path_results'][len(self.df_output_test_plan) - 1] + '/benchmark/'):
+                                                        os.makedirs(self.df_output_test_plan['path_results'][len(self.df_output_test_plan) - 1] + '/benchmark/')
 
     def savetofile(self):
         self.df_output_test_plan.to_csv(self.path_results + 'automatictestplan.csv')
