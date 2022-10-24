@@ -139,7 +139,6 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
 
         return selling_signal
 
-
     def get_symbol_buying_size(self, symbol):
         if not symbol in self.rtctrl.prices_symbols or self.rtctrl.prices_symbols[symbol] < 0: # first init at -1
             return 0, 0, 0
@@ -150,19 +149,8 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
             return 0, 0, 0
 
         init_cash_value = self.rtctrl.init_cash_value
-        # init_cash_value = init_cash_value - init_cash_value * 0.007  # CEDE: replace 0.007 with call to broker fees
-        grid_size = self.grid.grid_size
-        # CEDE Test: buying_size_value = init_cash_value / grid_size
         buying_size_value = init_cash_value / self.share_size
-        # CEDE: Price % based on upper limit. Safer approach
-        # CEDE: Always buying / selling the same % size
-        # CEDE: The other solution is to buy / sell the same $ amount
-        buying_size_percent = buying_size_value * 100 / self.grid.UpperPriceLimit
-        buying_size_value = buying_size_percent * self.rtctrl.prices_symbols[symbol] / 100
-
         wallet_value = available_cash
-
-        # cash_to_buy = wallet_value * self.SPLIT / 100
         cash_to_buy = buying_size_value
 
         if cash_to_buy > available_cash:
