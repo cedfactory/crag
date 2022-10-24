@@ -163,7 +163,8 @@ class Crag:
             self.maximal_portfolio_date = current_date
 
         msg = "original portfolio value : $ {} ({})\n".format(utils.KeepNDecimals(self.original_portfolio_value, 2), self.start_date)
-        msg += "current portfolio value : $ {}\n".format(utils.KeepNDecimals(portfolio_value, 2))
+        variation_percent = utils.get_variation(self.original_portfolio_value, portfolio_value)
+        msg += "current portfolio value : $ {} ({}%)\n".format(utils.KeepNDecimals(portfolio_value, 2), utils.KeepNDecimals(variation_percent, 2))
         msg += "    minimal portfolio value : $ {} ({})\n".format(utils.KeepNDecimals(self.minimal_portfolio_value, 2), self.minimal_portfolio_date)
         msg += "    maximal portfolio value : $ {} ({})\n".format(utils.KeepNDecimals(self.maximal_portfolio_value, 2), self.maximal_portfolio_date)
         msg += "current cash = {}".format(utils.KeepNDecimals(self.broker.get_cash(), 2))

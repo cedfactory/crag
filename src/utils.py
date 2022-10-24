@@ -86,3 +86,8 @@ def normalize(df):
 
 def KeepNDecimals(value, n=3):
     return "{:.{}f}".format(value, n)
+
+def get_variation(src, dst):
+    if src == 0:
+        return 0
+    return 100 * (dst - src) / src
