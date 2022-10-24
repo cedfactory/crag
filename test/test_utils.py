@@ -69,3 +69,11 @@ class TestUtils:
 
         # expectations
         assert(variation == -75)
+
+    def test_get_random_id(self):
+        # action
+        id = utils.get_random_id()
+
+        # expectations
+        assert(id >= 10000000)
+        assert(id < 99999999)

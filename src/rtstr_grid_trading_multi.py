@@ -1,6 +1,6 @@
 import pandas as pd
 import os
-from . import rtdp, rtstr, rtctrl
+from . import rtdp, rtstr, rtctrl, utils
 
 class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
 
@@ -67,12 +67,12 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
         self.log(msg=info, header="StrategyGridTradingMulti::log_info")
 
     def log_current_info(self):
-        csvfilename = "df_grid.csv"
+        csvfilename = str(utils.get_random_id())+"_df_grid.csv"
         self.grid.df_grid.to_csv(csvfilename, sep=',')
         self.log(msg="> df_grid", header="StrategyGridTrading::log_current_info", attachments=[csvfilename])
         os.remove(csvfilename)
 
-        currentdatafilename = "df_current_data.csv"
+        currentdatafilename = str(utils.get_random_id())+"_df_current_data.csv"
         self.df_current_data.to_csv(currentdatafilename, sep=',')
         self.log(msg="> df_current_data", header="StrategyGridTrading::log_current_info", attachments=[currentdatafilename])
         os.remove(currentdatafilename)

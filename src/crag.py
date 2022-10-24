@@ -96,7 +96,7 @@ class Crag:
                         summary = rtctrl.display_summary_info()
                         df_rtctrl = rtctrl.df_rtctrl
                         if isinstance(df_rtctrl, pd.DataFrame):
-                            filename = "rtctrl.csv"
+                            filename = str(utils.get_random_id())+"_rtctrl.csv"
                             df_rtctrl.to_csv(filename)
                             self.log(msg="> {}".format(filename), header="{}".format(body), attachments=[filename])
                             os.remove(filename)
