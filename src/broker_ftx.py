@@ -43,6 +43,10 @@ class BrokerFTX(broker.Broker):
                 response = self.ftx_exchange.private_post_account_leverage({"leverage": self.leverage})
         except ccxt.AuthenticationError as err:
             print("[BrokerFTX] AuthenticationError : ", err)
+        except ccxt.base.errors.NetworkError as err:
+            print("[BrokerFTX] NetworkError : ", err)
+        except BaseException as err:
+            print("[BrokerFTX] BaseException : ", err)
         return authentificated
 
     def authentication_required(fn):
