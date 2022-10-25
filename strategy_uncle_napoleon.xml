@@ -2,6 +2,6 @@
     <strategy id="napoleon" name="StrategyGridTradingMulti">
         <params max_position="100" share_size="10" grid_df_params="./grid_df_params.csv" />
     </strategy>
-    <broker name="ftx" account="napoleon" simulation="1" />
+    <broker name="ftx" account="napoleon" simulation="0" />
     <crag id="napoleon" interval="60" />
 </configuration>
