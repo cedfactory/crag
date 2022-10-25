@@ -28,7 +28,7 @@ class Crag:
         self.minimal_portfolio_date = ""
         self.maximal_portfolio_value = 0
         self.maximal_portfolio_date = ""
-        self.id = ""
+        self.id = str(utils.get_random_id())
         if params:
             self.broker = params.get("broker", self.broker)
             self.original_portfolio_value = self.broker.get_portfolio_value()
@@ -64,7 +64,7 @@ class Crag:
                                + "_" + str(self.str_sl)\
                                + "_" + str(self.str_tp)\
                                + ".csv"
-        self.backup_filename = 'crag_backup.pickle'
+        self.backup_filename = self.id + "_crag_backup.pickle"
 
         if self.working_directory != None:
             self.export_filename = os.path.join(self.working_directory, self.export_filename)
