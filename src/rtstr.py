@@ -9,9 +9,13 @@ class RealTimeStrategy(metaclass=ABCMeta):
     def __init__(self, params=None):
         self.SL = 0             # Stop Loss %
         self.TP = 0             # Take Profit %
+        self.MAX_POSITION = 5    # Asset Overall Percent Size
         self.logger = None
         self.id = ""
         if params:
+            self.MAX_POSITION = params.get("max_position", self.MAX_POSITION)
+            if isinstance(self.MAX_POSITION, str):
+                self.MAX_POSITION = int(self.MAX_POSITION)
             self.SL = params.get("sl", self.SL)
             self.TP = params.get("tp", self.TP)
             self.logger = params.get("logger", self.logger)
@@ -26,7 +30,6 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
         self.rtctrl = None
         self.SPLIT = 5           # Asset Split %
-        self.MAX_POSITION = 5    # Asset Overall Percent Size
         self.match_full_position = True
 
     def log_info(self):

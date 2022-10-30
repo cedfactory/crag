@@ -1,13 +1,11 @@
 import pandas as pd
 import os
-from . import rtdp, rtstr, rtctrl
+from . import rtdp, rtstr, rtctrl, utils
 
 class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
 
     def __init__(self, params=None):
         super().__init__(params)
-
-        self.MAX_POSITION = 100
 
         self.rtctrl = rtctrl.rtctrl(params=params)
 
@@ -61,13 +59,20 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
         self.list_symbols = ds.symbols
         return ds
 
+    def log_info(self):
+        info = ""
+        info += "MAX_POSITION = {}\n".format(self.MAX_POSITION)
+        info += "share_size = {}\n".format(self.share_size)
+        info += "global_tp = {}\n".format(self.global_tp)
+        self.log(msg=info, header="StrategyGridTradingMulti::log_info")
+
     def log_current_info(self):
-        csvfilename = "df_grid.csv"
+        csvfilename = str(utils.get_random_id())+"_df_grid.csv"
         self.grid.df_grid.to_csv(csvfilename, sep=',')
         self.log(msg="> df_grid", header="StrategyGridTrading::log_current_info", attachments=[csvfilename])
         os.remove(csvfilename)
 
-        currentdatafilename = "df_current_data.csv"
+        currentdatafilename = str(utils.get_random_id())+"_df_current_data.csv"
         self.df_current_data.to_csv(currentdatafilename, sep=',')
         self.log(msg="> df_current_data", header="StrategyGridTrading::log_current_info", attachments=[currentdatafilename])
         os.remove(currentdatafilename)

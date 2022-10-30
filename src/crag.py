@@ -28,7 +28,7 @@ class Crag:
         self.minimal_portfolio_date = ""
         self.maximal_portfolio_value = 0
         self.maximal_portfolio_date = ""
-        self.id = ""
+        self.id = str(utils.get_random_id())
         if params:
             self.broker = params.get("broker", self.broker)
             self.original_portfolio_value = self.broker.get_portfolio_value()
@@ -64,7 +64,7 @@ class Crag:
                                + "_" + str(self.str_sl)\
                                + "_" + str(self.str_tp)\
                                + ".csv"
-        self.backup_filename = 'crag_backup.pickle'
+        self.backup_filename = self.id + "_crag_backup.pickle"
 
         if self.working_directory != None:
             self.export_filename = os.path.join(self.working_directory, self.export_filename)
@@ -96,7 +96,7 @@ class Crag:
                         summary = rtctrl.display_summary_info()
                         df_rtctrl = rtctrl.df_rtctrl
                         if isinstance(df_rtctrl, pd.DataFrame):
-                            filename = "rtctrl.csv"
+                            filename = str(utils.get_random_id())+"_rtctrl.csv"
                             df_rtctrl.to_csv(filename)
                             self.log(msg="> {}".format(filename), header="{}".format(body), attachments=[filename])
                             os.remove(filename)
@@ -163,7 +163,8 @@ class Crag:
             self.maximal_portfolio_date = current_date
 
         msg = "original portfolio value : $ {} ({})\n".format(utils.KeepNDecimals(self.original_portfolio_value, 2), self.start_date)
-        msg += "current portfolio value : $ {}\n".format(utils.KeepNDecimals(portfolio_value, 2))
+        variation_percent = utils.get_variation(self.original_portfolio_value, portfolio_value)
+        msg += "current portfolio value : $ {} ({}%)\n".format(utils.KeepNDecimals(portfolio_value, 2), utils.KeepNDecimals(variation_percent, 2))
         msg += "    minimal portfolio value : $ {} ({})\n".format(utils.KeepNDecimals(self.minimal_portfolio_value, 2), self.minimal_portfolio_date)
         msg += "    maximal portfolio value : $ {} ({})\n".format(utils.KeepNDecimals(self.maximal_portfolio_value, 2), self.maximal_portfolio_date)
         msg += "current cash = {}".format(utils.KeepNDecimals(self.broker.get_cash(), 2))

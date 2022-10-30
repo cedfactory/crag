@@ -71,7 +71,7 @@ class TestRTSTRGridTrading:
         assert(strategy.global_tp == 10000)
         assert(strategy.SL == -1000)
         assert(strategy.TP == 1000)
-        assert(strategy.MAX_POSITION == 100)
+        assert(strategy.MAX_POSITION == 5)
         assert(strategy.SPLIT == 5)
         assert(strategy.match_full_position == True)
 
