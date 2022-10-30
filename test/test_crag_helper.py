@@ -86,7 +86,8 @@ class TestCrag:
         bot.backup()
 
         # action
-        bot = crag_helper.initialization_from_pickle("crag_backup.pickle")
+        backup_filename = bot.backup_filename
+        bot = crag_helper.initialization_from_pickle(backup_filename)
 
         # expectations
         assert(bot.broker != None)
@@ -95,4 +96,4 @@ class TestCrag:
 
         # cleaning
         os.remove(filename)
-        os.remove("crag_backup.pickle")
+        os.remove(backup_filename)
