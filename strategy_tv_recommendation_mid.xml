@@ -1,0 +1,7 @@
+<configuration>
+    <strategy id="room1" name="StrategyTvRecommendationMid">
+        <params share_size="10" grid_df_params="./grid_df_params.csv" />
+    </strategy>
+    <broker name="ftx" account="TESTGRIDPREP" simulation="0" />
+    <crag id="test" interval="60" />
+</configuration>

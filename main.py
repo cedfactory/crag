@@ -1,4 +1,4 @@
-from src import rtdp,rtdp_simulation,broker_simulation,broker_ftx,rtstr,rtstr_grid_trading,rtstr_grid_trading_multi,rtstr_balance_trading,rtstr_balance_trading_multi,rtstr_super_reversal,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC,analyser,benchmark,automatic_test_plan
+from src import rtdp,rtdp_simulation,broker_simulation,broker_ftx,rtstr,rtstr_grid_trading,rtstr_grid_trading_multi,rtstr_balance_trading,rtstr_tv_recommendation_mid,rtstr_balance_trading_multi,rtstr_super_reversal,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC,analyser,benchmark,automatic_test_plan
 from src import crag,crag_helper
 from src import logger
 # from src import debug
