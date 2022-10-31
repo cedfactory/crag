@@ -8,6 +8,7 @@ import urllib.request
 import json
 import concurrent.futures
 import random
+import requests
 
 import yfinance as yf
 
@@ -23,7 +24,7 @@ def _atomic_fdp_request(url):
             response_json = json.loads(response)
             break
         except:
-            reason = "exception when requesting {}".format(url)
+            reason = "exception when requesting GET {}".format(url)
             response_json = {"status":"ko", "info":reason}
             n_attempts = n_attempts - 1
             print('FDP ERROR : ', reason)
@@ -71,10 +72,25 @@ def fdp_request(params, multithreading = True):
 def fdp_request_post(url, params):
     load_dotenv()
     fdp_url = os.getenv("FDP_URL")
+    final_result = {}
 
-    request = urllib.request.Request(fdp_url+'/'+url, urllib.parse.urlencode(params).encode())
-    response = urllib.request.urlopen(request).read().decode()
-    return json.loads(response)
+    n_attempts = 3
+    while n_attempts > 0:
+        try:
+            response = requests.post(fdp_url+'/'+url, json=params)
+            if response.status_code == 200:
+                response_json = json.loads(response.text)
+                final_result["status"] = "ok"
+                final_result["elapsed_time"] = response_json["elapsed_time"]
+                final_result["result"] = response_json["result"]
+                break
+        except:
+            reason = "exception when requesting POST {}".format(url)
+            final_result = {"status":"ko", "info":reason}
+            n_attempts = n_attempts - 1
+            print('FDP ERROR : ', reason)
+
+    return final_result
 
 def normalize(df):
     result = df.copy()
