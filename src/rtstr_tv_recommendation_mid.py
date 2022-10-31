@@ -18,6 +18,10 @@ class StrategyTvRecommendationMid(rtstr.RealTimeStrategy):
 
         self.zero_print = True
 
+        self.MAX_POSITION = 10
+        self.TP = 10
+        self.SL = -2
+
     def get_data_description(self):
         ds = rtdp.DataDescription()
         ds.features = { "tv_1h" : None,
@@ -34,9 +38,9 @@ class StrategyTvRecommendationMid(rtstr.RealTimeStrategy):
     def condition_for_buying(self, symbol):
         lst_recom = [
             self.df_current_data['tv_1h'][symbol],
-            self.df_current_data['tv_1h'][symbol],
-            self.df_current_data['tv_1h'][symbol],
-            self.df_current_data['tv_1h'][symbol]
+            self.df_current_data['tv_2h'][symbol],
+            self.df_current_data['tv_4h'][symbol],
+            self.df_current_data['tv_1d'][symbol]
         ]
 
         strong_buy_count = lst_recom.count('STRONG_BUY')
@@ -48,6 +52,7 @@ class StrategyTvRecommendationMid(rtstr.RealTimeStrategy):
         else:
             if (strong_buy_count >= 2):
                 # BUY signal
+                print('BUY: ', symbol, " ", lst_recom)
                 buying_signal = True
             else:
                 # HOLD signal
@@ -58,9 +63,9 @@ class StrategyTvRecommendationMid(rtstr.RealTimeStrategy):
     def condition_for_selling(self, symbol, df_sl_tp):
         lst_recom = [
             self.df_current_data['tv_1h'][symbol],
-            self.df_current_data['tv_1h'][symbol],
-            self.df_current_data['tv_1h'][symbol],
-            self.df_current_data['tv_1h'][symbol]
+            self.df_current_data['tv_2h'][symbol],
+            self.df_current_data['tv_4h'][symbol],
+            self.df_current_data['tv_1d'][symbol]
         ]
 
         strong_buy_count = lst_recom.count('STRONG_BUY')
@@ -68,14 +73,16 @@ class StrategyTvRecommendationMid(rtstr.RealTimeStrategy):
 
         if ('SELL' in lst_recom or 'STRONG_SELL' in lst_recom or 'NEUTRAL' in lst_recom):
             # SELL signal
+            print('SELL: ', symbol, " ", lst_recom)
             selling_signal = True
         else:
-            if (strong_buy_count >= 2):
+            if (strong_buy_count >= 1):
                 # BUY signal
                 selling_signal = False
             else:
                 # HOLD signal
                 selling_signal = False
+                print('HOLD: ', symbol, " ", lst_recom)
 
 
         return (
