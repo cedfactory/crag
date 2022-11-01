@@ -5,6 +5,7 @@ import csv
 import json
 from datetime import datetime
 from . import features # temporary (before using fdp)
+from rich import inspect,print
 
 default_symbols = [
         "BTC/USD",
@@ -39,7 +40,7 @@ default_symbols = [
     ]
 '''
 default_symbols = [
-        # "BTC/USD"
+        "BTC/USD",
         "OMG/USD"
     ]
 '''
@@ -108,8 +109,8 @@ class RealTimeDataProvider(IRealTimeDataProvider):
 
         symbols = ','.join(data_description.symbols)
         symbols = symbols.replace('/','_')
-        params = { "service":"history", "exchange":"ftx", "symbol":symbols, "start":"2022-08-01", "interval": "1h" }
-        response_json = utils.fdp_request(params)
+        params = { "service":"history", "exchange":"ftx", "symbol":symbols, "start":"2022-10-20", "interval": "1d", "indicators": data_description.features}
+        response_json = utils.fdp_request_post("history", params)
 
         data = {feature: [] for feature in data_description.features}
         data["symbol"] = []
@@ -118,9 +119,7 @@ class RealTimeDataProvider(IRealTimeDataProvider):
             for symbol in data_description.symbols:
                 formatted_symbol = symbol.replace('/','_')
                 df = pd.read_json(response_json["result"][formatted_symbol]["info"])
-                df = features.add_features(df, data_description.features)
                 columns = list(df.columns)
-
                 data["symbol"].append(symbol)
                 for feature in data_description.features:
                     if feature not in columns:

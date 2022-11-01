@@ -1,4 +1,4 @@
-;timestamp;open;high;low;close;volume;ema_short;ema_long;super_trend_direction
+;timestamp;open;high;low;close;volume;ema_5;ema_400;super_trend_direction
 0;2021-04-06 10:00:00;8.224;8.423;7.878;7.878;4256.8076;7.878;7.878;True
 1;2021-04-06 11:00:00;7.878;8.16;7.8;7.98;24604.0098;7.9392000000000005;7.9291275;True
 2;2021-04-06 12:00:00;7.98;8.405;7.931;7.942;10761.2858;7.940526315789473;7.933439805333739;True

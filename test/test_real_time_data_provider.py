@@ -3,7 +3,7 @@ import pandas as pd
 from src import rtdp
 
 class TestRealTimeDataProvider:
-    src_utils_fdp_request = 'src.utils.fdp_request'
+    src_utils_fdp_request_post = 'src.utils.fdp_request_post'
     fdp_response = {'result': {'ETH_EURS': {'status': 'ok', 'info': '{"index":{"0":1638662400000},"open":{"0":3525.0},"high":{"0":3732.8855,},"low":{"0":3460.0},"close":{"0":3732.8855},"volume":{"0":0.3798}}'}, 'BTC_EURS': {'status': 'ok', 'info': '{"index":{"0":1638662400000},"open":{"0":43388.73},"high":{"0":43481.66},"low":{"0":42105.38},"close":{"0":43035.5},"volume":{"0":0.00628}}'}}, 'status': 'ok', 'elapsed_time': '0:00:00.476569'}
 
     def test_get_current_data(self, mocker):
@@ -12,7 +12,7 @@ class TestRealTimeDataProvider:
         ds = rtdp.DataDescription()
         ds.symbols = ["ETH/EURS", "BTC/EURS"]
         ds.features = ["open", "high", "low", "close"]
-        mocker.patch(self.src_utils_fdp_request, side_effect=[self.fdp_response])
+        mocker.patch(self.src_utils_fdp_request_post, side_effect=[self.fdp_response])
 
         # action
         df = dp.get_current_data(ds)
@@ -38,7 +38,7 @@ class TestRealTimeDataProvider:
         ds = rtdp.DataDescription()
         ds.symbols = ["ETH/EURS", "BTC/EURS"]
         ds.features = ["open", "high", "low", "close"]
-        mocker.patch(self.src_utils_fdp_request, side_effect=[{"status":"ko"}])
+        mocker.patch(self.src_utils_fdp_request_post, side_effect=[{"status":"ko"}])
 
         # action
         df = dp.get_current_data(ds)
