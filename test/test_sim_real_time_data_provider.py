@@ -20,7 +20,7 @@ class TestSimRealTimeDataProvider:
         assert("AAVE/USD" in dp.data)
         df = dp.data["AAVE/USD"]
         assert(isinstance(df, pd.DataFrame))
-        expected_columns = ['Unnamed: 0', 'timestamp', 'open', 'high', 'low', 'close', 'volume', 'ema_short', 'ema_long', 'super_trend_direction']
+        expected_columns = ['Unnamed: 0', 'timestamp', 'open', 'high', 'low', 'close', 'volume', 'ema_5', 'ema_400', 'super_trend_direction']
         assert(df.columns.to_list() == expected_columns)
         assert(len(df) == 402)
 
