@@ -12,6 +12,7 @@ class TestRealTimeDataProvider:
         ds = rtdp.DataDescription()
         ds.symbols = ["ETH/EURS", "BTC/EURS"]
         ds.features = ["open", "high", "low", "close"]
+        ds.interval = 20
         mocker.patch(self.src_utils_fdp_request_post, side_effect=[self.fdp_response])
 
         # action
@@ -38,6 +39,7 @@ class TestRealTimeDataProvider:
         ds = rtdp.DataDescription()
         ds.symbols = ["ETH/EURS", "BTC/EURS"]
         ds.features = ["open", "high", "low", "close"]
+        ds.interval = 20
         mocker.patch(self.src_utils_fdp_request_post, side_effect=[{"status":"ko"}])
 
         # action

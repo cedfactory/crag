@@ -1,10 +1,7 @@
 from . import utils
 import pandas as pd
 from abc import ABCMeta, abstractmethod
-import csv
-import json
-from datetime import datetime
-from . import features # temporary (before using fdp)
+from datetime import datetime, timedelta
 from rich import inspect,print
 
 default_symbols = [
@@ -51,6 +48,7 @@ class DataDescription():
     def __init__(self):
         self.symbols = default_symbols
         self.features = default_features
+        self.interval = "1d"
 
 class IRealTimeDataProvider(metaclass = ABCMeta):
     def __init__(self, params = None):
@@ -103,13 +101,29 @@ class RealTimeDataProvider(IRealTimeDataProvider):
 
             df_result = pd.DataFrame(data)
             df_result.set_index("symbol", inplace=True)
-            print(df_result)
+
             return df_result
 
 
         symbols = ','.join(data_description.symbols)
         symbols = symbols.replace('/','_')
-        params = { "service":"history", "exchange":"ftx", "symbol":symbols, "start":"2022-10-20", "interval": "1d", "indicators": data_description.features}
+
+        # adapt the interval according to the frequency given to crag (todo : the interval should be provided by the strategy itself)
+        interval = "1d"
+        if data_description.interval < 60 * 60:
+            interval = "1h"
+        if data_description.interval < 60:
+            interval = "1m"
+        
+        # adapt the start date
+        start = datetime.now() - timedelta(days=400)
+        if interval == "1h":
+            start = datetime.now() - timedelta(hours=400)
+        #elif interval == "1m": # too much for fdp now
+        #    start = datetime.now() - timedelta(minutes=400)
+        start = start.strftime("%Y-%m-%d")
+
+        params = { "service":"history", "exchange":"ftx", "symbol":symbols, "start":start, "interval": interval, "indicators": data_description.features}
         response_json = utils.fdp_request_post("history", params)
 
         data = {feature: [] for feature in data_description.features}
@@ -118,6 +132,9 @@ class RealTimeDataProvider(IRealTimeDataProvider):
         if response_json["status"] == "ok":
             for symbol in data_description.symbols:
                 formatted_symbol = symbol.replace('/','_')
+                if response_json["result"][formatted_symbol]["status"] == "ko":
+                    print("[RealTimeDataProvider:get_current_data] !!!! no data for ", symbol)
+                    continue
                 df = pd.read_json(response_json["result"][formatted_symbol]["info"])
                 columns = list(df.columns)
                 data["symbol"].append(symbol)
