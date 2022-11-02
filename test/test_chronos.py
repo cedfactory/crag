@@ -13,7 +13,7 @@ class TestChronos:
         df['timestamp'] = pd.to_datetime(df['timestamp'], format="%d/%m/%Y %H:%M") # format datetime
         df.rename(columns = {"timestamp":"index"}, inplace = True)
         json_df = {'result': {'BTC_USD': {'status': 'ok', 'info':df.to_json()}}}
-        mocker.patch('src.utils.fdp_request', side_effect=[json_df])
+        mocker.patch('src.utils.fdp_request_post', side_effect=[json_df])
 
         # action
         my_chronos = chronos.Chronos("2022-01-01", "2022-01-10", "1h")
