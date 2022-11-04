@@ -175,6 +175,8 @@ class Crag:
         # update all the data
         # TODO : this call should be done once, during the initialization of the system
         ds = self.rtstr.get_data_description()
+        ds.interval = self.interval # probably better to let the strategy provide this info
+
         if self.clear_unused_data:
             self.broker.check_data_description(ds)
             self.clear_unused_data = False

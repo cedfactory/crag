@@ -23,8 +23,10 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
         #ds.symbols = ds.symbols[:2]
         ds.features = { "low" : None,
                         "high" : None,
-                        "ema_short" : {"feature": "ema", "period": 5},
-                        "ema_long" : {"feature": "ema", "period": 400},
+                        #"ema_short" : {"feature": "ema", "period": 5},
+                        #"ema_long" : {"feature": "ema", "period": 400},
+                        "ema_5" : None,
+                        "ema_400" : None,
                         "super_trend_direction" : {"feature": "super_trend"}
                         }
 
@@ -34,15 +36,15 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
         return "StrategySuperReversal", self.str_sl, self.str_tp
 
     def condition_for_buying(self, symbol):
-        return self.df_current_data['ema_short'][symbol] >= self.df_current_data['ema_long'][symbol] \
+        return self.df_current_data['ema_5'][symbol] >= self.df_current_data['ema_400'][symbol] \
                     and self.df_current_data['super_trend_direction'][symbol] == True \
-                    and self.df_current_data['ema_short'][symbol] > self.df_current_data['low'][symbol]
+                    and self.df_current_data['ema_5'][symbol] > self.df_current_data['low'][symbol]
 
     def condition_for_selling(self, symbol, df_sl_tp):
         return (
-                    (self.df_current_data['ema_short'][symbol] <= self.df_current_data['ema_long'][symbol]
+                    (self.df_current_data['ema_5'][symbol] <= self.df_current_data['ema_400'][symbol]
                      or self.df_current_data['super_trend_direction'][symbol] == False)
-                    and self.df_current_data['ema_short'][symbol] < self.df_current_data['high'][symbol]
+                    and self.df_current_data['ema_5'][symbol] < self.df_current_data['high'][symbol]
             ) or (
                     (isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] > self.TP)
                     or (isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] < self.SL)

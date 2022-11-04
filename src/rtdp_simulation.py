@@ -129,7 +129,7 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
         symbols = ','.join(data_description.symbols)
         symbols = symbols.replace('/','_')
         params = { "service":"history", "exchange":"ftx", "symbol":symbols, "start":"2022-06-01", "interval": "1h" }
-        response_json = utils.fdp_request(params)
+        response_json = utils.fdp_request_post("history", params)
         for symbol in data_description.symbols:
             formatted_symbol = symbol.replace('/','_')
             if response_json["result"][formatted_symbol]["status"] == "ko":
@@ -147,7 +147,7 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
         list_missing_data = []
         params = { "service":"history", "exchange":"ftx", "symbol":symbols, "start":start_date, "end": end_date, "interval": interval }
         print('interval from: ', start_date, ' -> ', end_date)
-        response_json = utils.fdp_request(params)
+        response_json = utils.fdp_request_post("history", params)
         for symbol in data_description.symbols:
             formatted_symbol = symbol.replace('/','_')
             if response_json["result"][formatted_symbol]["status"] == "ko":

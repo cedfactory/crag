@@ -20,7 +20,7 @@ class TestSimRealTimeDataProvider:
         assert("AAVE/USD" in dp.data)
         df = dp.data["AAVE/USD"]
         assert(isinstance(df, pd.DataFrame))
-        expected_columns = ['Unnamed: 0', 'timestamp', 'open', 'high', 'low', 'close', 'volume', 'ema_short', 'ema_long', 'super_trend_direction']
+        expected_columns = ['Unnamed: 0', 'timestamp', 'open', 'high', 'low', 'close', 'volume', 'ema_5', 'ema_400', 'super_trend_direction']
         assert(df.columns.to_list() == expected_columns)
         assert(len(df) == 402)
 
@@ -110,7 +110,7 @@ class TestSimRealTimeDataProvider:
 
         df = pd.read_csv("./test/data/AAVE_USD.csv", delimiter=';')
         json_df = {'result': {'AAVE_EURS': {'status': 'ok', 'info':df.to_json()}}}
-        mocker.patch('src.utils.fdp_request', side_effect=[json_df])
+        mocker.patch('src.utils.fdp_request_post', side_effect=[json_df])
 
         # action
         my_rtdp.record(ds)

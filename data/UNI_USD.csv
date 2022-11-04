@@ -1,4 +1,4 @@
-;timestamp;open;high;low;close;volume;ema_short;ema_long;super_trend_direction
+;timestamp;open;high;low;close;volume;ema_5;ema_400;super_trend_direction
 0;2020-12-31 23:00:00;5.153;5.195;5.087;5.165;95030.0909;5.165;5.165;True
 1;2021-01-01 00:00:00;5.165;5.231;5.009;5.223;196842.1525;5.199800000000001;5.1940725;True
 2;2021-01-01 01:00:00;5.225;5.273;5.142;5.172;40809.7965;5.186631578947368;5.186678181920454;True

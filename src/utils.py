@@ -72,6 +72,9 @@ def fdp_request(params, multithreading = True):
 def fdp_request_post(url, params):
     load_dotenv()
     fdp_url = os.getenv("FDP_URL")
+    if not fdp_url or fdp_url == "":
+        return {"status":"ko", "info":"fdp url not found"}
+
     final_result = {}
 
     n_attempts = 3
