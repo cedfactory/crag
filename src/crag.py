@@ -275,7 +275,7 @@ class Crag:
                     and df_selling_symbols["stimulus"][current_trade.symbol] != "HOLD"\
                     and (self.flush_current_trade
                          or ((self.rtstr.get_selling_limit(current_trade.symbol))
-                             and (current_trade.gridzone > self.rtstr.get_lower_zone_buy_engaged(current_trade.symbol)))):
+                             and ( self.rtstr.get_grid_sell_condition(current_trade.symbol, current_trade.gridzone)))):
                 sell_trade = self._prepare_sell_trade_from_bought_trade(current_trade, current_datetime, df_selling_symbols)
                 done = self.broker.execute_trade(sell_trade)
                 if done:
@@ -390,9 +390,14 @@ class Crag:
         if self.temp_debug:
             total = self.cash + self.df_portfolio_status['value'].sum()
             coin_size = self.df_portfolio_status['portfolio_size'].sum()
+            print('zone: ', self.rtstr.grid.get_zone_position(self.broker.get_value('BTC/USD')), ' price: ', self.broker.get_value('BTC/USD'))
             print(current_datetime, ' cash : $', round(self.cash, 2), ' coin size : ', round(coin_size, 4), 'portfolio : $', round(self.df_portfolio_status['value'].sum(), 2), ' total : $', round(total))
-            cash_percent = 100 * self.cash / total
-            coin_percent = 100 * self.df_portfolio_status['value'].sum() / total
+            if total != 0:
+                cash_percent = 100 * self.cash / total
+                coin_percent = 100 * self.df_portfolio_status['value'].sum() / total
+            else:
+                cash_percent = 100 * self.cash / 0.001
+                coin_percent = 100 * self.df_portfolio_status['value'].sum() / 0.001
             print(current_datetime, ' cash% : %', round(cash_percent,2), ' portfolio : %', round(coin_percent,2), ' total : %', round(cash_percent + coin_percent, 2))
 
             # add row to end of DataFrame

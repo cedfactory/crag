@@ -2,7 +2,7 @@ import pandas as pd
 import os
 from . import rtdp, rtstr, rtctrl, utils
 
-class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
+class StrategySimuGridTradingMulti(rtstr.RealTimeStrategy):
 
     def __init__(self, params=None):
         super().__init__(params)
@@ -50,12 +50,10 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
         ds = rtdp.DataDescription()
         ds.symbols = [
             "BTC/USD",
-            "ETH/USD",
-            "XRP/USD",
-            "BNB/USD",
-            "SOL/USD"
         ]
-        ds.features = { "close" : None }
+        ds.features = { "close" : None,
+                        "close_synthetic_SINGLE_SINUS_1_FLAT" : None
+                        }
         self.list_symbols = ds.symbols
         return ds
 
@@ -88,20 +86,20 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
             self.set_df_multi()
 
         self.grid = self.df_grid_multi.loc[self.df_grid_multi['symbol'] == symbol, "grid"].iloc[0]
-        if self.grid.get_zone_position(self.df_current_data['close'][symbol]) == -1:
+        if self.grid.get_zone_position(self.df_current_data['close_synthetic_SINGLE_SINUS_1_FLAT'][symbol]) == -1:
             return False
 
         self.previous_zone_position = self.grid.get_previous_zone_position()
-        self.zone_position = self.grid.get_zone_position(self.df_current_data['close'][symbol])
+        self.zone_position = self.grid.get_zone_position(self.df_current_data['close_synthetic_SINGLE_SINUS_1_FLAT'][symbol])
 
         if ((self.zone_position > self.previous_zone_position)
-                and (not(self.grid.zone_buy_engaged(self.df_current_data['close'][symbol]))) \
+                and (not(self.grid.zone_buy_engaged(self.df_current_data['close_synthetic_SINGLE_SINUS_1_FLAT'][symbol]))) \
                 and (self.previous_zone_position != -1)):
             buying_signal = True
         else:
             buying_signal = False
 
-        self.grid.set_previous_zone_position(self.df_current_data['close'][symbol])
+        self.grid.set_previous_zone_position(self.df_current_data['close_synthetic_SINGLE_SINUS_1_FLAT'][symbol])
         return buying_signal
 
     def set_zone_engaged(self, symbol, price):
@@ -120,14 +118,14 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
             self.set_df_multi()
 
         self.grid = self.df_grid_multi.loc[self.df_grid_multi['symbol'] == symbol, "grid"].iloc[0]
-        if self.grid.get_zone_position(self.df_current_data['close'][symbol]) == -1:
+        if self.grid.get_zone_position(self.df_current_data['close_synthetic_SINGLE_SINUS_1_FLAT'][symbol]) == -1:
             return False
 
         self.previous_zone_position = self.grid.get_previous_zone_position()
-        self.zone_position = self.grid.get_zone_position(self.df_current_data['close'][symbol])
+        self.zone_position = self.grid.get_zone_position(self.df_current_data['close_synthetic_SINGLE_SINUS_1_FLAT'][symbol])
 
         if ((self.zone_position < self.previous_zone_position)
-            and (self.grid.lower_zone_buy_engaged(self.df_current_data['close'][symbol]))
+            and (self.grid.lower_zone_buy_engaged(self.df_current_data['close_synthetic_SINGLE_SINUS_1_FLAT'][symbol]))
             and (self.previous_zone_position != -1)) \
                 or ((isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] > self.TP)
                     or (isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] < self.SL)):
@@ -171,6 +169,22 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
         if size < min_size:
             size = min_size
 
+        in_grid = self.grid.in_grid
+        out_grid = self.grid.out_grid
+        exception_grid = self.grid.exception_grid
+        print(' exception: ', exception_grid,
+              ' in: ', in_grid,
+              ' out: ', out_grid,
+              ' percent in: ', round(in_grid / (in_grid + out_grid + exception_grid) * 100, 1),
+              ' percent out: ', round(out_grid / (in_grid + out_grid + exception_grid) * 100, 1)
+              )
+
+        print(" ############################# Buying Size: ",round(size, 1),
+              " zone: ", self.grid.get_zone_position(self.rtctrl.prices_symbols[symbol]),
+              " price: ", round(self.rtctrl.prices_symbols[symbol], 1),
+              " value: ", size * self.rtctrl.prices_symbols[symbol]
+              )
+
         return size, percent, self.grid.get_zone_position(self.rtctrl.prices_symbols[symbol])
 
     def get_symbol_selling_size(self, symbol):
@@ -185,6 +199,12 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
 
         actual_zone = self.grid.get_zone_position(self.rtctrl.prices_symbols[symbol])
         zone = self.grid.get_lower_zone_buy_engaged(actual_zone)
+
+        print(" ############################# Selling Size: ", round(size, 1),
+              " zone: ", zone,
+              " price: ", round(self.rtctrl.prices_symbols[symbol], 1),
+              " value: ", size * self.rtctrl.prices_symbols[symbol]
+              )
 
         return size, percent, zone
 
@@ -291,6 +311,10 @@ class GridLevelPosition():
 
         self.grid_size = len(self.df_grid)
 
+        self.in_grid = 0
+        self.out_grid = 0
+        self.exception_grid = 0
+
     def get_zone_position(self, price):
         try:
             start_debug = (self.df_grid['start']) < price
@@ -299,9 +323,14 @@ class GridLevelPosition():
                                 & ( (self.df_grid['end']) >= price)]) > 0:
                 zone = self.df_grid[( (self.df_grid['start']) < price)
                                     & ( (self.df_grid['end']) >= price)].index[0]
+                self.in_grid = self.in_grid + 1
             else:
+                self.out_grid = self.out_grid + 1
+                print('^^^^^^^^^^^^^^^^^^^^^^ out of grig')
                 zone = -1
         except:
+            self.exception_grid = self.exception_grid + 1
+            print('^^^^^^^^^^^^^^^^^^^^^^ out of grid exception')
             zone = -1
         return zone
 
@@ -323,15 +352,21 @@ class GridLevelPosition():
         self.df_grid.loc[zone_position, 'zone_engaged'] = True
         self.df_grid.loc[zone_position, 'buying_value'] = price
 
+        print("+++++++++++++++ engaged: ", self.df_grid['zone_engaged'].tolist())
+
     def set_lower_zone_unengaged(self, price):
         zone_position = self.get_zone_position(price)
 
         self.df_grid.loc[zone_position, 'zone_engaged'] = False
         self.df_grid.loc[zone_position, 'buying_value'] = 0
 
+        print("**************** unengaged: ", self.df_grid['zone_engaged'].tolist())
+
     def set_lower_zone_unengaged_position(self, zone_position):
         self.df_grid.loc[zone_position, 'zone_engaged'] = False
         self.df_grid.loc[zone_position, 'buying_value'] = 0
+
+        print("*--------------- unengaged: ", self.df_grid['zone_engaged'].tolist())
 
     def zone_buy_engaged(self, price):
         zone_position = self.get_zone_position(price)

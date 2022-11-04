@@ -150,6 +150,9 @@ class RealTimeStrategy(metaclass=ABCMeta):
     def get_lower_zone_buy_engaged(self, zone):
         return -10
 
+    def get_grid_sell_condition(self, symbol, zone):
+        return True
+
     @staticmethod
     def get_df_forced_selling_symbols(selection_symbols, df_rtctrl):
         lst_symbols = df_rtctrl['symbol'].tolist()

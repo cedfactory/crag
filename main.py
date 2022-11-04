@@ -1,4 +1,4 @@
-from src import rtdp,rtdp_simulation,broker_simulation,broker_ftx,rtstr,rtstr_grid_trading,rtstr_grid_trading_multi,rtstr_balance_trading,rtstr_tv_recommendation_mid,rtstr_balance_trading_multi,rtstr_super_reversal,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC,analyser,benchmark,automatic_test_plan
+from src import rtdp,rtdp_simulation,broker_simulation,broker_ftx,rtstr,rtstr_grid_trading,rtstr_grid_trading_multi,rtstr_simu_grid_trading_multi,rtstr_balance_trading,rtstr_tv_recommendation_mid,rtstr_balance_trading_multi,rtstr_super_reversal,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC,analyser,benchmark,automatic_test_plan
 from src import crag,crag_helper
 from src import logger
 # from src import debug
@@ -123,6 +123,7 @@ def crag_simulation_scenario(strategy_name, start_date, end_date, interval, sl, 
                                                                                  "upper_grid": upper_grid,
                                                                                  "max_pos": max_pos,
                                                                                  "grid_df_params": '../../grid_df_params.csv',
+                                                                                 # "grid_df_params": '../../grid_simu_df_params.csv',
                                                                                  "working_directory": working_directory})
     else:
         print("💥 missing known strategy ({})".format(strategy_name))
@@ -308,6 +309,7 @@ if __name__ == '__main__':
                   # "startegies": ['StrategyCryptobot'],
                   # "startegies": ['StrategyGridTrading'],
                   "startegies": ['StrategyGridTradingMulti'],
+                  # "startegies": ['StrategySimuGridTradingMulti'],
                   # "startegies": ['StrategyBalanceTrading'],
                   # "startegies": ['StrategyBalanceTradingMulti'],
                   # "sl": [0, -5, -10],
