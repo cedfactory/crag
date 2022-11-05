@@ -167,6 +167,16 @@ class Crag:
         msg += "current portfolio value : $ {} ({}%)\n".format(utils.KeepNDecimals(portfolio_value, 2), utils.KeepNDecimals(variation_percent, 2))
         msg += "    minimal portfolio value : $ {} ({})\n".format(utils.KeepNDecimals(self.minimal_portfolio_value, 2), self.minimal_portfolio_date)
         msg += "    maximal portfolio value : $ {} ({})\n".format(utils.KeepNDecimals(self.maximal_portfolio_value, 2), self.maximal_portfolio_date)
+        if len(self.df_portfolio_status) > 0:
+            msg += "symbols value roi:\n"
+            list_symbols = self.df_portfolio_status['symbol'].to_list()
+            list_value = self.df_portfolio_status['value'].to_list()
+            list_roi = self.df_portfolio_status['roi_sl_tp'].to_list()
+            for symbols in list_symbols:
+                msg += "{} - {} - {}\n".format(list_symbols[0], utils.KeepNDecimals(list_value[0], 2), utils.KeepNDecimals(list_roi[0], 2))
+                list_symbols.pop(0)
+                list_value.pop(0)
+                list_roi.pop(0)
         msg += "current cash = {}".format(utils.KeepNDecimals(self.broker.get_cash(), 2))
         self.log(msg, "step")
         if not self.zero_print:
