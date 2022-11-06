@@ -1,6 +1,6 @@
 <configuration>
     <strategy id="solo" name="StrategyGridTradingMulti">
-        <params max_position="0" share_size="20" grid_df_params="./grid_df_params.csv" />
+        <params symbols="BTC/USD,ETH/USD,XRP/USD,BNB/USD,SOL/USD" max_position="0" share_size="20" grid_df_params="./grid_df_params.csv" />
     </strategy>
     <broker name="ftx" account="solo" simulation="0" />
     <crag id="solo" interval="60" />

@@ -23,6 +23,7 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
         self.share_size = 10
         self.global_tp = 10000
         self.df_size_grid_params = pd.DataFrame()
+        self.symbols = ["BTC/USD"]
         if params:
             self.share_size = params.get("share_size", self.share_size)
             if isinstance(self.share_size, str):
@@ -36,6 +37,9 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
             self.MAX_POSITION = params.get("max_pos", self.MAX_POSITION)
             if isinstance(self.MAX_POSITION, str):
                 self.MAX_POSITION = int(self.MAX_POSITION)
+            self.symbols = params.get("symbols", self.symbols)
+            if isinstance(self.symbols, str):
+                self.symbols = self.symbols.split(",")
 
         # add commision 0.08
         self.df_size_grid_params['balance_min_size'] = self.df_size_grid_params['balance_min_size'] / (1 - 0.008)
@@ -48,13 +52,7 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
 
     def get_data_description(self):
         ds = rtdp.DataDescription()
-        ds.symbols = [
-            "BTC/USD",
-            "ETH/USD",
-            "XRP/USD",
-            "BNB/USD",
-            "SOL/USD"
-        ]
+        ds.symbols = self.symbols
         ds.features = { "close" : None }
         self.list_symbols = ds.symbols
         return ds
@@ -64,6 +62,7 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
         info += "MAX_POSITION = {}\n".format(self.MAX_POSITION)
         info += "share_size = {}\n".format(self.share_size)
         info += "global_tp = {}\n".format(self.global_tp)
+        info += "symbols = {}\n".format(",".join(self.symbols))
         self.log(msg=info, header="StrategyGridTradingMulti::log_info")
 
     def log_current_info(self):

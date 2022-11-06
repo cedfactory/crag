@@ -1,6 +1,0 @@
-symbol,UpperPriceLimit,LowerPriceLimit,OutboundZoneMax,OutboundZoneMin,grid_step,grid_threshold,balance_min_size
-BTC-PERP,20000,15000,100000,10000,1,0.08,0.0001
-ETH-PERP,1800,1000,3000,500,1,0.08,0.001
-XRP-PERP,0.6,0.2,2,0.1,1,0.08,1
-BNB-PERP,300,180,350,150,1,0.08,0.01
-SOL-PERP,38,24,50,10,1,0.08,0.01
