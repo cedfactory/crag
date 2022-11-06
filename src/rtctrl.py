@@ -91,7 +91,10 @@ class rtctrl():
             self.wallet_value = self.df_rtctrl['wallet_value'][0]
         else:
             self.wallet_value = self.wallet_cash
-        self.df_rtctrl['wallet_%'] = 100 * self.df_rtctrl['portfolio_value'] / self.df_rtctrl['wallet_value']
+        if self.df_rtctrl['wallet_value'] != 0 and self.df_rtctrl['wallet_value'] != None:
+            self.df_rtctrl['wallet_%'] = 100 * self.df_rtctrl['portfolio_value'] / self.df_rtctrl['wallet_value']
+        else:
+            self.df_rtctrl['wallet_%'] = 0
 
     def display_summary_info(self, record_info=None):
         wallet_cash = self.wallet_cash
