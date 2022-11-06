@@ -165,8 +165,13 @@ class Crag:
         msg = "original portfolio value : $ {} ({})\n".format(utils.KeepNDecimals(self.original_portfolio_value, 2), self.start_date)
         variation_percent = utils.get_variation(self.original_portfolio_value, portfolio_value)
         msg += "current portfolio value : $ {} ({}%)\n".format(utils.KeepNDecimals(portfolio_value, 2), utils.KeepNDecimals(variation_percent, 2))
-        msg += "    minimal portfolio value : $ {} ({})\n".format(utils.KeepNDecimals(self.minimal_portfolio_value, 2), self.minimal_portfolio_date)
-        msg += "    maximal portfolio value : $ {} ({})\n".format(utils.KeepNDecimals(self.maximal_portfolio_value, 2), self.maximal_portfolio_date)
+        portfolio_net_value = portfolio_value - (portfolio_value - self.broker.get_cash()) * 0.07 / 100 # CEDE 0.07 could be replaced by get_commission???
+        variation_percent = utils.get_variation(self.original_portfolio_value, portfolio_net_value)
+        msg += "current portfolio net value : $ {} ({}%)\n".format(utils.KeepNDecimals(portfolio_net_value, 2), utils.KeepNDecimals(variation_percent, 2))
+        variation_percent = utils.get_variation(self.minimal_portfolio_value, portfolio_value)
+        msg += "    minimal portfolio value : $ {} ({}%) ({})\n".format(utils.KeepNDecimals(self.minimal_portfolio_value, 2), utils.KeepNDecimals(variation_percent, 2),self.minimal_portfolio_date)
+        variation_percent = utils.get_variation(self.maximal_portfolio_value, portfolio_value)
+        msg += "    maximal portfolio value : $ {} ({}%) ({})\n".format(utils.KeepNDecimals(self.maximal_portfolio_value, 2), utils.KeepNDecimals(variation_percent, 2),self.maximal_portfolio_date)
         if len(self.df_portfolio_status) > 0:
             msg += "symbols value roi:\n"
             list_symbols = self.df_portfolio_status['symbol'].to_list()
@@ -177,6 +182,8 @@ class Crag:
                 list_symbols.pop(0)
                 list_value.pop(0)
                 list_roi.pop(0)
+        else:
+            msg += "no positions\n"
         msg += "current cash = {}".format(utils.KeepNDecimals(self.broker.get_cash(), 2))
         self.log(msg, "step")
         if not self.zero_print:
