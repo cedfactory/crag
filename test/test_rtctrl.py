@@ -91,5 +91,6 @@ class TestRTCTRL:
         assert(df['size'].to_list() == [5, 4])
         assert(df['fees'].to_list()== [.5, .4])
         assert(df['buying_gross_price'].to_list() == [50, 40])
+        assert(df['portfolio_value'].to_list() == [0.1, 0.12])
         assert(ctrl.wallet_cash == 100)
         

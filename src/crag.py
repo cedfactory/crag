@@ -174,7 +174,7 @@ class Crag:
         msg += "    maximal portfolio value : $ {} ({}%) ({})\n".format(utils.KeepNDecimals(self.maximal_portfolio_value, 2), utils.KeepNDecimals(variation_percent, 2),self.maximal_portfolio_date)
         if len(self.df_portfolio_status) > 0:
             msg += "symbols value roi:\n"
-            list_symbols = self.df_portfolio_status['symbol'].to_list()
+            list_symbols = self.df_portfolio_status.index.to_list()
             list_value = self.df_portfolio_status['value'].to_list()
             list_roi = self.df_portfolio_status['roi_sl_tp'].to_list()
             for symbols in list_symbols:
@@ -409,7 +409,7 @@ class Crag:
         if self.temp_debug:
             total = self.cash + self.df_portfolio_status['value'].sum()
             coin_size = self.df_portfolio_status['portfolio_size'].sum()
-            print('zone: ', self.rtstr.grid.get_zone_position(self.broker.get_value('BTC/USD')), ' price: ', self.broker.get_value('BTC/USD'))
+            #print('zone: ', self.rtstr.grid.get_zone_position(self.broker.get_value('BTC/USD')), ' price: ', self.broker.get_value('BTC/USD'))
             print(current_datetime, ' cash : $', round(self.cash, 2), ' coin size : ', round(coin_size, 4), 'portfolio : $', round(self.df_portfolio_status['value'].sum(), 2), ' total : $', round(total))
             if total != 0:
                 cash_percent = 100 * self.cash / total
