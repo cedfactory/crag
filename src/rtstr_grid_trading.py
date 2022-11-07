@@ -52,18 +52,6 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
         info += "grid.upper_grid = {}\n".format(self.grid.UpperPriceLimit)
         self.log(msg=info, header="StrategyGridTrading::log_info")
 
-    def log_current_info(self):
-        csvfilename = str(utils.get_random_id())+"_df_grid.csv"
-        print(csvfilename)
-        self.grid.df_grid.to_csv(csvfilename, sep=',')
-        self.log(msg="> df_grid", header="StrategyGridTrading::log_current_info", attachments=[csvfilename])
-        os.remove(csvfilename)
-
-        currentdatafilename = str(utils.get_random_id())+"_df_current_data.csv"
-        self.df_current_data.to_csv(currentdatafilename, sep=',')
-        self.log(msg="> df_current_data", header="StrategyGridTrading::log_current_info", attachments=[currentdatafilename])
-        os.remove(currentdatafilename)
-
     def get_info(self):
         return "StrategyGridTrading", self.str_sl, self.str_tp
 
