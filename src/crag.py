@@ -74,6 +74,10 @@ class Crag:
         if self.temp_debug:
             self.df_debug_traces = pd.DataFrame(columns=['time', 'cash_dol', ' coin_size', 'coin_dol', 'cash_pct', 'coin_pct', 'total_cash', 'total_pct'])
 
+        self.traces_trade_total_opened = 0
+        self.traces_trade_positive = 0
+        self.traces_trade_negative = 0
+        self.traces_trade_performed = 0
 
         # rabbitmq connection
         try:
@@ -168,8 +172,11 @@ class Crag:
         portfolio_net_value = portfolio_value - (portfolio_value - self.broker.get_cash()) * 0.07 / 100 # CEDE 0.07 could be replaced by get_commission???
         variation_percent = utils.get_variation(self.original_portfolio_value, portfolio_net_value)
         msg += "current portfolio net value : $ {} ({}%)\n".format(utils.KeepNDecimals(portfolio_net_value, 2), utils.KeepNDecimals(variation_percent, 2))
+        msg += "total opened positions : {} remaining open: {}\n".format(self.traces_trade_total_opened, self.traces_trade_total_opened - self.traces_trade_performed)
+        win_rate = self.traces_trade_positive / self.traces_trade_performed * 100
+        msg += "win rate : {}% out of {} trades concluded\n".format(utils.KeepNDecimals(win_rate, 2), self.traces_trade_performed)
         variation_percent = utils.get_variation(self.minimal_portfolio_value, portfolio_value)
-        msg += "    minimal portfolio value : $ {} ({}%) ({})\n".format(utils.KeepNDecimals(self.minimal_portfolio_value, 2), utils.KeepNDecimals(variation_percent, 2),self.minimal_portfolio_date)
+        msg += "    max drawdown : $ {} ({}%) ({})\n".format(utils.KeepNDecimals(self.minimal_portfolio_value, 2), utils.KeepNDecimals(variation_percent, 2),self.minimal_portfolio_date)
         variation_percent = utils.get_variation(self.maximal_portfolio_value, portfolio_value)
         msg += "    maximal portfolio value : $ {} ({}%) ({})\n".format(utils.KeepNDecimals(self.maximal_portfolio_value, 2), utils.KeepNDecimals(variation_percent, 2),self.maximal_portfolio_date)
         if len(self.df_portfolio_status) > 0:
@@ -248,16 +255,16 @@ class Crag:
         sell_trade.selling_fee = sell_trade.gross_price - sell_trade.net_price
         sell_trade.roi = 100 * (sell_trade.net_price - bought_trade.gross_price) / bought_trade.gross_price
 
-        # CEDE DEBUG TRACES
+        self.traces_trade_performed = self.traces_trade_performed + 1
         if sell_trade.roi < 0:
+            self.traces_trade_negative = self.traces_trade_negative + 1
             if (sell_trade.symbol_price - sell_trade.buying_price) < 0:
                 print('NEGATIVE TRADE: $', sell_trade.net_price - bought_trade.gross_price)
             else:
                 print('NEGATIVE TRADE DUE TO FEES: $', sell_trade.net_price - bought_trade.gross_price)
             print('BUYING AT: $', sell_trade.buying_price, ' SELLING AT: $', sell_trade.symbol_price)
-        # CEDE TRACES FOR DEBUG
-        # else:
-        #     print('POSITIVE TRADE: $', sell_trade.net_price - bought_trade.gross_price)
+        else:
+            self.traces_trade_positive = self.traces_trade_positive + 1
         return sell_trade
 
     def trade(self):
@@ -369,6 +376,9 @@ class Crag:
                 if done:
                     self.cash = self.broker.get_cash()
                     current_trade.cash = self.cash
+
+                    # Update traces
+                    self.traces_trade_total_opened = self.traces_trade_total_opened + 1
 
                     # Update grid strategy
                     self.rtstr.set_zone_engaged(current_trade.symbol, current_trade.symbol_price)
