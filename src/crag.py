@@ -176,9 +176,9 @@ class Crag:
         win_rate = self.traces_trade_positive / self.traces_trade_performed * 100
         msg += "win rate : {}% out of {} trades concluded\n".format(utils.KeepNDecimals(win_rate, 2), self.traces_trade_performed)
         variation_percent = utils.get_variation(self.minimal_portfolio_value, portfolio_value)
-        msg += "    max drawdown : $ {} ({}%) ({})\n".format(utils.KeepNDecimals(self.minimal_portfolio_value, 2), utils.KeepNDecimals(variation_percent, 2),self.minimal_portfolio_date)
+        msg += "max drawdown : $ {} ({}%) ({})\n".format(utils.KeepNDecimals(self.minimal_portfolio_value, 2), utils.KeepNDecimals(variation_percent, 2),self.minimal_portfolio_date)
         variation_percent = utils.get_variation(self.maximal_portfolio_value, portfolio_value)
-        msg += "    maximal portfolio value : $ {} ({}%) ({})\n".format(utils.KeepNDecimals(self.maximal_portfolio_value, 2), utils.KeepNDecimals(variation_percent, 2),self.maximal_portfolio_date)
+        msg += "maximal portfolio value : $ {} ({}%) ({})\n".format(utils.KeepNDecimals(self.maximal_portfolio_value, 2), utils.KeepNDecimals(variation_percent, 2),self.maximal_portfolio_date)
         if len(self.df_portfolio_status) > 0:
             msg += "symbols value roi:\n"
             list_symbols = self.df_portfolio_status.index.to_list()
