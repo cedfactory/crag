@@ -1,7 +1,7 @@
 from src import rtdp,rtdp_simulation
 from src import broker_simulation,broker_ftx
 from src import crag
-from src import rtstr,rtstr_grid_trading, rtstr_super_reversal,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC
+from src import rtstr,rtstr_super_reversal,rtstr_grid_trading_multi,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC
 from src import logger
 import xml.etree.cElementTree as ET
 from dotenv import load_dotenv

@@ -15,7 +15,7 @@ class TestCrag:
     def test_initialization_from_configuration_file_ko_unknown_strategy(self):
         # context : create the configruation file
         filename = self._write_file('''<configuration>
-            <strategy name="StrategyGridTrading" />
+            <strategy name="StrategySuperReversal" />
             <broker name="fake_broker">
                 <params account="test_bot" simulation="1" />
             </broker>
@@ -73,8 +73,8 @@ class TestCrag:
     def test_initialization_from_configuration_file_ok(self):
         # context : create the configruation file
         filename = self._write_file('''<configuration>
-            <strategy name="StrategyGridTrading">
-                <params share_size="12" global_tp="15000" grid_step="1." grid_threshold=".8" upper_grid="25000" />
+            <strategy name="StrategyGridTradingMulti">
+                <params symbols="BTC/USD" grid_df_params="./test/data/multigrid_df_params.csv"/>
             </strategy>
             <broker name="ftx">
                 <params account="test_bot" leverage="3" simulation="1"/>
@@ -88,11 +88,9 @@ class TestCrag:
         # expectations
         assert(bot.broker != None)
         assert(bot.broker.leverage == 3)
-        assert(bot.rtstr.get_name() == "StrategyGridTrading")
-        assert(bot.rtstr.share_size == 12)
-        assert(bot.rtstr.global_tp == 15000)
-        assert(bot.rtstr.grid.grid_threshold == .8)
-        assert(bot.rtstr.grid.UpperPriceLimit == 25000)
+        assert(bot.rtstr.get_name() == "StrategyGridTradingMulti")
+        assert(bot.rtstr.share_size == 10)
+        assert(bot.rtstr.global_tp == 10000)
         assert(bot.interval == 20)
 
         # cleaning
@@ -102,7 +100,9 @@ class TestCrag:
     def test_initialization_from_configuration_file_ok_broker_simulation(self):
         # context : create the configruation file
         filename = self._write_file('''<configuration>
-            <strategy name="StrategyGridTrading" />
+            <strategy name="StrategyGridTradingMulti">
+                <params symbols="BTC/USD" grid_df_params="./test/data/multigrid_df_params.csv"/>
+            </strategy>
             <broker name="simulator">
                 <params cash="100" start_date="2022-01-01" end_date="2022-02-01" intervals="1d"/>
             </broker>
@@ -118,11 +118,9 @@ class TestCrag:
         assert(bot.broker.end_date == "2022-02-01")
         assert(bot.broker.intervals == "1d")
         assert(bot.broker.get_cash() == 100)
-        assert(bot.rtstr.get_name() == "StrategyGridTrading")
+        assert(bot.rtstr.get_name() == "StrategyGridTradingMulti")
         assert(bot.rtstr.share_size == 10)
         assert(bot.rtstr.global_tp == 10000)
-        assert(bot.rtstr.grid.grid_threshold == .08)
-        assert(bot.rtstr.grid.UpperPriceLimit == 20500)
         assert(bot.interval == 20)
 
         # cleaning
@@ -134,7 +132,9 @@ class TestCrag:
     def test_backup(self):
         # context : create the configruation file
         filename = self._write_file('''<configuration>
-            <strategy name="StrategyGridTrading" />
+            <strategy name="StrategyGridTradingMulti">
+                <params symbols="BTC/USD" grid_df_params="./test/data/multigrid_df_params.csv"/>
+            </strategy>
             <broker name="ftx" account="test_bot" simulation="1" />
             <crag interval="20" />
         </configuration>''')
@@ -147,7 +147,7 @@ class TestCrag:
 
         # expectations
         assert(bot.broker != None)
-        assert(bot.rtstr.get_name() == "StrategyGridTrading")
+        assert(bot.rtstr.get_name() == "StrategyGridTradingMulti")
         assert(bot.interval == 20)
 
         # cleaning
