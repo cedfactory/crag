@@ -1,0 +1,2 @@
+symbol,UpperPriceLimit,LowerPriceLimit,OutboundZoneMax,OutboundZoneMin,grid_step,grid_threshold,balance_min_size
+BTC/USD,20500,19700,100000,10000,30,0.08,0.0001

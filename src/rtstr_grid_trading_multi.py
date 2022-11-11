@@ -1,6 +1,6 @@
 import pandas as pd
 import os
-from . import rtdp, rtstr, rtctrl, utils
+from . import rtdp, rtstr, rtctrl
 
 class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
 
