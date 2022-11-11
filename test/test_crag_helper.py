@@ -104,7 +104,7 @@ class TestCrag:
         filename = self._write_file('''<configuration>
             <strategy name="StrategyGridTrading" />
             <broker name="simulator">
-                <params cash="100" intervals="1d"/>
+                <params cash="100" start_date="2022-01-01" end_date="2022-02-01" intervals="1d"/>
             </broker>
             <crag interval="20" />
         </configuration>''')
@@ -114,8 +114,8 @@ class TestCrag:
 
         # expectations
         assert(bot.broker != None)
-        #assert(bot.broker.start_date == "")
-        #assert(bot.broker.end_date == "")
+        assert(bot.broker.start_date == "2022-01-01")
+        assert(bot.broker.end_date == "2022-02-01")
         assert(bot.broker.intervals == "1d")
         assert(bot.broker.get_cash() == 100)
         assert(bot.rtstr.get_name() == "StrategyGridTrading")
