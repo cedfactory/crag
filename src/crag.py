@@ -138,6 +138,10 @@ class Crag:
         msg = msg_broker_info + "\n" + msg_strategy_info
         self.log(msg, "run")
         self.rtstr.log_info()
+
+        # configure the broker is compatible with the data description used by the strategy
+        self.broker.configure_for_data_description(self.rtstr.get_data_description())
+
         done = False
         while not done:
             start = time.time()

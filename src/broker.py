@@ -15,6 +15,9 @@ class Broker(metaclass = ABCMeta):
         if self.rtdp:
             return self.rtdp.tick()
 
+    def configure_for_data_description(self, data_description):
+        pass
+
     def check_data_description(self, data_description):
         if self.rtdp:
             self.rtdp.check_data_description(data_description)

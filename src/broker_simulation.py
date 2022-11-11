@@ -21,6 +21,10 @@ class SimBroker(broker.Broker):
             self.end_date = params.get("end_date", self.end_date)
             self.intervals = params.get("intervals", self.intervals)
 
+    def configure_for_data_description(self, data_description):
+        if self.start_date != "":
+            self.rtdp.record_for_data_scenario(data_description, self.start_date, self.end_date, self.intervals)
+
     def check_data_description(self, data_description):
         self.rtdp.check_data_description(data_description)
 

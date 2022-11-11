@@ -115,12 +115,16 @@ class rtctrl():
             self.df_rtctrl_tracking = pd.concat([self.df_rtctrl_tracking, df_new_line])
             self.df_rtctrl_tracking.reset_index(inplace=True, drop=True)
             if record_info and self.export_filename != None and self.export_filename != "":
-                interval = self.df_rtctrl_tracking['time'][1] - self.df_rtctrl_tracking['time'][0]
-                self.df_rtctrl_tracking['time'][len(self.df_rtctrl_tracking)-1] = self.df_rtctrl_tracking['time'][len(self.df_rtctrl_tracking)-1] + interval
+                if self.df_rtctrl_tracking['time'][1] and self.df_rtctrl_tracking['time'][0]:
+                    interval = self.df_rtctrl_tracking['time'][1] - self.df_rtctrl_tracking['time'][0]
+                    self.df_rtctrl_tracking['time'][len(self.df_rtctrl_tracking)-1] = self.df_rtctrl_tracking['time'][len(self.df_rtctrl_tracking)-1] + interval
 
-                self.df_rtctrl_tracking.drop(index=self.df_rtctrl_tracking.index[-2], axis=0, inplace=True)
-                self.df_rtctrl_tracking.reset_index(drop=True, inplace=True)
+                    self.df_rtctrl_tracking.drop(index=self.df_rtctrl_tracking.index[-2], axis=0, inplace=True)
+                    self.df_rtctrl_tracking.reset_index(drop=True, inplace=True)
 
-                self.df_rtctrl_tracking.to_csv(self.export_filename)
+                    self.df_rtctrl_tracking.to_csv(self.export_filename)
+                else:
+                    print("!!! [rtctrl] self.df_rtctrl_tracking expecting values in time column")
+                    print(self.df_rtctrl_tracking)
         
         return summary

@@ -160,9 +160,13 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
             df.drop(columns="index", inplace=True)
 
             df = features.add_features(df, data_description.features)
+
             if not os.path.exists(self.data_directory):
                 os.makedirs(self.data_directory)
-            df.to_csv(self.data_directory+'/'+formatted_symbol+".csv", sep=',')
+            
+            csvfilename = self.data_directory+'/'+formatted_symbol+".csv"
+            print("write ", csvfilename)
+            df.to_csv(csvfilename, sep=',')
 
         list_dates = []
         directory = os.getcwd()

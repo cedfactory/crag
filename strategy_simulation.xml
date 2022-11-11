@@ -1,5 +1,7 @@
 <configuration>
-    <strategy name="StrategySuperReversal" />
+    <strategy name="StrategySuperReversal">
+        <params/>
+    </strategy>
     <broker name="simulator">
         <params cash="100" start_date="2022-01-01" end_date="2022-02-01" intervals="1d"/>
     </broker>
