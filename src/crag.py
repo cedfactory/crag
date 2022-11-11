@@ -77,7 +77,7 @@ class Crag:
         self.traces_trade_total_opened = 0
         self.traces_trade_positive = 0
         self.traces_trade_negative = 0
-        self.traces_trade_performed = 0
+        self.traces_trade_performed = 1 # find a better way to fix the incrementation of it
 
         # rabbitmq connection
         try:
@@ -173,7 +173,7 @@ class Crag:
         variation_percent = utils.get_variation(self.original_portfolio_value, portfolio_net_value)
         msg += "current portfolio net value : $ {} ({}%)\n".format(utils.KeepNDecimals(portfolio_net_value, 2), utils.KeepNDecimals(variation_percent, 2))
         msg += "total opened positions : {} remaining open: {}\n".format(self.traces_trade_total_opened, self.traces_trade_total_opened - self.traces_trade_performed)
-        win_rate = self.traces_trade_positive / self.traces_trade_performed * 100
+        win_rate = 100 * self.traces_trade_positive / self.traces_trade_performed
         msg += "win rate : {}% out of {} trades concluded\n".format(utils.KeepNDecimals(win_rate, 2), self.traces_trade_performed)
         variation_percent = utils.get_variation(self.minimal_portfolio_value, portfolio_value)
         msg += "max drawdown : $ {} ({}%) ({})\n".format(utils.KeepNDecimals(self.minimal_portfolio_value, 2), utils.KeepNDecimals(variation_percent, 2),self.minimal_portfolio_date)
