@@ -1,7 +1,0 @@
-<configuration>
-    <strategy id="room1" name="StrategyGridTradingMulti">
-        <params share_size="10" grid_df_params="./grid_df_params.csv" />
-    </strategy>
-    <broker name="ftx" account="room1" simulation="0" />
-    <crag id="room1" interval="60" />
-</configuration>

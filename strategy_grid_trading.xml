@@ -1,7 +1,0 @@
-<configuration>
-    <strategy id="room1" name="StrategyGridTrading">
-        <params grid_step="1." grid_threshold="0.08" lower_grid="15000" upper_grid="21000" />
-    </strategy>
-    <broker name="ftx" account="room1" simulation="0" />
-    <crag id="room1" interval="60" />
-</configuration>

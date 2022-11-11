@@ -19,8 +19,14 @@ class BrokerFTX(broker.Broker):
         self.leverage = 0
         if params:
             self.simulation = params.get("simulation", self.simulation)
+            if self.simulation == 0 or self.simulation == "0":
+                self.simulation = False
+            if self.simulation == 1 or self.simulation == "1":
+                self.simulation = True
             self.account = params.get("account", self.account)
             self.leverage = params.get("leverage", self.leverage)
+            if isinstance(self.leverage, str):
+                self.leverage = int(self.leverage)
         if not self.authentification():
             print("[BrokerFTX] : Problem encountered during authentification")
          

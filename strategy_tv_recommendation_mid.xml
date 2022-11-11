@@ -2,6 +2,8 @@
     <strategy id="room1" name="StrategyTvRecommendationMid">
         <params share_size="10" grid_df_params="./grid_df_params.csv" />
     </strategy>
-    <broker name="ftx" account="TV_MID" simulation="0" />
+    <broker name="ftx">
+        <params account="TV_MID" simulation="0" />
+    </broker>
     <crag id="test" interval="60" />
 </configuration>

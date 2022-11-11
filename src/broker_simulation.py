@@ -17,6 +17,8 @@ class SimBroker(broker.Broker):
         self.intervals = 0
         if params:
             self.cash = params.get("cash", self.cash)
+            if isinstance(self.cash, str):
+                self.cash = int(self.cash)
             self.start_date = params.get("start", self.start_date)
             self.end_date = params.get("end", self.end_date)
             self.intervals = params.get("intervals", self.intervals)
