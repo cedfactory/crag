@@ -1,0 +1,7 @@
+<configuration>
+    <strategy name="StrategySuperReversal" />
+    <broker name="simulator">
+        <params cash="100" intervals="1d"/>
+    </broker>
+    <crag interval="60" />
+</configuration>
