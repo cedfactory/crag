@@ -12,7 +12,7 @@ class Chronos():
         if start_date != None and end_date != None:
             self.df_time = self.get_df_range_time()
         else:
-            self.df_time = pd.read_csv('./data/' + 'BTC_USD.csv', delimiter=';', usecols=['timestamp'])
+            self.df_time = pd.read_csv('./data/' + 'BTC_USD.csv', delimiter=',', usecols=['timestamp'])
 
         #self.duration_tick = len(self.get_df_range_time())
         

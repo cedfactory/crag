@@ -108,7 +108,7 @@ class TestSimRealTimeDataProvider:
         ds = rtdp.DataDescription()
         ds.symbols = ["AAVE/EURS"]
 
-        df = pd.read_csv("./test/data/AAVE_USD.csv", delimiter=';')
+        df = pd.read_csv("./test/data/AAVE_USD.csv", delimiter=',')
         json_df = {'result': {'AAVE_EURS': {'status': 'ok', 'info':df.to_json()}}}
         mocker.patch('src.utils.fdp_request_post', side_effect=[json_df])
 

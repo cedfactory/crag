@@ -6,7 +6,7 @@ class TestChronos:
 
     def test_get_df_range_time(self, mocker):
         # context
-        df = pd.read_csv("./test/data/AAVE_USD.csv", delimiter=';')
+        df = pd.read_csv("./test/data/AAVE_USD.csv", delimiter=',')
 
         df.drop(["Unnamed: 0"], axis=1, inplace=True)
         df['timestamp'] = df['timestamp'].astype('string') # convert object type to string type
