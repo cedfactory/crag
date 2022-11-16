@@ -139,9 +139,6 @@ class Crag:
         self.log(msg, "run")
         self.rtstr.log_info()
 
-        # configure the broker is compatible with the data description used by the strategy
-        self.broker.configure_for_data_description(self.rtstr.get_data_description())
-
         done = False
         while not done:
             start = time.time()
@@ -149,11 +146,14 @@ class Crag:
             if done:
                 break
             end = time.time()
-            sleeping_time = self.interval - (end - start)
-            if sleeping_time >= 0:
-                time.sleep(self.interval - (end - start))
+            if self.start_date and self.end_date:
+                sleeping_time = 0
             else:
-                self.log("warning : time elapsed for the step ({}) is greater than the interval ({})".format(end - start, self.interval))
+                sleeping_time = self.interval - (end - start)
+                if sleeping_time >= 0:
+                    time.sleep(self.interval - (end - start))
+                else:
+                    self.log("warning : time elapsed for the step ({}) is greater than the interval ({})".format(end - start, self.interval))
 
             self.broker.tick() # increment
             self.backup() # backup for reboot
