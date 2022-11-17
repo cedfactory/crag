@@ -7,7 +7,7 @@ import urllib.parse
 import urllib.request
 import json
 import concurrent.futures
-import random
+import secrets
 import requests
 
 import yfinance as yf
@@ -113,4 +113,4 @@ def get_variation(src, dst):
     return 100 * (dst - src) / src
 
 def get_random_id():
-    return random.randint(10000000, 99999999)
+    return 10000000 + secrets.randbelow(90000000)
