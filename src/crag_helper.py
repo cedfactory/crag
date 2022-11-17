@@ -1,5 +1,5 @@
 from src import rtdp
-from src import broker_simulation,broker_ftx
+from src import broker_simulation,broker_ccxt
 from src import crag
 from src import rtstr,rtstr_super_reversal,rtstr_grid_trading_multi,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC
 from src import logger
@@ -56,10 +56,12 @@ def initialization_from_configuration_file(configuration_file):
         return None
 
     my_broker = None
-    if broker_name == "ftx":
-        my_broker = broker_ftx.BrokerFTX(params_broker)
-    elif broker_name == "simulator" or broker_name == "simulation" or broker_name == "simu":
+    if broker_name == "simulator" or broker_name == "simulation" or broker_name == "simu":
         my_broker = broker_simulation.SimBroker(params_broker)
+    else:
+        my_broker = broker_ccxt.BrokerCCXT(params_broker)
+    if my_broker == None:
+        return None
 
     params = {'broker':my_broker, 'rtstr':my_strategy, "id": crag_id, 'interval':crag_interval, 'logger':crag_discord_bot}
     bot = crag.Crag(params)

@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 import pika
 import pandas as pd
-from src import broker_ftx
+from src import broker_ccxt
 
 class BotSimon(commands.Bot):
     def __init__(self):
@@ -22,8 +22,8 @@ class BotSimon(commands.Bot):
                 account = args[0]
 
             # get balance from the broker
-            my_broker_ftx = broker_ftx.BrokerFTX({'account':account, 'simulation':1})
-            balance = my_broker_ftx.get_balance()
+            my_broker = broker_ccxt.BrokerCCXT({"exchange": "binance", "account":account, "simulation":1})
+            balance = my_broker.get_balance()
 
             # convert data into dataframe
             value = 0

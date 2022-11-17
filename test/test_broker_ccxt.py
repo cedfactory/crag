@@ -1,10 +1,10 @@
 import pytest
-from src import broker_ftx
+from src import broker_ccxt
 
-class TestBrokerFTX:
+class TestBrokerCCXT:
     def test_constructor(self):
         # action
-        broker = broker_ftx.BrokerFTX()
+        broker = broker_ccxt.BrokerCCXT()
 
         # expectations
         assert(broker.simulation == False)
@@ -12,7 +12,7 @@ class TestBrokerFTX:
 
     def test_get_value(self):
         # context
-        broker = broker_ftx.BrokerFTX()
+        broker = broker_ccxt.BrokerCCXT()
 
         # action
         value = broker.get_value("BTC/USD")
@@ -22,7 +22,7 @@ class TestBrokerFTX:
 
     def test_get_cash(self):
         # context
-        broker = broker_ftx.BrokerFTX()
+        broker = broker_ccxt.BrokerCCXT()
 
         # action
         value = broker.get_cash()

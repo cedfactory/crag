@@ -1,4 +1,4 @@
-from src import rtdp,rtdp_simulation,broker_simulation,broker_ftx,rtstr,rtstr_grid_trading_multi,rtstr_simu_grid_trading_multi,rtstr_balance_trading,rtstr_tv_recommendation_mid,rtstr_balance_trading_multi,rtstr_super_reversal,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC,analyser,benchmark,automatic_test_plan
+from src import rtdp,rtdp_simulation,broker_simulation,broker_ccxt,rtstr,rtstr_grid_trading_multi,rtstr_simu_grid_trading_multi,rtstr_balance_trading,rtstr_tv_recommendation_mid,rtstr_balance_trading_multi,rtstr_super_reversal,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC,analyser,benchmark,automatic_test_plan
 from src import crag,crag_helper
 from src import logger
 # from src import debug
@@ -86,24 +86,24 @@ def crag_benchmark_scenario(df, start_date, end_date, period):
     my_benchmark.set_benchmark_df_results(df)
 
 def crag_ftx():
-    my_broker_ftx = broker_ftx.BrokerFTX({'account':'room2', 'simulation':0})
+    my_broker = broker_ccxt.BrokerCCXT({'exchange':'binance', 'account':'room2', 'simulation':0})
 
     print("### balance ###")
-    balance = my_broker_ftx.get_balance()
+    balance = my_broker.get_balance()
     print(balance)
 
     print("### positions ###")
-    positions = my_broker_ftx.get_positions()
+    positions = my_broker.get_positions()
     print(positions)
 
     print("### my trades ###")
-    my_broker_ftx.export_history()
+    my_broker.export_history()
 
     print("### portfolio value ###")
-    print("{}".format(my_broker_ftx.get_portfolio_value()))
+    print("{}".format(my_broker.get_portfolio_value()))
 
     print("### sell everything ###")
-    #my_broker_ftx.sell_everything()
+    #my_broker.sell_everything()
 
 
 def crag_simulation_scenario(strategy_name, start_date, end_date, interval, sl, tp, share_size, grid_step, global_tp, grid_threshold, upper_grid, max_pos, working_directory):
