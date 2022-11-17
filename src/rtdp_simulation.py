@@ -9,47 +9,22 @@ from . import features # temporary (before using fdp)
 class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
     def __init__(self, params = None):
         print("[SimRealTimeDataProvider] initialization...")
-        self.working_directory = ""
-        self.data_directory = "./data/"
-        self.processed_data = "./data_processed/"
         self.start = None
         self.end = None
         self.intervals = None
 
         if params:
-            self.data_directory = params.get("data_directory", self.data_directory)
             self.start = params.get("start", self.start)
             self.end = params.get("end", self.end)
             self.intervals = params.get("intervals", self.intervals)
 
         if self.start != None and self.end != None:
             self.scheduler = chronos.Chronos(self.start, self.end, self.intervals)
-            self.working_directory = params.get("working_directory", self.working_directory)
-            self.data_directory = os.path.join(self.working_directory, "./data/")
-            self.processed_data = os.path.join(self.working_directory, "./data_processed/")
         else:
             self.scheduler = chronos.Chronos()
     
         self.data = {}
         self.current_position = self.scheduler.get_current_position()
-
-        if self.data_directory == None or not os.path.exists(self.data_directory):
-            print(" 💥 ",self.data_directory," not found")
-            return
-        print("[SimRealTimeDataProvider] reading data from ", self.data_directory)
-
-        files = os.listdir(self.data_directory)
-        for file in files:
-            strs = file.split('.')
-            symbol = strs[0].replace("_", "/")
-            if symbol in rtdp.default_symbols and strs[1] == "csv":
-                csv_filename = os.path.join(self.data_directory, file)
-                # df = pd.read_csv(csv_filename, low_memory=False, sep=";")
-                df = pd.read_csv(csv_filename, low_memory=False)
-                self.data[symbol] = df
-                # WARNING CEDE TEMPORARY WORK AROUND
-                # self.data[symbol] = df.iloc[:-1, :]
-
 
     def _is_in_dataframe(self):
         if self.scheduler.get_current_position() < 0:
@@ -128,7 +103,7 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
     def record(self, data_description, target="./data/"):
         symbols = ','.join(data_description.symbols)
         symbols = symbols.replace('/','_')
-        params = { "service":"history", "exchange":"ftx", "symbol":symbols, "start":"2022-06-01", "interval": "1h" }
+        params = { "service":"history", "exchange":"binance", "symbol":symbols, "start":"2022-06-01", "interval": "1h" }
         response_json = utils.fdp_request_post("history", params)
         for symbol in data_description.symbols:
             formatted_symbol = symbol.replace('/','_')
@@ -145,7 +120,7 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
         symbols = ','.join(data_description.symbols)
         symbols = symbols.replace('/','_')
         list_missing_data = []
-        params = { "service":"history", "exchange":"ftx", "symbol":symbols, "start":start_date, "end": end_date, "interval": interval }
+        params = { "service":"history", "exchange":"binance", "symbol":symbols, "start":start_date, "end": end_date, "interval": interval }
         print('interval from: ', start_date, ' -> ', end_date)
         response_json = utils.fdp_request_post("history", params)
         for symbol in data_description.symbols:

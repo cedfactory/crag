@@ -1,13 +1,13 @@
 import pandas as pd
 
-from . import broker,rtdp_simulation
+from . import broker,rtdp
 import csv
 
 class SimBroker(broker.Broker):
     def __init__(self, params = None):
         super().__init__(params)
 
-        self.rtdp = rtdp_simulation.SimRealTimeDataProvider(params)
+        self.rtdp = rtdp.RealTimeDataProvider(params)
         self.trades = []
 
         self.start_date = ""

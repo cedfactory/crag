@@ -1,4 +1,4 @@
-from src import rtdp,rtdp_simulation
+from src import rtdp
 from src import broker_simulation,broker_ftx
 from src import crag
 from src import rtstr,rtstr_super_reversal,rtstr_grid_trading_multi,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC
