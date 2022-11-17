@@ -41,7 +41,7 @@ class BrokerFTX(broker.Broker):
             }
         if self.account != "":
             params["headers"] = {"FTX-SUBACCOUNT": self.account}
-        self.ftx_exchange = ccxt.ftx(params)
+        self.ftx_exchange = ccxt.binance(params)
         # check authentification
         try:
             authentificated = self.ftx_exchange.check_required_credentials()

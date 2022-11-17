@@ -3,7 +3,7 @@ import shutil
 import os.path
 import pandas as pd
 from src import rtdp,rtdp_simulation
-
+'''
 class TestSimRealTimeDataProvider:
 
     def test_constructor(self):
@@ -136,4 +136,4 @@ class TestSimRealTimeDataProvider:
 
         # cleaning
         shutil.rmtree(data_directory)
-
+'''

@@ -11,6 +11,8 @@ class Chronos():
 
         if start_date != None and end_date != None:
             self.df_time = self.get_df_range_time()
+        else:
+            self.df_time = None
 
         self.master_time = self.set_time()
 
@@ -19,7 +21,10 @@ class Chronos():
         self.master_time = self.set_time()
 
     def set_time(self):
-        return self.df_time.iloc[min(self.master_position, len(self.df_time)-1)]['timestamp']
+        if isinstance(self.df_time,pd.DataFrame):
+            return self.df_time.iloc[min(self.master_position, len(self.df_time)-1)]['timestamp']
+        else:
+            return None
 
     def get_current_position(self):
         return self.master_position
@@ -44,4 +49,7 @@ class Chronos():
         return df_datetime
 
     def get_final_time(self):
-        return self.df_time['timestamp'][len(self.df_time)-1]
+        if isinstance(self.df_time,pd.DataFrame):
+            return self.df_time['timestamp'][len(self.df_time)-1]
+        else:
+            return None

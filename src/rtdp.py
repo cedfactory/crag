@@ -135,7 +135,9 @@ class RealTimeDataProvider(IRealTimeDataProvider):
             pass
 
     def get_current_data(self, data_description):
-        
+        if self.start != None and self.end != None:
+            return None
+
         symbols = ','.join(data_description.symbols)
         symbols = symbols.replace('/','_')
 
@@ -197,6 +199,8 @@ class RealTimeDataProvider(IRealTimeDataProvider):
             elif self.intervals == "1m":
                 ds.interval = 60
             df_price = self.get_current_data(ds)
+            if df_price == None:
+                return None
             return df_price.loc[df_price.index == symbol, 'close'].iloc[0]
         else:
             return None
