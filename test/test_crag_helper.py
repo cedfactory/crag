@@ -2,6 +2,7 @@ import pytest
 from src import crag_helper
 from rich import print,inspect
 import os
+from . import utils
 
 class TestCrag:
 
@@ -97,8 +98,11 @@ class TestCrag:
         os.remove(filename)
 
     # unknown broker
-    def test_initialization_from_configuration_file_ok_broker_simulation(self):
+    def test_initialization_from_configuration_file_ok_broker_simulation(self, mocker):
         # context : create the configruation file
+        json_df = utils.get_json_for_get_df_range()
+        mocker.patch('src.utils.fdp_request_post', side_effect=[json_df])
+
         filename = self._write_file('''<configuration>
             <strategy name="StrategyGridTradingMulti">
                 <params symbols="BTC/USD" grid_df_params="./test/data/multigrid_df_params.csv"/>
