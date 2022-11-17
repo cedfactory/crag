@@ -2,8 +2,8 @@
     <strategy id="room2" name="StrategyGridTradingMulti">
         <params symbols="BTC-PERP,ETH-PERP,XRP-PERP,BNB-PERP,SOL-PERP" max_position="0" share_size="20" grid_df_params="./grid_df_params.csv" />
     </strategy>
-    <broker name="ftx">
-        <params account="room2" leverage="2" simulation="1" />
+    <broker name="binance">
+        <params exchange="binance" account="room2" leverage="2" simulation="1" />
     </broker/>
     <crag id="room2" interval="60" />
 </configuration>

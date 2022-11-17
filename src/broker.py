@@ -8,6 +8,9 @@ class Broker(metaclass = ABCMeta):
             self.cash = params.get("cash", self.cash)
         self.rtdp = None
 
+    def ready(self):
+        return False
+
     def log_info(self):
         return ""
 

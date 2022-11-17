@@ -85,7 +85,7 @@ def crag_benchmark_scenario(df, start_date, end_date, period):
     my_benchmark = benchmark.Benchmark(params)
     my_benchmark.set_benchmark_df_results(df)
 
-def crag_ftx():
+def crag_broker():
     my_broker = broker_ccxt.BrokerCCXT({'exchange':'binance', 'account':'room2', 'simulation':0})
 
     print("### balance ###")
@@ -335,8 +335,8 @@ if __name__ == '__main__':
             crag_reboot(sys.argv[2])
         elif len(sys.argv) > 2 and (sys.argv[1] == "--live"):
             crag_live(sys.argv[2])
-        elif len(sys.argv) >= 2 and (sys.argv[1] == "--ftx"):
-            crag_ftx()
+        elif len(sys.argv) >= 2 and (sys.argv[1] == "--broker"):
+            crag_broker()
         elif len(sys.argv) >= 2 and (sys.argv[1] == "--analyse"):
             crag_analyse_results()
         elif len(sys.argv) >= 2 and (sys.argv[1] == "--benchmark"):

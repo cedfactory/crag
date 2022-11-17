@@ -7,6 +7,7 @@ class SimBroker(broker.Broker):
     def __init__(self, params = None):
         super().__init__(params)
 
+        self.name = ""
         self.rtdp = rtdp.RealTimeDataProvider(params)
         self.trades = []
 
@@ -14,12 +15,16 @@ class SimBroker(broker.Broker):
         self.end_date = ""
         self.intervals = ""
         if params:
+            self.name = params.get("name", self.name)
             self.cash = params.get("cash", self.cash)
             if isinstance(self.cash, str):
                 self.cash = int(self.cash)
             self.start_date = params.get("start_date", self.start_date)
             self.end_date = params.get("end_date", self.end_date)
             self.intervals = params.get("intervals", self.intervals)
+
+    def ready(self):
+        return True
 
     def configure_for_data_description(self, data_description):
         if self.start_date != "":

@@ -35,7 +35,7 @@ def initialization_from_configuration_file(configuration_file):
     broker_node = root.find("broker")
     broker_name = broker_node.get("name", None)
     params_node = list(broker_node.iter('params'))
-    params_broker = {}
+    params_broker = {"name": broker_name}
     if len(params_node) == 1:
         for name, value in params_node[0].attrib.items():
             params_broker[name] = value
@@ -60,7 +60,7 @@ def initialization_from_configuration_file(configuration_file):
         my_broker = broker_simulation.SimBroker(params_broker)
     else:
         my_broker = broker_ccxt.BrokerCCXT(params_broker)
-    if my_broker == None:
+    if my_broker == None or my_broker.ready() == False:
         return None
 
     params = {'broker':my_broker, 'rtstr':my_strategy, "id": crag_id, 'interval':crag_interval, 'logger':crag_discord_bot}

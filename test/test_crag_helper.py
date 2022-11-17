@@ -13,7 +13,7 @@ class TestCrag:
         return filename
 
     # unknown broker
-    def test_initialization_from_configuration_file_ko_unknown_strategy(self):
+    def test_initialization_from_configuration_file_ko_unknown_broker(self):
         # context : create the configruation file
         filename = self._write_file('''<configuration>
             <strategy name="StrategySuperReversal" />
@@ -37,7 +37,7 @@ class TestCrag:
         # context : create the configruation file
         filename = self._write_file('''<configuration>
             <strategy name="StrategyUnknown" />
-            <broker name="ftx">
+            <broker name="binance">
                 <params account="test_bot" simulation="1" />
             </broker>
             <crag interval="20" />
@@ -56,7 +56,7 @@ class TestCrag:
         # context : create the configruation file
         filename = self._write_file('''<root>
             <strategy name="StrategyUnknown" />
-            <broker name="ftx">
+            <broker name="binance">
                 <params account="test_bot" simulation="1"/>
             </broker>
             <crag interval="20" />
@@ -75,10 +75,10 @@ class TestCrag:
         # context : create the configruation file
         filename = self._write_file('''<configuration>
             <strategy name="StrategyGridTradingMulti">
-                <params symbols="BTC/USD" grid_df_params="./test/data/multigrid_df_params.csv"/>
+                <params symbols="BTC/USDT" grid_df_params="./test/data/multigrid_df_params.csv"/>
             </strategy>
-            <broker name="ftx">
-                <params account="test_bot" leverage="3" simulation="1"/>
+            <broker name="binance">
+                <params exchange="binance" account="test_bot" leverage="3" simulation="1"/>
             </broker>
             <crag interval="20" />
         </configuration>''')
@@ -88,6 +88,7 @@ class TestCrag:
 
         # expectations
         assert(bot.broker != None)
+        assert(bot.broker.name == "binance")
         assert(bot.broker.leverage == 3)
         assert(bot.rtstr.get_name() == "StrategyGridTradingMulti")
         assert(bot.rtstr.share_size == 10)
@@ -118,6 +119,7 @@ class TestCrag:
 
         # expectations
         assert(bot.broker != None)
+        assert(bot.broker.name == "simulator")
         assert(bot.broker.start_date == "2022-01-01")
         assert(bot.broker.end_date == "2022-02-01")
         assert(bot.broker.intervals == "1d")
@@ -139,7 +141,9 @@ class TestCrag:
             <strategy name="StrategyGridTradingMulti">
                 <params symbols="BTC/USD" grid_df_params="./test/data/multigrid_df_params.csv"/>
             </strategy>
-            <broker name="ftx" account="test_bot" simulation="1" />
+            <broker name="hitbtc">
+                <params exchange="hitbtc" account="test_bot" simulation="1" />
+            </broker>
             <crag interval="20" />
         </configuration>''')
         bot = crag_helper.initialization_from_configuration_file(filename)
@@ -151,6 +155,7 @@ class TestCrag:
 
         # expectations
         assert(bot.broker != None)
+        assert(bot.broker.name == "hitbtc")
         assert(bot.rtstr.get_name() == "StrategyGridTradingMulti")
         assert(bot.interval == 20)
 

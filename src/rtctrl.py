@@ -22,7 +22,7 @@ class rtctrl():
         self.wallet_value = 0
         self.wallet_percent = 0
         self.screener_type = "crypto"
-        self.exchange = "ftx"
+        self.exchange = "binance"
         self.verbose = False
         self.suffix = ""
         self.working_directory = ""

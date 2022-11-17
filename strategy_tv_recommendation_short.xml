@@ -2,8 +2,8 @@
     <strategy id="room1" name="StrategyTvRecommendationShort">
         <params share_size="10" grid_df_params="./grid_df_params.csv" />
     </strategy>
-    <broker name="ftx">
-        <params account="TV_SHORT" simulation="0" />
+    <broker name="binance">
+        <params exchange="binance" account="TV_SHORT" simulation="0" />
     </broker>
     <crag id="test" interval="60" />
 </configuration>

@@ -12,7 +12,11 @@ class BrokerCCXT(broker.Broker):
         self.simulation = False
         self.account = ""
         self.leverage = 0
+        self.name = ""
+        self.exchange_name = ""
         if params:
+            self.name = params.get("name", self.name)
+            self.exchange_name = params.get("exchange", self.exchange_name)
             self.simulation = params.get("simulation", self.simulation)
             if self.simulation == 0 or self.simulation == "0":
                 self.simulation = False
@@ -36,7 +40,14 @@ class BrokerCCXT(broker.Broker):
             }
         if self.account != "":
             params["headers"] = {"EXCHANGE-SUBACCOUNT": self.account}
-        self.exchange = ccxt.binance(params)
+
+        self.exchange = None
+        if self.exchange_name == "binance":
+            self.exchange = ccxt.binance(params)
+        elif self.exchange_name == "hitbtc":
+            self.exchange = ccxt.hitbtc(params)
+        elif self.exchange_name == "kraken":
+            self.exchange = ccxt.kraken(params)
         # check authentification
         try:
             authentificated = self.exchange.check_required_credentials()
@@ -59,6 +70,9 @@ class BrokerCCXT(broker.Broker):
             else:
                 return fn(self, *args, **kwargs)
         return wrapped
+
+    def ready(self):
+        return self.exchange != None
 
     def log_info(self):
         info = ""
