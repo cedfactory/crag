@@ -36,16 +36,7 @@ class Chronos():
             return datetime.now()
 
     def get_df_range_time(self):
-        formatted_symbol = "BTC_USDT"
-        params = { "service":"history", "exchange":"binance", "symbol":formatted_symbol, "start":self.start_date, "end": self.end_date, "interval": self.interval }
-        response_json = utils.fdp_request_post("history", params)
-
-        if response_json["result"][formatted_symbol]["status"] == "ko":
-            print("no data for scheduler ")
-
-        df = pd.read_json(response_json["result"][formatted_symbol]["info"])
-        df_datetime = pd.DataFrame()
-        df_datetime['timestamp'] = pd.to_datetime(df['index'], unit='ms')
+        df_datetime = pd.DataFrame({'timestamp': pd.date_range(start=self.start_date, end=self.end_date, freq=self.interval)})
         return df_datetime
 
     def get_final_time(self):
