@@ -190,17 +190,6 @@ class BrokerCCXT(broker.Broker):
                 print("[BrokerCCXT::execute_trade]   -> amount : {}".format(amount))
             return True
 
-            if trade.type == "LIMIT_BUY":
-                try:
-                    order = self.exchange.create_limit_buy_order(symbol, amount, new_bid, {"postOnly": True})
-                except BaseException as err:
-                    print("[BrokerCCXT::execute_trade] An error occured : {}".format(err))
-                    print("[BrokerCCXT::execute_trade]   -> symbol : {}".format(symbol))
-                    print("[BrokerCCXT::execute_trade]   -> side :   {}".format(side))
-                    print("[BrokerCCXT::execute_trade]   -> amount : {}".format(amount))
-                return True
-
-
         return False
 
     @authentication_required
