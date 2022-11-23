@@ -159,22 +159,48 @@ class BrokerCCXT(broker.Broker):
         if self.exchange:
             side = ""
             if trade.type == "SELL":
+                type = "market"
                 side = "sell"
             elif trade.type == "BUY":
+                type = "market"
                 side = "buy"
+
+            # limit orders :
+            # https://github.com/ccxt/ccxt/wiki/Manual
+            # https://nukewhales.com/p/limitchase.html
+            elif trade.type == "LIMIT_SELL":
+                type = "limit"
+                side = "sell"
+            elif trade.type == "LIMIT_BUY":
+                type = "limit"
+                side = "buy"
+
             if side == "":
                 return False
 
             symbol = trade.symbol
             amount = trade.net_price / trade.symbol_price
             try:
-                order_structure = self.exchange.create_order(symbol, "market", side, amount)
+                order_structure = self.exchange.create_order(symbol, type, side, amount)
             except BaseException as err:
                 print("[BrokerCCXT::execute_trade] An error occured : {}".format(err))
                 print("[BrokerCCXT::execute_trade]   -> symbol : {}".format(symbol))
+                print("[BrokerCCXT::execute_trade]   -> type :   {}".format(type))
                 print("[BrokerCCXT::execute_trade]   -> side :   {}".format(side))
                 print("[BrokerCCXT::execute_trade]   -> amount : {}".format(amount))
             return True
+
+            if trade.type == "LIMIT_BUY":
+                try:
+                    order = self.exchange.create_limit_buy_order(symbol, amount, new_bid, {"postOnly": True})
+                except BaseException as err:
+                    print("[BrokerCCXT::execute_trade] An error occured : {}".format(err))
+                    print("[BrokerCCXT::execute_trade]   -> symbol : {}".format(symbol))
+                    print("[BrokerCCXT::execute_trade]   -> side :   {}".format(side))
+                    print("[BrokerCCXT::execute_trade]   -> amount : {}".format(amount))
+                return True
+
+
         return False
 
     @authentication_required
