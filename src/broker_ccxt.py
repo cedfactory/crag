@@ -14,9 +14,13 @@ class BrokerCCXT(broker.Broker):
         self.leverage = 0
         self.name = ""
         self.exchange_name = ""
+        self.api_key = ""
+        self.api_secret = ""
         if params:
             self.name = params.get("name", self.name)
             self.exchange_name = params.get("exchange", self.exchange_name)
+            self.api_key = params.get("api_key", self.api_key)
+            self.api_secret = params.get("api_secret", self.api_secret)
             self.simulation = params.get("simulation", self.simulation)
             if self.simulation == 0 or self.simulation == "0":
                 self.simulation = False
@@ -32,8 +36,8 @@ class BrokerCCXT(broker.Broker):
     def authentification(self):
         authentificated = False
         load_dotenv()
-        exchange_api_key = os.getenv("EXCHANGE_API_KEY")
-        exchange_api_secret = os.getenv("EXCHANGE_API_SECRET")
+        exchange_api_key = os.getenv(self.api_key)
+        exchange_api_secret = os.getenv(self.api_secret)
         params = {
             'apiKey': exchange_api_key,
             'secret': exchange_api_secret
@@ -48,6 +52,10 @@ class BrokerCCXT(broker.Broker):
             self.exchange = ccxt.hitbtc(params)
         elif self.exchange_name == "kraken":
             self.exchange = ccxt.kraken(params)
+
+        if self.exchange == None:
+            return False
+
         # check authentification
         try:
             authentificated = self.exchange.check_required_credentials()

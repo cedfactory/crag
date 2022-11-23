@@ -3,10 +3,14 @@ from src import broker_ccxt
 
 class TestBrokerCCXT:
     def test_constructor(self):
+        # context
+        params = {"exchange": "fake_exchange"}
+        
         # action
-        broker = broker_ccxt.BrokerCCXT()
+        broker = broker_ccxt.BrokerCCXT(params)
 
         # expectations
+        assert(broker.exchange_name == "fake_exchange")
         assert(broker.simulation == False)
         assert(len(broker.trades) == 0)
 
