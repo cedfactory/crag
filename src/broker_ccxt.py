@@ -184,6 +184,8 @@ class BrokerCCXT(broker.Broker):
         order = None
         bid, ask = 0, 1e10
 
+        attempts_execute = 3
+
         while amount - amount_traded > min_size:
             move = False
             ticker_data = self.exchange.fetch_ticker(ticker)
@@ -215,6 +217,9 @@ class BrokerCCXT(broker.Broker):
                     print("Buy {} {} at {}".format(amount, ticker, new_bid))
                 except Exception as e:
                     print(e)
+                    attempts_execute -= 1
+                    if attempts_execute == 0:
+                        return False
                 time.sleep(random.random())
 
             # Even if the price has not moved, check how much we have filled.
