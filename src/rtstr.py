@@ -121,7 +121,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
     def get_df_selling_symbols(self, lst_symbols, df_sl_tp):
         data = {'symbol':[], 'stimulus':[], 'size':[], 'percent':[], 'gridzone':[]}
         for symbol in self.df_current_data.index.to_list():
-            if self.condition_for_selling(symbol, df_sl_tp):
+            if symbol in lst_symbols and self.condition_for_selling(symbol, df_sl_tp):
                 size, percent, zone = self.get_symbol_selling_size(symbol)
                 data['symbol'].append(symbol)
                 data["stimulus"].append("SELL")
@@ -180,7 +180,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
         wallet_value = available_cash
 
-        cash_to_buy = wallet_value * self.SPLIT / 100
+        cash_to_buy = wallet_value * self.MAX_POSITION / 100
 
         if cash_to_buy > available_cash:
             cash_to_buy = available_cash
@@ -203,7 +203,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
         wallet_value = available_cash
 
-        cash_to_buy = wallet_value * self.SPLIT / 100
+        cash_to_buy = wallet_value * self.MAX_POSITION / 100
 
         if cash_to_buy > available_cash:
             cash_to_buy = available_cash
@@ -222,17 +222,6 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
     # get_df_selling_symbols and get_df_forced_exit_selling_symbols
     # could be merged in one...
-    '''
-    def get_df_forced_exit_selling_symbols(self, lst_symbols):
-        data = {'symbol':[], 'stimulus':[]}
-        if hasattr(self, 'df_current_data'):
-            for symbol in self.df_current_data.index.to_list():
-                data["symbol"].append(symbol)
-                data["stimulus"].append("SELL")
-
-        df_result = pd.DataFrame(data)
-        return df_result
-    '''
 
     def reset_selling_limits(self):
         return True
@@ -247,6 +236,12 @@ class RealTimeStrategy(metaclass=ABCMeta):
         return True
 
     def set_selling_limits(self, symbol):
+        return True
+
+    def authorize_clear_current_trades(self):
+        return True
+
+    def authorize_merge_current_trades(self):
         return True
 
     @staticmethod
@@ -287,4 +282,3 @@ class RealTimeStrategy(metaclass=ABCMeta):
     @staticmethod
     def get_strategy_from_name(name, params=None):
         return RealTimeStrategy.__get_strategy_from_name(RealTimeStrategy, name, params)
-

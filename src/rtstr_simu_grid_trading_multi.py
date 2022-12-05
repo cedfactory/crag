@@ -240,6 +240,9 @@ class StrategySimuGridTradingMulti(rtstr.RealTimeStrategy):
     def get_grid_sell_condition(self, symbol, zone):
         return zone == self.get_lower_zone_buy_engaged(symbol)
 
+    def authorize_merge_current_trades(self):
+        return False
+
 class GridLevelPosition():
     def __init__(self, symbol, params=None):
         self.UpperPriceLimit = 20500
