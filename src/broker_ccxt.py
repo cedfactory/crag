@@ -14,9 +14,13 @@ class BrokerCCXT(broker.Broker):
         self.leverage = 0
         self.name = ""
         self.exchange_name = ""
+        self.api_key = ""
+        self.api_secret = ""
         if params:
             self.name = params.get("name", self.name)
             self.exchange_name = params.get("exchange", self.exchange_name)
+            self.api_key = params.get("api_key", self.api_key)
+            self.api_secret = params.get("api_secret", self.api_secret)
             self.simulation = params.get("simulation", self.simulation)
             if self.simulation == 0 or self.simulation == "0":
                 self.simulation = False
@@ -32,8 +36,8 @@ class BrokerCCXT(broker.Broker):
     def authentification(self):
         authentificated = False
         load_dotenv()
-        exchange_api_key = os.getenv("EXCHANGE_API_KEY")
-        exchange_api_secret = os.getenv("EXCHANGE_API_SECRET")
+        exchange_api_key = os.getenv(self.api_key)
+        exchange_api_secret = os.getenv(self.api_secret)
         params = {
             'apiKey': exchange_api_key,
             'secret': exchange_api_secret
@@ -48,6 +52,10 @@ class BrokerCCXT(broker.Broker):
             self.exchange = ccxt.hitbtc(params)
         elif self.exchange_name == "kraken":
             self.exchange = ccxt.kraken(params)
+
+        if self.exchange == None:
+            return False
+
         # check authentification
         try:
             authentificated = self.exchange.check_required_credentials()
@@ -142,6 +150,89 @@ class BrokerCCXT(broker.Broker):
     def get_info(self):
         return None, None, None
 
+    def get_min_size(self, ticker):
+        min_size = False
+        if self.exchange:
+            markets = [mk for mk in self.exchange.fetch_markets() if mk["symbol"] == ticker]
+            if len(markets) == 0:
+                return False
+            min_size = markets[0]["limits"]["amount"]["min"]
+        return min_size
+
+    #
+    # limit chase
+    #
+    # ref https://nukewhales.com/p/limitchase.html
+    #
+    def _refresh_order(self, order):
+        updated_orders = self.exchange.fetch_orders()
+        for updated_order in updated_orders:
+            if updated_order["id"] == order["id"]:
+                return updated_order
+        print("Failed to find order {}".format(order["id"]))
+        return None
+
+    @authentication_required
+    def _chase_limit(self, ticker, amount):
+        import time, random
+        min_size = self.get_min_size(ticker)
+        if min_size == False:
+            return False
+        amount_traded = 0
+
+        # Initialise empty order and prices, preparing for loop
+        order = None
+        bid, ask = 0, 1e10
+
+        attempts_execute = 3
+
+        while amount - amount_traded > min_size:
+            move = False
+            ticker_data = self.exchange.fetch_ticker(ticker)
+            new_bid, new_ask = ticker_data['bid'], ticker_data['ask']
+
+            if bid != new_bid:
+                bid = new_bid
+
+                # If an order exists then cancel it
+                if order is not None:
+                    # cancel order
+                    try:
+                        self.exchange.cancel_order(order["id"])
+                    except Exception as e:
+                        print(e)
+
+                    # refresh order details and track how much we got filled
+                    order = self._refresh_order(order)
+                    if order:
+                        amount_traded += float(order["info"]["filledSize"])
+
+                    # Exit now if we're done!
+                    if amount - amount_traded < min_size:
+                        break
+
+                # place order
+                try:
+                    order = self.exchange.create_limit_buy_order(ticker, amount, new_bid, {"postOnly": True})
+                    print("Buy {} {} at {}".format(amount, ticker, new_bid))
+                except Exception as e:
+                    print(e)
+                    attempts_execute -= 1
+                    if attempts_execute == 0:
+                        return False
+                time.sleep(random.random())
+
+            # Even if the price has not moved, check how much we have filled.
+            if order is not None:
+                order = self._refresh_order(order)
+                if order:
+                    amount_traded += float(order["info"]["filledSize"])
+            time.sleep(0.1)
+
+        print("Finished buying {} of {}".format(amount, ticker))
+        return True
+        
+
     @authentication_required
     def execute_trade(self, trade):
         if self.simulation:
@@ -151,22 +242,40 @@ class BrokerCCXT(broker.Broker):
         if self.exchange:
             side = ""
             if trade.type == "SELL":
+                type = "market"
                 side = "sell"
             elif trade.type == "BUY":
+                type = "market"
                 side = "buy"
+
+            # limit orders :
+            # https://github.com/ccxt/ccxt/wiki/Manual
+            elif trade.type == "LIMIT_SELL":
+                type = "limit"
+                side = "sell"
+            elif trade.type == "LIMIT_BUY":
+                type = "limit"
+                side = "buy"
+
             if side == "":
                 return False
 
             symbol = trade.symbol
             amount = trade.net_price / trade.symbol_price
+
+            if type == "market" and self.chase_limit:
+                return self._chase_limit(symbol, amount)
+
             try:
-                order_structure = self.exchange.create_order(symbol, "market", side, amount)
+                order_structure = self.exchange.create_order(symbol, type, side, amount)
             except BaseException as err:
                 print("[BrokerCCXT::execute_trade] An error occured : {}".format(err))
                 print("[BrokerCCXT::execute_trade]   -> symbol : {}".format(symbol))
+                print("[BrokerCCXT::execute_trade]   -> type :   {}".format(type))
                 print("[BrokerCCXT::execute_trade]   -> side :   {}".format(side))
                 print("[BrokerCCXT::execute_trade]   -> amount : {}".format(amount))
             return True
+
         return False
 
     @authentication_required

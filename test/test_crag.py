@@ -3,6 +3,7 @@ import pandas as pd
 from src import rtstr_grid_trading_multi,crag,broker_simulation,trade
 from . import utils
 
+'''
 class TestCrag:
 
     def test_step_no_current_data(self, mocker):
@@ -21,8 +22,7 @@ class TestCrag:
         bot.run()
 
         # expectations
-        
-'''
+
     def test_step_trade(self, mocker):
         # context
         trade.Trade.reset_id()
