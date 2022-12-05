@@ -1,4 +1,5 @@
 import os
+import shutil
 import time
 import pandas as pd
 from . import trade,rtstr,utils
@@ -15,7 +16,7 @@ import pickle
 # reference : https://medium.com/analytics-vidhya/how-to-use-rabbitmq-with-python-e0ccfe7fa959
 class Crag:
     def __init__(self, params = None):
-
+        self.exit = False
         self.broker = None
         self.rtstr = None
         self.working_directory = None
@@ -66,9 +67,16 @@ class Crag:
                                + ".csv"
         self.backup_filename = self.id + "_crag_backup.pickle"
 
-        if self.working_directory != None:
-            self.export_filename = os.path.join(self.working_directory, self.export_filename)
-            self.backup_filename = os.path.join(self.working_directory, self.backup_filename)
+        if self.working_directory == None:
+            self.working_directory = './output/' # CEDE NOTE: output directory name to be added to .xml / output as default value
+
+        if not os.path.exists(self.working_directory):
+            os.makedirs(self.working_directory)
+        else:
+            shutil.rmtree(self.working_directory)
+            os.makedirs(self.working_directory)
+        self.export_filename = os.path.join(self.working_directory, self.export_filename)
+        self.backup_filename = os.path.join(self.working_directory, self.backup_filename)
 
         self.temp_debug = True
         if self.temp_debug:
@@ -148,6 +156,7 @@ class Crag:
             end = time.time()
             if self.start_date and self.end_date:
                 sleeping_time = 0
+                # self.export_history(self.export_filename) # CEDE DEBUG
             else:
                 sleeping_time = self.interval - (end - start)
                 if sleeping_time >= 0:
@@ -232,7 +241,7 @@ class Crag:
 
         self.rtstr.log_current_info()
 
-        return True
+        return not self.exit
 
     def export_history(self, target=None):
         self.broker.export_history(target)
@@ -290,6 +299,7 @@ class Crag:
         if self.final_datetime and current_datetime >= self.final_datetime:
             # final step - force all the symbols to be sold
             df_selling_symbols = rtstr.RealTimeStrategy.get_df_forced_selling_symbols(lst_symbols, self.rtstr.get_rtctrl().df_rtctrl)
+            self.exit = True
             self.flush_current_trade = True
             self.rtstr.force_selling_limits()
         else:
@@ -413,11 +423,39 @@ class Crag:
         if not df_symbols_bought.empty:
             self.log(df_symbols_bought, "symbols bought")
 
+        if self.temp_debug:
+            self.debug_trace_current_trades('end_trade', self.current_trades)
+
         # Clear the current_trades for optimization
-        lst_buy_trades = []
-        for current_trade in self.current_trades:
-            if current_trade.type == "BUY":
-                lst_buy_trades.append(current_trade)
+        if self.rtstr.authorize_clear_current_trades():
+            lst_buy_trades = []
+            lst_buy_symbols_trades = []
+            for current_trade in self.current_trades:
+                if current_trade.type == "BUY":
+                    lst_buy_trades.append(current_trade)
+                    lst_buy_symbols_trades.append(current_trade.symbol)
+            self.current_trades = lst_buy_trades
+
+        if self.temp_debug:
+            self.debug_trace_current_trades('clear    ', self.current_trades)
+
+        # Merge the current_trades for optimization
+        if self.rtstr.authorize_merge_current_trades():
+            lst_buy_trades_merged = []
+            lst_buy_symbols_trades_unique = list(set(lst_buy_symbols_trades))
+            for symbol in lst_buy_symbols_trades_unique:
+                if lst_buy_symbols_trades.count(symbol) > 1:
+                    merged_trades = self.merge_current_trades_from_symbol(self.current_trades, symbol, current_datetime)
+                    lst_buy_trades_merged.append(merged_trades)
+                else:
+                    for current_trade in self.current_trades:
+                        if current_trade.type == "BUY" and current_trade.symbol == symbol:
+                            # unique trade
+                            lst_buy_trades_merged.append(current_trade)
+            self.current_trades = lst_buy_trades_merged
+
+        if self.temp_debug:
+            self.debug_trace_current_trades('merge    ', self.current_trades)
 
         # CEDE: Only for debug purpose
         if self.temp_debug:
@@ -444,6 +482,8 @@ class Crag:
                                                                          round(cash_percent + coin_percent, 2)]
             if current_datetime == self.final_datetime:
                 self.export_debug_traces()
+                self.rtstr.rtctrl.display_summary_info(True)
+                self.exit = True
 
 
     def export_status(self):
@@ -470,3 +510,85 @@ class Crag:
     def export_debug_traces(self):
         if self.temp_debug:
             self.df_debug_traces.to_csv('debug_traces.csv')
+
+    def merge_current_trades_from_symbol(self, current_trades, symbol, current_datetime):
+        lst_trades = []
+
+        lst_current_trade_symbol_price = []
+        lst_current_trade_buying_price = []
+        lst_current_trade_gridzone = []
+        lst_current_trade_commission = []
+        lst_current_trade_gross_size = []
+        lst_current_trade_gross_price = []
+        lst_current_trade_net_price = []
+        lst_current_trade_net_size = []
+        lst_current_trade_buying_fee = []
+        lst_current_trade_profit_loss = []
+
+        for current_trade in current_trades:
+            if current_trade.type == "BUY" and current_trade.symbol == symbol:
+                lst_trades.append(current_trade)
+
+                lst_current_trade_symbol_price.append(current_trade.symbol_price)
+                lst_current_trade_buying_price.append(current_trade.buying_price)
+
+                lst_current_trade_gridzone.append(current_trade.gridzone)
+
+                lst_current_trade_commission.append(current_trade.commission)
+
+                lst_current_trade_gross_size.append(current_trade.gross_size)
+                lst_current_trade_gross_price.append(current_trade.gross_price)
+
+                lst_current_trade_net_price.append(current_trade.net_price)
+                lst_current_trade_net_size.append(current_trade.net_size)
+
+                lst_current_trade_buying_fee.append(current_trade.buying_fee)
+                lst_current_trade_profit_loss.append(current_trade.profit_loss)
+
+        merged_trade = trade.Trade(current_datetime)
+
+        merged_trade.type = "BUY"
+        merged_trade.symbol = symbol
+
+        merged_trade.sell_id = ""
+        merged_trade.stimulus = ""
+        merged_trade.roi = ""
+        merged_trade.selling_fee = ""
+
+        merged_trade.buying_time = ""
+
+        merged_trade.symbol_price = max(lst_current_trade_symbol_price)
+        merged_trade.buying_price = max(lst_current_trade_buying_price)
+
+        merged_trade.gridzone = max(lst_current_trade_gridzone)
+
+        merged_trade.commission = sum(lst_current_trade_commission) / len(lst_current_trade_commission)
+
+        merged_trade.gross_size = sum(lst_current_trade_gross_size)
+        merged_trade.gross_price = sum(lst_current_trade_gross_price)
+
+        merged_trade.net_price = sum(lst_current_trade_net_price)
+        merged_trade.net_size = sum(lst_current_trade_net_size)
+
+        merged_trade.buying_fee = sum(lst_current_trade_buying_fee)
+        merged_trade.profit_loss = sum(lst_current_trade_profit_loss)
+
+        merged_trade.portfolio_value = self.portfolio_value
+        merged_trade.wallet_value = self.wallet_value
+        merged_trade.wallet_roi = (self.wallet_value - self.init_cash_value) * 100 / self.init_cash_value
+
+        self.traces_trade_total_opened = self.traces_trade_total_opened - len(lst_current_trade_symbol_price) + 1
+
+        return merged_trade
+
+    def debug_trace_current_trades(self, step_state, current_trades):
+        iterration = 0
+        msg = step_state
+        for current_trade in current_trades:
+            msg = msg + ' - trade: ' + str(iterration)
+            iterration = iterration + 1
+            msg = msg + ' symbol: ' + str(current_trade.symbol)
+            msg = msg + ' type: ' + str(current_trade.type)
+            msg = msg + ' price: ' + str(round(current_trade.net_price, 1))
+            msg = msg + ' size: ' + str(round(current_trade.net_size, 4))
+        print(msg)
