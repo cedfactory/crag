@@ -43,7 +43,16 @@ default_symbols = [
         "BTC/USDT",
     ]
 '''
-
+'''
+# synthethic datas
+default_symbols = [
+        "SINGLESINUS1FLAT",
+        "SINGLESINUS2FLAT",
+        "MIXEDSINUSFLAT",
+        "SINGLESINUS2UP",
+        "SINGLESINUS1UP"
+    ]
+'''
 default_symbols = [
         "BTC/USDT",
         "DOGE/USDT",
@@ -75,7 +84,6 @@ default_symbols = [
         "SOL/USDT",
         "AVAX/USDT"
     ]
-
 
 
 default_features = ["open", "close", "high", "low", "volume"]
