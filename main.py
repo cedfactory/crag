@@ -29,6 +29,15 @@ def crag_record():
     ds = rtdp.DataDescription()
     my_rtdp.record(ds)
 
+def crag_print_duration(start_time):
+    end_time = datetime.now()
+    duration = end_time - start_time
+    duration_in_s = duration.total_seconds()
+    hours = divmod(duration_in_s, 3600)[0]
+    minutes = divmod(duration_in_s, 60)[0]
+    seconds = duration.seconds
+    print('duration : ', hours, 'h ', minutes, 'm ', seconds, 's')
+
 def crag_simulation(strategy_name):
     print("selected strategy: ",strategy_name)
     available_strategies = rtstr.RealTimeStrategy.get_strategies_list()
@@ -57,9 +66,10 @@ def crag_simulation(strategy_name):
 
 def crag_live(configuration_file):
     bot = crag_helper.initialization_from_configuration_file(configuration_file)
+    start_time = datetime.now()
     bot.run()
-    # bot.export_history("broker_history.csv") # DEBUG CEDE
     bot.export_status()
+    crag_print_duration(start_time)
 
 def crag_reboot(picklefilename):
     bot = crag_helper.initialization_from_pickle(picklefilename)
