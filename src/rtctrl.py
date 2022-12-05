@@ -31,7 +31,9 @@ class rtctrl():
             self.verbose = params.get("rtctrl_verbose", self.verbose)
             self.suffix = params.get("suffix", self.suffix)
             self.working_directory = params.get("working_directory", self.working_directory)
-            self.export_filename = os.path.join(self.working_directory, "./" + "wallet_tracking_records" + self.suffix + ".csv")
+            if self.working_directory == "":
+                self.working_directory = './output/'  # CEDE NOTE: output dir as default value
+            self.export_filename = os.path.join("./" + self.working_directory, "wallet_tracking_records" + self.suffix + ".csv")
         self.record_tracking = True
 
     def get_df_header(self):
@@ -114,6 +116,8 @@ class rtctrl():
 
             self.df_rtctrl_tracking = pd.concat([self.df_rtctrl_tracking, df_new_line])
             self.df_rtctrl_tracking.reset_index(inplace=True, drop=True)
+            # DEBUG CEDE:
+            # self.df_rtctrl_tracking.to_csv('./output/DEBUG_wallet_tracking_records.csv')
             if record_info and self.export_filename != None and self.export_filename != "":
                 if self.df_rtctrl_tracking['time'][1] and self.df_rtctrl_tracking['time'][0]:
                     interval = self.df_rtctrl_tracking['time'][1] - self.df_rtctrl_tracking['time'][0]
@@ -126,5 +130,5 @@ class rtctrl():
                 else:
                     print("!!! [rtctrl] self.df_rtctrl_tracking expecting values in time column")
                     print(self.df_rtctrl_tracking)
-        
+
         return summary
