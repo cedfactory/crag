@@ -53,11 +53,12 @@ class TestRTSTRCryptobot:
     def test_get_df_selling_symbols(self):
         # context
         strategy = rtstr_cryptobot.StrategyCryptobot()
-        data = {"index":[0, 1], "symbol":["BTC/USD", "ETH/USD"], "ema12gtema26co":[True, False], "macdgtsignal":[True, False], "goldencross":[True, False], "obv_pc":[-4, -6], "eri_buy":[True, False], "ema12ltema26co":[True, False], "macdltsignal":[True, False]}
+        lst_symbols = ["BTC/USD", "ETH/USD"]
+        data = {"index":[0, 1], "symbol":lst_symbols, "ema12gtema26co":[True, False], "macdgtsignal":[True, False], "goldencross":[True, False], "obv_pc":[-4, -6], "eri_buy":[True, False], "ema12ltema26co":[True, False], "macdltsignal":[True, False]}
         strategy = self._initialize_current_data(strategy, data)
 
         # action
-        df = strategy.get_df_selling_symbols([], None)
+        df = strategy.get_df_selling_symbols(lst_symbols, None)
 
         # expectations
         assert(isinstance(df, pd.DataFrame))

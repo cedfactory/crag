@@ -53,11 +53,12 @@ class TestRTSTRTrix:
     def test_get_df_selling_symbols(self):
         # context
         strategy = rtstr_trix.StrategyTrix()
-        data = {"index":[0, 1, 2, 3], "symbol":["BTC/USD", "ETH/USD", "BNB/USD", "SUSHI/USD"], "TRIX_HISTO":[-1, -1.1, 1, 1.1], "STOCH_RSI":[0.3, 0.1, 0.3, 0.1]}
+        lst_symbols = ["BTC/USD", "ETH/USD", "BNB/USD", "SUSHI/USD"]
+        data = {"index":[0, 1, 2, 3], "symbol":lst_symbols, "TRIX_HISTO":[-1, -1.1, 1, 1.1], "STOCH_RSI":[0.3, 0.1, 0.3, 0.1]}
         strategy = self._initialize_current_data(strategy, data)
 
         # action
-        df = strategy.get_df_selling_symbols([], None)
+        df = strategy.get_df_selling_symbols(lst_symbols, None)
 
         # expectations
         assert(isinstance(df, pd.DataFrame))

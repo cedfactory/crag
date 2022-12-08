@@ -63,11 +63,12 @@ class TestRTSTRSuperReversal:
     def test_get_df_selling_symbols(self):
         # context
         strategy = rtstr_super_reversal.StrategySuperReversal()
-        data = {"index":[0], "symbol":["BTC/USD"], "low":[1.1], "high":[2.2], "ema_5":[1], "ema_400":[2], "super_trend_direction":[True]}
+        lst_symbols = ["BTC/USD"]
+        data = {"index":[0], "symbol":lst_symbols, "low":[1.1], "high":[2.2], "ema_5":[1], "ema_400":[2], "super_trend_direction":[True]}
         strategy = self._initialize_current_data(strategy, data)
 
         # action
-        df = strategy.get_df_selling_symbols([], None)
+        df = strategy.get_df_selling_symbols(lst_symbols, None)
 
         # expectations
         assert(isinstance(df, pd.DataFrame))

@@ -82,7 +82,7 @@ class TestRTSTRVMC:
         strategy = self._get_strategy_for_buying_and_selling()
 
         # action
-        df = strategy.get_df_selling_symbols([], None)
+        df = strategy.get_df_selling_symbols(["BTC/USD", "ETH/USD"], None)
 
         # expectations
         assert(isinstance(df, pd.DataFrame))

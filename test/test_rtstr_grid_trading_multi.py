@@ -136,7 +136,7 @@ class TestRTSTRGridMultiTrading:
         strategy.set_zone_engaged("BTC/USD", 19000.)
 
         # action
-        df = strategy.get_df_selling_symbols([], None)
+        df = strategy.get_df_selling_symbols(["BTC/USD"], None)
 
         # expectations
         assert(isinstance(df, pd.DataFrame))

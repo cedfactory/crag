@@ -79,11 +79,12 @@ class TestRTSTRBigWill:
     def test_get_df_selling_symbols(self):
         # context
         strategy = rtstr_bigwill.StrategyBigWill()
-        data = {"index":[0, 1], "symbol":["BTC/USD", "ETH/USD"], "low":[-1, 2], "high":[0.7, 0.9], "AO":[1, 1], "previous_AO":[2, 2], "EMA100":[50, 50], "EMA200":[25, 25], "STOCH_RSI":[0.3, 0.1], "WILLR":[-5, -100]}
+        lst_symbols = ["BTC/USD", "ETH/USD"]
+        data = {"index":[0, 1], "symbol":lst_symbols, "low":[-1, 2], "high":[0.7, 0.9], "AO":[1, 1], "previous_AO":[2, 2], "EMA100":[50, 50], "EMA200":[25, 25], "STOCH_RSI":[0.3, 0.1], "WILLR":[-5, -100]}
         strategy = self._initialize_current_data(strategy, data)
 
         # action
-        df = strategy.get_df_selling_symbols([], None)
+        df = strategy.get_df_selling_symbols(lst_symbols, None)
 
         # expectations
         assert(isinstance(df, pd.DataFrame))
