@@ -154,19 +154,7 @@ class RealTimeDataProvider(IRealTimeDataProvider):
         if data_description.interval <= 60:
             interval = "1m"
         
-        # adapt the start date
-        # start = datetime.now() - timedelta(days=400) # Modif CEDE
-        end = self.get_current_datetime()
-        if interval == "1d":
-            start = end - timedelta(days=400)
-        if interval == "1h":
-            start = end - timedelta(hours=400)
-        elif interval == "1m":
-            start = end - timedelta(minutes=400)
-        start_timestamp = str(int( 1000 * datetime.timestamp(start)))
-        end_timestamp = str(int(1000 * datetime.timestamp(end)))
-
-        params = { "service":"history", "exchange":"binance", "symbol":symbols, "start":start_timestamp, "end":end_timestamp ,"interval": interval, "indicators": data_description.features}
+        params = { "service":"history_last", "exchange":"binance", "symbol":symbols, "interval": interval, "indicators": data_description.features}
         response_json = utils.fdp_request_post("history", params)
 
         data = {feature: [] for feature in data_description.features}
