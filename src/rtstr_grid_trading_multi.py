@@ -8,11 +8,12 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
         super().__init__(params)
 
         self.rtctrl = rtctrl.rtctrl(params=params)
+        self.rtctrl.set_list_open_position_type(self.get_lst_opening_type())
+        self.rtctrl.set_list_close_position_type(self.get_lst_closing_type())
 
         self.zero_print = True
 
         # Strategy Specifics
-        self.list_symbols = []
         self.df_grid_multi = pd.DataFrame(columns=['symbol', 'grid', 'previous_zone_position', 'zone_position'])
         self.df_selling_limits = pd.DataFrame(columns=['symbol', 'selling_limits'])
         self.limit_sell = 1
@@ -21,22 +22,15 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
         self.grid = 0
 
         self.share_size = 10
-        self.global_tp = 10000
         self.df_size_grid_params = pd.DataFrame()
         self.symbols = ["BTC/USD"]
         if params:
             self.share_size = params.get("share_size", self.share_size)
             if isinstance(self.share_size, str):
                 self.share_size = int(self.share_size)
-            self.global_tp = params.get("global_tp", self.global_tp)
-            if isinstance(self.global_tp, str):
-                self.global_tp = int(self.global_tp)
             self.df_size_grid_params = params.get("grid_df_params", self.df_size_grid_params)
             if isinstance(self.df_size_grid_params, str):
                 self.df_size_grid_params = pd.read_csv(self.df_size_grid_params)
-            self.MAX_POSITION = params.get("max_pos", self.MAX_POSITION)
-            if isinstance(self.MAX_POSITION, str):
-                self.MAX_POSITION = int(self.MAX_POSITION)
             self.symbols = params.get("symbols", self.symbols)
             if isinstance(self.symbols, str):
                 self.symbols = self.symbols.split(",")
@@ -44,34 +38,27 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
         # add commision 0.08
         self.df_size_grid_params['balance_min_size'] = self.df_size_grid_params['balance_min_size'] / (1 - 0.008)
 
-        if self.global_tp == 0:
-            self.global_tp = 10000
+        if self.share_size == 0:
+            self.share_size = 1
+
         self.net_size = 0.0
-        self.global_tp_net = -1000
-        self.tp_sl_abort = False
 
     def get_data_description(self):
         ds = rtdp.DataDescription()
-        ds.symbols = self.symbols
+        ds.symbols = self.lst_symbols
         ds.features = { "close" : None }
-        self.list_symbols = ds.symbols
         return ds
 
     def log_info(self):
         info = ""
-        info += "MAX_POSITION = {}\n".format(self.MAX_POSITION)
         info += "share_size = {}\n".format(self.share_size)
-        info += "global_tp = {}\n".format(self.global_tp)
         info += "symbols = {}\n".format(",".join(self.symbols))
         self.log(msg=info, header="StrategyGridTradingMulti::log_info")
 
     def get_info(self):
-        return "StrategyGridTrading", self.str_sl, self.str_tp
+        return "StrategyGridTrading"
 
-    def condition_for_buying(self, symbol):
-        if self.tp_sl_abort:
-            return False
-
+    def condition_for_opening_long_position(self, symbol):
         if len(self.df_grid_multi) == 0:
             self.set_df_multi()
 
@@ -100,10 +87,7 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
         self.grid = self.df_grid_multi.loc[self.df_grid_multi['symbol'] == symbol, "grid"].iloc[0]
         self.grid.set_lower_zone_unengaged_position(zone_position)
 
-    def condition_for_selling(self, symbol, df_sl_tp):
-        if self.tp_sl_abort:
-            return True
-
+    def condition_for_closing_long_position(self, symbol):
         if len(self.df_grid_multi) == 0:
             self.set_df_multi()
 
@@ -114,24 +98,12 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
         self.previous_zone_position = self.grid.get_previous_zone_position()
         self.zone_position = self.grid.get_zone_position(self.df_current_data['close'][symbol])
 
-        if ((self.zone_position < self.previous_zone_position)
-            and (self.grid.lower_zone_buy_engaged(self.df_current_data['close'][symbol]))
-            and (self.previous_zone_position != -1)) \
-                or ((isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] > self.TP)
-                    or (isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] < self.SL)):
+        if self.zone_position < self.previous_zone_position \
+                and self.grid.lower_zone_buy_engaged(self.df_current_data['close'][symbol]) \
+                and self.previous_zone_position != -1:
             selling_signal = True
         else:
             selling_signal = False
-
-        if self.rtctrl.wallet_value >= self.rtctrl.init_cash_value + self.rtctrl.init_cash_value * self.global_tp / 100:
-            self.global_tp = (self.rtctrl.wallet_value - self.rtctrl.init_cash_value) * 100 / self.rtctrl.init_cash_value
-            self.global_tp_net = self.global_tp - self.net_size
-            print("global_tp: ", round(self.global_tp, 2), " net_tp: ", round(self.global_tp_net, 2), "protfolio: $", self.rtctrl.wallet_value)
-
-        if self.rtctrl.wallet_value <= self.rtctrl.init_cash_value + self.rtctrl.init_cash_value * self.global_tp_net / 100:
-            self.tp_sl_abort = True
-            selling_signal = True
-            print("abort: $", self.rtctrl.wallet_value)
 
         return selling_signal
 
@@ -145,7 +117,10 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
             return 0, 0, 0
 
         init_cash_value = self.rtctrl.init_cash_value
-        buying_size_value = init_cash_value / self.share_size
+
+        # buying_size_value = init_cash_value / self.share_size
+        buying_size_value = init_cash_value * self.share_size / 100
+
         wallet_value = available_cash
         cash_to_buy = buying_size_value
 
@@ -202,25 +177,28 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
             return False
 
     def set_df_multi(self):
-        self.df_selling_limits['symbol'] = self.list_symbols
+        self.df_selling_limits['symbol'] = self.lst_symbols
         self.df_selling_limits['selling_limits'] = 0
 
         self.df_grid_multi = pd.DataFrame(columns=['symbol', 'grid', 'previous_zone_position', 'zone_position'])
-        self.df_grid_multi['symbol'] = self.list_symbols
+        self.df_grid_multi['symbol'] = self.lst_symbols
         self.df_grid_multi['previous_zone_position'] = 0
         self.df_grid_multi['zone_position'] = 0
 
-        for symbol in self.list_symbols:
+        for symbol in self.lst_symbols:
             self.df_grid_multi.loc[self.df_grid_multi['symbol'] == symbol, "grid"] = GridLevelPosition(symbol, params=self.params)
-
-        if self.MAX_POSITION == 0:
-            self.MAX_POSITION = 100 / len(self.list_symbols)
 
     def get_grid_sell_condition(self, symbol, zone):
         return zone == self.get_lower_zone_buy_engaged(symbol)
 
     def authorize_merge_current_trades(self):
         return False
+
+    def authorize_merge_buy_long_position(self):
+        return False
+
+    def is_open_type_long(self, symbol):
+        return True
 
 class GridLevelPosition():
     def __init__(self, symbol, params=None):

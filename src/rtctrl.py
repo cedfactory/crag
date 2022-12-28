@@ -43,17 +43,17 @@ class rtctrl():
         return ["time", "roi%", "cash", "portfolio", "wallet", "asset%"]
 
     def get_list_of_traded_symbols(self, list_of_current_trades):
-        list_symbols = [trade.symbol for trade in list_of_current_trades if trade.type == "BUY"]
+        list_symbols = [trade.symbol for trade in list_of_current_trades if trade.type in self.lst_opening_type]
         return list(set(list_symbols))
 
     def get_list_of_asset_size(self, list_of_current_trades):
-        return [sum(current_trade.net_size for current_trade in list_of_current_trades if current_trade.type == "BUY" and current_trade.symbol == symbol) for symbol in self.symbols]
+        return [sum(current_trade.net_size for current_trade in list_of_current_trades if current_trade.type in self.lst_opening_type and current_trade.symbol == symbol) for symbol in self.symbols]
 
     def get_list_of_asset_fees(self, list_of_current_trades):
-        return [sum(current_trade.buying_fee for current_trade in list_of_current_trades if current_trade.type == "BUY" and current_trade.symbol == symbol) for symbol in self.symbols]
+        return [sum(current_trade.buying_fee for current_trade in list_of_current_trades if current_trade.type in self.lst_opening_type and current_trade.symbol == symbol) for symbol in self.symbols]
 
     def get_list_of_asset_gross_price(self, list_of_current_trades):
-        return [sum(current_trade.gross_price for current_trade in list_of_current_trades if current_trade.type == "BUY" and current_trade.symbol == symbol) for symbol in self.symbols]
+        return [sum(current_trade.gross_price for current_trade in list_of_current_trades if current_trade.type in self.lst_opening_type and current_trade.symbol == symbol) for symbol in self.symbols]
 
     def update_rtctrl(self, current_datetime, list_of_current_trades, wallet_cash, prices_symbols, final_date):
         self.prices_symbols = prices_symbols
@@ -65,6 +65,7 @@ class rtctrl():
             final_step = False
 
         if len(list_of_current_trades) == 0 and (not final_step):
+            self.df_rtctrl = pd.DataFrame(columns=self.get_df_header())
             if self.init_cash_value == 0:
                 self.init_cash_value = wallet_cash
                 self.wallet_cash = wallet_cash
@@ -83,6 +84,7 @@ class rtctrl():
         self.df_rtctrl['size'] = self.get_list_of_asset_size(list_of_current_trades)
         self.df_rtctrl['fees'] = self.get_list_of_asset_fees(list_of_current_trades)
         self.df_rtctrl['buying_gross_price'] = self.get_list_of_asset_gross_price(list_of_current_trades)
+        # self.df_rtctrl['buying_gross_price'] = list(map(abs, self.df_rtctrl['buying_gross_price'])) # CEDE test......
 
         self.df_rtctrl['actual_net_price'] = self.df_rtctrl['size'] * self.df_rtctrl['actual_price']
         self.df_rtctrl['roi_$'] = self.df_rtctrl['actual_net_price'] - self.df_rtctrl['buying_gross_price']
@@ -132,3 +134,9 @@ class rtctrl():
                     print(self.df_rtctrl_tracking)
 
         return summary
+
+    def set_list_open_position_type(self, lst_opening_type):
+        self.lst_opening_type = lst_opening_type
+
+    def set_list_close_position_type(self, lst_closing_type):
+        self.lst_closing_type = lst_closing_type

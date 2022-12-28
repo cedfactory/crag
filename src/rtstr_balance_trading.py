@@ -48,7 +48,7 @@ class StrategyBalanceTrading(rtstr.RealTimeStrategy):
         return ds
 
     def get_info(self):
-        return "StrategyBalanceTradingMulti", self.str_sl, self.str_tp
+        return "StrategyBalanceTradingMulti"
 
     def condition_for_buying(self, symbol):
         if self.tp_sl_abort:

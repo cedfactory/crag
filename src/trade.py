@@ -4,7 +4,13 @@ class Trade:
         self.id = Trade.id
         Trade.id = Trade.id + 1
         self.time = current_datetime
-        
+
+        self.sell_id = ""
+        self.stimulus = ""
+        self.roi = ""
+        self.buying_time = ""
+        self.selling_fee = ""
+
     @staticmethod
     def reset_id():
         Trade.id = 0

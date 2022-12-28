@@ -114,3 +114,10 @@ def get_variation(src, dst):
 
 def get_random_id():
     return 10000000 + secrets.randbelow(90000000)
+
+def count_symbols_with_position_type(current_trades, symbol, position_type):
+    count = 0
+    for current_trade in current_trades:
+        if current_trade.symbol == symbol and current_trade.type == position_type:
+            count = count + 1
+    return count

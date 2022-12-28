@@ -1,0 +1,9 @@
+<configuration>
+    <strategy id="strategygridtrading" name="StrategyGridTradingMulti">
+        <params symbols="./symbols_df_synthetics_test.csv" max_position="100" share_size="1" sl="0" tp="0" global_sl="0"  global_tp="0" grid_df_params="./grid_df_params.csv"/>
+    </strategy>
+    <broker name="simulator">
+        <params cash="1000" start_date="2022-01-01" end_date="2022-02-01" intervals="1h" orders="market"/>
+    </broker>
+    <crag interval="3600" />
+</configuration>
