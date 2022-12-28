@@ -557,9 +557,9 @@ class Crag:
         for position_type in lst_position_type:
             for current_trade in current_trades:
                 if current_trade.type == position_type and current_trade.symbol == symbol:
-                    if position_type == "OPEN_LONG":
+                    if position_type == self.rtstr.open_long:
                         alpha = 1
-                    elif position_type == "OPEN_SHORT":
+                    elif position_type == self.rtstr.open_short:
                         alpha = -1
                     lst_trades.append(current_trade)
 
@@ -596,9 +596,9 @@ class Crag:
         merged_trade.commission = sum(lst_current_trade_commission) / len(lst_current_trade_commission)
 
         if sum(lst_current_trade_gross_size) > 0:
-            merged_trade.type = "OPEN_LONG"
+            merged_trade.type = self.rtstr.open_long
         elif sum(lst_current_trade_gross_size) < 0:
-            merged_trade.type = "OPEN_SHORT"
+            merged_trade.type = self.rtstr.open_short
         elif sum(lst_current_trade_gross_size) == 0:
             return []
 
