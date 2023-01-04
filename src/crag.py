@@ -285,7 +285,8 @@ class Crag:
         sell_trade.buying_fee = bought_trade.buying_fee
         sell_trade.selling_fee = sell_trade.gross_price - sell_trade.net_price
         sell_trade.roi = 100 * (sell_trade.net_price - bought_trade.gross_price) / bought_trade.gross_price
-
+        if sell_trade.type == "CLOSE_SHORT":
+            sell_trade.roi = -sell_trade.roi
         self.traces_trade_performed = self.traces_trade_performed + 1
         if sell_trade.roi < 0:
             self.traces_trade_negative = self.traces_trade_negative + 1
@@ -443,7 +444,7 @@ class Crag:
             self.debug_trace_current_trades('end_trade', self.current_trades)
 
         # Clear the current_trades for optimization
-        if self.rtstr.authorize_clear_current_trades():
+        if self.rtstr.authorize_clear_current_trades() and len(self.current_trades) > 1:
             lst_buy_trades = []
             lst_buy_symbols_trades = []
             for current_trade in self.current_trades:
@@ -456,7 +457,7 @@ class Crag:
             self.debug_trace_current_trades('clear    ', self.current_trades)
 
         # Merge the current_trades for optimization
-        if self.rtstr.authorize_merge_current_trades():
+        if self.rtstr.authorize_merge_current_trades() and len(self.current_trades) > 1:
             lst_buy_trades_merged = []
             lst_buy_symbols_trades_unique = list(set(lst_buy_symbols_trades))
             for position_type in self.rtstr.get_lst_opening_type():

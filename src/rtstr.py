@@ -7,14 +7,15 @@ import importlib
 class RealTimeStrategy(metaclass=ABCMeta):
 
     def __init__(self, params=None):
-        self.SL = 0             # Stop Loss %
-        self.TP = 0             # Take Profit %
-        self.global_SL = 0      # Stop Loss % applicable to the overall portfolio
-        self.global_TP = 0      # Take Profit % applicable to the overall portfolio
+        self.SL = 0              # Stop Loss %
+        self.TP = 0              # Take Profit %
+        self.global_SL = 0       # Stop Loss % applicable to the overall portfolio
+        self.global_TP = 0       # Take Profit % applicable to the overall portfolio
         self.MAX_POSITION = 5    # Asset Overall Percent Size
         self.logger = None
         self.id = ""
         self.symbols_path = ""
+        self.min_bol_spread = 0   # Bollinger Trend startegy
         if params:
             self.MAX_POSITION = params.get("max_position", self.MAX_POSITION)
             if isinstance(self.MAX_POSITION, str):
@@ -27,6 +28,9 @@ class RealTimeStrategy(metaclass=ABCMeta):
             self.global_TP = int(params.get("global_tp", self.global_TP))
             self.logger = params.get("logger", self.logger)
             self.id = params.get("id", self.id)
+            self.min_bol_spread = params.get("min_bol_spread", self.min_bol_spread)
+            if isinstance(self.min_bol_spread, str):
+                self.min_bol_spread = int(self.min_bol_spread)
 
         if self.SL == 0:     # SL == 0 => mean no SL
             self.SL = -1000
@@ -123,7 +127,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
     def get_df_buying_symbols(self):
         data = {'symbol':[], 'stimulus':[], 'size':[], 'percent':[], 'gridzone':[], 'pos_type':[]}
         for symbol in self.df_current_data.index.to_list():
-            if self.condition_for_buying(symbol) == True:
+            if not self.is_open_type_short_or_long(symbol) and self.condition_for_buying(symbol):
                 size, percent, zone = self.get_symbol_buying_size(symbol)
                 data['symbol'].append(symbol)
                 # data["stimulus"].append("BUY")
@@ -344,6 +348,9 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
     def is_open_type_long(self, symbol):
         return self.get_open_type(symbol) == self.open_long
+
+    def is_open_type_short_or_long(self, symbol):
+        return self.is_open_type_short(symbol) or self.is_open_type_long(symbol)
 
     def open_position_failed(self, symbol):
         # open position broker failure -> retrun to state NO_POSITION

@@ -70,6 +70,9 @@ class rtctrl():
                 self.init_cash_value = wallet_cash
                 self.wallet_cash = wallet_cash
                 self.wallet_value = wallet_cash
+            else:
+                self.wallet_cash = wallet_cash
+                self.wallet_value = wallet_cash
             return
 
         self.df_rtctrl = pd.DataFrame(columns=self.get_df_header())
