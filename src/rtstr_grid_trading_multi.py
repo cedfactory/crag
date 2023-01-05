@@ -43,6 +43,8 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
 
         self.net_size = 0.0
 
+        self.set_df_multi()
+
     def get_data_description(self):
         ds = rtdp.DataDescription()
         ds.symbols = self.lst_symbols
@@ -118,7 +120,6 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
 
         init_cash_value = self.rtctrl.init_cash_value
 
-        # buying_size_value = init_cash_value / self.share_size
         buying_size_value = init_cash_value * self.share_size / 100
 
         wallet_value = available_cash
@@ -129,7 +130,8 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
 
         size = cash_to_buy / self.rtctrl.prices_symbols[symbol]
 
-        percent = cash_to_buy * 100 / wallet_value
+        # percent = cash_to_buy * 100 / wallet_value
+        percent = cash_to_buy * 100 /  self.rtctrl.wallet_value
         min_size = self.df_size_grid_params.loc[self.df_size_grid_params['symbol'] == symbol, 'balance_min_size'].iloc[0]
         if size < min_size:
             size = min_size
@@ -199,6 +201,10 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
 
     def is_open_type_long(self, symbol):
         return True
+
+    # Modif CEDE SPECIFIC
+    def is_open_type_short_or_long(self, symbol):
+        return False
 
 class GridLevelPosition():
     def __init__(self, symbol, params=None):

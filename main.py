@@ -40,6 +40,7 @@ def crag_plot_output(filename_csv, lst_column):
                 df_plot = pd.DataFrame()
                 df_plot[column] = df[column]
                 ax = df_plot.plot.line()
+                ax.grid()
                 output_file_png = directory + prefixe[0] + '_' + column + '.png'
                 ax.figure.savefig(output_file_png)
     else:
