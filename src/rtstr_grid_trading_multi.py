@@ -94,6 +94,10 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
             self.set_df_multi()
 
         self.grid = self.df_grid_multi.loc[self.df_grid_multi['symbol'] == symbol, "grid"].iloc[0]
+
+        if self.grid.exit_range_down_trend(self.df_current_data['close'][symbol]):
+            return True
+
         if self.grid.get_zone_position(self.df_current_data['close'][symbol]) == -1:
             return False
 
@@ -173,7 +177,7 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
             self.df_selling_limits.loc[self.df_selling_limits['symbol'] == symbol, "selling_limits"].iloc[0] + 1
 
     def get_selling_limit(self, symbol):
-        if self.df_selling_limits.loc[self.df_selling_limits['symbol'] == symbol, "selling_limits"].iloc[0] < 1:
+        if self.df_selling_limits.loc[self.df_selling_limits['symbol'] == symbol, "selling_limits"].iloc[0] < self.limit_sell:
             return True
         else:
             return False
@@ -205,6 +209,14 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
     # Modif CEDE SPECIFIC
     def is_open_type_short_or_long(self, symbol):
         return False
+
+    def grid_exit_range_trend_down(self, symbol):
+        self.grid = self.df_grid_multi.loc[self.df_grid_multi['symbol'] == symbol, "grid"].iloc[0]
+
+        if self.grid.exit_range_down_trend(self.df_current_data['close'][symbol]):
+            return True
+        else:
+            return False
 
 class GridLevelPosition():
     def __init__(self, symbol, params=None):
@@ -268,8 +280,6 @@ class GridLevelPosition():
 
     def get_zone_position(self, price):
         try:
-            start_debug = (self.df_grid['start']) < price
-            end_debug = ( (self.df_grid['end']) >= price)
             if len(self.df_grid[( (self.df_grid['start']) < price)
                                 & ( (self.df_grid['end']) >= price)]) > 0:
                 zone = self.df_grid[( (self.df_grid['start']) < price)
@@ -334,3 +344,28 @@ class GridLevelPosition():
 
     def get_UpperPriceLimit(self):
         return self.UpperPriceLimit
+
+    def get_LowerPriceLimit(self):
+        return self.LowerPriceLimit
+
+    def get_OutboundZoneMax(self):
+        return self.OutboundZoneMax
+
+    def get_OutboundZoneMin(self):
+        return self.OutboundZoneMin
+
+    def exit_range_down_trend(self, price):
+        if price < self.OutboundZoneMin:
+            return True
+        else:
+            return False
+
+    def exit_range_up_trend(self, price):
+        if price < self.OutboundZoneMin:
+            return True
+        else:
+            return False
+
+    def exit_range(self, price):
+        return self.exit_range_up_trend(price) \
+               or self.exit_range_down_trend(price)

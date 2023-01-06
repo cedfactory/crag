@@ -222,6 +222,9 @@ class RealTimeStrategy(metaclass=ABCMeta):
     def get_grid_sell_condition(self, symbol, zone):
         return True
 
+    def grid_exit_range_trend_down(self, symbol):
+        return False
+
     # @staticmethod
     def get_df_forced_selling_symbols(self):
         lst_symbols = self.rtctrl.df_rtctrl['symbol'].tolist()

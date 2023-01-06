@@ -334,7 +334,8 @@ class Crag:
             if self.rtstr.is_open_type(current_trade.type) and current_trade.symbol in list_symbols_to_sell \
                     and (self.flush_current_trade
                          or ((self.rtstr.get_selling_limit(current_trade.symbol))
-                             and ( self.rtstr.get_grid_sell_condition(current_trade.symbol, current_trade.gridzone)))):
+                             and (self.rtstr.get_grid_sell_condition(current_trade.symbol, current_trade.gridzone))
+                             or self.rtstr.grid_exit_range_trend_down(current_trade.symbol))):
                 sell_trade = self._prepare_sell_trade_from_bought_trade(current_trade, current_datetime, df_selling_symbols)
                 done = self.broker.execute_trade(sell_trade)
                 if done:
