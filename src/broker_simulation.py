@@ -50,21 +50,22 @@ class SimBroker(broker.Broker):
 
     def execute_trade(self, trade):
         if trade.type == "OPEN_LONG":
-            if self.cash < trade.gross_price:
+            if round(self.cash, 4) < round(trade.gross_price, 4):
                 return False
             self.cash = self.cash - trade.gross_price
             if self.cash < 0.001:
                 self.cash = 0
         elif trade.type == "OPEN_SHORT":
-            if self.cash < trade.gross_price:
+            if round(self.cash, 4) < round(trade.gross_price, 4):
                 return False
-            # self.cash = self.cash + abs(trade.gross_price)  # CEDE to investigate best solution
-            self.cash = self.cash + abs(trade.net_price)  # CEDE to investigate best solution
+            self.cash = self.cash + abs(trade.net_price)
             self.cash = self.cash - trade.buying_fee
+            self.cash_borrowed = self.cash_borrowed + abs(trade.net_price)
         elif trade.type == "CLOSE_LONG":
             self.cash = self.cash + trade.net_price
         elif trade.type == "CLOSE_SHORT":
             self.cash = self.cash - abs(trade.net_price)
+            self.cash_borrowed = self.cash_borrowed - abs(trade.cash_borrowed)
             if self.cash < 0.001:
                 self.cash = 0
         self.trades.append(trade)

@@ -41,14 +41,17 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
         if self.share_size == 0:
             self.share_size = 1
 
-        self.net_size = 0.0
 
+
+        self.net_size = 0.0
         self.set_df_multi()
 
     def get_data_description(self):
         ds = rtdp.DataDescription()
         ds.symbols = self.lst_symbols
-        ds.features = { "close" : None }
+        ds.features = { "close" : None,
+                        "sma_30" : 30,
+                        "slope_30" : 30}
         return ds
 
     def log_info(self):
@@ -60,11 +63,24 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
     def get_info(self):
         return "StrategyGridTrading"
 
-    def condition_for_opening_long_position(self, symbol):
-        if len(self.df_grid_multi) == 0:
-            self.set_df_multi()
+    def is_down_trend(self, symbol):
+        return self.df_current_data['slope_30'][symbol] < 0 \
+               and self.df_current_data['close'][symbol] < self.df_current_data['sma_30'][symbol]
 
+    def is_up_trend(self, symbol):
+        return self.df_current_data['slope_30'][symbol] > 0 \
+               and self.df_current_data['close'][symbol] > self.df_current_data['sma_30'][symbol]
+
+    def condition_for_opening_long_position(self, symbol):
         self.grid = self.df_grid_multi.loc[self.df_grid_multi['symbol'] == symbol, "grid"].iloc[0]
+
+        if self.grid.exit_range_up_trend(self.df_current_data['close'][symbol]) \
+                and self.trade_over_range_limits \
+                and not self.is_open_type_short_or_long(symbol) \
+                and self.is_up_trend(symbol) \
+                and self.grid.is_grid_flushed():
+            return True
+
         if self.grid.get_zone_position(self.df_current_data['close'][symbol]) == -1:
             return False
 
@@ -81,6 +97,20 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
         self.grid.set_previous_zone_position(self.df_current_data['close'][symbol])
         return buying_signal
 
+    def condition_for_opening_short_position(self, symbol):
+        if self.trade_over_range_limits:
+            self.grid = self.df_grid_multi.loc[self.df_grid_multi['symbol'] == symbol, "grid"].iloc[0]
+            if self.grid.exit_range_down_trend(self.df_current_data['close'][symbol])\
+                    and not self.is_open_type_short(symbol) \
+                    and not self.is_open_type_long(symbol) \
+                    and self.is_down_trend(symbol)\
+                    and self.grid.is_grid_flushed():
+                return True
+            else:
+                return False
+        else:
+            return False
+
     def set_zone_engaged(self, symbol, price):
         self.grid = self.df_grid_multi.loc[self.df_grid_multi['symbol'] == symbol, "grid"].iloc[0]
         self.grid.set_zone_engaged(price)
@@ -90,13 +120,17 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
         self.grid.set_lower_zone_unengaged_position(zone_position)
 
     def condition_for_closing_long_position(self, symbol):
-        if len(self.df_grid_multi) == 0:
-            self.set_df_multi()
-
         self.grid = self.df_grid_multi.loc[self.df_grid_multi['symbol'] == symbol, "grid"].iloc[0]
 
-        if self.grid.exit_range_down_trend(self.df_current_data['close'][symbol]):
+        if self.is_specific_grid_open_type_long(symbol) and self.is_down_trend(symbol) and self.grid.is_grid_flushed():
             return True
+
+        if self.grid.exit_range_down_trend(self.df_current_data['close'][symbol])\
+                and not self.grid.is_grid_flushed():
+            return True
+        elif self.grid.exit_range_down_trend(self.df_current_data['close'][symbol])\
+                and self.grid.is_grid_flushed():
+            return False
 
         if self.grid.get_zone_position(self.df_current_data['close'][symbol]) == -1:
             return False
@@ -113,18 +147,54 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
 
         return selling_signal
 
+    def condition_for_closing_short_position(self, symbol):
+        result = False
+        self.grid = self.df_grid_multi.loc[self.df_grid_multi['symbol'] == symbol, "grid"].iloc[0]
+        if self.is_open_type_short(symbol) and self.is_up_trend(symbol) and self.grid.is_grid_flushed():
+            result = True
+        return result
+
+    def condition_for_grid_out_of_range_sl_tp_signal(self, symbol, df_sl_tp):
+        # SIGNAL SPECIFIC TO GRID STRATEGY
+        if not self.is_out_of_range(symbol):
+            return False
+        result = False
+        self.grid = self.df_grid_multi.loc[self.df_grid_multi['symbol'] == symbol, "grid"].iloc[0]
+        if isinstance(df_sl_tp, pd.DataFrame) \
+                and self.grid.exit_range_down_trend(self.df_current_data['close'][symbol]) \
+                and self.is_open_type_short(symbol) \
+                and self.grid.is_grid_flushed() \
+                and (df_sl_tp['roi_sl_tp'][symbol] > self.grid.get_out_of_range_TP()
+                     or df_sl_tp['roi_sl_tp'][symbol] < self.grid.get_out_of_range_SL()):
+            result = True
+            print("============= GRID CLOSE SHORT SL_TP =============")
+        elif isinstance(df_sl_tp, pd.DataFrame)\
+                and self.grid.exit_range_up_trend(self.df_current_data['close'][symbol]) \
+                and self.is_specific_grid_open_type_long(symbol) \
+                and self.grid.is_grid_flushed() \
+                and (df_sl_tp['roi_sl_tp'][symbol] > self.grid.get_out_of_range_TP()
+                     or df_sl_tp['roi_sl_tp'][symbol] < self.grid.get_out_of_range_SL()):
+            result = True
+            print("============= GRID CLOSE LONG SL_TP =============")
+        return result
+
     def get_symbol_buying_size(self, symbol):
         if not symbol in self.rtctrl.prices_symbols or self.rtctrl.prices_symbols[symbol] < 0: # first init at -1
             return 0, 0, 0
 
         self.grid = self.df_grid_multi.loc[self.df_grid_multi['symbol'] == symbol, "grid"].iloc[0]
-        available_cash = self.rtctrl.wallet_cash
+        available_cash = self.rtctrl.wallet_cash - self.rtctrl.wallet_cash_borrowed
         if available_cash == 0:
             return 0, 0, 0
 
         init_cash_value = self.rtctrl.init_cash_value
 
-        buying_size_value = init_cash_value * self.share_size / 100
+        if (self.grid.exit_range_down_trend(self.df_current_data['close'][symbol])
+            or self.grid.exit_range_up_trend(self.df_current_data['close'][symbol])) \
+                and self.grid.is_grid_flushed():
+            buying_size_value = available_cash * self.MAX_POSITION / 100
+        else:
+            buying_size_value = init_cash_value * self.MAX_POSITION * self.share_size / 100 / 100
 
         wallet_value = available_cash
         cash_to_buy = buying_size_value
@@ -136,9 +206,10 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
 
         # percent = cash_to_buy * 100 / wallet_value
         percent = cash_to_buy * 100 /  self.rtctrl.wallet_value
-        min_size = self.df_size_grid_params.loc[self.df_size_grid_params['symbol'] == symbol, 'balance_min_size'].iloc[0]
-        if size < min_size:
-            size = min_size
+        # min_size = self.df_size_grid_params.loc[self.df_size_grid_params['symbol'] == symbol, 'balance_min_size'].iloc[0]
+
+        if self.is_open_type_short(symbol):
+            size = -size
 
         return size, percent, self.grid.get_zone_position(self.rtctrl.prices_symbols[symbol])
 
@@ -204,9 +275,13 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
         return False
 
     def is_open_type_long(self, symbol):
-        return True
+        self.grid = self.df_grid_multi.loc[self.df_grid_multi['symbol'] == symbol, "grid"].iloc[0]
+        return self.grid.is_grid_get_open_position()
 
-    # Modif CEDE SPECIFIC
+    # MODIF CEDE DESPERATE SOLUTION
+    def is_specific_grid_open_type_long(self, symbol):
+        return self.get_open_type(symbol) == self.open_long
+
     def is_open_type_short_or_long(self, symbol):
         return False
 
@@ -217,6 +292,10 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
             return True
         else:
             return False
+
+    def is_out_of_range(self, symbol):
+        self.grid = self.df_grid_multi.loc[self.df_grid_multi['symbol'] == symbol, "grid"].iloc[0]
+        return self.grid.exit_range(self.df_current_data['close'][symbol])
 
 class GridLevelPosition():
     def __init__(self, symbol, params=None):
@@ -235,6 +314,20 @@ class GridLevelPosition():
         self.OutboundZoneMin = self.df_grid_params.loc[self.df_grid_params['symbol'] == symbol, 'OutboundZoneMin'].iloc[0]
         self.grid_step = self.df_grid_params.loc[self.df_grid_params['symbol'] == symbol, 'grid_step'].iloc[0]
         self.grid_threshold = self.df_grid_params.loc[self.df_grid_params['symbol'] == symbol, 'grid_threshold'].iloc[0]
+        self.out_of_grid_range_TP = self.df_grid_params.loc[self.df_grid_params['symbol'] == symbol, 'out_of_range_TP'].iloc[0]
+        self.out_of_grid_range_SL = self.df_grid_params.loc[self.df_grid_params['symbol'] == symbol, 'out_of_range_SL'].iloc[0]
+
+        if self.OutboundZoneMax < self.UpperPriceLimit \
+                or self.OutboundZoneMin > self.LowerPriceLimit:
+            print('PARAMETER ERROR: OutboundZone vs PriceLimit inverted')
+            tmp1 = self.UpperPriceLimit
+            tmp2 = self.OutboundZoneMax
+            self.OutboundZoneMax = max(tmp1, tmp2)
+            self.UpperPriceLimit = min(tmp1, tmp2)
+            tmp1 = self.OutboundZoneMin
+            tmp2 = self.LowerPriceLimit
+            self.OutboundZoneMin = min(tmp1, tmp2)
+            self.LowerPriceLimit = max(tmp1, tmp2)
 
         GridLen = self.UpperPriceLimit - self.LowerPriceLimit
         GridStep = GridLen * self.grid_step / 100
@@ -275,8 +368,15 @@ class GridLevelPosition():
         self.df_grid['actual_position'] = 0
         self.df_grid['zone_engaged'] = False
         self.df_grid['buying_value'] = 0
+        self.df_grid['flushed'] = False
 
         self.grid_size = len(self.df_grid)
+
+    def get_out_of_range_TP(self):
+        return self.out_of_grid_range_TP
+
+    def get_out_of_range_SL(self):
+        return self.out_of_grid_range_SL
 
     def get_zone_position(self, price):
         try:
@@ -304,9 +404,11 @@ class GridLevelPosition():
 
     def set_zone_engaged(self, price):
         zone_position = self.get_zone_position(price)
-
-        self.df_grid.loc[zone_position, 'zone_engaged'] = True
-        self.df_grid.loc[zone_position, 'buying_value'] = price
+        if zone_position == -1:
+            pass
+        else:
+            self.df_grid.loc[zone_position, 'zone_engaged'] = True
+            self.df_grid.loc[zone_position, 'buying_value'] = price
 
     def set_lower_zone_unengaged(self, price):
         zone_position = self.get_zone_position(price)
@@ -361,7 +463,7 @@ class GridLevelPosition():
             return False
 
     def exit_range_up_trend(self, price):
-        if price < self.OutboundZoneMin:
+        if price > self.OutboundZoneMax:
             return True
         else:
             return False
@@ -369,3 +471,9 @@ class GridLevelPosition():
     def exit_range(self, price):
         return self.exit_range_up_trend(price) \
                or self.exit_range_down_trend(price)
+
+    def is_grid_get_open_position(self):
+        return self.df_grid['zone_engaged'].any()
+
+    def is_grid_flushed(self):
+        return not self.is_grid_get_open_position()

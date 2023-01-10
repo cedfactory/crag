@@ -52,24 +52,3 @@ class StrategyDummyTest(rtstr.RealTimeStrategy):
         return self.df_current_data['close_shift_5'][symbol] <= self.df_current_data['close'][symbol]\
                and self.df_current_data['close_shift_10'][symbol] <= self.df_current_data['close_shift_5'][symbol]\
                and self.df_current_data['close_shift_15'][symbol] <= self.df_current_data['close_shift_10'][symbol]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

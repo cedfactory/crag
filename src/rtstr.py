@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import inspect
 import importlib
+import ast
 
 class RealTimeStrategy(metaclass=ABCMeta):
 
@@ -11,11 +12,15 @@ class RealTimeStrategy(metaclass=ABCMeta):
         self.TP = 0              # Take Profit %
         self.global_SL = 0       # Stop Loss % applicable to the overall portfolio
         self.global_TP = 0       # Take Profit % applicable to the overall portfolio
+        self.build_in_TP = 100
+        self.build_in_SL = -50
+        self.liquidation_SL = self.build_in_SL # Stop Loss % specific to short liquidation
         self.MAX_POSITION = 5    # Asset Overall Percent Size
         self.logger = None
         self.id = ""
         self.symbols_path = ""
         self.min_bol_spread = 0   # Bollinger Trend startegy
+        self.trade_over_range_limits = False
         if params:
             self.MAX_POSITION = params.get("max_position", self.MAX_POSITION)
             if isinstance(self.MAX_POSITION, str):
@@ -26,11 +31,17 @@ class RealTimeStrategy(metaclass=ABCMeta):
             self.TP = int(params.get("tp", self.TP))
             self.global_SL = int(params.get("global_sl", self.global_SL))
             self.global_TP = int(params.get("global_tp", self.global_TP))
+            self.liquidation_SL = int(params.get("liquidation_SL", self.liquidation_SL))
+            if self.liquidation_SL < self.build_in_SL:
+                self.build_in_SL = self.liquidation_SL
             self.logger = params.get("logger", self.logger)
             self.id = params.get("id", self.id)
             self.min_bol_spread = params.get("min_bol_spread", self.min_bol_spread)
             if isinstance(self.min_bol_spread, str):
                 self.min_bol_spread = int(self.min_bol_spread)
+            self.trade_over_range_limits = params.get("trade_over_range_limits", self.trade_over_range_limits)
+            if isinstance(self.trade_over_range_limits, str):
+                self.trade_over_range_limits = ast.literal_eval(self.trade_over_range_limits)
 
         if self.SL == 0:     # SL == 0 => mean no SL
             self.SL = -1000
@@ -85,7 +96,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
     def condition_for_buying(self, symbol):
         result = False
         if self.condition_for_opening_long_position(symbol):
-            print('============= OPEN LONG ==============')
+            print('============= OPEN LONG =============')
             self.open_long_position(symbol)
             result = True
 
@@ -95,7 +106,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
                 self.open_position_failed(symbol)
                 result = False
             else:
-                print('============= OPEN SHORT ==============')
+                print('============= OPEN SHORT =============')
                 self.open_short_position(symbol)
                 result = True
         return result
@@ -114,15 +125,37 @@ class RealTimeStrategy(metaclass=ABCMeta):
         return (isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] > self.TP) \
                or (isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] < self.SL)
 
+    def condition_for_sl_liquidation_signal(self, symbol, df_sl_tp):
+        return isinstance(df_sl_tp, pd.DataFrame) \
+               and self.is_open_type_short(symbol) \
+               and df_sl_tp['roi_sl_tp'][symbol] < self.liquidation_SL
+
+    def condition_for_build_in_sl_tp_signal(self, symbol, df_sl_tp):
+        return isinstance(df_sl_tp, pd.DataFrame)\
+               and (df_sl_tp['roi_sl_tp'][symbol] < self.build_in_SL
+                    or df_sl_tp['roi_sl_tp'][symbol] > self.build_in_TP)
+
+    def condition_for_grid_out_of_range_sl_tp_signal(self, symbol, df_sl_tp):
+        # SIGNAL SPECIFIC TO GRID STRATEGY
+        return False
+
     def condition_for_selling(self, symbol, df_sl_tp):
         result = False
         if self.is_open_type_short(symbol) and self.condition_for_closing_short_position(symbol):
             result = True
-            print('============= CLOSE_SHORT ==============')
+            print('============= CLOSE_SHORT =============')
         elif self.is_open_type_long(symbol) and self.condition_for_closing_long_position(symbol):
             result = True
-            print('============= CLOSE_LONG ==============')
-        return result or self.condition_for_sl_tp_signal(symbol, df_sl_tp) or self.condition_for_global_sl_tp_signal()
+            print('============= CLOSE_LONG =============')
+        elif self.condition_for_sl_tp_signal(symbol, df_sl_tp)\
+                or self.condition_for_global_sl_tp_signal()\
+                or self.condition_for_sl_liquidation_signal(symbol, df_sl_tp)\
+                or self.condition_for_build_in_sl_tp_signal(symbol, df_sl_tp)\
+                or self.condition_for_grid_out_of_range_sl_tp_signal(symbol, df_sl_tp):
+            result = True
+            print('============= CLOSE_SL_TP =============')
+
+        return result
 
     def get_df_buying_symbols(self):
         data = {'symbol':[], 'stimulus':[], 'size':[], 'percent':[], 'gridzone':[], 'pos_type':[]}
@@ -191,17 +224,11 @@ class RealTimeStrategy(metaclass=ABCMeta):
             if symbol in lst_symbols and self.condition_for_selling(symbol, df_sl_tp):
                 size, percent, zone = self.get_symbol_selling_size(symbol)
                 data['symbol'].append(symbol)
-                # data["stimulus"].append("SELL")
                 data["stimulus"].append(self.get_close_type(symbol))
                 data['size'].append(size)
                 data['percent'].append(percent)
                 data['gridzone'].append(zone) # CEDE: Previous zone engaged
                 data['pos_type'].append(self.get_close_type(symbol))
-
-                if(isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] > self.TP):
-                    print('TAKE PROFIT: ', symbol, ": ", df_sl_tp['roi_sl_tp'][symbol])
-                if(isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] < self.SL):
-                    print('STOP LOST: ', symbol, ": ", df_sl_tp['roi_sl_tp'][symbol])
 
         df_result = pd.DataFrame(data)
         
@@ -232,7 +259,6 @@ class RealTimeStrategy(metaclass=ABCMeta):
         lst_stimulus = []
         for symbol in lst_symbols:
             lst_stimulus.append(self.get_close_type(symbol))
-        # lst_stimulus = ['SELL'] * len(lst_symbols)
         lst_percent = [0] * len(lst_symbols)
         data = {'symbol': lst_symbols, 'stimulus': lst_stimulus, 'size': lst_size, 'percent': lst_percent}
 
@@ -240,9 +266,9 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
         return df_result
 
-    def update(self, current_datetime, current_trades, broker_cash, prices_symbols, record_info, final_date):
+    def update(self, current_datetime, current_trades, broker_cash, broker_cash_borrowed, prices_symbols, record_info, final_date):
         if self.rtctrl:
-            self.rtctrl.update_rtctrl(current_datetime, current_trades, broker_cash, prices_symbols, final_date)
+            self.rtctrl.update_rtctrl(current_datetime, current_trades, broker_cash, broker_cash_borrowed, prices_symbols, final_date)
             self.rtctrl.display_summary_info(record_info)
         
     def get_symbol_buying_size(self, symbol):
@@ -275,7 +301,8 @@ class RealTimeStrategy(metaclass=ABCMeta):
         if not symbol in self.rtctrl.prices_symbols or self.rtctrl.prices_symbols[symbol] < 0: # first init at -1
             return 0, 0, 0
 
-        size = self.rtctrl.df_rtctrl.loc[self.rtctrl.df_rtctrl['symbol'] == symbol, "size"][0]
+        size = self.rtctrl.df_rtctrl.loc[self.rtctrl.df_rtctrl['symbol'] == symbol, "size"].values[0]
+
         if self.rtctrl.wallet_cash > 0:
             percent = size * self.rtctrl.prices_symbols[symbol] * 100 / self.rtctrl.wallet_cash
         else:
