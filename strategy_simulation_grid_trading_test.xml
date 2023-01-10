@@ -1,6 +1,6 @@
 <configuration>
     <strategy id="strategygridtrading" name="StrategyGridTradingMulti">
-        <params symbols="./symbols_df_synthetics_grid_trading.csv" max_position="50" share_size="10" sl="0" tp="0" global_sl="0"  global_tp="0" grid_df_params="./grid_df_params_test_grid_trading.csv" trade_over_range_limits="True"/>
+        <params symbols="./symbols_df_synthetics_grid_trading.csv" max_position="100" share_size="10" sl="0" tp="0" global_sl="0"  global_tp="0" grid_df_params="./grid_df_params_test_grid_trading.csv" trade_over_range_limits="True"/>
     </strategy>
     <broker name="simulator">
         <params cash="1000" start_date="2022-01-01" end_date="2022-02-01" intervals="1h" orders="market"/>
