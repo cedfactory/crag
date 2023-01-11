@@ -14,20 +14,21 @@ class TestGridLevelPosition:
         gridLevel = rtstr_grid_trading_multi.GridLevelPosition(symbol, params)
         
         # expectations
-        assert(gridLevel.UpperPriceLimit == 20500)
-        assert(gridLevel.LowerPriceLimit == 19700)
+        assert(gridLevel.UpperPriceLimit == 21100)
+        assert(gridLevel.LowerPriceLimit == 19900)
         expected_data = {
-            "zone_id":["zone_0", "zone_1", "zone_2", "zone_3", "zone_4", "zone_5"],
-            "start":[20516.400, 20436.336, 20196.144, 19955.952, 19715.760, 10008.000],
-            "end": [99920.000, 20483.600, 20403.664, 20163.856, 19924.048, 19684.240],
-            "previous_position": [0, 0, 0, 0, 0, 0],
-            "actual_position": [0, 0, 0, 0, 0, 0],
-            "zone_engaged": [False, False, False, False, False, False],
-            "buying_value": [0, 0, 0, 0, 0, 0]
+            "zone_id":["zone_0", "zone_1", "zone_2", "zone_3", "zone_4", "zone_5", "zone_6", "zone_7", "zone_8", "zone_9", "zone_10", "zone_11"],
+            "start":[21116.880, 20996.784, 20876.688, 20756.592, 20636.496, 20516.400, 20396.304, 20276.208, 20156.112, 20036.016, 19915.920, 10008.000],
+            "end": [99920.000, 21083.120, 20963.216, 20843.312, 20723.408, 20603.504, 20483.600, 20363.696, 20243.792, 20123.888, 20003.984, 19884.080],
+            "previous_position": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            "actual_position": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            "zone_engaged": [False, False, False, False, False, False, False, False, False, False, False, False],
+            "buying_value": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            "flushed": [False, False, False, False, False, False, False, False, False, False, False, False]
         }
         df_expected = pd.DataFrame(expected_data)
         pd.testing.assert_frame_equal(gridLevel.df_grid, df_expected)
-        assert(gridLevel.grid_size == 6)
+        assert(gridLevel.grid_size == 12)
 
     def test_get_zone_position(self):
          # context
@@ -39,7 +40,7 @@ class TestGridLevelPosition:
         zone_position = gridLevel.get_zone_position(19999)
 
         # expectations
-        assert(zone_position == 3)
+        assert(zone_position == 10)
 
     def test_get_set_previous_zone_position(self):
          # context
@@ -48,21 +49,20 @@ class TestGridLevelPosition:
         gridLevel = rtstr_grid_trading_multi.GridLevelPosition(symbol, params)
         previous_zone_position = gridLevel.get_previous_zone_position()
         assert(previous_zone_position == -1)
-        print(gridLevel.df_grid)
 
         # action 1
         gridLevel.set_previous_zone_position(19999)
 
         # expectations 1
         previous_zone_position = gridLevel.get_previous_zone_position()
-        assert(previous_zone_position == 3)
+        assert(previous_zone_position == 10)
 
         # action 2
         gridLevel.set_previous_zone_position(20450)
 
         # expectations 2
         previous_zone_position = gridLevel.get_previous_zone_position()
-        assert(previous_zone_position == 1)
+        assert(previous_zone_position == 6)
 
 class TestRTSTRGridMultiTrading:
 
@@ -75,12 +75,10 @@ class TestRTSTRGridMultiTrading:
 
         # expectations
         assert(strategy.share_size == 10)
-        assert(strategy.global_tp == 10000)
         assert(strategy.SL == -1000)
         assert(strategy.TP == 1000)
         assert(strategy.MAX_POSITION == 5)
-        assert(strategy.SPLIT == 5)
-        assert(strategy.match_full_position == True)
+        assert(strategy.match_full_position == False)
 
     def test_get_data_description(self):
         # context

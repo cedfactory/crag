@@ -18,8 +18,7 @@ class TestRTSTRVMC:
         assert(strategy.SL == -1000)
         assert(strategy.TP == 1000)
         assert(strategy.MAX_POSITION == 5)
-        assert(strategy.SPLIT == 5)
-        assert(strategy.match_full_position == True)
+        assert(strategy.match_full_position == False)
 
     def test_get_data_description(self, mocker):
         # context

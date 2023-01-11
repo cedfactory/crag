@@ -75,7 +75,7 @@ class TestCrag:
         # context : create the configruation file
         filename = self._write_file('''<configuration>
             <strategy name="StrategyGridTradingMulti">
-                <params symbols="BTC/USDT" grid_df_params="./test/data/multigrid_df_params.csv"/>
+                <params symbols="BTC/USD" grid_df_params="./test/data/multigrid_df_params.csv"/>
             </strategy>
             <broker name="binance">
                 <params exchange="binance" account="test_bot" leverage="3" simulation="1"/>
@@ -92,7 +92,7 @@ class TestCrag:
         assert(bot.broker.leverage == 3)
         assert(bot.rtstr.get_name() == "StrategyGridTradingMulti")
         assert(bot.rtstr.share_size == 10)
-        assert(bot.rtstr.global_tp == 10000)
+        assert(bot.rtstr.global_TP == 1000)
         assert(bot.interval == 20)
 
         # cleaning
@@ -126,7 +126,7 @@ class TestCrag:
         assert(bot.broker.get_cash() == 100)
         assert(bot.rtstr.get_name() == "StrategyGridTradingMulti")
         assert(bot.rtstr.share_size == 10)
-        assert(bot.rtstr.global_tp == 10000)
+        assert(bot.rtstr.global_TP == 1000)
         assert(bot.interval == 20)
 
         # cleaning

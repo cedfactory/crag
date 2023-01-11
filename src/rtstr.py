@@ -4,10 +4,12 @@ import numpy as np
 import inspect
 import importlib
 import ast
+from os import path
 
 class RealTimeStrategy(metaclass=ABCMeta):
 
     def __init__(self, params=None):
+        self.lst_symbols = []
         self.SL = 0              # Stop Loss %
         self.TP = 0              # Take Profit %
         self.global_SL = 0       # Stop Loss % applicable to the overall portfolio
@@ -18,15 +20,17 @@ class RealTimeStrategy(metaclass=ABCMeta):
         self.MAX_POSITION = 5    # Asset Overall Percent Size
         self.logger = None
         self.id = ""
-        self.symbols_path = ""
         self.min_bol_spread = 0   # Bollinger Trend startegy
         self.trade_over_range_limits = False
         if params:
             self.MAX_POSITION = params.get("max_position", self.MAX_POSITION)
             if isinstance(self.MAX_POSITION, str):
                 self.MAX_POSITION = int(self.MAX_POSITION)
-            self.symbols_path = params.get("symbols", self.symbols_path)
-            self.lst_symbols = pd.read_csv(self.symbols_path)['symbol'].tolist()
+            symbols = params.get("symbols", "")
+            if path.exists(symbols):
+                self.lst_symbols = pd.read_csv(symbols)['symbol'].tolist()
+            else:
+                self.lst_symbols = symbols.split(",")
             self.SL = int(params.get("sl", self.SL))
             self.TP = int(params.get("tp", self.TP))
             self.global_SL = int(params.get("global_sl", self.global_SL))
