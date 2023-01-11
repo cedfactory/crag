@@ -16,6 +16,7 @@ class BrokerCCXT(broker.Broker):
         self.exchange_name = ""
         self.api_key = ""
         self.api_secret = ""
+        self.orders = "market"
         if params:
             self.name = params.get("name", self.name)
             self.exchange_name = params.get("exchange", self.exchange_name)
@@ -27,6 +28,7 @@ class BrokerCCXT(broker.Broker):
             if self.simulation == 1 or self.simulation == "1":
                 self.simulation = True
             self.account = params.get("account", self.account)
+            self.orders = params.get("orders", self.orders)
             self.leverage = params.get("leverage", self.leverage)
             if isinstance(self.leverage, str):
                 self.leverage = int(self.leverage)
@@ -241,6 +243,7 @@ class BrokerCCXT(broker.Broker):
         print("!!!!!!! EXECUTE THE TRADE !!!!!!!")
         if self.exchange:
             side = ""
+            type = self.orders
             if trade.type == "SELL":
                 type = "market"
                 side = "sell"

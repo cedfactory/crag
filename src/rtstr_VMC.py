@@ -1,13 +1,4 @@
-import pandas as pd
-import numpy as np
-from . import trade
-import json
-import time
-import csv
-from datetime import datetime
-import datetime
-
-from . import rtdp, rtstr, utils, rtctrl
+from . import rtdp, rtstr, rtctrl
 
 class StrategyVMC(rtstr.RealTimeStrategy):
 
@@ -15,6 +6,10 @@ class StrategyVMC(rtstr.RealTimeStrategy):
         super().__init__(params)
 
         self.rtctrl = rtctrl.rtctrl(params=params)
+        self.rtctrl.set_list_open_position_type(self.get_lst_opening_type())
+        self.rtctrl.set_list_close_position_type(self.get_lst_closing_type())
+
+        self.zero_print = True
 
         self.positive_Threshold = 0
         self.chop_Threshold = 50
@@ -24,7 +19,7 @@ class StrategyVMC(rtstr.RealTimeStrategy):
 
     def get_data_description(self):
         ds = rtdp.DataDescription()
-        #ds.symbols = ds.symbols[:2]
+        ds.symbols = self.lst_symbols
         ds.features = { "low" : None,
                         "high" : None,
                         "close": None,
@@ -43,7 +38,7 @@ class StrategyVMC(rtstr.RealTimeStrategy):
                         }
         return ds
 
-    def condition_for_buying(self, symbol):
+    def condition_for_opening_long_position(self, symbol):
         return (
                     (self.df_current_data['ema_short_vmc'][symbol] > self.df_current_data['ema_long_vmc'][symbol])
                     & (self.df_current_data['close'][symbol] > self.df_current_data['ema_short_vmc'][symbol])
@@ -55,12 +50,7 @@ class StrategyVMC(rtstr.RealTimeStrategy):
                     & (self.df_current_data['CHOP'][symbol] < self.chop_Threshold)
             )
 
-    def condition_for_selling(self, symbol, df_sl_tp):
-        return (
-                (self.df_current_data['AO'][symbol] < self.AO_Threshold
-                    and self.df_current_data['STOCH_RSI'][symbol] >  self.stochOverSold)
-                or self.df_current_data['WILLR'][symbol] > self.willOverBought
-            ) or (
-                (isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] > self.TP)
-                or (isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] < self.SL)
-            )
+    def condition_for_closing_long_position(self, symbol):
+        return (self.df_current_data['AO'][symbol] < self.AO_Threshold
+                and self.df_current_data['STOCH_RSI'][symbol] > self.stochOverSold) \
+               or self.df_current_data['WILLR'][symbol] > self.willOverBought

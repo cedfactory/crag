@@ -8,15 +8,13 @@ class StrategyBalanceTradingMulti(rtstr.RealTimeStrategy):
         super().__init__(params)
 
         self.rtctrl = rtctrl.rtctrl(params=params)
+        self.rtctrl.set_list_open_position_type(self.get_lst_opening_type())
+        self.rtctrl.set_list_close_position_type(self.get_lst_closing_type())
 
         self.zero_print = True
 
-        self.global_tp = 10000
         self.df_size_grid_params = pd.DataFrame()
         if params:
-            self.global_tp = params.get("global_tp", self.global_tp)
-            if isinstance(self.global_tp, str):
-                self.global_tp = int(self.global_tp)
             self.df_size_grid_params = params.get("grid_df_params", self.df_size_grid_params)
             if isinstance(self.df_size_grid_params, str):
                 self.df_size_grid_params = pd.read_csv(self.df_size_grid_params)
@@ -24,16 +22,9 @@ class StrategyBalanceTradingMulti(rtstr.RealTimeStrategy):
         # add commision 0.08
         self.df_size_grid_params['balance_min_size'] = self.df_size_grid_params['balance_min_size'] / (1 - 0.008)
 
-        if self.global_tp == 0:
-            self.global_tp = 10000
-        self.net_size = 0.0
-        self.global_tp_net = -1000
-        self.tp_sl_abort = False
-
         self.limit_sell = 1
 
         # Strategy Specifics
-        self.list_symbols = []
         self.symbol_pct = 0.5          #BTC%
         # CEDE Comment: Merge the 3 df into one unique
         self.df_symbol_pct = pd.DataFrame(columns=['symbol', 'symbol_pct'])
@@ -54,24 +45,14 @@ class StrategyBalanceTradingMulti(rtstr.RealTimeStrategy):
 
     def get_data_description(self):
         ds = rtdp.DataDescription()
-        ds.symbols = [
-            "BTC/USD",
-            "ETH/USD",
-            "XRP/USD",
-            "BNB/USD",
-            "SOL/USD"
-        ]
+        ds.symbols = self.lst_symbols
         ds.features = { "close" : None }
-        self.list_symbols = ds.symbols
         return ds
 
     def get_info(self):
-        return "StrategyBalanceTradingMulti", self.str_sl, self.str_tp
+        return "StrategyBalanceTradingMulti"
 
-    def condition_for_buying(self, symbol):
-        if self.tp_sl_abort:
-            return False
-
+    def condition_for_opening_long_position(self, symbol):
         if len(self.df_selling_limits) == 0:
             self.set_df_multi()
 
@@ -103,10 +84,7 @@ class StrategyBalanceTradingMulti(rtstr.RealTimeStrategy):
 
         return buying_signal
 
-    def condition_for_selling(self, symbol, df_sl_tp):
-        if self.tp_sl_abort:
-            return True
-
+    def condition_for_closing_long_position(self, symbol):
         if len(self.df_selling_limits) == 0:
             self.set_df_multi()
 
@@ -131,23 +109,10 @@ class StrategyBalanceTradingMulti(rtstr.RealTimeStrategy):
         self.symbol_current_pct = self.df_symbol_current_pct.loc[self.df_symbol_current_pct['symbol'] == symbol, "symbol_current_pct"].iloc[0]
         self.symbol_pct = self.df_symbol_pct.loc[self.df_symbol_pct['symbol'] == symbol, "symbol_pct"].iloc[0]
         # get_variable("BTC_Current%")>get_variable("BTC%")+get_variable("rebalance%")
-        if ((self.symbol_current_pct > self.symbol_pct + self.rebalance_pct)
-                or ((isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] > self.TP)
-                    or (isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] < self.SL))):
+        if self.symbol_current_pct > self.symbol_pct + self.rebalance_pct:
             selling_signal = True
         else:
             selling_signal = False
-
-        if self.rtctrl.wallet_value >= self.rtctrl.init_cash_value + self.rtctrl.init_cash_value * self.global_tp / 100:
-            self.global_tp = (self.rtctrl.wallet_value - self.rtctrl.init_cash_value) * 100 / self.rtctrl.init_cash_value
-            self.global_tp_net = self.global_tp - self.net_size
-            print("global_tp: ", round(self.global_tp, 2), " net_tp: ", round(self.global_tp_net, 2), "protfolio: $",
-                  self.rtctrl.wallet_value)
-
-        if self.rtctrl.wallet_value <= self.rtctrl.init_cash_value + self.rtctrl.init_cash_value * self.global_tp_net / 100:
-            self.tp_sl_abort = True
-            selling_signal = True
-            print("abort: $", self.rtctrl.wallet_value)
 
         return selling_signal
 
@@ -228,17 +193,17 @@ class StrategyBalanceTradingMulti(rtstr.RealTimeStrategy):
             return False
 
     def set_df_multi(self):
-        self.df_balance_symbol['symbol'] = self.list_symbols
+        self.df_balance_symbol['symbol'] = self.lst_symbols
         self.df_balance_symbol['balance_symbol'] = 0
 
-        self.df_selling_limits['symbol'] = self.list_symbols
+        self.df_selling_limits['symbol'] = self.lst_symbols
         self.df_selling_limits['selling_limits'] = 0
 
-        self.df_symbol_pct['symbol'] = self.list_symbols
-        val_symbol_pct = (1 - self.usd_pct) / len(self.list_symbols)
-        for symbol in self.list_symbols:
+        self.df_symbol_pct['symbol'] = self.lst_symbols
+        val_symbol_pct = (1 - self.usd_pct) / len(self.lst_symbols)
+        for symbol in self.lst_symbols:
             self.df_symbol_pct.loc[self.df_symbol_pct['symbol'] == symbol, "symbol_pct"] = val_symbol_pct
-        self.df_symbol_current_pct['symbol'] = self.list_symbols
+        self.df_symbol_current_pct['symbol'] = self.lst_symbols
         self.df_symbol_current_pct['symbol_current_pct'] = 0
 
 

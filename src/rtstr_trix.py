@@ -1,13 +1,4 @@
-import pandas as pd
-import numpy as np
-from . import trade
-import json
-import time
-import csv
-from datetime import datetime
-import datetime
-
-from . import rtdp, rtstr, utils, rtctrl
+from . import rtdp, rtstr, rtctrl
 
 class StrategyTrix(rtstr.RealTimeStrategy):
 
@@ -15,27 +6,24 @@ class StrategyTrix(rtstr.RealTimeStrategy):
         super().__init__(params)
 
         self.rtctrl = rtctrl.rtctrl(params=params)
+        self.rtctrl.set_list_open_position_type(self.get_lst_opening_type())
+        self.rtctrl.set_list_close_position_type(self.get_lst_closing_type())
 
         self.zero_print = True
 
     def get_data_description(self):
         ds = rtdp.DataDescription()
-        #ds.symbols = ds.symbols[:2]
+        ds.symbols = self.lst_symbols
         ds.features = { "TRIX_HISTO" : {"feature": "trix", "period": 21},
                         "STOCH_RSI": {"feature": "stoch_rsi", "period": 14}
                         }
         return ds
 
     def get_info(self):
-        return "StrategyTrix", self.str_sl, self.str_tp
+        return "StrategyTrix"
 
-    def condition_for_buying(self, symbol):
+    def condition_for_opening_long_position(self, symbol):
         return self.df_current_data['TRIX_HISTO'][symbol] > 0 and self.df_current_data['STOCH_RSI'][symbol] < 0.8
 
-    def condition_for_selling(self, symbol, df_sl_tp):
-        return (
-                    self.df_current_data['TRIX_HISTO'][symbol] < 0 and self.df_current_data['STOCH_RSI'][symbol] > 0.2
-            ) or (
-                    (isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] > self.TP)
-                    or (isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] < self.SL)
-            )
+    def condition_for_closing_long_position(self, symbol):
+        return self.df_current_data['TRIX_HISTO'][symbol] < 0 and self.df_current_data['STOCH_RSI'][symbol] > 0.2

@@ -6,6 +6,7 @@ class Broker(metaclass = ABCMeta):
         self.cash = 0
         if params:
             self.cash = params.get("cash", self.cash)
+        self.cash_borrowed = 0
         self.rtdp = None
 
     def ready(self):
@@ -29,6 +30,9 @@ class Broker(metaclass = ABCMeta):
 
     def get_cash(self):
         return self.cash
+
+    def get_cash_borrowed(self):
+        return self.cash_borrowed
 
     def get_portfolio_value(self):
         # todo : to implement

@@ -15,8 +15,8 @@ class rtctrl():
         self.init_cash_value = 0
         self.actual_price = 0
         self.actual_net_price = 0
-        self.roi_value = 0
-        self.roi_percent = 0
+        self.global_roi_value = 0
+        self.global_roi_percent = 0
         self.portfolio_value = 0
         self.wallet_cash = 0
         self.wallet_value = 0
@@ -37,25 +37,25 @@ class rtctrl():
         self.record_tracking = True
 
     def get_df_header(self):
-        return ["symbol", "time", "actual_price", "size", "fees", "buying_gross_price", "actual_net_price", "roi_$", "roi_%", "portfolio_value", "cash","wallet_value", "wallet_%"]
+        return ["symbol", "time", "actual_price", "size", "fees", "buying_gross_price", "actual_net_price", "roi_$", "roi_%", "portfolio_value", "cash", 'cash_borrowed',"wallet_value", "wallet_%"]
 
     def get_df_header_tracking(self):
         return ["time", "roi%", "cash", "portfolio", "wallet", "asset%"]
 
     def get_list_of_traded_symbols(self, list_of_current_trades):
-        list_symbols = [trade.symbol for trade in list_of_current_trades if trade.type == "BUY"]
+        list_symbols = [trade.symbol for trade in list_of_current_trades if trade.type in self.lst_opening_type]
         return list(set(list_symbols))
 
     def get_list_of_asset_size(self, list_of_current_trades):
-        return [sum(current_trade.net_size for current_trade in list_of_current_trades if current_trade.type == "BUY" and current_trade.symbol == symbol) for symbol in self.symbols]
+        return [sum(current_trade.net_size for current_trade in list_of_current_trades if current_trade.type in self.lst_opening_type and current_trade.symbol == symbol) for symbol in self.symbols]
 
     def get_list_of_asset_fees(self, list_of_current_trades):
-        return [sum(current_trade.buying_fee for current_trade in list_of_current_trades if current_trade.type == "BUY" and current_trade.symbol == symbol) for symbol in self.symbols]
+        return [sum(current_trade.buying_fee for current_trade in list_of_current_trades if current_trade.type in self.lst_opening_type and current_trade.symbol == symbol) for symbol in self.symbols]
 
     def get_list_of_asset_gross_price(self, list_of_current_trades):
-        return [sum(current_trade.gross_price for current_trade in list_of_current_trades if current_trade.type == "BUY" and current_trade.symbol == symbol) for symbol in self.symbols]
+        return [sum(current_trade.gross_price for current_trade in list_of_current_trades if current_trade.type in self.lst_opening_type and current_trade.symbol == symbol) for symbol in self.symbols]
 
-    def update_rtctrl(self, current_datetime, list_of_current_trades, wallet_cash, prices_symbols, final_date):
+    def update_rtctrl(self, current_datetime, list_of_current_trades, wallet_cash, wallet_cash_borrowed, prices_symbols, final_date):
         self.prices_symbols = prices_symbols
         self.time = current_datetime
 
@@ -65,10 +65,16 @@ class rtctrl():
             final_step = False
 
         if len(list_of_current_trades) == 0 and (not final_step):
+            self.df_rtctrl = pd.DataFrame(columns=self.get_df_header())
             if self.init_cash_value == 0:
                 self.init_cash_value = wallet_cash
                 self.wallet_cash = wallet_cash
                 self.wallet_value = wallet_cash
+                self.wallet_cash_borrowed = wallet_cash_borrowed
+            else:
+                self.wallet_cash = wallet_cash
+                self.wallet_value = wallet_cash
+                self.wallet_cash_borrowed = wallet_cash_borrowed
             return
 
         self.df_rtctrl = pd.DataFrame(columns=self.get_df_header())
@@ -76,6 +82,7 @@ class rtctrl():
         actual_prices = [prices_symbols[symbol] for symbol in self.symbols]
         self.actual_price = actual_prices
         self.wallet_cash = wallet_cash
+        self.wallet_cash_borrowed = wallet_cash_borrowed
 
         self.df_rtctrl['symbol'] = self.symbols
         self.df_rtctrl['time'] = self.time
@@ -83,18 +90,21 @@ class rtctrl():
         self.df_rtctrl['size'] = self.get_list_of_asset_size(list_of_current_trades)
         self.df_rtctrl['fees'] = self.get_list_of_asset_fees(list_of_current_trades)
         self.df_rtctrl['buying_gross_price'] = self.get_list_of_asset_gross_price(list_of_current_trades)
-
         self.df_rtctrl['actual_net_price'] = self.df_rtctrl['size'] * self.df_rtctrl['actual_price']
         self.df_rtctrl['roi_$'] = self.df_rtctrl['actual_net_price'] - self.df_rtctrl['buying_gross_price']
         self.df_rtctrl['roi_%'] = self.df_rtctrl['roi_$'] / self.df_rtctrl['buying_gross_price']    # * 100 ????
         self.df_rtctrl['portfolio_value'] = self.df_rtctrl['actual_net_price']
         self.df_rtctrl['cash'] = self.wallet_cash
+        self.df_rtctrl['cash_borrowed'] = self.wallet_cash_borrowed
         self.df_rtctrl['wallet_value'] = self.df_rtctrl['portfolio_value'].sum() + self.df_rtctrl['cash']
         if len(self.df_rtctrl) > 0:
             self.wallet_value = self.df_rtctrl['wallet_value'][0]
         else:
             self.wallet_value = self.wallet_cash
         self.df_rtctrl['wallet_%'] = np.where(self.df_rtctrl['wallet_value'] != 0, 100 * self.df_rtctrl['portfolio_value'] / self.df_rtctrl['wallet_value'], 0.)
+
+        self.global_roi_value = self.wallet_value - self.init_cash_value
+        self.global_roi_percent = self.global_roi_value / self.init_cash_value * 100
 
     def display_summary_info(self, record_info=None):
         wallet_cash = self.wallet_cash
@@ -132,3 +142,9 @@ class rtctrl():
                     print(self.df_rtctrl_tracking)
 
         return summary
+
+    def set_list_open_position_type(self, lst_opening_type):
+        self.lst_opening_type = lst_opening_type
+
+    def set_list_close_position_type(self, lst_closing_type):
+        self.lst_closing_type = lst_closing_type

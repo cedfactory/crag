@@ -1,13 +1,5 @@
 import pandas as pd
-import numpy as np
-from . import trade
-import json
-import time
-import csv
-from datetime import datetime
-import datetime
-
-from . import rtdp, rtstr, utils, rtctrl
+from . import rtdp, rtstr, rtctrl
 
 class StrategyTvRecommendationMid(rtstr.RealTimeStrategy):
 
@@ -15,27 +7,25 @@ class StrategyTvRecommendationMid(rtstr.RealTimeStrategy):
         super().__init__(params)
 
         self.rtctrl = rtctrl.rtctrl(params=params)
+        self.rtctrl.set_list_open_position_type(self.get_lst_opening_type())
+        self.rtctrl.set_list_close_position_type(self.get_lst_closing_type())
 
         self.zero_print = True
 
-        self.MAX_POSITION = 10
-        self.TP = 10
-        self.SL = -2
-
     def get_data_description(self):
         ds = rtdp.DataDescription()
+        ds.symbols = self.lst_symbols
         ds.features = { "tv_1h" : None,
                         "tv_2h" : None,
                         "tv_4h" : None,
                         "tv_1d" : None
                         }
-
         return ds
 
     def get_info(self):
-        return "StrategyTvRecommendationMid", self.str_sl, self.str_tp
+        return "StrategyTvRecommendationMid"
 
-    def condition_for_buying(self, symbol):
+    def condition_for_opening_long_position(self, symbol):
         lst_recom = [
             self.df_current_data['tv_1h'][symbol],
             self.df_current_data['tv_2h'][symbol],
@@ -52,7 +42,7 @@ class StrategyTvRecommendationMid(rtstr.RealTimeStrategy):
         else:
             if (strong_buy_count >= 2):
                 # BUY signal
-                print('BUY: ', symbol, " ", lst_recom)
+                print('OPEN LONG POSITION: ', symbol, " ", lst_recom)
                 buying_signal = True
             else:
                 # HOLD signal
@@ -60,7 +50,7 @@ class StrategyTvRecommendationMid(rtstr.RealTimeStrategy):
 
         return buying_signal
 
-    def condition_for_selling(self, symbol, df_sl_tp):
+    def condition_for_closing_long_position(self, symbol):
         lst_recom = [
             self.df_current_data['tv_1h'][symbol],
             self.df_current_data['tv_2h'][symbol],
@@ -73,7 +63,7 @@ class StrategyTvRecommendationMid(rtstr.RealTimeStrategy):
 
         if ('SELL' in lst_recom or 'STRONG_SELL' in lst_recom or 'NEUTRAL' in lst_recom):
             # SELL signal
-            print('SELL: ', symbol, " ", lst_recom)
+            print('CLOSE LONG POSITION: ', symbol, " ", lst_recom)
             selling_signal = True
         else:
             if (strong_buy_count >= 1):
@@ -82,12 +72,6 @@ class StrategyTvRecommendationMid(rtstr.RealTimeStrategy):
             else:
                 # HOLD signal
                 selling_signal = False
-                print('HOLD: ', symbol, " ", lst_recom)
+                print('HOLD POSITION: ', symbol, " ", lst_recom)
 
-
-        return (
-                   selling_signal
-            ) or (
-                    (isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] > self.TP)
-                    or (isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] < self.SL)
-            )
+        return selling_signal

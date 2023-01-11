@@ -48,12 +48,13 @@ class Crag:
         self.df_portfolio_status = pd.DataFrame(columns=['symbol', 'portfolio_size', 'value', 'buying_value', 'roi_sl_tp'])
         self.portfolio_value = 0
         self.wallet_value = 0
+        self.sell_performed = False
 
         self.zero_print = True
         self.flush_current_trade = False
 
         if self.rtstr != None:
-            self.strategy_name, self.str_sl, self.str_tp = self.rtstr.get_info()
+            self.strategy_name = self.rtstr.get_info()
         if self.broker != None:
             self.final_datetime = self.broker.get_final_datetime()
             self.start_date, self.end_date,  self.inteval = self.broker.get_info()
@@ -62,8 +63,6 @@ class Crag:
                                + "_" + str(self.start_date)\
                                + "_" + str(self.end_date)\
                                + "_" + str(self.inteval)\
-                               + "_" + str(self.str_sl)\
-                               + "_" + str(self.str_tp)\
                                + ".csv"
         self.backup_filename = self.id + "_crag_backup.pickle"
 
@@ -219,8 +218,10 @@ class Crag:
             self.clear_unused_data = False
 
         prices_symbols = {symbol:self.broker.get_value(symbol) for symbol in ds.symbols}
+
+        print('price: ', prices_symbols)
         current_datetime = self.broker.get_current_datetime()
-        self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(), prices_symbols, False, self.final_datetime)
+        self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(), self.broker.get_cash_borrowed(), prices_symbols, False, self.final_datetime)
 
         if(len(self.df_portfolio_status) == 0):
             self.df_portfolio_status = pd.DataFrame({"symbol":ds.symbols, "portfolio_size":0, "value":0, "buying_value":0, "roi_sl_tp":0})
@@ -248,7 +249,7 @@ class Crag:
 
     def _prepare_sell_trade_from_bought_trade(self, bought_trade, current_datetime, df_selling_symbols):
         sell_trade = trade.Trade(current_datetime)
-        sell_trade.type = "SELL"
+        sell_trade.type = self.rtstr.get_close_type(bought_trade.symbol)
         sell_trade.sell_id = bought_trade.id
         sell_trade.buying_price = bought_trade.buying_price
         sell_trade.buying_time = bought_trade.time
@@ -256,18 +257,39 @@ class Crag:
         sell_trade.symbol = bought_trade.symbol
         sell_trade.symbol_price = self.broker.get_value(bought_trade.symbol)
 
-        # Clear one trade position partialy
-        sell_trade.gross_size = df_selling_symbols['size'][sell_trade.symbol]
+        sell_trade.cash_borrowed = bought_trade.cash_borrowed
+
+        # Clear one trade position partialy:
+        # sell_trade.gross_size = df_selling_symbols['size'][sell_trade.symbol]
         # Clear one trade position totaly
+        # Option chosen... so far...
         sell_trade.gross_size = bought_trade.net_size
 
-        sell_trade.gross_price = sell_trade.gross_size * sell_trade.symbol_price
+        if sell_trade.type == "CLOSE_LONG":
+            # cash = cash - sell_trade.gross_size * sell_trade.buying_price
+            # cash = cash + sell_trade.gross_size * sell_trade.symbol_price
+            # cash = cash + sell_trade.gross_size * (sell_trade.symbol_price - sell_trade.buying_price)
+
+            sell_trade.gross_price = sell_trade.gross_size * sell_trade.symbol_price
+            # sell_trade.gross_price = sell_trade.gross_size * (sell_trade.symbol_price + sell_trade.symbol_price - sell_trade.buying_price)
+        elif sell_trade.type == "CLOSE_SHORT":
+            # cash = cash + sell_trade.gross_size * sell_trade.buying_price
+            # cash = cash - sell_trade.gross_size * sell_trade.symbol_price
+            # cash = cash + sell_trade.gross_size * (sell_trade.buying_price - sell_trade.symbol_price)
+
+            sell_trade.gross_price = sell_trade.gross_size * sell_trade.symbol_price  # (-) to be added un broker_execute_trade
+            # sell_trade.gross_price = sell_trade.gross_size * (sell_trade.buying_price + sell_trade.buying_price - sell_trade.symbol_price)
+        elif sell_trade.type == "NO_POSITION": # CEDE WORKAROUND to be fixed
+            sell_trade.type = "CLOSE_LONG" # CEDE WORKAROUND grid trading
+            sell_trade.gross_price = sell_trade.gross_size * sell_trade.symbol_price
+
         sell_trade.net_price = sell_trade.gross_price - sell_trade.gross_price * self.broker.get_commission(bought_trade.symbol)
         sell_trade.net_size = round(sell_trade.net_price / sell_trade.symbol_price, 8)
         sell_trade.buying_fee = bought_trade.buying_fee
         sell_trade.selling_fee = sell_trade.gross_price - sell_trade.net_price
         sell_trade.roi = 100 * (sell_trade.net_price - bought_trade.gross_price) / bought_trade.gross_price
-
+        if sell_trade.type == "CLOSE_SHORT":
+            sell_trade.roi = -sell_trade.roi
         self.traces_trade_performed = self.traces_trade_performed + 1
         if sell_trade.roi < 0:
             self.traces_trade_negative = self.traces_trade_negative + 1
@@ -292,13 +314,14 @@ class Crag:
         trades = []
 
         # sell symbols
-        lst_symbols = [current_trade.symbol for current_trade in self.current_trades if current_trade.type == "BUY"]
+        lst_symbols = [current_trade.symbol for current_trade in self.current_trades if self.rtstr.is_open_type(current_trade.type)]
         lst_symbols = list(set(lst_symbols))
         self.update_df_roi_sl_tp(lst_symbols)
         self.rtstr.reset_selling_limits()
-        if self.final_datetime and current_datetime >= self.final_datetime:
+        if (self.final_datetime and current_datetime >= self.final_datetime)\
+                or self.rtstr.condition_for_global_sl_tp_signal():
             # final step - force all the symbols to be sold
-            df_selling_symbols = rtstr.RealTimeStrategy.get_df_forced_selling_symbols(lst_symbols, self.rtstr.get_rtctrl().df_rtctrl)
+            df_selling_symbols = self.rtstr.get_df_forced_selling_symbols()
             self.exit = True
             self.flush_current_trade = True
             self.rtstr.force_selling_limits()
@@ -311,16 +334,17 @@ class Crag:
         df_selling_symbols.set_index("symbol", inplace=True)
 
         for current_trade in self.current_trades:
-            if current_trade.type == "BUY" and current_trade.symbol in list_symbols_to_sell \
-                    and df_selling_symbols["stimulus"][current_trade.symbol] != "HOLD"\
+            if self.rtstr.is_open_type(current_trade.type) and current_trade.symbol in list_symbols_to_sell \
                     and (self.flush_current_trade
                          or ((self.rtstr.get_selling_limit(current_trade.symbol))
-                             and ( self.rtstr.get_grid_sell_condition(current_trade.symbol, current_trade.gridzone)))):
+                             and (self.rtstr.get_grid_sell_condition(current_trade.symbol, current_trade.gridzone))
+                             or self.rtstr.grid_exit_range_trend_down(current_trade.symbol))):
                 sell_trade = self._prepare_sell_trade_from_bought_trade(current_trade, current_datetime, df_selling_symbols)
                 done = self.broker.execute_trade(sell_trade)
                 if done:
+                    self.sell_performed = True
                     self.rtstr.count_selling_limits(current_trade.symbol)
-                    current_trade.type = "SOLD"
+                    current_trade.type = self.rtstr.get_close_type_and_close(current_trade.symbol)
                     self.cash = self.broker.get_cash()
                     sell_trade.cash = self.cash
 
@@ -329,16 +353,23 @@ class Crag:
                     sell_trade.gridzone = current_trade.gridzone
 
                     # Portfolio Size/Value Update
-
                     self.df_portfolio_status.at[sell_trade.symbol, 'portfolio_size'] = self.df_portfolio_status.at[sell_trade.symbol, 'portfolio_size'] - sell_trade.gross_size
                     if self.df_portfolio_status.at[sell_trade.symbol, 'portfolio_size'] < 0.0000001:
                         self.df_portfolio_status.at[sell_trade.symbol, 'portfolio_size'] = 0
                     self.df_portfolio_status.at[sell_trade.symbol, 'value'] = self.df_portfolio_status.at[sell_trade.symbol, 'portfolio_size'] * sell_trade.symbol_price
                     self.df_portfolio_status.at[sell_trade.symbol, 'buying_value'] = self.df_portfolio_status.at[sell_trade.symbol, 'buying_value'] - current_trade.gross_price
-                    if self.df_portfolio_status.at[sell_trade.symbol, 'portfolio_size'] == 0:
+                    if self.df_portfolio_status.at[sell_trade.symbol, 'portfolio_size'] == 0\
+                            or self.df_portfolio_status.at[sell_trade.symbol, 'buying_value'] == 0 \
+                            or self.df_portfolio_status.at[sell_trade.symbol, 'value'] == 0:
                         self.df_portfolio_status.at[sell_trade.symbol, 'roi_sl_tp'] = 0
                     else:
-                        self.df_portfolio_status.at[sell_trade.symbol, 'roi_sl_tp'] = 100 * (self.df_portfolio_status.at[sell_trade.symbol, 'value'] / self.df_portfolio_status.at[sell_trade.symbol, 'buying_value'] - 1)
+                        if self.df_portfolio_status.at[sell_trade.symbol, 'portfolio_size'] > 0:
+                            # ROI FOR LONG POSITION
+                            self.df_portfolio_status.at[sell_trade.symbol, 'roi_sl_tp'] = round(100 * (self.df_portfolio_status.at[sell_trade.symbol, 'value'] / self.df_portfolio_status.at[sell_trade.symbol, 'buying_value'] - 1), 4)
+                        else:
+                            # ROI FOR LONG POSITION
+                            diff = abs(self.df_portfolio_status.at[sell_trade.symbol, 'buying_value']) - abs(self.df_portfolio_status.at[sell_trade.symbol, 'value'])
+                            self.df_portfolio_status.at[sell_trade.symbol, 'roi_sl_tp'] = round(100 * diff / abs(self.df_portfolio_status.at[sell_trade.symbol, 'buying_value']), 4)
 
                     self.portfolio_value = self.df_portfolio_status['value'].sum()
 
@@ -354,21 +385,21 @@ class Crag:
                     msg = "{} ({}) {} {:.2f} roi={:.2f}".format(sell_trade.type, sell_trade.stimulus, sell_trade.symbol, sell_trade.gross_price, sell_trade.roi)
                     self.log(msg, "symbol sold")
 
+        if self.sell_performed:
+            self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(),  self.broker.get_cash_borrowed(), self.rtstr.rtctrl.prices_symbols, False, self.final_datetime)
+            self.sell_performed = False
+
         # buy symbols
         df_buying_symbols = self.rtstr.get_df_buying_symbols()
         df_buying_symbols.set_index('symbol', inplace=True)
         df_buying_symbols.drop(df_buying_symbols[df_buying_symbols['size'] == 0].index, inplace=True)
         if current_datetime == self.final_datetime:
             df_buying_symbols.drop(df_buying_symbols.index, inplace=True)
-        symbols_bought = {"symbol":[], "size":[], "percent":[], "gross_price":[], "gridzone":[]}
+        symbols_bought = {"symbol":[], "size":[], "percent":[], "gross_price":[], "gridzone":[], "pos_type": []}
         for symbol in df_buying_symbols.index.to_list():
             current_trade = trade.Trade(current_datetime)
-            current_trade.type = "BUY"
-            current_trade.sell_id = ""
-            current_trade.stimulus = ""
-            current_trade.roi = ""
-            current_trade.buying_time = ""
-            current_trade.selling_fee = ""
+            # current_trade.type = self.rtstr.get_open_type(symbol)
+            current_trade.type = df_buying_symbols['pos_type'][symbol]
             current_trade.symbol = symbol
 
             current_trade.symbol_price = self.broker.get_value(symbol)
@@ -377,15 +408,19 @@ class Crag:
 
             current_trade.commission = self.broker.get_commission(current_trade.symbol)
             current_trade.gross_size = df_buying_symbols["size"][symbol]  # Gross size
-            current_trade.gross_price = current_trade.gross_size * current_trade.buying_price
+            current_trade.gross_price = round(current_trade.gross_size * current_trade.symbol_price, 4)
 
-            current_trade.net_price = current_trade.gross_price * (1 - current_trade.commission)
-            current_trade.net_size = round(current_trade.net_price / current_trade.buying_price, 8)
+            current_trade.net_price = round(current_trade.gross_price * (1 - current_trade.commission), 4)
+            current_trade.net_size = round(current_trade.net_price / current_trade.symbol_price, 6)
 
-            current_trade.buying_fee = current_trade.gross_price - current_trade.net_price
+            current_trade.buying_fee = abs(round(current_trade.gross_price - current_trade.net_price, 4)) # COMMENT CEDE abs to be confirmed
             current_trade.profit_loss = -current_trade.buying_fee
+            if current_trade.type == self.rtstr.open_long:
+                current_trade.cash_borrowed = 0
+            elif current_trade.type == self.rtstr.open_short:
+                current_trade.cash_borrowed = current_trade.net_price
 
-            if current_trade.gross_price <= self.cash:
+            if abs(round(current_trade.gross_price, 4)) <= round(self.cash, 4):
                 done = self.broker.execute_trade(current_trade)
                 if done:
                     self.cash = self.broker.get_cash()
@@ -401,14 +436,25 @@ class Crag:
                     self.df_portfolio_status.at[symbol, 'portfolio_size'] = self.df_portfolio_status.at[symbol, 'portfolio_size'] + current_trade.net_size
                     self.df_portfolio_status.at[symbol, 'value'] = self.df_portfolio_status.at[symbol, 'value'] + current_trade.net_price
                     self.df_portfolio_status.at[symbol, 'buying_value'] = self.df_portfolio_status.at[symbol, 'buying_value'] + current_trade.gross_price
-                    self.df_portfolio_status.at[symbol, 'roi_sl_tp'] = 100 * (self.df_portfolio_status.at[symbol, 'value'] / self.df_portfolio_status.at[symbol, 'buying_value'] - 1)
+                    if self.df_portfolio_status.at[symbol, 'portfolio_size'] == 0 \
+                            or self.df_portfolio_status.at[symbol, 'buying_value'] == 0 \
+                            or self.df_portfolio_status.at[symbol, 'value'] == 0:
+                        self.df_portfolio_status.at[symbol, 'roi_sl_tp'] = 0
+                    else:
+                        if self.df_portfolio_status.at[symbol, 'portfolio_size'] > 0:
+                            # ROI FOR LONG POSITION
+                            self.df_portfolio_status.at[symbol, 'roi_sl_tp'] = round(100 * (self.df_portfolio_status.at[symbol, 'value'] / self.df_portfolio_status.at[symbol, 'buying_value'] - 1), 4)
+                        else:
+                            # ROI FOR LONG POSITION
+                            diff = abs(self.df_portfolio_status.at[symbol, 'buying_value']) - abs(self.df_portfolio_status.at[symbol, 'value'])
+                            self.df_portfolio_status.at[symbol, 'roi_sl_tp'] = round(100 * diff / abs(self.df_portfolio_status.at[symbol, 'buying_value']), 4)
 
                     self.portfolio_value = self.df_portfolio_status['value'].sum()
 
                     self.wallet_value = self.portfolio_value + self.cash
                     current_trade.portfolio_value = self.portfolio_value
                     current_trade.wallet_value = self.wallet_value
-                    current_trade.wallet_roi = (self.wallet_value - self.init_cash_value) * 100 / self.init_cash_value
+                    current_trade.wallet_roi = round((self.wallet_value - self.init_cash_value) * 100 / self.init_cash_value, 4)
 
                     trades.append(current_trade)
                     self.current_trades.append(current_trade)
@@ -418,6 +464,9 @@ class Crag:
                     symbols_bought["percent"].append(utils.KeepNDecimals(df_buying_symbols["percent"][current_trade.symbol]))
                     symbols_bought["gross_price"].append(utils.KeepNDecimals(current_trade.gross_price))
                     symbols_bought["gridzone"].append(df_buying_symbols["gridzone"][current_trade.symbol])
+                    symbols_bought["pos_type"].append(df_buying_symbols["pos_type"][current_trade.symbol])
+                else:
+                    self.rtstr.open_position_failed(symbol)
         df_symbols_bought = pd.DataFrame(symbols_bought)
 
         if not df_symbols_bought.empty:
@@ -427,11 +476,11 @@ class Crag:
             self.debug_trace_current_trades('end_trade', self.current_trades)
 
         # Clear the current_trades for optimization
-        if self.rtstr.authorize_clear_current_trades():
+        if self.rtstr.authorize_clear_current_trades() and len(self.current_trades) > 1:
             lst_buy_trades = []
             lst_buy_symbols_trades = []
             for current_trade in self.current_trades:
-                if current_trade.type == "BUY":
+                if self.rtstr.is_open_type(current_trade.type):
                     lst_buy_trades.append(current_trade)
                     lst_buy_symbols_trades.append(current_trade.symbol)
             self.current_trades = lst_buy_trades
@@ -440,19 +489,26 @@ class Crag:
             self.debug_trace_current_trades('clear    ', self.current_trades)
 
         # Merge the current_trades for optimization
-        if self.rtstr.authorize_merge_current_trades():
+
+        if self.rtstr.authorize_merge_current_trades() \
+                and len(self.current_trades) > 1:
             lst_buy_trades_merged = []
             lst_buy_symbols_trades_unique = list(set(lst_buy_symbols_trades))
-            for symbol in lst_buy_symbols_trades_unique:
-                if lst_buy_symbols_trades.count(symbol) > 1:
-                    merged_trades = self.merge_current_trades_from_symbol(self.current_trades, symbol, current_datetime)
-                    lst_buy_trades_merged.append(merged_trades)
-                else:
-                    for current_trade in self.current_trades:
-                        if current_trade.type == "BUY" and current_trade.symbol == symbol:
-                            # unique trade
-                            lst_buy_trades_merged.append(current_trade)
-            self.current_trades = lst_buy_trades_merged
+            if len(lst_buy_symbols_trades_unique) < len(lst_buy_symbols_trades):
+                for position_type in self.rtstr.get_lst_opening_type():
+                    for symbol in lst_buy_symbols_trades_unique:
+                        # if lst_buy_symbols_trades.count(symbol) > 1:
+                        if utils.count_symbols_with_position_type(self.current_trades, symbol, position_type) > 1:
+                            merged_trades = self.merge_current_trades_from_symbol(self.current_trades, symbol, current_datetime, position_type)
+                            lst_buy_trades_merged.append(merged_trades)
+                        else:
+                            for current_trade in self.current_trades:
+                                if self.rtstr.is_open_type(current_trade.type)\
+                                        and current_trade.symbol == symbol\
+                                        and current_trade.type == position_type:
+                                    # unique trade
+                                    lst_buy_trades_merged.append(current_trade)
+                self.current_trades = lst_buy_trades_merged
 
         if self.temp_debug:
             self.debug_trace_current_trades('merge    ', self.current_trades)
@@ -480,11 +536,10 @@ class Crag:
                                                                          round(coin_percent,2),
                                                                          round(total, 2),
                                                                          round(cash_percent + coin_percent, 2)]
-            if current_datetime == self.final_datetime:
-                self.export_debug_traces()
-                self.rtstr.rtctrl.display_summary_info(True)
-                self.exit = True
-
+        if current_datetime == self.final_datetime or self.exit:
+            self.export_debug_traces()
+            self.rtstr.rtctrl.display_summary_info(True)
+            self.exit = True
 
     def export_status(self):
         return self.broker.export_status()
@@ -500,7 +555,13 @@ class Crag:
                     or self.df_portfolio_status.at[symbol, 'value'] == 0:
                 self.df_portfolio_status.at[symbol, 'roi_sl_tp'] = 0
             else:
-                self.df_portfolio_status.at[symbol, 'roi_sl_tp'] = 100 * (self.df_portfolio_status.at[symbol, 'value'] / self.df_portfolio_status.at[symbol, 'buying_value'] - 1)
+                if self.df_portfolio_status.at[symbol, 'portfolio_size'] > 0:
+                    # ROI FOR LONG POSITION
+                    self.df_portfolio_status.at[symbol, 'roi_sl_tp'] = round(100 * (self.df_portfolio_status.at[symbol, 'value'] / self.df_portfolio_status.at[symbol, 'buying_value'] - 1), 4)
+                else:
+                    # ROI FOR LONG POSITION
+                    diff = abs(self.df_portfolio_status.at[symbol, 'buying_value']) - abs(self.df_portfolio_status.at[symbol, 'value'])
+                    self.df_portfolio_status.at[symbol, 'roi_sl_tp'] = round(100 * diff / abs(self.df_portfolio_status.at[symbol, 'buying_value']), 4)
 
     def backup(self):
         with open(self.backup_filename, 'wb') as file:
@@ -511,7 +572,7 @@ class Crag:
         if self.temp_debug:
             self.df_debug_traces.to_csv('debug_traces.csv')
 
-    def merge_current_trades_from_symbol(self, current_trades, symbol, current_datetime):
+    def merge_current_trades_from_symbol(self, current_trades, symbol, current_datetime, position_type):
         lst_trades = []
 
         lst_current_trade_symbol_price = []
@@ -526,7 +587,7 @@ class Crag:
         lst_current_trade_profit_loss = []
 
         for current_trade in current_trades:
-            if current_trade.type == "BUY" and current_trade.symbol == symbol:
+            if current_trade.type == position_type and current_trade.symbol == symbol:
                 lst_trades.append(current_trade)
 
                 lst_current_trade_symbol_price.append(current_trade.symbol_price)
@@ -547,7 +608,7 @@ class Crag:
 
         merged_trade = trade.Trade(current_datetime)
 
-        merged_trade.type = "BUY"
+        merged_trade.type = position_type
         merged_trade.symbol = symbol
 
         merged_trade.sell_id = ""

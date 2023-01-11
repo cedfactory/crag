@@ -14,6 +14,7 @@ class SimBroker(broker.Broker):
         self.start_date = ""
         self.end_date = ""
         self.intervals = ""
+        self.orders = "market"
         if params:
             self.name = params.get("name", self.name)
             self.cash = params.get("cash", self.cash)
@@ -22,6 +23,7 @@ class SimBroker(broker.Broker):
             self.start_date = params.get("start_date", self.start_date)
             self.end_date = params.get("end_date", self.end_date)
             self.intervals = params.get("intervals", self.intervals)
+            self.orders = params.get("orders", self.orders)
 
     def ready(self):
         return True
@@ -47,15 +49,25 @@ class SimBroker(broker.Broker):
         return self.start_date, self.end_date,  self.intervals
 
     def execute_trade(self, trade):
-        if trade.type == "BUY":
-            if self.cash < trade.gross_price:
+        if trade.type == "OPEN_LONG":
+            if round(self.cash, 4) < round(trade.gross_price, 4):
                 return False
             self.cash = self.cash - trade.gross_price
-            if self.cash < 0.00001:
+            if self.cash < 0.001:
                 self.cash = 0
-        elif trade.type == "SELL":
-            # self.cash = self.cash + trade.net_price - trade.selling_fee
+        elif trade.type == "OPEN_SHORT":
+            if round(self.cash, 4) < round(trade.gross_price, 4):
+                return False
+            self.cash = self.cash + abs(trade.net_price)
+            self.cash = self.cash - trade.buying_fee
+            self.cash_borrowed = self.cash_borrowed + abs(trade.net_price)
+        elif trade.type == "CLOSE_LONG":
             self.cash = self.cash + trade.net_price
+        elif trade.type == "CLOSE_SHORT":
+            self.cash = self.cash - abs(trade.net_price)
+            self.cash_borrowed = self.cash_borrowed - abs(trade.cash_borrowed)
+            if self.cash < 0.001:
+                self.cash = 0
         self.trades.append(trade)
         
         return True

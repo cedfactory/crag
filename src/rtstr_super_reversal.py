@@ -1,13 +1,4 @@
-import pandas as pd
-import numpy as np
-from . import trade
-import json
-import time
-import csv
-from datetime import datetime
-import datetime
-
-from . import rtdp, rtstr, utils, rtctrl
+from . import rtdp, rtstr, rtctrl
 
 class StrategySuperReversal(rtstr.RealTimeStrategy):
 
@@ -15,37 +6,31 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
         super().__init__(params)
 
         self.rtctrl = rtctrl.rtctrl(params=params)
+        self.rtctrl.set_list_open_position_type(self.get_lst_opening_type())
+        self.rtctrl.set_list_close_position_type(self.get_lst_closing_type())
 
         self.zero_print = True
 
     def get_data_description(self):
         ds = rtdp.DataDescription()
-        #ds.symbols = ds.symbols[:2]
+        ds.symbols = self.lst_symbols
         ds.features = { "low" : None,
                         "high" : None,
-                        #"ema_short" : {"feature": "ema", "period": 5},
-                        #"ema_long" : {"feature": "ema", "period": 400},
                         "ema_5" : None,
                         "ema_400" : None,
                         "super_trend_direction" : {"feature": "super_trend"}
                         }
-
         return ds
 
     def get_info(self):
-        return "StrategySuperReversal", self.str_sl, self.str_tp
+        return "StrategySuperReversal"
 
-    def condition_for_buying(self, symbol):
+    def condition_for_opening_long_position(self, symbol):
         return self.df_current_data['ema_5'][symbol] >= self.df_current_data['ema_400'][symbol] \
-                    and self.df_current_data['super_trend_direction'][symbol] == True \
-                    and self.df_current_data['ema_5'][symbol] > self.df_current_data['low'][symbol]
+               and self.df_current_data['super_trend_direction'][symbol] == True \
+               and self.df_current_data['ema_5'][symbol] > self.df_current_data['low'][symbol]
 
-    def condition_for_selling(self, symbol, df_sl_tp):
-        return (
-                    (self.df_current_data['ema_5'][symbol] <= self.df_current_data['ema_400'][symbol]
-                     or self.df_current_data['super_trend_direction'][symbol] == False)
-                    and self.df_current_data['ema_5'][symbol] < self.df_current_data['high'][symbol]
-            ) or (
-                    (isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] > self.TP)
-                    or (isinstance(df_sl_tp, pd.DataFrame) and df_sl_tp['roi_sl_tp'][symbol] < self.SL)
-            )
+    def condition_for_closing_long_position(self, symbol):
+        return (self.df_current_data['ema_5'][symbol] <= self.df_current_data['ema_400'][symbol]
+                or self.df_current_data['super_trend_direction'][symbol] == False)\
+               and self.df_current_data['ema_5'][symbol] < self.df_current_data['high'][symbol]

@@ -1,0 +1,1 @@
+{"close": null, "n1_close": 1, "syntheticbollinger": 500,"lower_band": 100, "higher_band": 100, "ma_band": 100, "n1_lower_band": 100, "n1_higher_band": 100, "n1_ma_band": 1000, "long_ma": 500}

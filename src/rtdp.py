@@ -6,86 +6,7 @@ from rich import inspect,print
 
 from . import utils,chronos
 
-'''
-default_symbols = [
-        "BTC/USD",
-        "DOGE/USD",
-        "MANA/USD",
-        "CHZ/USD",
-        "AAVE/USD",
-        # "BNB/USD",
-        "ETH/USD",
-        # "MATIC/USD",
-        "XRP/USD",
-        "SAND/USD",
-        # "OMG/USD",
-        "CRV/USD",
-        "TRX/USD",
-        # "FTT/USD",
-        "GRT/USD",
-        "SRM/USD",
-        "FTM/USD",
-        "LTC/USD",
-        "RUNE/USD",
-        # "CRO/USD",
-        "UNI/USD",
-        "SUSHI/USD",
-        "LRC/USD",
-        "LINK/USD",
-        "BCH/USD",
-        "AXS/USD",
-        "RAY/USD",
-        "SOL/USD",
-        "AVAX/USD"
-    ]
-
-default_symbols = [
-        "BTC/USDT",
-    ]
-'''
-'''
-# synthethic datas
-default_symbols = [
-        "SINGLESINUS1FLAT",
-        "SINGLESINUS2FLAT",
-        "MIXEDSINUSFLAT",
-        "SINGLESINUS2UP",
-        "SINGLESINUS1UP"
-    ]
-'''
-default_symbols = [
-        "BTC/USDT",
-        "DOGE/USDT",
-        "MANA/USDT",
-        "CHZ/USDT",
-        "AAVE/USDT",
-        "BNB/USDT",
-        "ETH/USDT",
-        "MATIC/USDT",
-        "XRP/USDT",
-        "SAND/USDT",
-        # "OMG/USD",
-        "CRV/USDT",
-        "TRX/USDT",
-        # "FTT/USD",
-        "GRT/USDT",
-        "SRM/USDT",
-        "FTM/USDT",
-        "LTC/USDT",
-        "RUNE/USDT",
-        # "CRO/USDT",
-        "UNI/USDT",
-        "SUSHI/USDT",
-        "LRC/USDT",
-        "LINK/USDT",
-        "BCH/USDT",
-        "AXS/USDT",
-        "RAY/USDT",
-        "SOL/USDT",
-        "AVAX/USDT"
-    ]
-
-
+default_symbols = []
 default_features = ["open", "close", "high", "low", "volume"]
 
 class DataDescription():
@@ -153,9 +74,12 @@ class RealTimeDataProvider(IRealTimeDataProvider):
             interval = "1h"
         if data_description.interval <= 60:
             interval = "1m"
-        
-        params = { "service":"history_last", "exchange":"binance", "symbol":symbols, "interval": interval, "indicators": data_description.features}
-        response_json = utils.fdp_request_post("history", params)
+
+        # MODIF CEDE: TEST
+        sim_current_date = self.get_current_datetime()
+        params = { "service":"history_last", "exchange":"binance", "symbol":symbols, "interval": interval, "start": str(sim_current_date),"indicators": data_description.features}
+        # params = {"service": "history_last", "exchange": "binance", "symbol": symbols, "interval": interval, "indicators": data_description.features}
+        response_json = utils.fdp_request_post("history_last", params)
 
         data = {feature: [] for feature in data_description.features}
         data["symbol"] = []

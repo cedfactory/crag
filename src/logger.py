@@ -144,6 +144,7 @@ class LoggerDiscordBot(ILogger):
         r = requests.post(SEND_URL.format(id=self.channel_id), headers=headers, json={"content": content})
 
     def log(self, msg, header="", author="", attachments=[]):
+        return
         if self.webhook != "":
             self.log_webhook(msg, header, author, attachments)
         else:

@@ -1,0 +1,1 @@
+{"close": null, "sma_30": 30, "slope_30": 30}
