@@ -121,3 +121,52 @@ def count_symbols_with_position_type(current_trades, symbol, position_type):
         if current_trade.symbol == symbol and current_trade.type == position_type:
             count = count + 1
     return count
+
+def get_lst_directories(path):
+    lst_dir = []
+    all_files = os.listdir(path)
+    for file in all_files:
+        file_path = os.path.join(path, file)
+        if os.path.isdir(file_path):
+            lst_dir.append(file)
+    return lst_dir
+
+def get_lst_files(path):
+    lst_file = []
+    all_files = os.listdir(path)
+    for file in all_files:
+        file_path = os.path.join(path, file)
+        if not os.path.isdir(file_path):
+            lst_file.append(file)
+    return lst_file
+
+def get_lst_files_start_with(path, str):
+    lst_file = []
+    all_files = os.listdir(path)
+    for file in all_files:
+        file_path = os.path.join(path, file)
+        if not os.path.isdir(file_path) \
+                and file.startswith(str):
+            lst_file.append(file)
+    return lst_file
+
+def get_lst_files_end_with(path, str):
+    lst_file = []
+    all_files = os.listdir(path)
+    for file in all_files:
+        file_path = os.path.join(path, file)
+        if not os.path.isdir(file_path) \
+                and file.endswith(str):
+            lst_file.append(file)
+    return lst_file
+
+def get_lst_files_start_n_end_with(path, str1, str2):
+    lst_file = []
+    all_files = os.listdir(path)
+    for file in all_files:
+        file_path = os.path.join(path, file)
+        if not os.path.isdir(file_path) \
+                and file.startswith(str1)\
+                and file.endswith(str2):
+            lst_file.append(file)
+    return lst_file

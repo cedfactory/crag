@@ -23,17 +23,15 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
 
         self.share_size = 10
         self.df_size_grid_params = pd.DataFrame()
-        self.symbols = ["BTC/USD"]
         if params:
             self.share_size = params.get("share_size", self.share_size)
             if isinstance(self.share_size, str):
                 self.share_size = int(self.share_size)
             self.df_size_grid_params = params.get("grid_df_params", self.df_size_grid_params)
             if isinstance(self.df_size_grid_params, str):
+                config_path = './symbols'
+                self.df_size_grid_params = os.path.join(config_path, self.df_size_grid_params)
                 self.df_size_grid_params = pd.read_csv(self.df_size_grid_params)
-            self.symbols = params.get("symbols", self.symbols)
-            if isinstance(self.symbols, str):
-                self.symbols = self.symbols.split(",")
 
         # add commision 0.08
         self.df_size_grid_params['balance_min_size'] = self.df_size_grid_params['balance_min_size'] / (1 - 0.008)
@@ -57,7 +55,7 @@ class StrategyGridTradingMulti(rtstr.RealTimeStrategy):
     def log_info(self):
         info = ""
         info += "share_size = {}\n".format(self.share_size)
-        info += "symbols = {}\n".format(",".join(self.symbols))
+        info += "symbols = {}\n".format(",".join(self.lst_symbols))
         self.log(msg=info, header="StrategyGridTradingMulti::log_info")
 
     def get_info(self):
@@ -305,6 +303,8 @@ class GridLevelPosition():
         self.df_grid_params = pd.DataFrame()
         if params:
             self.df_grid_params = params.get("grid_df_params", self.df_grid_params)
+            config_path = './symbols'
+            self.df_grid_params = os.path.join(config_path, self.df_grid_params)
             if isinstance(self.df_grid_params, str):
                 self.df_grid_params = pd.read_csv(self.df_grid_params)
 

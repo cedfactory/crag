@@ -1,0 +1,9 @@
+<configuration>
+    <strategy id="strategybollingertrend" name="StrategyBollingerTrend">
+        <params symbols="./symbols_df_single_usdt.csv" max_position="100" share_size="1" sl="0" tp="0" global_sl="0"  global_tp="0" min_bol_spread="0"/>
+    </strategy>
+    <broker name="simulator">
+        <params cash="1000" start_date="2020-01-01" end_date="2021-01-01" intervals="1h" orders="market"/>
+    </broker>
+    <crag interval="3600" />
+</configuration>
