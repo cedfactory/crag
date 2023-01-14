@@ -27,8 +27,8 @@ class StrategyBollingerTrend(rtstr.RealTimeStrategy):
         ds.symbols = self.lst_symbols
         ds.features = { "close": None,
                         "n1_close": 1,
-                        # "bollinger": 500,
-                        "syntheticbollinger": 500,
+                        "bollinger": 500,
+                        # "syntheticbollinger": 500,
                         "lower_band": 100,
                         "n1_lower_band": 100,
                         "higher_band": 100,

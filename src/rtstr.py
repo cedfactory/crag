@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import inspect
 import importlib
+import os
 import ast
 from os import path
 
@@ -22,13 +23,15 @@ class RealTimeStrategy(metaclass=ABCMeta):
         self.id = ""
         self.min_bol_spread = 0   # Bollinger Trend startegy
         self.trade_over_range_limits = False
+        self.tradingview_condition = False
+        self.short_and_long = False
         if params:
             self.MAX_POSITION = params.get("max_position", self.MAX_POSITION)
             if isinstance(self.MAX_POSITION, str):
                 self.MAX_POSITION = int(self.MAX_POSITION)
             symbols = params.get("symbols", "")
-            if path.exists(symbols):
-                self.lst_symbols = pd.read_csv(symbols)['symbol'].tolist()
+            if symbols != "" and path.exists("./symbols/"+symbols):
+                self.lst_symbols = pd.read_csv("./symbols/"+symbols)['symbol'].tolist()
             else:
                 self.lst_symbols = symbols.split(",")
             self.SL = int(params.get("sl", self.SL))
@@ -46,6 +49,12 @@ class RealTimeStrategy(metaclass=ABCMeta):
             self.trade_over_range_limits = params.get("trade_over_range_limits", self.trade_over_range_limits)
             if isinstance(self.trade_over_range_limits, str):
                 self.trade_over_range_limits = ast.literal_eval(self.trade_over_range_limits)
+            self.tradingview_condition = params.get("tradingview_condition", self.tradingview_condition)
+            if isinstance(self.tradingview_condition, str):
+                self.tradingview_condition = ast.literal_eval(self.tradingview_condition)
+            self.short_and_long = params.get("short_and_long", self.short_and_long)
+            if isinstance(self.short_and_long, str):
+                self.short_and_long = ast.literal_eval(self.short_and_long)
 
         if self.SL == 0:     # SL == 0 => mean no SL
             self.SL = -1000
@@ -167,7 +176,6 @@ class RealTimeStrategy(metaclass=ABCMeta):
             if not self.is_open_type_short_or_long(symbol) and self.condition_for_buying(symbol):
                 size, percent, zone = self.get_symbol_buying_size(symbol)
                 data['symbol'].append(symbol)
-                # data["stimulus"].append("BUY")
                 data["stimulus"].append(self.get_open_type(symbol))
                 data['size'].append(size)
                 data['percent'].append(percent)

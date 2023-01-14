@@ -8,6 +8,54 @@ import math
 import os, fnmatch
 
 
+def get_df_header_benchmark():
+    return ["strategy", "start", "end", "interval",
+            "init_cash", "end_cash", "profit", "roi", "drawdown", "drawdown_percent", "max",  "max_percent",
+            "trade", "trade_long", "trade_short",
+            "winrate", "long_winrate", "short_winrate"]
+
+def get_df_benchmark_empty():
+    return pd.DataFrame(columns=get_df_header_benchmark())
+
+def proceed_analyse(path, strategy, start_date, end_date, interval):
+    wallet_tracking_file = utils.get_lst_files_start_n_end_with(path, "wallet_tracking", ".csv")
+    wallet_tracking_file_path = os.path.join(path, wallet_tracking_file[0])
+    df_wallet = pd.read_csv(wallet_tracking_file_path)
+    init_cash = round(df_wallet['cash'].values[0], 1)
+    end_cash = round(df_wallet['cash'].values[-1], 1)
+    profit = round(end_cash - init_cash, 1)
+    roi = round(profit * 100 / init_cash, 1)
+    drawdown_cash = round(df_wallet['wallet'].min(), 1)
+    drawdown_cash_percent = round((drawdown_cash * 100 / init_cash) - 100, 1)
+    max_cash = round(df_wallet['wallet'].max(), 1)
+    max_cash_percent = round((max_cash * 100 / init_cash) - 100, 1)
+
+    trade_tracking_file = utils.get_lst_files_start_n_end_with(path, "sim_broker_history", ".csv")
+    trade_tracking_file_path = os.path.join(path, trade_tracking_file[0])
+    df_trades = pd.read_csv(trade_tracking_file_path)
+
+    sum_long_trades = len(df_trades[df_trades['type'] == 'CLOSE_LONG']) - len(df_trades[df_trades['stimulus'] == 'CLOSE_LONG'])
+    sum_long_trades = len(df_trades[(df_trades['type'] == 'CLOSE_LONG')
+                                    & ((df_trades['stimulus'] != 'CLOSE_LONG')
+                                       & (df_trades['stimulus'] != 'CLOSE_SHORT'))])
+
+    sum_short_trades = len(df_trades[df_trades['type'] == 'CLOSE_SHORT']) - len(df_trades[df_trades['stimulus'] == 'CLOSE_SHORT'])
+    sum_trades = sum_long_trades + sum_short_trades
+
+    win_rate = round(len(df_trades[df_trades['transaction_roi%'] >= 0]) / sum_trades * 100, 1)
+    win_rate_long = round(len(df_trades[(df_trades['transaction_roi%'] >= 0)
+                                        & (df_trades['stimulus'] == 'CLOSE_LONG')]) / sum_trades * 100, 1)
+
+    win_rate_short = round(len(df_trades[(df_trades['transaction_roi%'] >= 0)
+                                         & (df_trades['stimulus'] == 'CLOSE_SHORT')]) / sum_trades * 100, 1)
+
+    df_new_line = pd.DataFrame([[strategy, start_date, end_date, interval,
+                                 init_cash, end_cash, profit, roi, drawdown_cash, drawdown_cash_percent, max_cash, max_cash_percent,
+                                 sum_trades, sum_long_trades, sum_short_trades,
+                                 win_rate, win_rate_long, win_rate_short]],
+                               columns=get_df_header_benchmark())
+    return df_new_line
+
 class Benchmark:
     def __init__(self, params = None):
         self.period = 0

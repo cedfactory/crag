@@ -1,11 +1,18 @@
+import pandas as pd
+
 from src import rtdp
 from src import broker_simulation,broker_ccxt
 from src import crag
 from src import rtstr,rtstr_super_reversal,rtstr_grid_trading_multi,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC
 from src import logger
+from src import utils
+from src import benchmark
+
 import xml.etree.cElementTree as ET
 from dotenv import load_dotenv
 import os
+import glob
+import shutil
 import pickle
 
 def _initialize_crag_discord_bot():
@@ -15,7 +22,80 @@ def _initialize_crag_discord_bot():
     webhook = os.getenv("CRAG_DISCORD_BOT_WEBHOOK")
     return logger.LoggerDiscordBot(params={"token":token, "channel_id":channel_id, "webhook":webhook})
 
+def export_benchmark_df_report():
+    validation_path = './validation'
+    benchmark_path = os.path.join(validation_path, 'benchmark')
+    if not os.path.exists(benchmark_path):
+        return
+    lst_strategy = utils.get_lst_directories(benchmark_path)
+    df_report = benchmark.get_df_benchmark_empty()
+    for strategy in lst_strategy:
+        strategy_path = os.path.join(benchmark_path, strategy)
+        lst_run = utils.get_lst_directories(strategy_path)
+        for run in lst_run:
+            split_run_name = run.split('_')
+            run_path = os.path.join(strategy_path, run)
+            df = benchmark.proceed_analyse(run_path, strategy, split_run_name[0], split_run_name[1], split_run_name[2])
+            df_report = pd.concat([df_report, df], axis=0)
+    report_filname = os.path.join(benchmark_path, 'strategy_benchmark_report.csv')
+    df_report.to_csv(report_filname)
+
+def get_configuration_files_list(config_files_df_lst):
+    config_path = './conf'
+    configuration_df_file = os.path.join(config_path, config_files_df_lst)
+    df_config_files = pd.read_csv(configuration_df_file)
+    lst_config_files = df_config_files['configuration_files'].tolist()
+    lst_files = []
+    for conf_file in lst_config_files:
+        path_conf_file = os.path.join(config_path, conf_file)
+        if os.path.exists(path_conf_file):
+            lst_files.append(conf_file)
+        else:
+            print(conf_file, ' not in conf directory')
+    return lst_files
+
+def benchmark_results(configuration_file):
+    config_path = './conf'
+    output_path_crag = './output'
+    output_path_benchmark = './validation/benchmark'
+    configuration_file = os.path.join(config_path, configuration_file)
+    tree = ET.parse(configuration_file)
+    root = tree.getroot()
+    if root.tag != "configuration":
+        print("!!! tag {} encountered. expecting configuration".format(root.tag))
+        return
+
+    if not os.path.exists(output_path_crag):
+        return
+
+    strategy_node = root.find("strategy")
+    strategy_name = strategy_node.get("name", None)
+
+    output_path_strategy = os.path.join(output_path_benchmark, strategy_name)
+    os.makedirs(output_path_strategy, exist_ok=True)
+
+    broker_node = root.find("broker")
+    broker_name = broker_node.get("name", None)
+    params_node = list(broker_node.iter('params'))
+    params_broker = {"name": broker_name}
+    if len(params_node) == 1:
+        for name, value in params_node[0].attrib.items():
+            params_broker[name] = value
+    output_dir = os.path.join(output_path_strategy, params_broker['start_date'] + '_' + params_broker['end_date'] + '_' + params_broker['intervals'])
+    os.makedirs(output_dir, exist_ok=True)
+
+    source_dir = output_path_crag
+    dest_dir = output_dir
+    csv_files = glob.glob(source_dir + './*.csv')
+    for file in csv_files:
+        shutil.move(file, dest_dir)
+    png_files = glob.glob(source_dir + './*.png')
+    for file in png_files:
+        shutil.move(file, dest_dir)
+
 def initialization_from_configuration_file(configuration_file):
+    config_path = './conf'
+    configuration_file = os.path.join(config_path, configuration_file)
     tree = ET.parse(configuration_file)
     root = tree.getroot()
     if root.tag != "configuration":

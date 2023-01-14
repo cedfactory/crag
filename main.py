@@ -71,6 +71,14 @@ def crag_simulation(strategy_name):
     bot.export_history("sim_broker_history.csv")
     bot.export_status()
 
+def crag_benchmark(scenarios_df_lst):
+    lst_configuration_file = crag_helper.get_configuration_files_list(scenarios_df_lst)
+    for configuration_file in lst_configuration_file:
+        crag_live(configuration_file)
+    crag_report()
+
+def crag_report():
+    crag_helper.export_benchmark_df_report()
 
 def crag_live(configuration_file):
     bot = crag_helper.initialization_from_configuration_file(configuration_file)
@@ -79,6 +87,7 @@ def crag_live(configuration_file):
     bot.export_status()
     crag_print_duration(start_time)
     crag_plot_output('wallet_tracking_records.csv', ['cash', 'wallet', 'portfolio'])
+    crag_helper.benchmark_results(configuration_file)
 
 def crag_reboot(picklefilename):
     bot = crag_helper.initialization_from_pickle(picklefilename)
@@ -134,6 +143,10 @@ if __name__ == '__main__':
             crag_reboot(sys.argv[2])
         elif len(sys.argv) > 2 and (sys.argv[1] == "--live"):
             crag_live(sys.argv[2])
+        elif len(sys.argv) > 2 and (sys.argv[1] == "--benchmark"):
+            crag_benchmark(sys.argv[2])
+        elif len(sys.argv) >= 2 and (sys.argv[1] == "--report"):
+            crag_report()
         elif len(sys.argv) >= 2 and (sys.argv[1] == "--broker"):
             crag_broker()
         elif len(sys.argv) >= 2 and (sys.argv[1] == "--analyse"):

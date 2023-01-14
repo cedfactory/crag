@@ -1,0 +1,2 @@
+{"close": null, "syntheticsuperreversal": 400, "low": null, "high": null, "ema_short": 5, "ema_long": 400, "super_trend_direction": 15, "n1_ema_short": 5, "n1_ema_long": 400, "n1_super_trend_direction": 15}
+
