@@ -16,12 +16,15 @@ class BrokerCCXT(broker.Broker):
         self.exchange_name = ""
         self.api_key = ""
         self.api_secret = ""
+        self.api_password = ""
         self.orders = "market"
         if params:
             self.name = params.get("name", self.name)
             self.exchange_name = params.get("exchange", self.exchange_name)
-            self.api_key = params.get("api_key", self.api_key)
-            self.api_secret = params.get("api_secret", self.api_secret)
+            self.api_key = self.exchange_name.upper()+"_API_KEY"
+            self.api_secret = self.exchange_name.upper()+"_API_SECRET"
+            if self.exchange_name == "bitget":
+                self.api_password = self.exchange_name.upper()+"_API_PASSWORD"
             self.simulation = params.get("simulation", self.simulation)
             if self.simulation == 0 or self.simulation == "0":
                 self.simulation = False
@@ -40,9 +43,11 @@ class BrokerCCXT(broker.Broker):
         load_dotenv()
         exchange_api_key = os.getenv(self.api_key)
         exchange_api_secret = os.getenv(self.api_secret)
+        exchange_api_password = os.getenv(self.api_password)
         params = {
             'apiKey': exchange_api_key,
-            'secret': exchange_api_secret
+            'secret': exchange_api_secret,
+            'password': exchange_api_password
             }
         if self.account != "":
             params["headers"] = {"EXCHANGE-SUBACCOUNT": self.account}
@@ -50,6 +55,8 @@ class BrokerCCXT(broker.Broker):
         self.exchange = None
         if self.exchange_name == "binance":
             self.exchange = ccxt.binance(params)
+        if self.exchange_name == "bitget":
+            self.exchange = ccxt.bitget(params)
         elif self.exchange_name == "hitbtc":
             self.exchange = ccxt.hitbtc(params)
         elif self.exchange_name == "kraken":
@@ -57,6 +64,8 @@ class BrokerCCXT(broker.Broker):
 
         if self.exchange == None:
             return False
+
+        self.exchange.load_markets()
 
         # check authentification
         try:
@@ -110,8 +119,9 @@ class BrokerCCXT(broker.Broker):
         if self.exchange:
             try:
                 balance = self.exchange.fetch_balance()
-                #print(balance)
-                result = {coin['coin']:{"availableForWithdrawal":float(coin['total']), "usdValue":float(coin["usdValue"])} for coin in balance["info"]["result"] if coin['total'] != "0.0"}
+                if "info" not in balance or len(balance["info"]) == 0:
+                    return {}
+                result = {coin['coinName']:{"available":float(coin['available'])} for coin in balance["info"] if float(coin['available']) != 0.}
             except BaseException as err:
                 print("[BrokerCCXT::get_balance] An error occured : {}".format(err))
         return result
@@ -122,7 +132,7 @@ class BrokerCCXT(broker.Broker):
         portfolio_value = 0
         for coin in balance:
             #print("{}: {}".format(coin, balance[coin]["usdValue"]))
-            portfolio_value += balance[coin]["usdValue"]
+            portfolio_value += balance[coin]["available"]
         return portfolio_value
 
     @authentication_required
@@ -311,7 +321,9 @@ class BrokerCCXT(broker.Broker):
 
     @authentication_required
     def export_history(self, target=None):
-        my_trades = self.exchange.fetch_my_trades()
+        if not self.exchange.has['fetchMyTrades']:
+            return
+        my_trades = self.exchange.fetch_my_trades("BTC/USDT")
         if len(my_trades) > 0:
             if target and target.endswith(".csv"):
                 with open(target, 'w', newline='') as f:

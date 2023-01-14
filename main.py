@@ -93,7 +93,7 @@ def crag_analyse_results():
     my_analyser.run_analyse()
 
 def crag_broker():
-    my_broker = broker_ccxt.BrokerCCXT({'exchange':'binance', 'account':'room2', 'simulation':0})
+    my_broker = broker_ccxt.BrokerCCXT({'exchange':'bitget', 'account':'room2', 'simulation':0})
 
     print("### balance ###")
     balance = my_broker.get_balance()
