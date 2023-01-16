@@ -22,7 +22,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
         self.safety_TP = 100
         self.safety_SL = -50
         self.liquidation_SL = 0
-        self.safety_liquidation = False
+        self.trigger_liquidation_SL = False
         self.trailer_TP = 0
         self.trailer_delta = 0
         self.trigger_trailer = False
@@ -75,7 +75,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
         self.trigger_TP = self.TP > 0
         self.trigger_global_SL = self.global_SL < 0
         self.trigger_global_TP = self.global_TP > 0
-        self.safety_liquidation = self.liquidation_SL < 0
+        self.trigger_liquidation_SL = self.liquidation_SL < 0
 
         self.rtctrl = None
         self.match_full_position = False # disabled
@@ -155,7 +155,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
                or (isinstance(df_sl_tp, pd.DataFrame) and self.trigger_SL and df_sl_tp['roi_sl_tp'][symbol] < self.SL)
 
     def condition_for_sl_liquidation_signal(self, symbol, df_sl_tp):
-        return self.safety_liquidation \
+        return self.trigger_liquidation_SL \
                and isinstance(df_sl_tp, pd.DataFrame) \
                and self.is_open_type_short(symbol) \
                and df_sl_tp['roi_sl_tp'][symbol] < self.liquidation_SL
