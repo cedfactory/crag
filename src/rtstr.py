@@ -19,15 +19,16 @@ class RealTimeStrategy(metaclass=ABCMeta):
         self.global_TP = 0       # Take Profit % applicable to the overall portfolio
         self.trigger_global_TP = False
         self.trigger_global_SL = False
-        self.build_in_TP = 100
-        self.build_in_SL = -50
+        self.safety_TP = 100
+        self.safety_SL = -50
+        self.liquidation_SL = 0
+        self.safety_liquidation = False
         self.trailer_TP = 0
         self.trailer_delta = 0
         self.trigger_trailer = False
         self.trailer_global_TP = 0
         self.trailer_global_delta = 0
         self.trigger_global_trailer = False
-        self.liquidation_SL = self.build_in_SL # Stop Loss % specific to short liquidation
         self.MAX_POSITION = 5    # Asset Overall Percent Size
         self.logger = None
         self.id = ""
@@ -48,9 +49,6 @@ class RealTimeStrategy(metaclass=ABCMeta):
             self.TP = int(params.get("tp", self.TP))
             self.global_SL = int(params.get("global_sl", self.global_SL))
             self.global_TP = int(params.get("global_tp", self.global_TP))
-            self.liquidation_SL = int(params.get("liquidation_SL", self.liquidation_SL))
-            if self.liquidation_SL < self.build_in_SL:
-                self.build_in_SL = self.liquidation_SL
             self.logger = params.get("logger", self.logger)
             self.id = params.get("id", self.id)
             self.min_bol_spread = params.get("min_bol_spread", self.min_bol_spread)
@@ -69,6 +67,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
             self.trailer_delta = int(params.get("trailer_delta", self.trailer_delta))
             self.trailer_global_TP = int(params.get("trailer_global_tp", self.trailer_global_TP))
             self.trailer_global_delta = int(params.get("trailer_global_delta", self.trailer_global_delta))
+            self.liquidation_SL = int(params.get("liquidation_sl", self.liquidation_SL))
 
         self.trigger_trailer = self.trailer_TP > 0 and self.trailer_delta > 0
         self.trigger_global_trailer = self.trailer_global_TP > 0 and self.trailer_global_delta > 0
@@ -76,6 +75,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
         self.trigger_TP = self.TP > 0
         self.trigger_global_SL = self.global_SL < 0
         self.trigger_global_TP = self.global_TP > 0
+        self.safety_liquidation = self.liquidation_SL < 0
 
         self.rtctrl = None
         self.match_full_position = False # disabled
@@ -155,14 +155,15 @@ class RealTimeStrategy(metaclass=ABCMeta):
                or (isinstance(df_sl_tp, pd.DataFrame) and self.trigger_SL and df_sl_tp['roi_sl_tp'][symbol] < self.SL)
 
     def condition_for_sl_liquidation_signal(self, symbol, df_sl_tp):
-        return isinstance(df_sl_tp, pd.DataFrame) \
+        return self.safety_liquidation \
+               and isinstance(df_sl_tp, pd.DataFrame) \
                and self.is_open_type_short(symbol) \
                and df_sl_tp['roi_sl_tp'][symbol] < self.liquidation_SL
 
-    def condition_for_build_in_sl_tp_signal(self, symbol, df_sl_tp):
+    def condition_for_safety_sl_tp_signal(self, symbol, df_sl_tp):
         return isinstance(df_sl_tp, pd.DataFrame)\
-               and (df_sl_tp['roi_sl_tp'][symbol] < self.build_in_SL
-                    or df_sl_tp['roi_sl_tp'][symbol] > self.build_in_TP)
+               and (df_sl_tp['roi_sl_tp'][symbol] < self.safety_SL
+                    or df_sl_tp['roi_sl_tp'][symbol] > self.safety_TP)
 
     def condition_for_grid_out_of_range_sl_tp_signal(self, symbol, df_sl_tp):
         # SIGNAL SPECIFIC TO GRID STRATEGY
@@ -212,7 +213,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
                 or self.condition_for_global_sl_tp_signal() \
                 or self.condition_for_global_trailer_tp_signal() \
                 or self.condition_for_sl_liquidation_signal(symbol, df_sl_tp) \
-                or self.condition_for_build_in_sl_tp_signal(symbol, df_sl_tp) \
+                or self.condition_for_safety_sl_tp_signal(symbol, df_sl_tp) \
                 or self.condition_for_grid_out_of_range_sl_tp_signal(symbol, df_sl_tp):
             result = True
             print('============= CLOSE_SL_TP =============')
