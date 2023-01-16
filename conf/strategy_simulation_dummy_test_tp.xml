@@ -1,6 +1,6 @@
 <configuration>
     <strategy id="strategydummytp" name="StrategyDummyTestTP">
-        <params symbols="./symbols_df_synthetics_dummy.csv" max_position="25" share_size="0" sl="0" tp="0" global_sl="0" global_tp="0" trailer_tp="0" trailer_delta="0"/>
+        <params symbols="./symbols_df_synthetics_dummy.csv" max_position="100" share_size="0" sl="0" tp="0" global_sl="0" global_tp="0" trailer_tp="0" trailer_delta="0"  trailer_global_tp="10" trailer_global_delta="5"/>
     </strategy>
     <broker name="simulator">
         <params cash="1000" start_date="2022-01-01" end_date="2022-02-01" intervals="1h" orders="market"/>
