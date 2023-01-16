@@ -18,6 +18,7 @@ class BrokerCCXT(broker.Broker):
         self.api_secret = ""
         self.api_password = ""
         self.orders = "market"
+        self.chase_limit = False
         if params:
             self.name = params.get("name", self.name)
             self.exchange_name = params.get("exchange", self.exchange_name)
@@ -47,7 +48,10 @@ class BrokerCCXT(broker.Broker):
         params = {
             'apiKey': exchange_api_key,
             'secret': exchange_api_secret,
-            'password': exchange_api_password
+            'password': exchange_api_password,
+            'options': {
+                    #'defaultType': 'swap', # for futures
+                }
             }
         if self.account != "":
             params["headers"] = {"EXCHANGE-SUBACCOUNT": self.account}
@@ -129,6 +133,7 @@ class BrokerCCXT(broker.Broker):
     @authentication_required
     def get_portfolio_value(self):
         balance = self.get_balance()
+        print(balance)
         portfolio_value = 0
         for coin in balance:
             #print("{}: {}".format(coin, balance[coin]["usdValue"]))
@@ -137,26 +142,44 @@ class BrokerCCXT(broker.Broker):
 
     @authentication_required
     def get_positions(self):
+        result = {}
+        if self.exchange:
+            try:
+                response = self.exchange.fetch_positions()
+                positions = response["data"]
+                for position in positions:
+                    if not position["symbol"] in result:
+                        result[position["symbol"]] = {}
+                    result[position["symbol"]][position["holdSide"]] = {"total" : position["total"], "available" : position["available"]}
+            except BaseException as err:
+                print("[BrokerCCXT::get_positions] An error occured : {}".format(err))
+        return result
+
+    @authentication_required
+    def get_orders(self, symbol):
         result = []
         if self.exchange:
             try:
-                result = self.exchange.fetch_positions()
+                result = self.exchange.fetch_orders(symbol)
             except BaseException as err:
-                print("[BrokerCCXT::get_positions] An error occured : {}".format(err))
+                print("[BrokerCCXT::get_orders] An error occured : {}".format(err))
         return result
        
     @authentication_required
     def get_value(self, symbol):
-        result = None
+        result = {"close" : None, "bid" : None, "ask" : None}
         if self.exchange:
             try:
-                result = self.exchange.fetch_ticker(symbol)["close"]
+                ticker = self.exchange.fetch_ticker(symbol)
+                result = {"close" : ticker["close"], "bid" : ticker["bid"], "ask" : ticker["ask"]}
             except BaseException as err:
                 print("[BrokerCCXT::get_value] An error occured : {}".format(err))
         return result
 
     @authentication_required
     def get_commission(self, symbol):
+        if self.exchange_name == "bitget":
+            return 0.01
         return 0.0067307233
 
     def get_info(self):

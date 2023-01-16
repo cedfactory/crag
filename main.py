@@ -111,12 +111,20 @@ def crag_broker():
     print("### positions ###")
     positions = my_broker.get_positions()
     print(positions)
+    
+    print("### orders ###")
+    orders = my_broker.get_orders("BTC/USDT")
+    print(orders)
 
     print("### my trades ###")
     my_broker.export_history()
 
     print("### portfolio value ###")
     print("{}".format(my_broker.get_portfolio_value()))
+
+    print("### value BTC ###")
+    usdt_value = my_broker.get_value("BTC/USDT")
+    print("USDT value = ", usdt_value)
 
     print("### sell everything ###")
     #my_broker.sell_everything()
