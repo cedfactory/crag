@@ -125,7 +125,10 @@ class BrokerCCXT(broker.Broker):
                 balance = self.exchange.fetch_balance()
                 if "info" not in balance or len(balance["info"]) == 0:
                     return {}
-                result = {coin['coinName']:{"available":float(coin['available'])} for coin in balance["info"] if float(coin['available']) != 0.}
+                if self.exchange_name == "biget":
+                    result = {coin["coinName"]:{"available":float(coin["available"])} for coin in balance["info"] if float(coin["available"]) != 0.}
+                elif self.exchange_name == "binance":
+                    result = {coin["asset"]:{"free":float(coin["free"])} for coin in balance["info"]["balances"] if float(coin["free"]) != 0.}
             except BaseException as err:
                 print("[BrokerCCXT::get_balance] An error occured : {}".format(err))
         return result
@@ -153,6 +156,16 @@ class BrokerCCXT(broker.Broker):
                     result[position["symbol"]][position["holdSide"]] = {"total" : position["total"], "available" : position["available"]}
             except BaseException as err:
                 print("[BrokerCCXT::get_positions] An error occured : {}".format(err))
+        return result
+
+    @authentication_required
+    def get_positions_risk(self, symbols):
+        result = {}
+        if self.exchange:
+            try:
+                result = self.exchange.fetch_positions_risk(symbols)
+            except BaseException as err:
+                print("[BrokerCCXT::get_positions_risk] An error occured : {}".format(err))
         return result
 
     @authentication_required

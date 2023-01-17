@@ -122,9 +122,12 @@ def crag_broker():
     print("### portfolio value ###")
     print("{}".format(my_broker.get_portfolio_value()))
 
-    print("### value BTC ###")
+    print("### BTC ###")
     usdt_value = my_broker.get_value("BTC/USDT")
     print("USDT value = ", usdt_value)
+
+    usdt_position_risk = my_broker.get_positions_risk(["BTC/USDT"])
+    print("USDT oposition risk = ", usdt_position_risk)
 
     print("### sell everything ###")
     #my_broker.sell_everything()
