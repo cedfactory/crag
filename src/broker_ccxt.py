@@ -50,7 +50,7 @@ class BrokerCCXT(broker.Broker):
             'secret': exchange_api_secret,
             'password': exchange_api_password,
             'options': {
-                    #'defaultType': 'swap', # for futures
+                    'defaultType': 'swap', # for futures
                 }
             }
         if self.account != "":
@@ -106,13 +106,13 @@ class BrokerCCXT(broker.Broker):
 
     @authentication_required
     def get_cash(self):
-        # get free USD
-        result = 0
+        result = {}
         if self.exchange:
             try:
                 balance = self.exchange.fetch_balance()
-                if 'USD' in balance:
-                    result = float(balance['USD']['free'])
+                if self.exchange_name == "bitget" and "info" in balance and len(balance["info"]) > 0 and "usdtEquity" in balance["info"][0]:
+                    result["fixed"] = float(balance["info"][0]["fixedMaxAvailable"])
+                    result["cross"] = float(balance["info"][0]["crossMaxAvailable"])
             except BaseException as err:
                 print("[BrokerCCXT::get_cash] An error occured : {}".format(err))
         return result
@@ -123,25 +123,29 @@ class BrokerCCXT(broker.Broker):
         if self.exchange:
             try:
                 balance = self.exchange.fetch_balance()
-                if "info" not in balance or len(balance["info"]) == 0:
-                    return {}
-                if self.exchange_name == "biget":
-                    result = {coin["coinName"]:{"available":float(coin["available"])} for coin in balance["info"] if float(coin["available"]) != 0.}
+                if self.exchange_name == "bitget":
+                    result = balance
                 elif self.exchange_name == "binance":
                     result = {coin["asset"]:{"free":float(coin["free"])} for coin in balance["info"]["balances"] if float(coin["free"]) != 0.}
             except BaseException as err:
                 print("[BrokerCCXT::get_balance] An error occured : {}".format(err))
         return result
-    
+
+    @authentication_required
+    def get_usdt_equity(self):
+        result = {}
+        if self.exchange:
+            try:
+                balance = self.exchange.fetch_balance()
+                if self.exchange_name == "bitget" and "info" in balance and len(balance["info"]) > 0 and "usdtEquity" in balance["info"][0]:
+                    result = balance["info"][0]["usdtEquity"]
+            except BaseException as err:
+                print("[BrokerCCXT::get_usdt_equity] An error occured : {}".format(err))
+        return result
+
     @authentication_required
     def get_portfolio_value(self):
-        balance = self.get_balance()
-        print(balance)
-        portfolio_value = 0
-        for coin in balance:
-            #print("{}: {}".format(coin, balance[coin]["usdValue"]))
-            portfolio_value += balance[coin]["available"]
-        return portfolio_value
+        return self.get_usdt_equity()
 
     @authentication_required
     def get_positions(self):
@@ -151,9 +155,11 @@ class BrokerCCXT(broker.Broker):
                 response = self.exchange.fetch_positions()
                 positions = response["data"]
                 for position in positions:
+                    if position["total"] == '0':
+                        continue
                     if not position["symbol"] in result:
                         result[position["symbol"]] = {}
-                    result[position["symbol"]][position["holdSide"]] = {"total" : position["total"], "available" : position["available"]}
+                    result[position["symbol"]][position["holdSide"]] = {"total" : float(position["total"]), "available" : float(position["available"])}
             except BaseException as err:
                 print("[BrokerCCXT::get_positions] An error occured : {}".format(err))
         return result
@@ -176,6 +182,16 @@ class BrokerCCXT(broker.Broker):
                 result = self.exchange.fetch_orders(symbol)
             except BaseException as err:
                 print("[BrokerCCXT::get_orders] An error occured : {}".format(err))
+        return result
+
+    @authentication_required
+    def get_liquidation_price(self, order_id):
+        result = []
+        if self.exchange:
+            try:
+                result = self.exchange.fetch_order(order_id)['price']
+            except BaseException as err:
+                print("[BrokerCCXT::get_liquidation_price] An error occured : {}".format(err))
         return result
        
     @authentication_required
@@ -278,13 +294,14 @@ class BrokerCCXT(broker.Broker):
             time.sleep(0.1)
 
         print("Finished buying {} of {}".format(amount, ticker))
-        return True
+        return order
         
 
     @authentication_required
     def execute_trade(self, trade):
+        order = None
         if self.simulation:
-            return True
+            return order
 
         print("!!!!!!! EXECUTE THE TRADE !!!!!!!")
         if self.exchange:
@@ -305,9 +322,10 @@ class BrokerCCXT(broker.Broker):
             elif trade.type == "LIMIT_BUY":
                 type = "limit"
                 side = "buy"
-
+            print("side : ", side)
+            print("type : ", type)
             if side == "":
-                return False
+                return order
 
             symbol = trade.symbol
             amount = trade.net_price / trade.symbol_price
@@ -316,29 +334,29 @@ class BrokerCCXT(broker.Broker):
                 return self._chase_limit(symbol, amount)
 
             try:
-                order_structure = self.exchange.create_order(symbol, type, side, amount)
+                order = self.exchange.create_order(symbol, type, side, amount)
             except BaseException as err:
                 print("[BrokerCCXT::execute_trade] An error occured : {}".format(err))
                 print("[BrokerCCXT::execute_trade]   -> symbol : {}".format(symbol))
                 print("[BrokerCCXT::execute_trade]   -> type :   {}".format(type))
                 print("[BrokerCCXT::execute_trade]   -> side :   {}".format(side))
                 print("[BrokerCCXT::execute_trade]   -> amount : {}".format(amount))
-            return True
 
-        return False
+        return order
 
     @authentication_required
     def sell_everything(self):
-        print("cash",self.get_cash())
-        my_balance = self.get_balance()
-        print(my_balance)
-        for coin in my_balance:
-            if coin == "EUR" or coin == "USD":
-                continue
-            print("{} : {}".format(coin, my_balance[coin]["availableForWithdrawal"]))
+        positions = self.get_positions()
+        print(positions)
+        for symbol, symbol_positions in positions.items():
+            symbol = symbol.split('_')[0]
+            iUSDT = symbol.find("USDT")
+            symbol = symbol[:iUSDT]+"/"+symbol[iUSDT:]
+            amount = symbol_positions["long"]["available"]
+            print("selling {} : {}".format(symbol, amount))
             try:
-                order_structure = self.exchange.create_order(coin+"/USD", "market", "sell", my_balance[coin]["availableForWithdrawal"])
-                #print(order_structure)
+                order_structure = self.exchange.create_order(symbol, "market", "sell", amount)
+                print(order_structure)
             except BaseException as err:
                 print("[BrokerCCXT::execute_trade] An error occured : {}".format(err))
 

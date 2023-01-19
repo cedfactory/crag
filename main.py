@@ -1,5 +1,5 @@
 from src import rtdp,rtdp_simulation,broker_simulation,broker_ccxt,rtstr,rtstr_dummy_test,rtstr_dummy_test_tp,rtstr_grid_trading_multi,rtstr_balance_trading,rtstr_bollinger_trend,rtstr_tv_recommendation_mid,rtstr_balance_trading_multi,rtstr_super_reversal,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC,analyser,benchmark,automatic_test_plan
-from src import crag,crag_helper
+from src import crag,crag_helper,trade
 import pandas as pd
 import os, sys
 import cProfile,pstats
@@ -108,10 +108,18 @@ def crag_broker():
     balance = my_broker.get_balance()
     print(balance)
 
+    print("### usdt equity ###")
+    usdt_equity = my_broker.get_usdt_equity()
+    print(usdt_equity)
+
+    print("### cash ###")
+    cash = my_broker.get_cash()
+    print(cash)
+
     print("### positions ###")
     positions = my_broker.get_positions()
     print(positions)
-    
+
     print("### orders ###")
     orders = my_broker.get_orders("BTC/USDT")
     print(orders)
@@ -123,15 +131,29 @@ def crag_broker():
     print("{}".format(my_broker.get_portfolio_value()))
 
     print("### BTC ###")
-    usdt_value = my_broker.get_value("BTC/USDT")
-    print("USDT value = ", usdt_value)
+    btc_usdt_value = my_broker.get_value("BTC/USDT")
+    print("USDT value = ", btc_usdt_value)
 
-    usdt_position_risk = my_broker.get_positions_risk(["BTC/USDT"])
-    print("USDT oposition risk = ", usdt_position_risk)
+    #usdt_position_risk = my_broker.get_positions_risk(["BTC/USDT"])
+    #print("USDT oposition risk = ", usdt_position_risk)
+
+    '''
+    print("### create_order ###")
+    mytrade = trade.Trade()
+    mytrade.symbol = "BTC/USDT"
+    mytrade.symbol_price = btc_usdt_value["close"]
+    mytrade.net_price = 20 # buy for $20
+    mytrade.type = "BUY"
+    order = my_broker.execute_trade(mytrade)
+    print(order)
+    if order != None:
+        order_id = order["id"]
+        liquidation_price = my_broker.get_liquidation_price(order_id)
+        print("### liquidation price : ", liquidation_price)
 
     print("### sell everything ###")
-    #my_broker.sell_everything()
-
+    my_broker.sell_everything()
+    '''
 if __name__ == '__main__':
     # Bear market historical dates
     # https://cointelegraph.com/news/a-brief-history-of-bitcoin-crashes-and-bear-markets-2009-2022
