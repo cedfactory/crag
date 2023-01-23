@@ -4,7 +4,7 @@ plotly==5.9.0
 pandas==1.4.3
 rich==12.5.1
 urllib3==1.26.10
-ccxt==2.2.35
+ccxt==2.6.58
 joblib==1.1.0
 parse==1.19.0
 pytest==7.1.2
