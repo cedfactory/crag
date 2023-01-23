@@ -1,4 +1,4 @@
-from src import rtdp,rtdp_simulation,broker_simulation,broker_ccxt,rtstr,rtstr_dummy_test,rtstr_dummy_test_tp,rtstr_grid_trading_multi,rtstr_balance_trading,rtstr_bollinger_trend,rtstr_tv_recommendation_mid,rtstr_balance_trading_multi,rtstr_super_reversal,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC,analyser,benchmark,automatic_test_plan
+from src import rtdp,rtdp_simulation,broker_simulation,broker_ccxt,broker_bitget,rtstr,rtstr_dummy_test,rtstr_dummy_test_tp,rtstr_grid_trading_multi,rtstr_balance_trading,rtstr_bollinger_trend,rtstr_tv_recommendation_mid,rtstr_balance_trading_multi,rtstr_super_reversal,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC,analyser,benchmark,automatic_test_plan
 from src import crag,crag_helper,trade
 import pandas as pd
 import os, sys
@@ -102,11 +102,21 @@ def crag_analyse_results():
     my_analyser.run_analyse()
 
 def crag_broker():
-    my_broker = broker_ccxt.BrokerCCXT({'exchange':'bitget', 'account':'room2', 'simulation':0})
+    my_broker = broker_bitget.BrokerBitGet({'account':'subaccount1'})
+
+    print("### BTCUSDT_UMCBL ###")
+    btc_usdt_value = my_broker.get_value("BTCUSDT_UMCBL")
+    print("BTCUSDT_UMCBL value = ", btc_usdt_value)
+
+
+    my_broker.get_list_of_account_assets()
+    my_broker.print_account_assets()
+    return
 
     print("### balance ###")
     balance = my_broker.get_balance()
     print(balance)
+
 
     print("### usdt equity ###")
     usdt_equity = my_broker.get_usdt_equity()
