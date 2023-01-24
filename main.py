@@ -103,6 +103,7 @@ def crag_analyse_results():
 
 def crag_broker():
     my_broker = broker_bitget.BrokerBitGet({'account':'subaccount1'})
+    # my_broker = broker_ccxt.BrokerCCXT({'exchange': 'bitget', 'account': 'room2', 'simulation': 0})
 
     symbol = my_broker.get_symbol('BTC', 'USDT')
 
@@ -110,15 +111,12 @@ def crag_broker():
     value = my_broker.get_value(symbol)
     print(symbol, " value = ", value)
 
-
     my_broker.get_list_of_account_assets()
     my_broker.print_account_assets()
-    return
 
     print("### balance ###")
     balance = my_broker.get_balance()
     print(balance)
-
 
     print("### usdt equity ###")
     usdt_equity = my_broker.get_usdt_equity()

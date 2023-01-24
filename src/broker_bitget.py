@@ -31,6 +31,8 @@ class BrokerBitGet(broker.Broker):
                 self.leverage = int(self.leverage)
         if not self.authentification():
             print("[BrokerBitGet] : Problem encountered during authentification")
+
+        self.df_market = self.get_future_market()
          
     def authentification(self):
         authentificated = False
@@ -82,10 +84,6 @@ class BrokerBitGet(broker.Broker):
     def export_history(self, target):
         pass
 
-
-
-
-
     def market_results_to_df(self, markets):
         lst_columns = ['symbol', 'quoteCoin', 'baseCoin', 'symbolType', 'makerFeeRate', 'takerFeeRate', 'minTradeNum']
         df = pd.DataFrame(columns=lst_columns)
@@ -134,14 +132,13 @@ class BrokerBitGet(broker.Broker):
         dct_market = self.marketApi.contracts('umcbl')
         df_market_umcbl = self.market_results_to_df(dct_market)
         dct_market = self.marketApi.contracts('dmcbl')
-        df_market_dmcbl =  self.market_results_to_df(dct_market)
+        df_market_dmcbl = self.market_results_to_df(dct_market)
         dct_market = self.marketApi.contracts('cmcbl')
         df_market_cmcbl = self.market_results_to_df(dct_market)
-        self.df_market = pd.concat([df_market_umcbl, df_market_dmcbl, df_market_cmcbl])
+        return pd.concat([df_market_umcbl, df_market_dmcbl, df_market_cmcbl])
 
     def get_df_account(self):
         # update market
-
         dct_account = self.accountApi.accounts('umcbl')
         df_account_umcbl = self.account_results_to_df(dct_account)
         dct_account = self.accountApi.accounts('dmcbl')
@@ -173,16 +170,14 @@ class BrokerBitGet(broker.Broker):
         for symbol in self.df_account_assets['symbol'].tolist():
             if self.df_account_assets.loc[self.df_account_assets['symbol'] == symbol, "symbolType"].values[0] == "perpetual":
                 self.df_account_assets.loc[self.df_account_assets['symbol'] == symbol, "actualPrice"] = self.get_value(symbol)
-                self.df_account_assets.loc[self.df_account_assets['symbol'] == symbol, "size"] = self.df_account_assets.loc[self.df_account_assets['symbol'] == symbol, "usdtEquity"].values[0] / self.df_account_assets.loc[self.df_account_assets['symbol'] == symbol, "actualPrice"]
-                print('price ', symbol,' : ', float(self.df_account_assets.loc[self.df_account_assets['symbol'] == symbol, "actualPrice"].values[0]), 'size: ',  self.df_account_assets.loc[self.df_account_assets['symbol'] == symbol, "size"].values[0])
+                self.df_account_assets.loc[self.df_account_assets['symbol'] == symbol, "size"] = self.df_account_assets.loc[self.df_account_assets['symbol'] == symbol, "available"].values[0]
             else:
-                print('price ', symbol,' : ', float(self.df_account_assets.loc[self.df_account_assets['symbol'] == symbol, "actualPrice"].values[0]), 'size: ',  self.df_account_assets.loc[self.df_account_assets['symbol'] == symbol, "size"].values[0])
+                pass
 
     def print_account_assets(self):
         print(self.df_account_assets)
 
     def get_list_of_account_assets(self):
-        self.get_future_market()
         self.get_df_account()
         self.fill_df_account_from_market()
         self.fill_price_and_size_from_bitget()
@@ -191,4 +186,21 @@ class BrokerBitGet(broker.Broker):
         self.get_future_market()
         symbol = self.df_market.loc[(self.df_market['baseCoin'] == coin) & (self.df_market['quoteCoin'] == base), "symbol"].values[0]
         return symbol
+
+    def get_balance(self):
+        self.get_list_of_account_assets()
+        df_balance = pd.DataFrame(columns=['symbol', 'usdValue'])
+        df_balance['symbol'] = self.df_account_assets['symbol']
+        df_balance['usdValue'] = self.df_account_assets['usdtEquity']
+        df_balance['size'] = self.df_account_assets['available']
+        return df_balance
+
+    def get_cash(self, baseCoin='USDT'):
+        self.get_list_of_account_assets()
+        return self.df_account_assets.loc[self.df_account_assets['symbol'] == baseCoin, "usdtEquity"].values[0]
+
+    def get_usdt_equity(self):
+        self.get_list_of_account_assets()
+        return self.df_account_assets['usdtEquity'].sum()
+
 
