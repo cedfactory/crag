@@ -104,9 +104,11 @@ def crag_analyse_results():
 def crag_broker():
     my_broker = broker_bitget.BrokerBitGet({'account':'subaccount1'})
 
-    print("### BTCUSDT_UMCBL ###")
-    btc_usdt_value = my_broker.get_value("BTCUSDT_UMCBL")
-    print("BTCUSDT_UMCBL value = ", btc_usdt_value)
+    symbol = my_broker.get_symbol('BTC', 'USDT')
+
+    print("### ", symbol, " ###")
+    value = my_broker.get_value(symbol)
+    print(symbol, " value = ", value)
 
 
     my_broker.get_list_of_account_assets()

@@ -186,3 +186,9 @@ class BrokerBitGet(broker.Broker):
         self.get_df_account()
         self.fill_df_account_from_market()
         self.fill_price_and_size_from_bitget()
+
+    def get_symbol(self, coin, base):
+        self.get_future_market()
+        symbol = self.df_market.loc[(self.df_market['baseCoin'] == coin) & (self.df_market['quoteCoin'] == base), "symbol"].values[0]
+        return symbol
+
