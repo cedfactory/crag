@@ -146,3 +146,16 @@ class AccountApi(Client):
             return self._request_with_params(GET, MIX_ACCOUNT_V1_URL + '/accountBill', params)
         else:
             return "pls check args"
+
+    '''
+    get sub future assets
+    :return:
+    '''
+    def accountAssets(self, productType):
+        params = {}
+        if productType:
+            params["productType"] = productType
+            # CEDE COMMENT : FAILED ALWAYS RETURN FAILED....
+            return self._request_with_params(POST, BROKER_ACCOUNT_V1_URL + '/sub-account-contract-assets', params)
+        else:
+            return "pls check args "

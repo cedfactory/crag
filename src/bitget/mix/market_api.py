@@ -173,3 +173,12 @@ class MarketApi(Client):
             return self._request_with_params(GET, MIX_MARKET_V1_URL + '/open-interest', params)
         else:
             return "pls check args"
+
+
+    def get_symbol_leverage(self, symbol):
+        params = {}
+        if symbol:
+            params["symbol"] = symbol
+            return self._request_with_params(GET, MIX_MARKET_V1_URL + '/symbol-leverage', params)
+        else:
+            return "pls check args"

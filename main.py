@@ -107,9 +107,38 @@ def crag_broker():
 
     symbol = my_broker.get_symbol('BTC', 'USDT')
 
+    print("### usdt equity ###")
+    usdt_equity = my_broker.get_usdt_equity()
+    print("usdt equity from api: ", usdt_equity)
+
+    usdt_equity = my_broker.get_usdt_equity_ccxt()
+    print("usdt equity from ccxt: ", usdt_equity)
+
+    print("### cash ###")
+    cash = my_broker.get_cash()
+    print("get cash from api: ",cash)
+
     print("### ", symbol, " ###")
     value = my_broker.get_value(symbol)
     print(symbol, " value = ", value)
+
+    leverage_min, leverage_max = my_broker.get_symbol_min_max_leverage(symbol)
+    print(symbol, " leverage_min = ", leverage_min)
+    print(symbol, " leverage_max = ", leverage_max)
+
+    crossMarginLeverage, shortLeverage, longLeverage = my_broker.get_account_symbol_leverage(symbol)
+    print('leverage: ', crossMarginLeverage, shortLeverage, longLeverage)
+
+    crossMarginLeverage, shortLeverage, longLeverage =  my_broker.set_account_symbol_leverage(symbol, "5")
+    print('leverage: ', crossMarginLeverage, shortLeverage, longLeverage)
+
+    crossMarginLeverage, shortLeverage, longLeverage = my_broker.get_account_symbol_leverage(symbol)
+    print('leverage: ', crossMarginLeverage, shortLeverage, longLeverage)
+
+    open_positions_ccxt = my_broker.get_open_position_ccxt()
+    open_positions_api = my_broker.get_open_position()
+    print('open_positions_ccxt: ',open_positions_ccxt)
+    print('open_positions_api: ',open_positions_api)
 
     my_broker.get_list_of_account_assets()
     my_broker.print_account_assets()
@@ -118,31 +147,118 @@ def crag_broker():
     balance = my_broker.get_balance()
     print(balance)
 
-    print("### usdt equity ###")
-    usdt_equity = my_broker.get_usdt_equity()
-    print(usdt_equity)
+    # CEDE COMMENT : sub-account-contract-assets failed???
+    # assets = my_broker.get_account_asset()
 
-    print("### cash ###")
-    cash = my_broker.get_cash()
-    print(cash)
+    symbol = my_broker.get_symbol('XRP', 'USDT')
+    marginCoin = 'USDT'
+
+    # orderId = '1001895328011161600'
+    # clientOid = '1001895328011161601'
+    # orderId = '1001877588152061955'
+    # clientOid = '1001877588156256262'
+    # cancelStatus = my_broker.cancel_order(symbol, marginCoin, orderId)
+    # print(cancelStatus)
+
+    print("Current date:", datetime.utcnow())
+    date = datetime.utcnow() - datetime(1970, 1, 1)
+    print("Number of days since epoch:", date)
+    seconds = (date.total_seconds())
+    endTime = round(seconds * 1000)
+    startTime = endTime - 4 * 60 * 60 * 1000
+    pageSize = 2
+
+    history = my_broker.get_order_history(symbol, startTime, endTime, pageSize)
+    print(history)
+
+    order_data = my_broker.get_order_current(symbol)
+    print(order_data)
+
+    if False: # MODIF CEDE TO BE TESTED - Place Order thru API
+        orderId, clientOid, requestTime = my_broker.place_order_api(symbol,
+                                                                    marginCoin=marginCoin,
+                                                                    size=20,
+                                                                    side='close_long',
+                                                                    orderType='market')
+        print(" orderId: ", orderId, " clientOid: ", clientOid, " requestTime: ", requestTime)
+
+    # print("### orders ###")
+    # COMMENT CEDE: FAILED
+    # orders = my_broker.get_orders(symbol)
+    # print(orders)
 
     print("### positions ###")
     positions = my_broker.get_positions()
     print(positions)
 
-    print("### orders ###")
-    orders = my_broker.get_orders("BTC/USDT")
-    print(orders)
-
     print("### my trades ###")
     my_broker.export_history()
 
     print("### portfolio value ###")
+    # COMMENT CEDE: WRONG!
     print("{}".format(my_broker.get_portfolio_value()))
 
-    print("### BTC ###")
-    btc_usdt_value = my_broker.get_value("BTC/USDT")
-    print("USDT value = ", btc_usdt_value)
+    return
+
+    production = True
+    condition_close_long = True      # play with bool to action buy and sell
+    condition_close_short = False    # play with bool to action buy and sell
+    # test the following code
+    # then : replace place_market_order buy when short or sell when long ..... by CLOSE_LONG OPEN_SHORT OPEN_SHORT .....
+    if len(position) > 0:
+        position = position[0]
+        print(f"Current position : {position}")
+        if position["side"] == "long" and condition_close_long:
+            close_long_market_price = float(df.iloc[-1]["close"])  # replace df.iloc[-1]["close"] by get_price(symbol)...
+            close_long_quantity = float(
+                my_broker.convert_amount_to_precision(pair, position["size"])  # get the right position size
+            )
+            exchange_close_long_quantity = close_long_quantity * close_long_market_price
+            print(
+                f"Place Close Long Market Order: {close_long_quantity} {pair[:-5]} at the price of {close_long_market_price}$ ~{round(exchange_close_long_quantity, 2)}$"
+            )
+            if production:
+                my_broker.place_market_order(pair, "sell", close_long_quantity, reduce=True)
+
+        elif position["side"] == "short" and condition_close_short:
+            close_short_market_price = float(df.iloc[-1]["close"])  # replace df.iloc[-1]["close"] by get_price(symbol)...
+            close_short_quantity = float(
+                my_broker.convert_amount_to_precision(pair, position["size"])  # get the right position size
+            )
+            exchange_close_short_quantity = close_short_quantity * close_short_market_price
+            print(
+                f"Place Close Short Market Order: {close_short_quantity} {pair[:-5]} at the price of {close_short_market_price}$ ~{round(exchange_close_short_quantity, 2)}$"
+            )
+            if production:
+                my_broker.place_market_order_ccxt(pair, "buy", close_short_quantity, reduce=True)
+
+    else:
+        print("No active position")
+        if open_long(row) and "long" in type:
+            long_market_price = float(df.iloc[-1]["close"])   # replace df.iloc[-1]["close"] by get_price(symbol)...
+            long_quantity_in_usd = usd_balance * leverage
+            long_quantity = float(my_broker.convert_amount_to_precision(pair, float(
+                my_broker.convert_amount_to_precision(pair, long_quantity_in_usd / long_market_price)
+            )))
+            exchange_long_quantity = long_quantity * long_market_price
+            print(
+                f"Place Open Long Market Order: {long_quantity} {pair[:-5]} at the price of {long_market_price}$ ~{round(exchange_long_quantity, 2)}$"
+            )
+            if production:
+                my_broker.place_market_order_ccxt(pair, "buy", long_quantity, reduce=False)
+
+        elif open_short(row) and "short" in type:
+            short_market_price = float(df.iloc[-1]["close"])    # replace df.iloc[-1]["close"] by get_price(symbol)...
+            short_quantity_in_usd = usd_balance * leverage
+            short_quantity = float(my_broker.convert_amount_to_precision(pair, float(
+                my_broker.convert_amount_to_precision(pair, short_quantity_in_usd / short_market_price)
+            )))
+            exchange_short_quantity = short_quantity * short_market_price
+            print(
+                f"Place Open Short Market Order: {short_quantity} {pair[:-5]} at the price of {short_market_price}$ ~{round(exchange_short_quantity, 2)}$"
+            )
+            if production:
+                my_broker.place_market_order_ccxt(pair, "sell", short_quantity, reduce=False)
 
     #usdt_position_risk = my_broker.get_positions_risk(["BTC/USDT"])
     #print("USDT oposition risk = ", usdt_position_risk)

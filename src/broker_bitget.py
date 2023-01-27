@@ -1,5 +1,8 @@
 from .bitget.mix import market_api as market
 from .bitget.mix import account_api as account
+from .bitget.mix import position_api as position
+from .bitget.mix import order_api as order
+from .bitget.mix import ccxt_bitget as prep
 
 from . import broker,rtdp,utils
 from dotenv import load_dotenv
@@ -43,8 +46,10 @@ class BrokerBitGet(broker.Broker):
 
         self.marketApi = market.MarketApi(exchange_api_key, exchange_api_secret, exchange_api_password, use_server_time=False, first=False)
         self.accountApi = account.AccountApi(exchange_api_key, exchange_api_secret, exchange_api_password, use_server_time=False, first=False)
+        self.positionApi = position.PositionApi(exchange_api_key, exchange_api_secret, exchange_api_password, use_server_time=False, first=False)
+        self.orderApi = order.OrderApi(exchange_api_key, exchange_api_secret, exchange_api_password, use_server_time=False, first=False)
+        self.ccxtApi = prep.PerpBitget(exchange_api_key, exchange_api_secret,exchange_api_password)
 
-        #self.df_market = pd.DataFrame()
         return True
 
     def authentication_required(fn):
@@ -84,8 +89,16 @@ class BrokerBitGet(broker.Broker):
     def export_history(self, target):
         pass
 
+    def get_market_info_header(self):
+        return ['symbol', 'quoteCoin', 'baseCoin', 'symbolType', 'makerFeeRate', 'takerFeeRate', 'minTradeNum']
+
+    def get_account_info_header(self):
+        return ['symbol', 'marginCoin', 'available', 'equity', 'usdtEquity', 'locked', 'btcEquity',
+                       "size", "actualPrice", 'quoteCoin', 'baseCoin', 'symbolType',
+                       'makerFeeRate', 'takerFeeRate', 'minTradeNum']
+
     def market_results_to_df(self, markets):
-        lst_columns = ['symbol', 'quoteCoin', 'baseCoin', 'symbolType', 'makerFeeRate', 'takerFeeRate', 'minTradeNum']
+        lst_columns = self.get_market_info_header()
         df = pd.DataFrame(columns=lst_columns)
         for market in markets['data']:
             lst_info_symbol = [ market['symbol'],
@@ -100,9 +113,7 @@ class BrokerBitGet(broker.Broker):
         return df
 
     def account_results_to_df(self, markets):
-        lst_columns = ['symbol', 'marginCoin', 'available', 'equity', 'usdtEquity', 'locked', 'btcEquity',
-                       "size", "actualPrice", 'quoteCoin', 'baseCoin', 'symbolType',
-                       'makerFeeRate', 'takerFeeRate', 'minTradeNum']
+        lst_columns = self.get_account_info_header()
         df = pd.DataFrame(columns=lst_columns)
         for market in markets['data']:
             if float(market['equity']) > 0 \
@@ -203,4 +214,79 @@ class BrokerBitGet(broker.Broker):
         self.get_list_of_account_assets()
         return self.df_account_assets['usdtEquity'].sum()
 
+    def get_usdt_equity_ccxt(self):
+        return self.ccxtApi.get_usdt_equity()
 
+    def get_account_asset(self):
+        result = self.accountApi.accountAssets(productType='umcbl')
+        return result
+
+    def place_order_api(self, symbol, marginCoin, size, side, orderType):
+        order = self.orderApi.place_order(symbol, marginCoin, size, side, orderType,
+                                         price='',
+                                         clientOrderId='', timeInForceValue='normal',
+                                         presetTakeProfitPrice='', presetStopLossPrice='')
+
+        if order['msg'] == 'success':
+            return order['data']['orderId'], order['data']['clientOid'], order['requestTime']
+        else:
+            return order['msg']
+
+    def get_order_current(self, symbol):
+        current = self.orderApi.current(symbol)
+        return current
+
+    def get_order_history(self, symbol, startTime, endTime, pageSize):
+        history = self.orderApi.history(symbol, startTime, endTime, pageSize, lastEndId='', isPre=False)
+        return history
+
+    def cancel_order(self, symbol, marginCoin, orderId):
+        result = self.orderApi.cancel_orders(symbol, marginCoin, orderId)
+        return result
+
+    def get_symbol_min_max_leverage(self, symbol):
+        leverage = self.marketApi.get_symbol_leverage(symbol)
+        return leverage['data']['minLeverage'], leverage['data']['maxLeverage']
+
+    def get_account_symbol_leverage(self, symbol, marginCoin='USDT'):
+        dct_account = self.accountApi.account(symbol, marginCoin)
+        return dct_account['data']['crossMarginLeverage'], dct_account['data']['fixedLongLeverage'], dct_account['data']['fixedShortLeverage']
+
+    def set_account_symbol_leverage(self, symbol, leverage):
+        dct_account = self.accountApi.leverage(symbol, 'USDT', leverage)
+        return dct_account['data']['crossMarginLeverage'], dct_account['data']['longLeverage'], dct_account['data']['shortLeverage']
+
+    def get_open_position_ccxt(self, symbol=''):
+        position_data = self.ccxtApi.get_open_position(symbol)
+        lst_position_data = []
+        for data in position_data:
+            lst_position_data.append(data['info'])
+        return lst_position_data
+
+    def get_open_position(self):
+        result = self.positionApi.all_position(productType='umcbl',marginCoin='USDT')
+        return result['data']
+
+    def convert_amount_to_precision(self, symbol, amount):
+        return self.ccxtApi.convert_amount_to_precision(symbol, amount)
+
+    def convert_price_to_precision(self, symbol, price):
+        return self.ccxtApi.convert_price_to_precision(symbol, price)
+
+    def get_min_order_amount(self, symbol):
+        return self.ccxtApi.get_min_order_amount(symbol)
+
+    def place_market_order_ccxt(self, symbol, side, amount, reduce=False):
+        return self.ccxtApi.place_market_order(symbol, side, amount, reduce)
+
+    def get_orders(self, symbol):
+        return self.ccxtApi.get_orders(symbol)
+
+    def get_positions(self):
+        return self.ccxtApi.get_positions()
+
+    def export_history(self, target=None):
+        return self.ccxtApi.export_history(target)
+
+    def get_portfolio_value(self):
+        return self.ccxtApi.get_portfolio_value()
