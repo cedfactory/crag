@@ -105,26 +105,43 @@ def crag_broker():
     my_broker = broker_bitget.BrokerBitGet({'account':'subaccount1'})
     # my_broker = broker_ccxt.BrokerCCXT({'exchange': 'bitget', 'account': 'room2', 'simulation': 0})
 
+    my_broker.get_list_of_account_assets()
+    my_broker.print_account_assets()
+
+    open_positions_ccxt = my_broker.get_open_position_ccxt()
+    open_positions_api = my_broker.get_open_position()
+    print("### open_positions_ccxt :\n", open_positions_ccxt)
+    print("### open_positions_api :\n", open_positions_api)
+
+    print("### cash ### ", my_broker.get_cash())
+
+    print("### balance ###")
+    balance = my_broker.get_balance()
+    print(balance)
+
+    print("### usdt equity (from api) : ", my_broker.get_usdt_equity())
+    print("### usdt equity (from ccxt) : ", my_broker.get_usdt_equity_ccxt())
+
     symbol = my_broker.get_symbol('BTC', 'USDT')
+    print("symbol BTC USDT : ", symbol)
 
-    print("### usdt equity ###")
-    usdt_equity = my_broker.get_usdt_equity()
-    print("usdt equity from api: ", usdt_equity)
+    print("### history ###")
+    print("Current date:", datetime.utcnow())
+    date = datetime.utcnow() - datetime(1970, 1, 1)
+    print("Number of days since epoch:", date)
+    seconds = (date.total_seconds())
+    endTime = round(seconds * 1000)
+    startTime = endTime - 4 * 60 * 60 * 1000
+    pageSize = 2
+    history = my_broker.get_order_history(symbol, startTime, endTime, pageSize)
+    print(history)
 
-    usdt_equity = my_broker.get_usdt_equity_ccxt()
-    print("usdt equity from ccxt: ", usdt_equity)
-
-    print("### cash ###")
-    cash = my_broker.get_cash()
-    print("get cash from api: ",cash)
-
-    print("### ", symbol, " ###")
-    value = my_broker.get_value(symbol)
-    print(symbol, " value = ", value)
+    
+    print("### value = ", my_broker.get_value(symbol))
 
     leverage_min, leverage_max = my_broker.get_symbol_min_max_leverage(symbol)
-    print(symbol, " leverage_min = ", leverage_min)
-    print(symbol, " leverage_max = ", leverage_max)
+    print("### leverage_min = ", leverage_min)
+    print("### leverage_max = ", leverage_max)
 
     crossMarginLeverage, shortLeverage, longLeverage = my_broker.get_account_symbol_leverage(symbol)
     print('leverage: ', crossMarginLeverage, shortLeverage, longLeverage)
@@ -135,17 +152,14 @@ def crag_broker():
     crossMarginLeverage, shortLeverage, longLeverage = my_broker.get_account_symbol_leverage(symbol)
     print('leverage: ', crossMarginLeverage, shortLeverage, longLeverage)
 
-    open_positions_ccxt = my_broker.get_open_position_ccxt()
-    open_positions_api = my_broker.get_open_position()
-    print('open_positions_ccxt: ',open_positions_ccxt)
-    print('open_positions_api: ',open_positions_api)
 
-    my_broker.get_list_of_account_assets()
-    my_broker.print_account_assets()
 
-    print("### balance ###")
-    balance = my_broker.get_balance()
-    print(balance)
+    return
+
+
+
+
+
 
     # CEDE COMMENT : sub-account-contract-assets failed???
     # assets = my_broker.get_account_asset()
@@ -160,16 +174,7 @@ def crag_broker():
     # cancelStatus = my_broker.cancel_order(symbol, marginCoin, orderId)
     # print(cancelStatus)
 
-    print("Current date:", datetime.utcnow())
-    date = datetime.utcnow() - datetime(1970, 1, 1)
-    print("Number of days since epoch:", date)
-    seconds = (date.total_seconds())
-    endTime = round(seconds * 1000)
-    startTime = endTime - 4 * 60 * 60 * 1000
-    pageSize = 2
 
-    history = my_broker.get_order_history(symbol, startTime, endTime, pageSize)
-    print(history)
 
     order_data = my_broker.get_order_current(symbol)
     print(order_data)
@@ -186,10 +191,6 @@ def crag_broker():
     # COMMENT CEDE: FAILED
     # orders = my_broker.get_orders(symbol)
     # print(orders)
-
-    print("### positions ###")
-    positions = my_broker.get_positions()
-    print(positions)
 
     print("### my trades ###")
     my_broker.export_history()

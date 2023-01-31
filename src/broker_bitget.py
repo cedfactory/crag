@@ -148,7 +148,7 @@ class BrokerBitGet(broker.Broker):
         df_market_cmcbl = self.market_results_to_df(dct_market)
         return pd.concat([df_market_umcbl, df_market_dmcbl, df_market_cmcbl])
 
-    def get_df_account(self):
+    def _get_df_account(self):
         # update market
         dct_account = self.accountApi.accounts('umcbl')
         df_account_umcbl = self.account_results_to_df(dct_account)
@@ -159,7 +159,7 @@ class BrokerBitGet(broker.Broker):
         self.df_account_assets = pd.concat([df_account_umcbl, df_account_dmcbl, df_account_cmcbl])
         self.df_account_assets.reset_index(inplace=True, drop=True)
 
-    def fill_df_account_from_market(self):
+    def _fill_df_account_from_market(self):
         for idx in self.df_account_assets.index.tolist():
             coin = self.df_account_assets.at[idx, 'marginCoin']
             if coin != "USDT" and coin != "USDC" and coin != "USD":
@@ -177,7 +177,7 @@ class BrokerBitGet(broker.Broker):
                 self.df_account_assets.at[idx, 'size'] = self.df_account_assets.loc[self.df_account_assets["symbol"] == coin, "usdtEquity"].values[0]
                 self.df_account_assets.at[idx, 'actualPrice'] = 1
 
-    def fill_price_and_size_from_bitget(self):
+    def _fill_price_and_size_from_bitget(self):
         for symbol in self.df_account_assets['symbol'].tolist():
             if self.df_account_assets.loc[self.df_account_assets['symbol'] == symbol, "symbolType"].values[0] == "perpetual":
                 self.df_account_assets.loc[self.df_account_assets['symbol'] == symbol, "actualPrice"] = self.get_value(symbol)
@@ -189,15 +189,16 @@ class BrokerBitGet(broker.Broker):
         print(self.df_account_assets)
 
     def get_list_of_account_assets(self):
-        self.get_df_account()
-        self.fill_df_account_from_market()
-        self.fill_price_and_size_from_bitget()
+        self._get_df_account()
+        self._fill_df_account_from_market()
+        self._fill_price_and_size_from_bitget()
 
     def get_symbol(self, coin, base):
         self.get_future_market()
         symbol = self.df_market.loc[(self.df_market['baseCoin'] == coin) & (self.df_market['quoteCoin'] == base), "symbol"].values[0]
         return symbol
 
+    @authentication_required
     def get_balance(self):
         self.get_list_of_account_assets()
         df_balance = pd.DataFrame(columns=['symbol', 'usdValue'])
@@ -206,21 +207,26 @@ class BrokerBitGet(broker.Broker):
         df_balance['size'] = self.df_account_assets['available']
         return df_balance
 
+    @authentication_required
     def get_cash(self, baseCoin='USDT'):
         self.get_list_of_account_assets()
         return self.df_account_assets.loc[self.df_account_assets['symbol'] == baseCoin, "usdtEquity"].values[0]
 
+    @authentication_required
     def get_usdt_equity(self):
         self.get_list_of_account_assets()
         return self.df_account_assets['usdtEquity'].sum()
 
+    @authentication_required
     def get_usdt_equity_ccxt(self):
         return self.ccxtApi.get_usdt_equity()
 
+    @authentication_required
     def get_account_asset(self):
         result = self.accountApi.accountAssets(productType='umcbl')
         return result
 
+    @authentication_required
     def place_order_api(self, symbol, marginCoin, size, side, orderType):
         order = self.orderApi.place_order(symbol, marginCoin, size, side, orderType,
                                          price='',
@@ -232,61 +238,85 @@ class BrokerBitGet(broker.Broker):
         else:
             return order['msg']
 
+    @authentication_required
     def get_order_current(self, symbol):
         current = self.orderApi.current(symbol)
         return current
 
+    @authentication_required
     def get_order_history(self, symbol, startTime, endTime, pageSize):
         history = self.orderApi.history(symbol, startTime, endTime, pageSize, lastEndId='', isPre=False)
         return history
 
+    @authentication_required
     def cancel_order(self, symbol, marginCoin, orderId):
         result = self.orderApi.cancel_orders(symbol, marginCoin, orderId)
         return result
 
+    @authentication_required
     def get_symbol_min_max_leverage(self, symbol):
         leverage = self.marketApi.get_symbol_leverage(symbol)
         return leverage['data']['minLeverage'], leverage['data']['maxLeverage']
 
+    @authentication_required
     def get_account_symbol_leverage(self, symbol, marginCoin='USDT'):
         dct_account = self.accountApi.account(symbol, marginCoin)
         return dct_account['data']['crossMarginLeverage'], dct_account['data']['fixedLongLeverage'], dct_account['data']['fixedShortLeverage']
 
+    @authentication_required
     def set_account_symbol_leverage(self, symbol, leverage):
         dct_account = self.accountApi.leverage(symbol, 'USDT', leverage)
         return dct_account['data']['crossMarginLeverage'], dct_account['data']['longLeverage'], dct_account['data']['shortLeverage']
 
+    def _build_df_open_positions(self, open_positions):
+        df_open_positions = pd.DataFrame(columns=["symbol", "holdSide", "leverage", "marginCoin", "available", "total", "marketPrice"])
+        for i in range(len(open_positions)):
+            data = open_positions[i]
+            df_open_positions.loc[i] = pd.Series({"symbol": data["symbol"], "holdSide": data["holdSide"], "leverage": data["leverage"], "marginCoin": data["marginCoin"],"available": float(data["available"]),"total": float(data["total"]),"marketPrice": data["marketPrice"]})
+        return df_open_positions
+
+    @authentication_required
     def get_open_position_ccxt(self, symbol=''):
-        position_data = self.ccxtApi.get_open_position(symbol)
-        lst_position_data = []
-        for data in position_data:
-            lst_position_data.append(data['info'])
-        return lst_position_data
+        open_position = self.ccxtApi.get_open_position(symbol)
+        lst_open_position = [data['info'] for data in open_position if float(data["info"]["total"]) != 0.]
+        return self._build_df_open_positions(lst_open_position)
 
+    @authentication_required
     def get_open_position(self):
-        result = self.positionApi.all_position(productType='umcbl',marginCoin='USDT')
-        return result['data']
+        all_positions = self.positionApi.all_position(productType='umcbl',marginCoin='USDT')
+        lst_all_positions = [data for data in all_positions["data"] if float(data["total"]) != 0.]
+        return self._build_df_open_positions(lst_all_positions)
+    
+    '''
+    @authentication_required
+    def get_positions(self):
+        return self.ccxtApi.get_positions()
+    '''
 
+    @authentication_required
     def convert_amount_to_precision(self, symbol, amount):
         return self.ccxtApi.convert_amount_to_precision(symbol, amount)
 
+    @authentication_required
     def convert_price_to_precision(self, symbol, price):
         return self.ccxtApi.convert_price_to_precision(symbol, price)
 
+    @authentication_required
     def get_min_order_amount(self, symbol):
         return self.ccxtApi.get_min_order_amount(symbol)
 
+    @authentication_required
     def place_market_order_ccxt(self, symbol, side, amount, reduce=False):
         return self.ccxtApi.place_market_order(symbol, side, amount, reduce)
 
+    @authentication_required
     def get_orders(self, symbol):
         return self.ccxtApi.get_orders(symbol)
 
-    def get_positions(self):
-        return self.ccxtApi.get_positions()
-
+    @authentication_required
     def export_history(self, target=None):
         return self.ccxtApi.export_history(target)
 
+    @authentication_required
     def get_portfolio_value(self):
         return self.ccxtApi.get_portfolio_value()

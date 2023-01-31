@@ -212,7 +212,23 @@ class PerpBitget():
             return truePositions
         except BaseException as err:
             raise TypeError("An error occured in get_open_position", err)
-
+    '''
+    @authentication_required
+    def get_positions(self):
+        result = {}
+        try:
+            response = self._session.fetch_positions()
+            for position in response:
+                position = position["info"]
+                if position["total"] == '0':
+                    continue
+                if not position["symbol"] in result:
+                    result[position["symbol"]] = {}
+                result[position["symbol"]][position["holdSide"]] = {"total" : float(position["total"]), "available" : float(position["available"])}
+        except BaseException as err:
+            print("[BrokerCCXT::get_positions] An error occured : {}".format(err))
+        return result
+    '''
     @authentication_required
     def cancel_order_by_id(self, id, symbol, conditionnal=False):
         try:
@@ -232,22 +248,6 @@ class PerpBitget():
         except BaseException as err:
             raise Exception("An error occured in get_orders_by_id", err)
             # print("[BrokerCCXT::get_orders] An error occured : {}".format(err))
-
-    @authentication_required
-    def get_positions(self):
-        result = {}
-        try:
-            response = self._session.fetch_positions()
-            positions = response["data"]
-            for position in positions:
-                if position["total"] == '0':
-                    continue
-                if not position["symbol"] in result:
-                    result[position["symbol"]] = {}
-                result[position["symbol"]][position["holdSide"]] = {"total" : float(position["total"]), "available" : float(position["available"])}
-        except BaseException as err:
-            print("[BrokerCCXT::get_positions] An error occured : {}".format(err))
-        return result
 
     def _format_row(self, current_trade):
         datetime = current_trade['datetime']

@@ -57,14 +57,17 @@ class BrokerCCXT(broker.Broker):
             params["headers"] = {"EXCHANGE-SUBACCOUNT": self.account}
 
         self.exchange = None
-        if self.exchange_name == "binance":
-            self.exchange = ccxt.binance(params)
-        if self.exchange_name == "bitget":
-            self.exchange = ccxt.bitget(params)
-        elif self.exchange_name == "hitbtc":
-            self.exchange = ccxt.hitbtc(params)
-        elif self.exchange_name == "kraken":
-            self.exchange = ccxt.kraken(params)
+        try:
+            if self.exchange_name == "binance":
+                self.exchange = ccxt.binance(params)
+            if self.exchange_name == "bitget":
+                self.exchange = ccxt.bitget(params)
+            elif self.exchange_name == "hitbtc":
+                self.exchange = ccxt.hitbtc(params)
+            elif self.exchange_name == "kraken":
+                self.exchange = ccxt.kraken(params)
+        except BaseException as err:
+            print("[BrokerCCXT] Exchange : ", err)
 
         if self.exchange == None:
             return False
