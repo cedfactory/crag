@@ -206,8 +206,8 @@ class PerpBitget():
         try:
             positions = self._session.fetchPositions(symbol)
             truePositions = []
-            for position in positions:
-                if float(position['contractSize']) > 0:
+            for position in positions["data"]:
+                if float(position['total']) > 0: # contractSize ?
                     truePositions.append(position)
             return truePositions
         except BaseException as err:

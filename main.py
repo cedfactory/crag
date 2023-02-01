@@ -105,6 +105,9 @@ def crag_broker():
     my_broker = broker_bitget.BrokerBitGet({'account':'subaccount1'})
     # my_broker = broker_ccxt.BrokerCCXT({'exchange': 'bitget', 'account': 'room2', 'simulation': 0})
 
+    future_market = my_broker.get_future_market()
+    print(future_market)
+
     my_broker.get_list_of_account_assets()
     my_broker.print_account_assets()
 
@@ -136,7 +139,6 @@ def crag_broker():
     history = my_broker.get_order_history(symbol, startTime, endTime, pageSize)
     print(history)
 
-    
     print("### value = ", my_broker.get_value(symbol))
 
     leverage_min, leverage_max = my_broker.get_symbol_min_max_leverage(symbol)

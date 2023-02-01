@@ -146,7 +146,7 @@ class BrokerBitGet(broker.Broker):
         df_market_dmcbl = self.market_results_to_df(dct_market)
         dct_market = self.marketApi.contracts('cmcbl')
         df_market_cmcbl = self.market_results_to_df(dct_market)
-        return pd.concat([df_market_umcbl, df_market_dmcbl, df_market_cmcbl])
+        return pd.concat([df_market_umcbl, df_market_dmcbl, df_market_cmcbl]).reset_index()
 
     def _get_df_account(self):
         # update market
@@ -226,13 +226,19 @@ class BrokerBitGet(broker.Broker):
         result = self.accountApi.accountAssets(productType='umcbl')
         return result
 
+    '''
+    marginCoin: Deposit currency
+    size: It is quantity when the price is limited. The market price is the limit. The sales is the quantity
+    side \in {open_long, open_short, close_long, close_short}
+    orderType \in {limit(fixed price), market(market price)}
+    '''
     @authentication_required
     def place_order_api(self, symbol, marginCoin, size, side, orderType):
         order = self.orderApi.place_order(symbol, marginCoin, size, side, orderType,
                                          price='',
                                          clientOrderId='', timeInForceValue='normal',
                                          presetTakeProfitPrice='', presetStopLossPrice='')
-
+        return order
         if order['msg'] == 'success':
             return order['data']['orderId'], order['data']['clientOid'], order['requestTime']
         else:
@@ -246,6 +252,13 @@ class BrokerBitGet(broker.Broker):
     @authentication_required
     def get_order_history(self, symbol, startTime, endTime, pageSize):
         history = self.orderApi.history(symbol, startTime, endTime, pageSize, lastEndId='', isPre=False)
+        df_history = pd.DataFrame(columns=["symbol", "size", "side", "orderId", "filledQty", "leverage", "fee", "orderType", "marginCoin", "totalProfits", "cTime", "uTime"])
+        orderList = history["data"]["orderList"]
+        for i in range(len(orderList)):
+            data = orderList[i]
+            df_history.loc[i] = pd.Series({"symbol": data["symbol"], "size": data["size"], "side": data["side"], "orderId": data["orderId"], "filledQty": data["filledQty"], "leverage": int(data["leverage"]),"fee": float(data["fee"]),"orderType": data["orderType"],"marginCoin": data["marginCoin"],"totalProfits": float(data["totalProfits"]),"cTime": utils.convert_ms_to_datetime(data["cTime"]),"uTime": utils.convert_ms_to_datetime(data["uTime"])})
+        return df_history
+
         return history
 
     @authentication_required
@@ -278,7 +291,7 @@ class BrokerBitGet(broker.Broker):
     @authentication_required
     def get_open_position_ccxt(self, symbol=''):
         open_position = self.ccxtApi.get_open_position(symbol)
-        lst_open_position = [data['info'] for data in open_position if float(data["info"]["total"]) != 0.]
+        lst_open_position = [data for data in open_position if float(data["total"]) != 0.]
         return self._build_df_open_positions(lst_open_position)
 
     @authentication_required

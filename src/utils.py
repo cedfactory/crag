@@ -14,6 +14,11 @@ import yfinance as yf
 
 from datetime import datetime
 
+def convert_ms_to_datetime(ms):
+    if isinstance(ms, str):
+        ms = int(ms)
+    return datetime.fromtimestamp(ms/1000.0)
+
 def _atomic_fdp_request(url):
     n_attempts = 3
     while n_attempts > 0:
