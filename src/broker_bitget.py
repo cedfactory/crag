@@ -198,6 +198,9 @@ class BrokerBitGet(broker.Broker):
         symbol = self.df_market.loc[(self.df_market['baseCoin'] == coin) & (self.df_market['quoteCoin'] == base), "symbol"].values[0]
         return symbol
 
+    def get_symbol_ccxt(self, coin, base):
+        return coin+"/"+base+":"+base
+
     @authentication_required
     def get_balance(self):
         self.get_list_of_account_assets()
@@ -231,6 +234,13 @@ class BrokerBitGet(broker.Broker):
     size: It is quantity when the price is limited. The market price is the limit. The sales is the quantity
     side \in {open_long, open_short, close_long, close_short}
     orderType \in {limit(fixed price), market(market price)}
+
+    !!!!!!! doesn't work. TODO : check why ?
+    symbol = my_broker.get_symbol('ETH', 'USDT')
+    marginCoin = 'USDT'
+    order = my_broker.place_order_api(symbol, marginCoin=marginCoin, size=0.01, side='close_long', orderType='market')
+    print(order)
+    cancelStatus = my_broker.cancel_order(symbol, marginCoin, orderId)
     '''
     @authentication_required
     def place_order_api(self, symbol, marginCoin, size, side, orderType):
@@ -238,7 +248,6 @@ class BrokerBitGet(broker.Broker):
                                          price='',
                                          clientOrderId='', timeInForceValue='normal',
                                          presetTakeProfitPrice='', presetStopLossPrice='')
-        return order
         if order['msg'] == 'success':
             return order['data']['orderId'], order['data']['clientOid'], order['requestTime']
         else:
@@ -323,7 +332,7 @@ class BrokerBitGet(broker.Broker):
         return self.ccxtApi.place_market_order(symbol, side, amount, reduce)
 
     @authentication_required
-    def get_orders(self, symbol):
+    def get_orders_ccxt(self, symbol=None):
         return self.ccxtApi.get_orders(symbol)
 
     @authentication_required

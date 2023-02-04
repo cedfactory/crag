@@ -105,6 +105,27 @@ def crag_broker():
     my_broker = broker_bitget.BrokerBitGet({'account':'subaccount1'})
     # my_broker = broker_ccxt.BrokerCCXT({'exchange': 'bitget', 'account': 'room2', 'simulation': 0})
 
+    #
+    # orders
+    #
+    symbol = my_broker.get_symbol_ccxt('BTC', 'USDT')
+    
+    print("symbol BTC USDT : ", symbol)
+
+    print("### open_positions :\n", my_broker.get_open_position())
+    
+    # open long
+    #order = my_broker.place_market_order_ccxt(symbol, "buy", 0.001, False)
+    #print(order)
+    # open short
+    #order = my_broker.place_market_order_ccxt(symbol, "sell", 0.001, False)
+    #print(order)
+
+
+    print("### open_positions_ccxt :\n", my_broker.get_open_position_ccxt())
+
+    return
+
     future_market = my_broker.get_future_market()
     print(future_market)
 
@@ -181,18 +202,7 @@ def crag_broker():
     order_data = my_broker.get_order_current(symbol)
     print(order_data)
 
-    if False: # MODIF CEDE TO BE TESTED - Place Order thru API
-        orderId, clientOid, requestTime = my_broker.place_order_api(symbol,
-                                                                    marginCoin=marginCoin,
-                                                                    size=20,
-                                                                    side='close_long',
-                                                                    orderType='market')
-        print(" orderId: ", orderId, " clientOid: ", clientOid, " requestTime: ", requestTime)
 
-    # print("### orders ###")
-    # COMMENT CEDE: FAILED
-    # orders = my_broker.get_orders(symbol)
-    # print(orders)
 
     print("### my trades ###")
     my_broker.export_history()

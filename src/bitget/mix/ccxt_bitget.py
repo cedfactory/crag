@@ -206,7 +206,11 @@ class PerpBitget():
         try:
             positions = self._session.fetchPositions(symbol)
             truePositions = []
-            for position in positions["data"]:
+            if "data" in positions:
+                positions = positions["data"]
+            for position in positions:
+                if "info" in position:
+                    position = position["info"]
                 if float(position['total']) > 0: # contractSize ?
                     truePositions.append(position)
             return truePositions
@@ -244,10 +248,9 @@ class PerpBitget():
         result = []
         try:
             result = self._session.fetch_orders(symbol)
-            return result
         except BaseException as err:
-            raise Exception("An error occured in get_orders_by_id", err)
-            # print("[BrokerCCXT::get_orders] An error occured : {}".format(err))
+            print("[BrokerCCXT::get_orders] An error occured : ", err)
+        return result
 
     def _format_row(self, current_trade):
         datetime = current_trade['datetime']
