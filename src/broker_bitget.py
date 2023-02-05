@@ -332,6 +332,22 @@ class BrokerBitGet(broker.Broker):
         return self.ccxtApi.place_market_order(symbol, side, amount, reduce)
 
     @authentication_required
+    def open_long_position(self, symbol, amount):
+        return self.ccxtApi.place_market_order(symbol, "buy", amount, reduce=False)
+
+    @authentication_required
+    def close_long_position(self, symbol, amount):
+        return self.ccxtApi.place_market_order(symbol, "sell", amount, reduce=True)
+
+    @authentication_required
+    def open_short_position(self, symbol, amount):
+        return self.ccxtApi.place_market_order(symbol, "sell", amount, reduce=False)
+
+    @authentication_required
+    def close_short_position(self, symbol, amount):
+        return self.ccxtApi.place_market_order(symbol, "buy", amount, reduce=True)
+
+    @authentication_required
     def get_orders_ccxt(self, symbol=None):
         return self.ccxtApi.get_orders(symbol)
 
