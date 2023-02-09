@@ -106,6 +106,39 @@ class rtctrl():
         self.global_roi_value = self.wallet_value - self.init_cash_value
         self.global_roi_percent = self.global_roi_value / self.init_cash_value * 100
 
+        '''
+        # Modif CEDE use rtctrl from Bitget Broker
+        # Find solution to access my_broker
+        LIVE_BROKER_CROSS_CHECK = True
+        if LIVE_BROKER_CROSS_CHECK:
+            df_balance = my_broker.get_balance()
+            lst_assets = df_balance['symbol'].to_list()
+            lst_assets.remove('USDT')
+            # sorting both the lists COMMENT CEDE TO BE TESTED IF IT'S WORKS
+            self.symbols.sort()
+            lst_assets.sort()
+            if self.symbols == lst_assets:
+                for symbol in self.symbols:
+                    self.df_rtctrl.loc[self.df_rtctrl['symbol'] == symbol, "size"] = df_balance.loc[df_balance['symbol'] == symbol, 'size'].iloc[0]
+                    self.df_rtctrl.loc[self.df_rtctrl['symbol'] == symbol, "actual_net_price"] = df_balance.loc[df_balance['symbol'] == symbol, 'size'].iloc[0] * self.df_rtctrl.loc[self.df_rtctrl['symbol'] == symbol, 'actual_price'].iloc[0]
+                    self.df_rtctrl.loc[self.df_rtctrl['symbol'] == symbol, "roi_$"] = self.df_rtctrl.loc[self.df_rtctrl['symbol'] == symbol, 'actual_net_price'].iloc[0] - self.df_rtctrl.loc[self.df_rtctrl['symbol'] == symbol, 'buying_gross_price'].iloc[0]
+                    self.df_rtctrl.loc[self.df_rtctrl['symbol'] == symbol, "roi_%"] = self.df_rtctrl.loc[self.df_rtctrl['symbol'] == symbol, 'roi_$'].iloc[0] / self.df_rtctrl.loc[self.df_rtctrl['symbol'] == symbol, 'buying_gross_price'].iloc[0]
+                    self.df_rtctrl.loc[self.df_rtctrl['symbol'] == symbol, "portfolio_value"] = self.df_rtctrl.loc[self.df_rtctrl['symbol'] == symbol, 'actual_net_price'].iloc[0]
+                    self.wallet_cash = my_wallet.get_cash()
+                self.df_rtctrl['cash'] = self.wallet_cash
+                self.df_rtctrl['cash_borrowed'] = self.wallet_cash_borrowed
+                self.df_rtctrl['wallet_value'] = my_wallet.get_wallet_equity()
+
+                if len(self.df_rtctrl) > 0:
+                    self.wallet_value = self.df_rtctrl['wallet_value'][0]
+                else:
+                    self.wallet_value = self.wallet_cash
+                self.df_rtctrl['wallet_%'] = np.where(self.df_rtctrl['wallet_value'] != 0, 100 * self.df_rtctrl['portfolio_value'] / self.df_rtctrl['wallet_value'], 0.)
+
+                self.global_roi_value = self.wallet_value - self.init_cash_value
+                self.global_roi_percent = self.global_roi_value / self.init_cash_value * 100
+        '''
+
     def display_summary_info(self, record_info=None):
         wallet_cash = self.wallet_cash
         portfolio = self.df_rtctrl['actual_net_price'].sum()
