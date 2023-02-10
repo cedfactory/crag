@@ -127,7 +127,12 @@ class OrderApi(Client):
             params["before"] = before
         if limit:
             params["limit"] = limit
-
-
         print(params)
         return self._request_with_params(POST, SPOT_ORDER_V1_URL + '/fills', params)
+
+    def get_order_fill_detail(self, symbol, order_id):
+        dct_fills_infos = self.fills(symbol, order_id)
+        return dct_fills_infos['data']['tradeId'], \
+               dct_fills_infos['data']['price'], \
+               dct_fills_infos['data']['sizeQty'], \
+               dct_fills_infos['data']['fee']

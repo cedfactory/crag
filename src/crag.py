@@ -256,6 +256,7 @@ class Crag:
         sell_trade.stimulus = df_selling_symbols["stimulus"][bought_trade.symbol]
         sell_trade.symbol = bought_trade.symbol
         sell_trade.symbol_price = self.broker.get_value(bought_trade.symbol)
+        sell_trade.bought_gross_price = bought_trade.gross_price
 
         sell_trade.cash_borrowed = bought_trade.cash_borrowed
 
@@ -265,22 +266,22 @@ class Crag:
         # Option chosen... so far...
         sell_trade.gross_size = bought_trade.net_size
 
-        if sell_trade.type == "CLOSE_LONG":
+        if sell_trade.type == self.rtstr.close_long:
             # cash = cash - sell_trade.gross_size * sell_trade.buying_price
             # cash = cash + sell_trade.gross_size * sell_trade.symbol_price
             # cash = cash + sell_trade.gross_size * (sell_trade.symbol_price - sell_trade.buying_price)
 
             sell_trade.gross_price = sell_trade.gross_size * sell_trade.symbol_price
             # sell_trade.gross_price = sell_trade.gross_size * (sell_trade.symbol_price + sell_trade.symbol_price - sell_trade.buying_price)
-        elif sell_trade.type == "CLOSE_SHORT":
+        elif sell_trade.type == self.rtstr.close_short:
             # cash = cash + sell_trade.gross_size * sell_trade.buying_price
             # cash = cash - sell_trade.gross_size * sell_trade.symbol_price
             # cash = cash + sell_trade.gross_size * (sell_trade.buying_price - sell_trade.symbol_price)
 
             sell_trade.gross_price = sell_trade.gross_size * sell_trade.symbol_price  # (-) to be added un broker_execute_trade
             # sell_trade.gross_price = sell_trade.gross_size * (sell_trade.buying_price + sell_trade.buying_price - sell_trade.symbol_price)
-        elif sell_trade.type == "NO_POSITION": # CEDE WORKAROUND to be fixed
-            sell_trade.type = "CLOSE_LONG" # CEDE WORKAROUND grid trading
+        elif sell_trade.type == self.rtstr.no_position: # CEDE WORKAROUND to be fixed
+            sell_trade.type = self.rtstr.close_long # CEDE WORKAROUND grid trading
             sell_trade.gross_price = sell_trade.gross_size * sell_trade.symbol_price
 
         sell_trade.net_price = sell_trade.gross_price - sell_trade.gross_price * self.broker.get_commission(bought_trade.symbol)
@@ -288,16 +289,19 @@ class Crag:
         sell_trade.buying_fee = bought_trade.buying_fee
         sell_trade.selling_fee = sell_trade.gross_price - sell_trade.net_price
         sell_trade.roi = 100 * (sell_trade.net_price - bought_trade.gross_price) / bought_trade.gross_price
-        if sell_trade.type == "CLOSE_SHORT":
+        if sell_trade.type == self.rtstr.close_short:
             sell_trade.roi = -sell_trade.roi
         self.traces_trade_performed = self.traces_trade_performed + 1
         if sell_trade.roi < 0:
             self.traces_trade_negative = self.traces_trade_negative + 1
+            '''
+            # CEDE DEBUG:
             if (sell_trade.symbol_price - sell_trade.buying_price) < 0:
                 print('NEGATIVE TRADE: $', sell_trade.net_price - bought_trade.gross_price)
             else:
                 print('NEGATIVE TRADE DUE TO FEES: $', sell_trade.net_price - bought_trade.gross_price)
             print('BUYING AT: $', sell_trade.buying_price, ' SELLING AT: $', sell_trade.symbol_price)
+            '''
         else:
             self.traces_trade_positive = self.traces_trade_positive + 1
         return sell_trade
