@@ -1,4 +1,4 @@
-from src import rtdp,rtdp_simulation,broker_simulation,broker_ccxt,broker_bitget,rtstr,rtstr_dummy_test,rtstr_dummy_test_tp,rtstr_grid_trading_multi,rtstr_balance_trading,rtstr_bollinger_trend,rtstr_tv_recommendation_mid,rtstr_balance_trading_multi,rtstr_super_reversal,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC,analyser,benchmark,automatic_test_plan
+from src import rtdp,rtdp_simulation,broker_simulation,broker_ccxt,broker_bitget,broker_bitget_api,broker_bitget_ccxt,rtstr,rtstr_dummy_test,rtstr_dummy_test_tp,rtstr_grid_trading_multi,rtstr_balance_trading,rtstr_bollinger_trend,rtstr_tv_recommendation_mid,rtstr_balance_trading_multi,rtstr_super_reversal,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC,analyser,benchmark,automatic_test_plan
 from src import crag,crag_helper,trade
 import pandas as pd
 import os, sys
@@ -102,51 +102,60 @@ def crag_analyse_results():
     my_analyser.run_analyse()
 
 def crag_broker():
-    my_broker = broker_bitget.BrokerBitGet({'account':'subaccount1'})
+    #my_broker = broker_bitget_ccxt.BrokerBitGetCcxt({'account':'subaccount1'})
+    my_broker = broker_bitget_api.BrokerBitGetApi({'account':'subaccount1'})
     # my_broker = broker_ccxt.BrokerCCXT({'exchange': 'bitget', 'account': 'room2', 'simulation': 0})
 
     #
     # orders
     #
-    symbol = my_broker.get_symbol_ccxt('BTC', 'USDT')
+    #symbol = my_broker.get_symbol_ccxt('BTC', 'USDT')
     
-    print("symbol BTC USDT : ", symbol)
+    #print("symbol BTC USDT : ", symbol)
 
-    print("### open_positions :\n", my_broker.get_open_position())
-    
+    '''
+    order = my_broker.open_long_position("BTC", 0.01)
     # open long
+    symbol = my_broker.get_symbol('ETH', 'USDT')
+    marginCoin = 'USDT'
+    symbol = "BTC"
+
+    order = my_broker.open_short_position(symbol, 0.011)
+    print(order)
+    print("### open_positions :\n", my_broker.get_open_position_ccxt())
+
+    order = my_broker.close_short_position(symbol, 0.011)
+    print(order)
+    
+    print("### open_positions :\n", my_broker.get_open_position())
+
+
     #order = my_broker.place_market_order_ccxt(symbol, "buy", 0.001, False)
+    #order = my_broker.open_short_position(symbol, 0.001)
     #print(order)
     # open short
     #order = my_broker.place_market_order_ccxt(symbol, "sell", 0.001, False)
+    #order = my_broker.close_short_position(symbol, 0.001)
     #print(order)
-
-
-    print("### open_positions_ccxt :\n", my_broker.get_open_position_ccxt())
-
-    return
 
     future_market = my_broker.get_future_market()
     print(future_market)
 
     my_broker.get_list_of_account_assets()
     my_broker.print_account_assets()
-
-    open_positions_ccxt = my_broker.get_open_position_ccxt()
-    open_positions_api = my_broker.get_open_position()
-    print("### open_positions_ccxt :\n", open_positions_ccxt)
-    print("### open_positions_api :\n", open_positions_api)
+    '''
 
     print("### cash ### ", my_broker.get_cash())
+
+    print("### open_positions :\n", my_broker.get_open_position())
 
     print("### balance ###")
     balance = my_broker.get_balance()
     print(balance)
 
-    print("### usdt equity (from api) : ", my_broker.get_usdt_equity())
-    print("### usdt equity (from ccxt) : ", my_broker.get_usdt_equity_ccxt())
+    print("### usdt equity : ", my_broker.get_usdt_equity())
 
-    symbol = my_broker.get_symbol('BTC', 'USDT')
+    symbol = my_broker._get_symbol('BTC', 'USDT')
     print("symbol BTC USDT : ", symbol)
 
     print("### history ###")
@@ -158,9 +167,11 @@ def crag_broker():
     startTime = endTime - 4 * 60 * 60 * 1000
     pageSize = 2
     history = my_broker.get_order_history(symbol, startTime, endTime, pageSize)
+    print("history")
     print(history)
 
     print("### value = ", my_broker.get_value(symbol))
+    return
 
     leverage_min, leverage_max = my_broker.get_symbol_min_max_leverage(symbol)
     print("### leverage_min = ", leverage_min)
