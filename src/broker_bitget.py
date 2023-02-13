@@ -1,12 +1,4 @@
-from .bitget.mix import market_api as market
-from .bitget.mix import account_api as account
-from .bitget.mix import position_api as position
-from .bitget.mix import order_api as order
-from .bitget.mix import ccxt_bitget as prep
-
 from . import broker,rtdp,utils
-from dotenv import load_dotenv
-import os
 import pandas as pd
 
 class BrokerBitGet(broker.Broker):
@@ -179,73 +171,9 @@ class BrokerBitGet(broker.Broker):
     def export_history(self, target):
         pass
 
-    '''
-    def get_symbol(self, coin, base):
-        self.get_future_market()
-        symbol = self.df_market.loc[(self.df_market['baseCoin'] == coin) & (self.df_market['quoteCoin'] == base), "symbol"].values[0]
-        return symbol
-    '''
-
-    @authentication_required
-    def get_account_asset(self):
-        result = self.accountApi.accountAssets(productType='umcbl')
-        return result
-
-    @authentication_required
-    def get_order_current(self, symbol):
-        current = self.orderApi.current(symbol)
-        return current
-
-    @authentication_required
-    def cancel_order(self, symbol, marginCoin, orderId):
-        result = self.orderApi.cancel_orders(symbol, marginCoin, orderId)
-        if result['msg'] == "success":
-            return True, result['data']['orderId']
-        else:
-            return False , False
-
-    def get_order_fill_detail(self, symbol, order_id):
-        transaction_id, transaction_price,  transaction_size,  transaction_fee = self.orderApi.get_order_fill_detail(symbol, order_id)
-        return transaction_id, transaction_price,  transaction_size,  transaction_fee
-
-    @authentication_required
-    def get_symbol_min_max_leverage(self, symbol):
-        leverage = self.marketApi.get_symbol_leverage(symbol)
-        return leverage['data']['minLeverage'], leverage['data']['maxLeverage']
-
-    @authentication_required
-    def get_account_symbol_leverage(self, symbol, marginCoin='USDT'):
-        dct_account = self.accountApi.account(symbol, marginCoin)
-        return dct_account['data']['crossMarginLeverage'], dct_account['data']['fixedLongLeverage'], dct_account['data']['fixedShortLeverage']
-
-    @authentication_required
-    def set_account_symbol_leverage(self, symbol, leverage):
-        dct_account = self.accountApi.leverage(symbol, 'USDT', leverage)
-        return dct_account['data']['crossMarginLeverage'], dct_account['data']['longLeverage'], dct_account['data']['shortLeverage']
-
     def _build_df_open_positions(self, open_positions):
         df_open_positions = pd.DataFrame(columns=["symbol", "holdSide", "leverage", "marginCoin", "available", "total", "marketPrice"])
         for i in range(len(open_positions)):
             data = open_positions[i]
             df_open_positions.loc[i] = pd.Series({"symbol": data["symbol"], "holdSide": data["holdSide"], "leverage": data["leverage"], "marginCoin": data["marginCoin"],"available": float(data["available"]),"total": float(data["total"]),"marketPrice": data["marketPrice"]})
         return df_open_positions
-
-    @authentication_required
-    def convert_amount_to_precision(self, symbol, amount):
-        return self.ccxtApi.convert_amount_to_precision(symbol, amount)
-
-    @authentication_required
-    def convert_price_to_precision(self, symbol, price):
-        return self.ccxtApi.convert_price_to_precision(symbol, price)
-
-    @authentication_required
-    def get_min_order_amount(self, symbol):
-        return self.ccxtApi.get_min_order_amount(symbol)
-
-    @authentication_required
-    def export_history(self, target=None):
-        return self.ccxtApi.export_history(target)
-
-    @authentication_required
-    def get_portfolio_value(self):
-        return self.ccxtApi.get_portfolio_value()

@@ -91,3 +91,23 @@ class BrokerBitGetCcxt(broker_bitget.BrokerBitGet):
     def get_value(self, symbol):
         value = self.ccxtApi.get_bid_ask_price(symbol)
         return value["ask"]
+
+    @authentication_required
+    def convert_amount_to_precision(self, symbol, amount):
+        return self.ccxtApi.convert_amount_to_precision(symbol, amount)
+
+    @authentication_required
+    def convert_price_to_precision(self, symbol, price):
+        return self.ccxtApi.convert_price_to_precision(symbol, price)
+
+    @authentication_required
+    def get_min_order_amount(self, symbol):
+        return self.ccxtApi.get_min_order_amount(symbol)
+
+    @authentication_required
+    def export_history(self, target=None):
+        return self.ccxtApi.export_history(target)
+
+    @authentication_required
+    def get_portfolio_value(self):
+        return self.ccxtApi.get_portfolio_value()

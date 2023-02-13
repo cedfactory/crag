@@ -238,4 +238,40 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         self._fill_df_account_from_market()
         self._fill_price_and_size_from_bitget()
 
-        
+
+    @authentication_required
+    def get_account_asset(self):
+        result = self.accountApi.accountAssets(productType='umcbl')
+        return result
+
+    @authentication_required
+    def get_order_current(self, symbol):
+        current = self.orderApi.current(symbol)
+        return current
+
+    @authentication_required
+    def cancel_order(self, symbol, marginCoin, orderId):
+        result = self.orderApi.cancel_orders(symbol, marginCoin, orderId)
+        if result['msg'] == "success":
+            return True, result['data']['orderId']
+        else:
+            return False , False
+
+    def get_order_fill_detail(self, symbol, order_id):
+        transaction_id, transaction_price,  transaction_size,  transaction_fee = self.orderApi.get_order_fill_detail(symbol, order_id)
+        return transaction_id, transaction_price,  transaction_size,  transaction_fee
+
+    @authentication_required
+    def get_symbol_min_max_leverage(self, symbol):
+        leverage = self.marketApi.get_symbol_leverage(symbol)
+        return leverage['data']['minLeverage'], leverage['data']['maxLeverage']
+
+    @authentication_required
+    def get_account_symbol_leverage(self, symbol, marginCoin='USDT'):
+        dct_account = self.accountApi.account(symbol, marginCoin)
+        return dct_account['data']['crossMarginLeverage'], dct_account['data']['fixedLongLeverage'], dct_account['data']['fixedShortLeverage']
+
+    @authentication_required
+    def set_account_symbol_leverage(self, symbol, leverage):
+        dct_account = self.accountApi.leverage(symbol, 'USDT', leverage)
+        return dct_account['data']['crossMarginLeverage'], dct_account['data']['longLeverage'], dct_account['data']['shortLeverage']
