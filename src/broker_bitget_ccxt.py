@@ -93,6 +93,18 @@ class BrokerBitGetCcxt(broker_bitget.BrokerBitGet):
         return value["ask"]
 
     @authentication_required
+    def get_symbol_min_max_leverage(self, symbol):
+        symbol = self._get_symbol(symbol, "USDT")
+        leverage = self.ccxtApi._session.fetch_leverage(symbol)
+        return leverage['data']['minLeverage'], leverage['data']['maxLeverage']
+
+    @authentication_required
+    def set_account_symbol_leverage(self, symbol, leverage):
+        symbol = self._get_symbol(symbol, "USDT")
+        leverage = self.ccxtApi._session.set_leverage(leverage, symbol)
+        return leverage['data']['crossMarginLeverage'], leverage['data']['longLeverage'], leverage['data']['shortLeverage']
+
+    @authentication_required
     def convert_amount_to_precision(self, symbol, amount):
         return self.ccxtApi.convert_amount_to_precision(symbol, amount)
 

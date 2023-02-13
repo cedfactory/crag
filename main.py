@@ -104,14 +104,10 @@ def crag_analyse_results():
 def crag_broker():
     #my_broker = broker_bitget_ccxt.BrokerBitGetCcxt({'account':'subaccount1'})
     my_broker = broker_bitget_api.BrokerBitGetApi({'account':'subaccount1'})
-    # my_broker = broker_ccxt.BrokerCCXT({'exchange': 'bitget', 'account': 'room2', 'simulation': 0})
 
     #
     # orders
     #
-    #symbol = my_broker.get_symbol_ccxt('BTC', 'USDT')
-    
-    #print("symbol BTC USDT : ", symbol)
 
     '''
     order = my_broker.open_long_position("BTC", 0.01)
@@ -171,18 +167,15 @@ def crag_broker():
     print(history)
 
     print("### value = ", my_broker.get_value(symbol))
-    return
 
     leverage_min, leverage_max = my_broker.get_symbol_min_max_leverage(symbol)
     print("### leverage_min = ", leverage_min)
     print("### leverage_max = ", leverage_max)
 
-    crossMarginLeverage, shortLeverage, longLeverage = my_broker.get_account_symbol_leverage(symbol)
-    print('leverage: ', crossMarginLeverage, shortLeverage, longLeverage)
-
     crossMarginLeverage, shortLeverage, longLeverage =  my_broker.set_account_symbol_leverage(symbol, "5")
     print('leverage: ', crossMarginLeverage, shortLeverage, longLeverage)
 
+    return
     crossMarginLeverage, shortLeverage, longLeverage = my_broker.get_account_symbol_leverage(symbol)
     print('leverage: ', crossMarginLeverage, shortLeverage, longLeverage)
 
@@ -192,27 +185,8 @@ def crag_broker():
 
 
 
-
-
-
-    # CEDE COMMENT : sub-account-contract-assets failed???
-    # assets = my_broker.get_account_asset()
-
-    symbol = my_broker.get_symbol('XRP', 'USDT')
-    marginCoin = 'USDT'
-
-    # orderId = '1001895328011161600'
-    # clientOid = '1001895328011161601'
-    # orderId = '1001877588152061955'
-    # clientOid = '1001877588156256262'
-    # cancelStatus = my_broker.cancel_order(symbol, marginCoin, orderId)
-    # print(cancelStatus)
-
-
-
     order_data = my_broker.get_order_current(symbol)
     print(order_data)
-
 
 
     print("### my trades ###")

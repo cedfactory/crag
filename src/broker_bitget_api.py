@@ -263,15 +263,18 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     @authentication_required
     def get_symbol_min_max_leverage(self, symbol):
+        symbol = self._get_symbol(symbol)
         leverage = self.marketApi.get_symbol_leverage(symbol)
         return leverage['data']['minLeverage'], leverage['data']['maxLeverage']
 
     @authentication_required
-    def get_account_symbol_leverage(self, symbol, marginCoin='USDT'):
+    def get_account_symbol_leverage(self, symbol, marginCoin="USDT"):
+        symbol = self._get_symbol(symbol, marginCoin)
         dct_account = self.accountApi.account(symbol, marginCoin)
         return dct_account['data']['crossMarginLeverage'], dct_account['data']['fixedLongLeverage'], dct_account['data']['fixedShortLeverage']
 
     @authentication_required
     def set_account_symbol_leverage(self, symbol, leverage):
-        dct_account = self.accountApi.leverage(symbol, 'USDT', leverage)
+        symbol = self._get_symbol(symbol)
+        dct_account = self.accountApi.leverage(symbol, "USDT", leverage)
         return dct_account['data']['crossMarginLeverage'], dct_account['data']['longLeverage'], dct_account['data']['shortLeverage']
