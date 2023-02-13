@@ -39,9 +39,14 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         return wrapped
 
     def _get_symbol(self, coin, base = "USDT"):
-        self.get_future_market()
+        # self.get_future_market()
         symbol = self.df_market.loc[(self.df_market['baseCoin'] == coin) & (self.df_market['quoteCoin'] == base), "symbol"].values[0]
         return symbol
+
+    def _get_symbol_min_trade_amount(self, coin, base = "USDT"):
+        # self.get_future_market()
+        minTradeNum = self.df_market.loc[(self.df_market['baseCoin'] == coin) & (self.df_market['quoteCoin'] == base), "minTradeNum"].values[0]
+        return float(minTradeNum)
 
     #@authentication_required
     def get_open_position(self):
