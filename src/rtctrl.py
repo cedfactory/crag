@@ -37,7 +37,7 @@ class rtctrl():
         self.record_tracking = True
 
     def get_df_header(self):
-        return ["symbol", "time", "actual_price", "size", "fees", "buying_gross_price", "actual_net_price", "roi_$", "roi_%", "portfolio_value", "cash", 'cash_borrowed',"wallet_value", "wallet_%"]
+        return ["symbol", "time", "actual_price", "size", "fees", "buying_gross_price", "actual_net_price", "roi_$", "roi_%", "portfolio_value", "cash", 'cash_borrowed',"wallet_value", "wallet_%", "unrealizedPL", "wallet_unrealizedPL"]
 
     def get_df_header_tracking(self):
         return ["time", "roi%", "cash", "portfolio", "wallet", "asset%"]
@@ -125,9 +125,13 @@ class rtctrl():
                     self.df_rtctrl.loc[self.df_rtctrl['symbol'] == symbol, "roi_%"] = self.df_rtctrl.loc[self.df_rtctrl['symbol'] == symbol, 'roi_$'].iloc[0] / self.df_rtctrl.loc[self.df_rtctrl['symbol'] == symbol, 'buying_gross_price'].iloc[0]
                     self.df_rtctrl.loc[self.df_rtctrl['symbol'] == symbol, "portfolio_value"] = self.df_rtctrl.loc[self.df_rtctrl['symbol'] == symbol, 'actual_net_price'].iloc[0]
                     self.wallet_cash = my_wallet.get_cash()
+                    unrealizedPL = my_broker.get_open_position_unrealizedPL(symbol)
+                    self.df_rtctrl.loc[self.df_rtctrl['symbol'] == symbol, "unrealizedPL"] = unrealizedPL
+                    
                 self.df_rtctrl['cash'] = self.wallet_cash
                 self.df_rtctrl['cash_borrowed'] = self.wallet_cash_borrowed
                 self.df_rtctrl['wallet_value'] = my_wallet.get_wallet_equity()
+                self.df_rtctrl['wallet_unrealizedPL'] = self.df_rtctrl['unrealizedPL'].sum()
 
                 if len(self.df_rtctrl) > 0:
                     self.wallet_value = self.df_rtctrl['wallet_value'][0]

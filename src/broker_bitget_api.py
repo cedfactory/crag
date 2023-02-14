@@ -54,6 +54,16 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         lst_all_positions = [data for data in all_positions["data"] if float(data["total"]) != 0.]
         return self._build_df_open_positions(lst_all_positions)
 
+    #@authentication_required
+    def get_open_position_unrealizedPL(self, symbol):
+        all_positions = self.positionApi.all_position(productType='umcbl',marginCoin='USDT')
+        for data in all_positions["data"]:
+            if data["symbol"] == symbol:
+                if float(data["total"]) != 0.:
+                    return float(data["unrealizedPL"])
+                else:
+                    return 0.0
+
     '''
     marginCoin: Deposit currency
     size: It is quantity when the price is limited. The market price is the limit. The sales is the quantity
