@@ -61,10 +61,8 @@ class BrokerBitGet(broker.Broker):
             amount = trade.gross_size
             # type = "market" # CEDE NOT USED
             if trade.type == "OPEN_LONG":
-                side = "buy"
-                reduce = False
                 if amount > self.get_min_order_amount(symbol):
-                    trade.orderId = self.place_market_order_ccxt(symbol, side, trade.gross_size, reduce)
+                    trade.orderId = self.open_long_position(symbol, trade.gross_size)
                     trade.tradeId, trade.symbol_price, trade.net_size, trade.buying_fee = self.get_order_fill_detail(symbol, trade.orderId)
                     trade.net_price = trade.net_size * trade.symbol_price
                     # CEDE: Option 1&2 should have the same value - Keep the more accurate
@@ -74,10 +72,8 @@ class BrokerBitGet(broker.Broker):
                 else:
                     return False
             elif trade.type == "OPEN_SHORT":
-                side = "sell"
-                reduce = False
                 if amount > self.get_min_order_amount(symbol):
-                    trade.orderId = self.place_market_order_ccxt(symbol, side, trade.gross_size, reduce)
+                    trade.orderId = self.open_short_position(symbol, trade.gross_size)
                     trade.tradeId, trade.symbol_price, trade.net_size, trade.buying_fee = self.get_order_fill_detail(symbol, trade.orderId)
                     trade.net_price = trade.net_size * trade.symbol_price
                     # CEDE: Option 1&2 should have the same value - Keep the more accurate
@@ -88,7 +84,8 @@ class BrokerBitGet(broker.Broker):
                 else:
                     return False
             elif trade.type == "CLOSE_LONG":
-                result, orderId = self.cancel_order(symbol, 'USDT', trade.orderId) # Possibility to use place_market_order_ccxt instead
+                #result, orderId = self.cancel_order(symbol, 'USDT', trade.orderId) # Possibility to use place_market_order_ccxt instead
+                orderId = self.close_long_position(symbol, trade.net_size)
                 if result:
                     tradeId, trade.symbol_price, trade.net_size, order_fee = self.get_order_fill_detail(symbol, orderId) # Is it possible to get info from a canceled order? to be tested
                     trade.net_price = trade.net_size * trade.symbol_price
@@ -103,7 +100,8 @@ class BrokerBitGet(broker.Broker):
                 else:
                     return False
             elif trade.type == "CLOSE_SHORT":
-                result, orderId = self.cancel_order(symbol, 'USDT', trade.orderId) # Possibility to use place_market_order_ccxt instead
+                #result, orderId = self.cancel_order(symbol, 'USDT', trade.orderId) # Possibility to use place_market_order_ccxt instead
+                orderId = self.close_short_position(symbol, trade.net_size)
                 if result:
                     tradeId, trade.symbol_price, trade.net_size, order_fee = self.get_order_fill_detail(symbol, orderId) # Is it possible to get info from a canceled order? to be tested
                     trade.net_price = trade.net_size * trade.symbol_price
