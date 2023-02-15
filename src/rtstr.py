@@ -45,18 +45,6 @@ class RealTimeStrategy(metaclass=ABCMeta):
                 self.lst_symbols = pd.read_csv("./symbols/"+symbols)['symbol'].tolist()
             else:
                 self.lst_symbols = symbols.split(",")
-            '''
-            # Modif CEDE:
-            # get self.lst_symbols from broker
-            # csv files: symbols_marginCoin_df_single.csv
-            # from broker: _get_symbol(self, coin, base="USDT")
-            # issue broker not defined in rtstr
-            lst_symbols = pd.read_csv("./symbols/"+symbols)['symbol'].tolist()
-            lst_base = pd.read_csv("./symbols/" + symbols)['base'].tolist()
-            self.lst_symbols = []
-            for (coin, base) in zip(lst_symbols, lst_base):
-                self.lst_symbols.append(my_broker.get_symbol(coin, base)
-            '''
 
             self.SL = int(params.get("sl", self.SL))
             self.TP = int(params.get("tp", self.TP))
