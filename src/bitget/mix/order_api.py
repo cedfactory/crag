@@ -13,11 +13,11 @@ class OrderApi(Client):
     price: Mandatory in case of price limit
     marginCoin: Deposit currency
     size: It is quantity when the price is limited. The market price is the limit. The sales is the quantity
-    side：open_long open_short close_long close_short
+    side: open_long open_short close_long close_short
     orderType: limit(fixed price)  market(market price)
     timeInForceValue: normal(Ordinary price limit order)   postOnly(It is only a maker. The market price is not allowed to use this)  ioc(Close immediately and cancel the remaining)  fok(Complete transaction or immediate cancellation)
     presetTakeProfitPrice: Default stop profit price
-    presetStopLossPrice：Preset stop loss price
+    presetStopLossPrice: Preset stop loss price
     :return:
     '''
     def place_order(self, symbol, marginCoin, size, side, orderType, price='', clientOrderId='', timeInForceValue='normal', presetTakeProfitPrice='', presetStopLossPrice=''):
@@ -43,7 +43,7 @@ class OrderApi(Client):
     marginCoin: Deposit currency
     order_data: 
     size: It is quantity when the price is limited. The market price is the limit. The sales is the quantity
-    side：open_long open_short close_long close_short
+    side: open_long open_short close_long close_short
     orderType: limit(fixed price)  market(market price)
     timeInForceValue: normal(Ordinary price limit order)   postOnly(It is only a maker. The market price is not allowed to use this)  ioc(Close immediately and cancel the remaining)  fok(Complete transaction or immediate cancellation)
     presetTakeProfitPrice: Default stop profit price
@@ -107,7 +107,7 @@ class OrderApi(Client):
 
     '''
     Get Historical Delegation
-    isPre： Whether to query the previous page
+    isPre: Whether to query the previous page
     :return:
     '''
     def history(self, symbol, startTime, endTime, pageSize, lastEndId='', isPre=False):

@@ -2,6 +2,7 @@ from .bitget.mix import market_api as market
 from .bitget.mix import account_api as account
 from .bitget.mix import position_api as position
 from .bitget.mix import order_api as order
+from .bitget.spot import public_api as public
 
 from . import broker_bitget
 from . import utils
@@ -25,6 +26,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         self.accountApi = account.AccountApi(exchange_api_key, exchange_api_secret, exchange_api_password, use_server_time=False, first=False)
         self.positionApi = position.PositionApi(exchange_api_key, exchange_api_secret, exchange_api_password, use_server_time=False, first=False)
         self.orderApi = order.OrderApi(exchange_api_key, exchange_api_secret, exchange_api_password, use_server_time=False, first=False)
+        self.publicApi = public.PublicApi(exchange_api_key, exchange_api_secret, exchange_api_password, use_server_time=False, first=False)
 
         return self.marketApi != None
 
@@ -69,50 +71,45 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     size: It is quantity when the price is limited. The market price is the limit. The sales is the quantity
     side \in {open_long, open_short, close_long, close_short}
     orderType \in {limit(fixed price), market(market price)}
-
-    !!!!!!! doesn't work. TODO : check why ?
-    symbol = my_broker.get_symbol('ETH', 'USDT')
-    marginCoin = 'USDT'
-    order = my_broker.place_order_api(symbol, marginCoin=marginCoin, size=0.01, side='close_long', orderType='market')
-    print(order)
-    cancelStatus = my_broker.cancel_order(symbol, marginCoin, orderId)
+    returns :
+    - transaction_id
+    - transaction_price
+    - transaction_size
+    - transaction_fee
     '''
     @authentication_required
     def _place_order_api(self, symbol, marginCoin, size, side, orderType):
+        result = {}
         order = self.orderApi.place_order(symbol, marginCoin, size, side, orderType,
                                          price='',
                                          clientOrderId='', timeInForceValue='normal',
                                          presetTakeProfitPrice='', presetStopLossPrice='')
-        print(order)
+        # order structure contains order['data']['orderId'], order['data']['clientOid'] & order['requestTime']
         if order['msg'] == 'success':
-            return order['data']['orderId'], order['data']['clientOid'], order['requestTime']
+            orderId = order['data']['orderId']
+            result["transaction_id"], result["transaction_price"], result["transaction_size"], result["transaction_fee"] = self.get_order_fill_detail(symbol, orderId)
+            result["order_id"] = orderId
+            result["success"] = True
         else:
-            return order['msg']
+            result["success"] = False
+            result["msg"] = order["msg"]
+        return result
 
     @authentication_required
-    def open_long_position(self, symbol, amount):
-        marginCoin = "USDT"
-        symbol = self._get_symbol(symbol, marginCoin)
-        print(symbol)
-        return self._place_order_api(symbol, marginCoin=marginCoin, size=amount, side='open_long', orderType='market')
+    def _open_long_position(self, symbol, amount):
+        return self._place_order_api(symbol, marginCoin="USDT", size=amount, side='open_long', orderType='market')
 
     @authentication_required
-    def close_long_position(self, symbol, amount):
-        marginCoin = "USDT"
-        symbol = self._get_symbol(symbol, marginCoin)
-        return self._place_order_api(symbol, marginCoin=marginCoin, size=amount, side='close_long', orderType='market')
+    def _close_long_position(self, symbol, amount):
+        return self._place_order_api(symbol, marginCoin="USDT", size=amount, side='close_long', orderType='market')
 
     @authentication_required
-    def open_short_position(self, symbol, amount):
-        marginCoin = "USDT"
-        symbol = self._get_symbol(symbol, marginCoin)
-        return self._place_order_api(symbol, marginCoin=marginCoin, size=amount, side='open_short', orderType='market')
+    def _open_short_position(self, symbol, amount):
+        return self._place_order_api(symbol, marginCoin="USDT", size=amount, side='open_short', orderType='market')
 
     @authentication_required
-    def close_short_position(self, symbol, amount):
-        marginCoin = "USDT"
-        symbol = self._get_symbol(symbol, marginCoin)
-        return self._place_order_api(symbol, marginCoin=marginCoin, size=amount, side='close_short', orderType='market')
+    def _close_short_position(self, symbol, amount):
+        return self._place_order_api(symbol, marginCoin="USDT", size=amount, side='close_short', orderType='market')
 
     @authentication_required
     def get_usdt_equity(self):
@@ -288,3 +285,11 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         symbol = self._get_symbol(symbol)
         dct_account = self.accountApi.leverage(symbol, "USDT", leverage)
         return dct_account['data']['crossMarginLeverage'], dct_account['data']['longLeverage'], dct_account['data']['shortLeverage']
+
+    def get_min_order_amount(self, symbol):
+        if "_" in symbol:
+            symbol = symbol[:3]+"USDT_SPBL"
+        else:
+            symbol += "USDT_SPBL"
+        product = self.publicApi.product(symbol)
+        return float(product["data"]["minTradeAmount"])

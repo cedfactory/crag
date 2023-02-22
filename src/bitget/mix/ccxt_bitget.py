@@ -80,7 +80,11 @@ class PerpBitget():
         return {"bid": ticker["bid"], "ask": ticker["ask"]}
 
     def get_min_order_amount(self, symbol):
-        return self._session.markets_by_id[symbol]["info"]["minProvideSize"]
+        if "/" in symbol:
+            symbol = symbol.split("/")[0]+"USDT_SPBL" # hack : retrieve the symbol name
+        else:
+            symbol += "USDT_SPBL"
+        return float(self._session.markets_by_id[symbol][0]["info"]["minTradeAmount"]) # minTradeUSDT
 
     def convert_amount_to_precision(self, symbol, amount):
         return self._session.amount_to_precision(symbol, amount)
@@ -133,7 +137,8 @@ class PerpBitget():
                 params={"reduceOnly": reduce}
             )
         except BaseException as err:
-            raise Exception(err)
+            print("exception : ", err)
+            return None
 
     @authentication_required
     def place_market_stop_loss(self, symbol, side, amount, trigger_price, reduce=False):
