@@ -50,6 +50,11 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         minTradeNum = self.df_market.loc[(self.df_market['baseCoin'] == coin) & (self.df_market['quoteCoin'] == base), "minTradeNum"].values[0]
         return float(minTradeNum)
 
+    def single_position(self, symbol, marginCoin = "USDT"):
+        single_position = self.positionApi.single_position(symbol, marginCoin='USDT')
+        return single_position
+
+
     #@authentication_required
     def get_open_position(self):
         all_positions = self.positionApi.all_position(productType='umcbl',marginCoin='USDT')
@@ -265,8 +270,15 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             return False , False
 
     def get_order_fill_detail(self, symbol, order_id):
-        transaction_id, transaction_price,  transaction_size,  transaction_fee = self.orderApi.get_order_fill_detail(symbol, order_id)
-        return transaction_id, transaction_price,  transaction_size,  transaction_fee
+        trade_id = price = fillAmount = sizeQty = fee = None
+        response = self.orderApi.fills(symbol, order_id)
+        if len(response["data"]) > 0:
+            trade_id = response["data"][0]["tradeId"]
+            price = response["data"][0]["price"]
+            sizeQty = response["data"][0]["sizeQty"]
+            fee = response["data"][0]["fee"]
+            fillAmount = response["data"][0]["fillAmount"]
+        return trade_id, price, fillAmount, sizeQty, fee
 
     @authentication_required
     def get_symbol_min_max_leverage(self, symbol):
