@@ -56,67 +56,66 @@ class BrokerBitGet(broker.Broker):
     @authentication_required
     def execute_trade(self, trade):
         print("!!!!!!! EXECUTE THE TRADE !!!!!!!")
+        trade.success = False
         symbol = self._get_symbol(trade.symbol)
         amount = trade.gross_size
         if trade.type == "OPEN_LONG":
             if amount > self.get_min_order_amount(symbol):
                 transaction = self._open_long_position(symbol, trade.gross_size)
-                print("transaction : ", transaction)
-                trade.orderId = transaction
-                trade.tradeId, trade.symbol_price, trade.net_size, trade.buying_fee = self.get_order_fill_detail(symbol, trade.orderId)
-                trade.net_price = trade.net_size * trade.symbol_price
-                # CEDE: Option 1&2 should have the same value - Keep the more accurate
-                trade.bought_gross_price = trade.gross_size * trade.symbol_price # CEDE: Option 1
-                trade.bought_gross_price = trade.net_price + trade.buying_fee # CEDE: Option 2
-                self.cash = self.get_cash()
-            else:
-                return False
+                if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
+                    trade.success = True
+                    trade.orderId = transaction["data"]["orderId"]
+                    trade.tradeId, trade.symbol_price, trade.gross_price, trade.gross_size, trade.buying_fee = self.get_order_fill_detail(symbol, trade.orderId)
+                    #trade.net_price = trade.net_size * trade.symbol_price # net_size ?
+                    #trade.bought_gross_price1 = trade.gross_size * trade.symbol_price # CEDE: Option 1
+                    #trade.bought_gross_price2 = trade.net_price + trade.buying_fee # CEDE: Option 2
+
         elif trade.type == "OPEN_SHORT":
             if amount > self.get_min_order_amount(symbol):
-                trade.orderId = self._open_short_position(symbol, trade.gross_size)
-                trade.tradeId, trade.symbol_price, trade.net_size, trade.buying_fee = self.get_order_fill_detail(symbol, trade.orderId)
-                trade.net_price = trade.net_size * trade.symbol_price
-                # CEDE: Option 1&2 should have the same value - Keep the more accurate
-                trade.bought_gross_price = trade.gross_size * trade.symbol_price # CEDE: Option 1
-                trade.bought_gross_price = trade.net_price + trade.buying_fee # CEDE: Option 2
-                self.cash = self.get_cash()
-                self.cash_borrowed = self.cash_borrowed + abs(trade.net_price) # CEDE: cash_borrowed to be investigated
-            else:
-                return False
+                transaction = self._open_short_position(symbol, trade.gross_size)
+                if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
+                    trade.success = True
+                    trade.orderId = transaction["data"]["orderId"]
+                    trade.tradeId, trade.symbol_price, trade.gross_price, trade.gross_size, trade.buying_fee = self.get_order_fill_detail(symbol, trade.orderId)
+                    #trade.net_price = trade.net_size * trade.symbol_price
+                    # CEDE: Option 1&2 should have the same value - Keep the more accurate
+                    trade.bought_gross_price1 = trade.gross_size * trade.symbol_price # CEDE: Option 1
+                    #trade.bought_gross_price2 = trade.net_price + trade.buying_fee # CEDE: Option 2
+                    #self.cash_borrowed = self.cash_borrowed + abs(trade.net_price) # CEDE: cash_borrowed to be investigated
+
         elif trade.type == "CLOSE_LONG":
-            #result, orderId = self.cancel_order(symbol, 'USDT', trade.orderId) # Possibility to use place_market_order_ccxt instead
-            orderId = self._close_long_position(symbol, trade.net_size)
-            if result:
-                tradeId, trade.symbol_price, trade.net_size, order_fee = self.get_order_fill_detail(symbol, orderId) # Is it possible to get info from a canceled order? to be tested
-                trade.net_price = trade.net_size * trade.symbol_price
+            transaction = self._close_long_position(symbol, trade.gross_size)
+            if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
+                trade.success = True
+                trade.orderId = transaction["data"]["orderId"]
+                trade.tradeId, trade.symbol_price, trade.gross_price, trade.gross_size, trade.buying_fee = self.get_order_fill_detail(symbol, trade.orderId)
+                #trade.net_price = trade.net_size * trade.symbol_price # net_size ?
                 # CEDE: Solution 1
-                trade.gross_price = trade.gross_size * trade.symbol_price
-                trade.selling_fee = trade.gross_price - trade.net_price
+                #trade.gross_price = trade.gross_size * trade.symbol_price
+                #trade.selling_fee = trade.gross_price - trade.net_price
                 # CEDE: Solution 2
-                trade.selling_fee = order_fee # CEDE: to be verified if retruned order_fee include buying_fee + selling_fee (cancelation) or just the selling_fee
-                trade.gross_price = trade.net_size + trade.selling_fee
-                trade.roi = 100 * (trade.net_price - trade.bought_gross_price) / trade.bought_gross_price
-                self.cash = self.get_cash()
-            else:
-                return False
+                #trade.selling_fee = order_fee # CEDE: to be verified if retruned order_fee include buying_fee + selling_fee (cancelation) or just the selling_fee
+                #trade.gross_price = trade.net_size + trade.selling_fee
+                #trade.roi = 100 * (trade.net_price - trade.bought_gross_price) / trade.bought_gross_price
+
         elif trade.type == "CLOSE_SHORT":
-            #result, orderId = self.cancel_order(symbol, 'USDT', trade.orderId) # Possibility to use place_market_order_ccxt instead
-            orderId = self._close_short_position(symbol, trade.net_size)
-            if result:
-                tradeId, trade.symbol_price, trade.net_size, order_fee = self.get_order_fill_detail(symbol, orderId) # Is it possible to get info from a canceled order? to be tested
-                trade.net_price = trade.net_size * trade.symbol_price
+            transaction = self._close_short_position(symbol, trade.gross_size)
+            if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
+                trade.success = True
+                trade.orderId = transaction["data"]["orderId"]
+                trade.tradeId, trade.symbol_price, trade.gross_price, trade.gross_size, trade.buying_fee = self.get_order_fill_detail(symbol, trade.orderId)
+                #trade.net_price = trade.net_size * trade.symbol_price # net_size ?
                 # CEDE: Solution 1
                 trade.gross_price = trade.gross_size * trade.symbol_price
-                trade.selling_fee = trade.gross_price - trade.net_price
+                #trade.selling_fee = trade.gross_price - trade.net_price
                 # CEDE: Solution 2
-                trade.selling_fee = order_fee # CEDE: to be verified if retruned order_fee include buying_fee + selling_fee (cancelation) or just the selling_fee
-                trade.gross_price = trade.net_size + trade.selling_fee
-                trade.roi = 100 * (trade.bought_gross_price - trade.net_price) / trade.bought_gross_price
-                self.cash_borrowed = self.cash_borrowed - abs(trade.cash_borrowed) # CEDE: cash_borrowed to be investigated
-            else:
-                return False
+                #trade.selling_fee = order_fee # CEDE: to be verified if retruned order_fee include buying_fee + selling_fee (cancelation) or just the selling_fee
+                #trade.gross_price = trade.net_size + trade.selling_fee
+                #trade.roi = 100 * (trade.bought_gross_price - trade.net_price) / trade.bought_gross_price
+                #self.cash_borrowed = self.cash_borrowed - abs(trade.cash_borrowed) # CEDE: cash_borrowed to be investigated
+
         self.trades.append(trade)
-        return True
+        return trade
 
         # CEDE: PREVIOUS CODE FROM broker_ccxt
         # INCLUDING _chase_limit NOT IMPLEMENTED FOR BITGET

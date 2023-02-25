@@ -1,3 +1,5 @@
+from rich import print,inspect
+
 class Trade:
     id = 0
     def __init__(self, current_datetime=None):
@@ -16,6 +18,8 @@ class Trade:
         Trade.id = 0
         
     def dump(self):
+        inspect(self)
+        return
         print("-> trade {}:".format(self.id))
         print("   {} {} ({})".format(self.type, self.symbol, self.stimulus))
         print("   symbol price : {:.3f}".format(self.symbol_price))

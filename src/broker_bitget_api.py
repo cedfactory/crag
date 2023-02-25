@@ -90,6 +90,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                                          clientOrderId='', timeInForceValue='normal',
                                          presetTakeProfitPrice='', presetStopLossPrice='')
         # order structure contains order['data']['orderId'], order['data']['clientOid'] & order['requestTime']
+        return order
         if order['msg'] == 'success':
             orderId = order['data']['orderId']
             result["transaction_id"], result["transaction_price"], result["transaction_size"], result["transaction_fee"] = self.get_order_fill_detail(symbol, orderId)
@@ -278,7 +279,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             sizeQty = response["data"][0]["sizeQty"]
             fee = response["data"][0]["fee"]
             fillAmount = response["data"][0]["fillAmount"]
-        return trade_id, price, fillAmount, sizeQty, fee
+        return trade_id, float(price), float(fillAmount), float(sizeQty), float(fee)
 
     @authentication_required
     def get_symbol_min_max_leverage(self, symbol):
