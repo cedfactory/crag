@@ -35,6 +35,22 @@ class BotSimon(commands.Bot):
             embed=discord.Embed(title=account, description=msg, color=0xFF5733)
             await ctx.channel.send(embed=embed)
             
+        @self.command(name="cash")
+        async def custom_command(ctx, *args):
+            account = ""
+            if len(args) >= 1:
+                account = args[0]
+
+            # getcash
+            my_broker = broker_bitget_api.BrokerBitGetApi()
+            cash = my_broker.get_cash()
+
+            # convert dataframe to string to display
+            msg = "Cash : {:2f}".format(cash)
+
+            embed=discord.Embed(title=account, description=msg, color=0xFF5733)
+            await ctx.channel.send(embed=embed)
+
         @self.command(name="crag")
         async def custom_command(ctx, *args):
             if len(args) != 1:
