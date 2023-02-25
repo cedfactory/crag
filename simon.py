@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 import pika
 import pandas as pd
-from src import broker_ccxt
+from src import broker_ccxt,broker_bitget_api
 
 class BotSimon(commands.Bot):
     def __init__(self):
@@ -15,31 +15,22 @@ class BotSimon(commands.Bot):
             print("hello")
             await ctx.channel.send("Hello {}".format(ctx.author.name))
         
-        @self.command(name="balance")
+        @self.command(name="open_positions")
         async def custom_command(ctx, *args):
             account = ""
             if len(args) >= 1:
                 account = args[0]
 
-            # get balance from the broker
-            my_broker = broker_ccxt.BrokerCCXT({"exchange": "binance", "account":account, "simulation":1})
-            balance = my_broker.get_balance()
-
-            # convert data into dataframe
-            value = 0
-            data = {"symbol": [], "usdValue": []}
-            for symbol in balance:
-                data["symbol"].append(symbol)
-                usdValue = balance[symbol]["usdValue"]
-                data["usdValue"].append(usdValue)
-                value += usdValue
-            df_result = pd.DataFrame(data)
-            df_result.set_index("symbol", inplace=True)
+            # get open positions from the broker
+            my_broker = broker_bitget_api.BrokerBitGetApi()
+            open_positions = my_broker.get_open_position()
+            open_positions.drop("available", axis=1, inplace=True)
+            open_positions.reset_index(drop=True, inplace=True)
 
             # convert dataframe to string to display
-            msg = df_result.to_string(index=True)
+            msg = open_positions.to_string(index=True)
             msg = '```' + msg + '```'
-            msg += "Total : {:2f}".format(value)
+            #msg += "Total : {:2f}".format(value)
 
             embed=discord.Embed(title=account, description=msg, color=0xFF5733)
             await ctx.channel.send(embed=embed)
