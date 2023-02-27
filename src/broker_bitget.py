@@ -66,9 +66,10 @@ class BrokerBitGet(broker.Broker):
                     trade.success = True
                     trade.orderId = transaction["data"]["orderId"]
                     trade.tradeId, trade.symbol_price, trade.gross_price, trade.gross_size, trade.buying_fee = self.get_order_fill_detail(symbol, trade.orderId)
-                    #trade.net_price = trade.net_size * trade.symbol_price # net_size ?
-                    #trade.bought_gross_price1 = trade.gross_size * trade.symbol_price # CEDE: Option 1
-                    #trade.bought_gross_price2 = trade.net_price + trade.buying_fee # CEDE: Option 2
+                    trade.net_size = trade.gross_size
+                    trade.net_price = trade.gross_price
+                    trade.bought_gross_price = trade.gross_price
+                    trade.buying_price = trade.symbol_price
 
         elif trade.type == "OPEN_SHORT":
             if amount > self.get_min_order_amount(symbol):
@@ -77,92 +78,38 @@ class BrokerBitGet(broker.Broker):
                     trade.success = True
                     trade.orderId = transaction["data"]["orderId"]
                     trade.tradeId, trade.symbol_price, trade.gross_price, trade.gross_size, trade.buying_fee = self.get_order_fill_detail(symbol, trade.orderId)
-                    #trade.net_price = trade.net_size * trade.symbol_price
-                    # CEDE: Option 1&2 should have the same value - Keep the more accurate
-                    trade.bought_gross_price1 = trade.gross_size * trade.symbol_price # CEDE: Option 1
-                    #trade.bought_gross_price2 = trade.net_price + trade.buying_fee # CEDE: Option 2
-                    #self.cash_borrowed = self.cash_borrowed + abs(trade.net_price) # CEDE: cash_borrowed to be investigated
+                    trade.net_size = trade.gross_size
+                    trade.net_price = trade.gross_price
+                    trade.bought_gross_price = trade.gross_price
+                    trade.buying_price = trade.symbol_price
 
         elif trade.type == "CLOSE_LONG":
             transaction = self._close_long_position(symbol, trade.gross_size)
             if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
                 trade.success = True
                 trade.orderId = transaction["data"]["orderId"]
-                trade.tradeId, trade.symbol_price, trade.gross_price, trade.gross_size, trade.buying_fee = self.get_order_fill_detail(symbol, trade.orderId)
-                #trade.net_price = trade.net_size * trade.symbol_price # net_size ?
-                # CEDE: Solution 1
-                #trade.gross_price = trade.gross_size * trade.symbol_price
-                #trade.selling_fee = trade.gross_price - trade.net_price
-                # CEDE: Solution 2
-                #trade.selling_fee = order_fee # CEDE: to be verified if retruned order_fee include buying_fee + selling_fee (cancelation) or just the selling_fee
-                #trade.gross_price = trade.net_size + trade.selling_fee
-                #trade.roi = 100 * (trade.net_price - trade.bought_gross_price) / trade.bought_gross_price
+                trade.tradeId, trade.symbol_price, trade.gross_price, trade.gross_size, trade.selling_fee = self.get_order_fill_detail(symbol, trade.orderId)
+                # CEDE to be confirmed : selling_fee is selling_fee + buying_fee or just selling_fee
+                trade.net_size = trade.gross_size
+                trade.net_price = trade.gross_price
+                trade.roi = 100 * (trade.gross_price - trade.bought_gross_price - trade.selling_fee - trade.buying_fee) / trade.bought_gross_price
 
         elif trade.type == "CLOSE_SHORT":
             transaction = self._close_short_position(symbol, trade.gross_size)
             if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
                 trade.success = True
                 trade.orderId = transaction["data"]["orderId"]
-                trade.tradeId, trade.symbol_price, trade.gross_price, trade.gross_size, trade.buying_fee = self.get_order_fill_detail(symbol, trade.orderId)
-                #trade.net_price = trade.net_size * trade.symbol_price # net_size ?
-                # CEDE: Solution 1
-                trade.gross_price = trade.gross_size * trade.symbol_price
-                #trade.selling_fee = trade.gross_price - trade.net_price
-                # CEDE: Solution 2
-                #trade.selling_fee = order_fee # CEDE: to be verified if retruned order_fee include buying_fee + selling_fee (cancelation) or just the selling_fee
-                #trade.gross_price = trade.net_size + trade.selling_fee
-                #trade.roi = 100 * (trade.bought_gross_price - trade.net_price) / trade.bought_gross_price
-                #self.cash_borrowed = self.cash_borrowed - abs(trade.cash_borrowed) # CEDE: cash_borrowed to be investigated
+                trade.tradeId, trade.symbol_price, trade.gross_price, trade.gross_size, trade.selling_fee = self.get_order_fill_detail(symbol, trade.orderId)
+                # CEDE to be confirmed : selling_fee is selling_fee + buying_fee or just selling_fee
+                trade.net_size = trade.gross_size
+                trade.net_price = trade.gross_price
+                trade.roi = 100 * (-1) * (trade.gross_price - trade.bought_gross_price - trade.selling_fee - trade.buying_fee) / trade.bought_gross_price
 
-        self.trades.append(trade)
-        return trade
-
-        # CEDE: PREVIOUS CODE FROM broker_ccxt
-        # INCLUDING _chase_limit NOT IMPLEMENTED FOR BITGET
-        order = None
-        if self.simulation:
-            return order
-
-        print("!!!!!!! EXECUTE THE TRADE !!!!!!!")
-        if self.exchange:
-            side = ""
-            type = self.orders
-            if trade.type == "SELL":
-                type = "market"
-                side = "sell"
-            elif trade.type == "BUY":
-                type = "market"
-                side = "buy"
-
-            # limit orders :
-            # https://github.com/ccxt/ccxt/wiki/Manual
-            elif trade.type == "LIMIT_SELL":
-                type = "limit"
-                side = "sell"
-            elif trade.type == "LIMIT_BUY":
-                type = "limit"
-                side = "buy"
-            print("side : ", side)
-            print("type : ", type)
-            if side == "":
-                return order
-
-            symbol = trade.symbol
-            amount = trade.net_price / trade.symbol_price
-
-            if type == "market" and self.chase_limit:
-                return self._chase_limit(symbol, amount)
-
-            try:
-                order = self.exchange.create_order(symbol, type, side, amount)
-            except BaseException as err:
-                print("[BrokerCCXT::execute_trade] An error occured : {}".format(err))
-                print("[BrokerCCXT::execute_trade]   -> symbol : {}".format(symbol))
-                print("[BrokerCCXT::execute_trade]   -> type :   {}".format(type))
-                print("[BrokerCCXT::execute_trade]   -> side :   {}".format(side))
-                print("[BrokerCCXT::execute_trade]   -> amount : {}".format(amount))
-
-        return order
+        if trade.success:  # CEDE to be discussed / confirmed
+            self.trades.append(trade)
+            return trade
+        else:
+            return trade.success
 
     @authentication_required
     def export_history(self, target):
