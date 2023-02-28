@@ -45,7 +45,6 @@ class Crag:
 
         self.cash = 0
         self.init_cash_value = 0
-        self.df_portfolio_status = pd.DataFrame(columns=['symbol', 'portfolio_size', 'value', 'buying_value', 'roi_sl_tp'])
         self.portfolio_value = 0
         self.wallet_value = 0
         self.sell_performed = False
@@ -191,11 +190,11 @@ class Crag:
         msg += "max drawdown : $ {} ({}%) ({})\n".format(utils.KeepNDecimals(self.minimal_portfolio_value, 2), utils.KeepNDecimals(variation_percent, 2),self.minimal_portfolio_date)
         variation_percent = utils.get_variation(self.maximal_portfolio_value, portfolio_value)
         msg += "maximal portfolio value : $ {} ({}%) ({})\n".format(utils.KeepNDecimals(self.maximal_portfolio_value, 2), utils.KeepNDecimals(variation_percent, 2),self.maximal_portfolio_date)
-        if len(self.df_portfolio_status) > 0:
+        if len(self.rtstr.rtctrl.get_rtctrl_nb_symbols()) > 0:
             msg += "symbols value roi:\n"
-            list_symbols = self.df_portfolio_status.index.to_list()
-            list_value = self.df_portfolio_status['value'].to_list()
-            list_roi = self.df_portfolio_status['roi_sl_tp'].to_list()
+            list_symbols = self.rtstr.rtctrl.get_rtctrl_lst_symbols()
+            list_value = self.rtstr.rtctrl.get_rtctrl_lst_values()
+            list_roi = self.rtstr.rtctrl.get_rtctrl_lst_roi()
             for symbols in list_symbols:
                 msg += "{} - {} - {}\n".format(list_symbols[0], utils.KeepNDecimals(list_value[0], 2), utils.KeepNDecimals(list_roi[0], 2))
                 list_symbols.pop(0)
@@ -222,10 +221,6 @@ class Crag:
         print('price: ', prices_symbols)
         current_datetime = self.broker.get_current_datetime()
         self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(), self.broker.get_cash_borrowed(), prices_symbols, False, self.final_datetime)
-
-        if(len(self.df_portfolio_status) == 0):
-            self.df_portfolio_status = pd.DataFrame({"symbol":ds.symbols, "portfolio_size":0, "value":0, "buying_value":0, "roi_sl_tp":0})
-            self.df_portfolio_status.set_index('symbol', drop=True, inplace=True)
 
         current_data = self.broker.get_current_data(ds)
         if current_data is None:
@@ -267,17 +262,9 @@ class Crag:
         sell_trade.gross_size = bought_trade.net_size
 
         if sell_trade.type == self.rtstr.close_long:
-            # cash = cash - sell_trade.gross_size * sell_trade.buying_price
-            # cash = cash + sell_trade.gross_size * sell_trade.symbol_price
-            # cash = cash + sell_trade.gross_size * (sell_trade.symbol_price - sell_trade.buying_price)
-
             sell_trade.gross_price = sell_trade.gross_size * sell_trade.symbol_price
             # sell_trade.gross_price = sell_trade.gross_size * (sell_trade.symbol_price + sell_trade.symbol_price - sell_trade.buying_price)
         elif sell_trade.type == self.rtstr.close_short:
-            # cash = cash + sell_trade.gross_size * sell_trade.buying_price
-            # cash = cash - sell_trade.gross_size * sell_trade.symbol_price
-            # cash = cash + sell_trade.gross_size * (sell_trade.buying_price - sell_trade.symbol_price)
-
             sell_trade.gross_price = sell_trade.gross_size * sell_trade.symbol_price  # (-) to be added un broker_execute_trade
             # sell_trade.gross_price = sell_trade.gross_size * (sell_trade.buying_price + sell_trade.buying_price - sell_trade.symbol_price)
         elif sell_trade.type == self.rtstr.no_position: # CEDE WORKAROUND to be fixed
@@ -315,12 +302,9 @@ class Crag:
         self.portfolio_value = self.rtstr.get_portfolio_value()
         current_datetime = self.broker.get_current_datetime()
 
-        trades = []
-
         # sell symbols
         lst_symbols = [current_trade.symbol for current_trade in self.current_trades if self.rtstr.is_open_type(current_trade.type)]
         lst_symbols = list(set(lst_symbols))
-        self.update_df_roi_sl_tp(lst_symbols)
         self.rtstr.reset_selling_limits()
         if (self.final_datetime and current_datetime >= self.final_datetime)\
                 or self.rtstr.condition_for_global_sl_tp_signal():
@@ -331,7 +315,7 @@ class Crag:
             self.rtstr.force_selling_limits()
         else:
             # identify symbols to sell
-            df_selling_symbols = self.rtstr.get_df_selling_symbols(lst_symbols, self.df_portfolio_status)
+            df_selling_symbols = self.rtstr.get_df_selling_symbols(lst_symbols, self.rtstr.rtctrl.get_rtctrl_df_roi_sl_tp())
             self.rtstr.set_selling_limits(df_selling_symbols)
 
         list_symbols_to_sell = df_selling_symbols.symbol.to_list()
@@ -356,34 +340,6 @@ class Crag:
                     self.rtstr.set_lower_zone_unengaged_position(current_trade.symbol, current_trade.gridzone)
                     sell_trade.gridzone = current_trade.gridzone
 
-                    # Portfolio Size/Value Update
-                    self.df_portfolio_status.at[sell_trade.symbol, 'portfolio_size'] = self.df_portfolio_status.at[sell_trade.symbol, 'portfolio_size'] - sell_trade.gross_size
-                    if self.df_portfolio_status.at[sell_trade.symbol, 'portfolio_size'] < 0.0000001:
-                        self.df_portfolio_status.at[sell_trade.symbol, 'portfolio_size'] = 0
-                    self.df_portfolio_status.at[sell_trade.symbol, 'value'] = self.df_portfolio_status.at[sell_trade.symbol, 'portfolio_size'] * sell_trade.symbol_price
-                    self.df_portfolio_status.at[sell_trade.symbol, 'buying_value'] = self.df_portfolio_status.at[sell_trade.symbol, 'buying_value'] - current_trade.gross_price
-                    if self.df_portfolio_status.at[sell_trade.symbol, 'portfolio_size'] == 0\
-                            or self.df_portfolio_status.at[sell_trade.symbol, 'buying_value'] == 0 \
-                            or self.df_portfolio_status.at[sell_trade.symbol, 'value'] == 0:
-                        self.df_portfolio_status.at[sell_trade.symbol, 'roi_sl_tp'] = 0
-                    else:
-                        if self.df_portfolio_status.at[sell_trade.symbol, 'portfolio_size'] > 0:
-                            # ROI FOR LONG POSITION
-                            self.df_portfolio_status.at[sell_trade.symbol, 'roi_sl_tp'] = round(100 * (self.df_portfolio_status.at[sell_trade.symbol, 'value'] / self.df_portfolio_status.at[sell_trade.symbol, 'buying_value'] - 1), 4)
-                        else:
-                            # ROI FOR LONG POSITION
-                            diff = abs(self.df_portfolio_status.at[sell_trade.symbol, 'buying_value']) - abs(self.df_portfolio_status.at[sell_trade.symbol, 'value'])
-                            self.df_portfolio_status.at[sell_trade.symbol, 'roi_sl_tp'] = round(100 * diff / abs(self.df_portfolio_status.at[sell_trade.symbol, 'buying_value']), 4)
-
-                    self.portfolio_value = self.df_portfolio_status['value'].sum()
-
-                    self.wallet_value = self.portfolio_value + self.cash
-
-                    sell_trade.portfolio_value = self.portfolio_value
-                    sell_trade.wallet_value = self.wallet_value
-                    sell_trade.wallet_roi = (self.wallet_value - self.init_cash_value) * 100 / self.init_cash_value
-
-                    trades.append(sell_trade)
                     self.current_trades.append(sell_trade)
                     
                     msg = "{} ({}) {} {:.2f} roi={:.2f}".format(sell_trade.type, sell_trade.stimulus, sell_trade.symbol, sell_trade.gross_price, sell_trade.roi)
@@ -436,31 +392,6 @@ class Crag:
                     # Update grid strategy
                     self.rtstr.set_zone_engaged(current_trade.symbol, current_trade.symbol_price)
 
-                    # Portfolio Size/Value Update
-                    self.df_portfolio_status.at[symbol, 'portfolio_size'] = self.df_portfolio_status.at[symbol, 'portfolio_size'] + current_trade.net_size
-                    self.df_portfolio_status.at[symbol, 'value'] = self.df_portfolio_status.at[symbol, 'value'] + current_trade.net_price
-                    self.df_portfolio_status.at[symbol, 'buying_value'] = self.df_portfolio_status.at[symbol, 'buying_value'] + current_trade.gross_price
-                    if self.df_portfolio_status.at[symbol, 'portfolio_size'] == 0 \
-                            or self.df_portfolio_status.at[symbol, 'buying_value'] == 0 \
-                            or self.df_portfolio_status.at[symbol, 'value'] == 0:
-                        self.df_portfolio_status.at[symbol, 'roi_sl_tp'] = 0
-                    else:
-                        if self.df_portfolio_status.at[symbol, 'portfolio_size'] > 0:
-                            # ROI FOR LONG POSITION
-                            self.df_portfolio_status.at[symbol, 'roi_sl_tp'] = round(100 * (self.df_portfolio_status.at[symbol, 'value'] / self.df_portfolio_status.at[symbol, 'buying_value'] - 1), 4)
-                        else:
-                            # ROI FOR LONG POSITION
-                            diff = abs(self.df_portfolio_status.at[symbol, 'buying_value']) - abs(self.df_portfolio_status.at[symbol, 'value'])
-                            self.df_portfolio_status.at[symbol, 'roi_sl_tp'] = round(100 * diff / abs(self.df_portfolio_status.at[symbol, 'buying_value']), 4)
-
-                    self.portfolio_value = self.df_portfolio_status['value'].sum()
-
-                    self.wallet_value = self.portfolio_value + self.cash
-                    current_trade.portfolio_value = self.portfolio_value
-                    current_trade.wallet_value = self.wallet_value
-                    current_trade.wallet_roi = round((self.wallet_value - self.init_cash_value) * 100 / self.init_cash_value, 4)
-
-                    trades.append(current_trade)
                     self.current_trades.append(current_trade)
 
                     symbols_bought["symbol"].append(current_trade.symbol)
@@ -517,29 +448,6 @@ class Crag:
         if self.temp_debug:
             self.debug_trace_current_trades('merge    ', self.current_trades)
 
-        # CEDE: Only for debug purpose
-        if self.temp_debug:
-            total = self.cash + self.df_portfolio_status['value'].sum()
-            coin_size = self.df_portfolio_status['portfolio_size'].sum()
-            #print('zone: ', self.rtstr.grid.get_zone_position(self.broker.get_value('BTC/USD')), ' price: ', self.broker.get_value('BTC/USD'))
-            print(current_datetime, ' cash : $', round(self.cash, 2), ' coin size : ', round(coin_size, 4), 'portfolio : $', round(self.df_portfolio_status['value'].sum(), 2), ' total : $', round(total))
-            if total != 0:
-                cash_percent = 100 * self.cash / total
-                coin_percent = 100 * self.df_portfolio_status['value'].sum() / total
-            else:
-                cash_percent = 100 * self.cash / 0.001
-                coin_percent = 100 * self.df_portfolio_status['value'].sum() / 0.001
-            print(current_datetime, ' cash% : %', round(cash_percent,2), ' portfolio : %', round(coin_percent,2), ' total : %', round(cash_percent + coin_percent, 2))
-
-            # add row to end of DataFrame
-            self.df_debug_traces.loc[len(self.df_debug_traces.index)] = [current_datetime,
-                                                                         round(self.cash,2),
-                                                                         round(coin_size, 4),
-                                                                         round(self.df_portfolio_status['value'].sum(),2),
-                                                                         round(cash_percent,2),
-                                                                         round(coin_percent,2),
-                                                                         round(total, 2),
-                                                                         round(cash_percent + coin_percent, 2)]
         if current_datetime == self.final_datetime or self.exit:
             self.export_debug_traces()
             self.rtstr.rtctrl.display_summary_info(True)
@@ -547,25 +455,6 @@ class Crag:
 
     def export_status(self):
         return self.broker.export_status()
-
-    def update_df_roi_sl_tp(self, lst_symbols):
-        for symbol in lst_symbols:
-            symbol_price = self.broker.get_value(symbol)
-            if symbol_price == None:
-                continue
-            self.df_portfolio_status.at[symbol, 'value'] = self.df_portfolio_status.at[symbol, 'portfolio_size'] * symbol_price
-            if self.df_portfolio_status.at[symbol, 'portfolio_size'] == 0 \
-                    or self.df_portfolio_status.at[symbol, 'buying_value'] == 0 \
-                    or self.df_portfolio_status.at[symbol, 'value'] == 0:
-                self.df_portfolio_status.at[symbol, 'roi_sl_tp'] = 0
-            else:
-                if self.df_portfolio_status.at[symbol, 'portfolio_size'] > 0:
-                    # ROI FOR LONG POSITION
-                    self.df_portfolio_status.at[symbol, 'roi_sl_tp'] = round(100 * (self.df_portfolio_status.at[symbol, 'value'] / self.df_portfolio_status.at[symbol, 'buying_value'] - 1), 4)
-                else:
-                    # ROI FOR LONG POSITION
-                    diff = abs(self.df_portfolio_status.at[symbol, 'buying_value']) - abs(self.df_portfolio_status.at[symbol, 'value'])
-                    self.df_portfolio_status.at[symbol, 'roi_sl_tp'] = round(100 * diff / abs(self.df_portfolio_status.at[symbol, 'buying_value']), 4)
 
     def backup(self):
         with open(self.backup_filename, 'wb') as file:

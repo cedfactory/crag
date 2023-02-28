@@ -105,11 +105,9 @@ class BrokerBitGet(broker.Broker):
                 trade.net_price = trade.gross_price
                 trade.roi = 100 * (-1) * (trade.gross_price - trade.bought_gross_price - trade.selling_fee - trade.buying_fee) / trade.bought_gross_price
 
-        if trade.success:  # CEDE to be discussed / confirmed
-            self.trades.append(trade)
-            return trade
-        else:
-            return trade.success
+        # CEDE COMMENT self.trades never used
+        self.trades.append(trade)
+        return trade.success
 
     @authentication_required
     def export_history(self, target):

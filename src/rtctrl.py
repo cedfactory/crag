@@ -99,12 +99,18 @@ class rtctrl():
         self.df_rtctrl['wallet_value'] = self.df_rtctrl['portfolio_value'].sum() + self.df_rtctrl['cash']
         if len(self.df_rtctrl) > 0:
             self.wallet_value = self.df_rtctrl['wallet_value'][0]
+            self.portfolio_value = self.df_rtctrl['portfolio_value'].sum()
         else:
             self.wallet_value = self.wallet_cash
+            self.portfolio_value = 0
         self.df_rtctrl['wallet_%'] = np.where(self.df_rtctrl['wallet_value'] != 0, 100 * self.df_rtctrl['portfolio_value'] / self.df_rtctrl['wallet_value'], 0.)
 
         self.global_roi_value = self.wallet_value - self.init_cash_value
         self.global_roi_percent = self.global_roi_value / self.init_cash_value * 100
+
+        self.df_roi_sl_tp = self.df_rtctrl.copy()
+        self.df_roi_sl_tp.set_index('symbol', inplace=True)
+        self.df_roi_sl_tp.rename(columns={'roi_%' : 'roi_sl_tp'}, inplace=True)
 
         '''
         # Modif CEDE use rtctrl from Bitget Broker
@@ -135,12 +141,18 @@ class rtctrl():
 
                 if len(self.df_rtctrl) > 0:
                     self.wallet_value = self.df_rtctrl['wallet_value'][0]
+                    self.portfolio_value = self.df_rtctrl['portfolio_value'].sum()
                 else:
                     self.wallet_value = self.wallet_cash
+                    self.portfolio_value = 0
                 self.df_rtctrl['wallet_%'] = np.where(self.df_rtctrl['wallet_value'] != 0, 100 * self.df_rtctrl['portfolio_value'] / self.df_rtctrl['wallet_value'], 0.)
 
                 self.global_roi_value = self.wallet_value - self.init_cash_value
                 self.global_roi_percent = self.global_roi_value / self.init_cash_value * 100
+                
+                self.df_roi_sl_tp = self.df_rtctrl.copy()
+                self.df_roi_sl_tp.set_index('symbol', inplace=True)
+                self.df_roi_sl_tp.rename(columns={'roi_%' : 'roi_sl_tp'}, inplace=True)
         '''
 
     def display_summary_info(self, record_info=None):
@@ -185,3 +197,26 @@ class rtctrl():
 
     def set_list_close_position_type(self, lst_closing_type):
         self.lst_closing_type = lst_closing_type
+
+    def get_rtctrl_wallet_value(self):
+        # Cash + Assets values
+        return self.wallet_value
+
+    def get_rtctrl_portfolio_value(self):
+        # Assets values
+        return self.portfolio_value
+
+    def get_rtctrl_nb_symbols(self):
+        return len(self.df_rtctrl)
+
+    def get_rtctrl_lst_symbols(self):
+        return self.df_rtctrl['symbol'].to_list()
+
+    def get_rtctrl_lst_values(self):
+        return self.df_rtctrl['actual_net_price'].to_list()
+
+    def get_rtctrl_lst_roi(self):
+        return self.df_rtctrl['roi_%'].to_list()
+
+    def get_rtctrl_df_roi_sl_tp(self):
+        return self.df_roi_sl_tp
