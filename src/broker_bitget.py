@@ -3,8 +3,8 @@ import pandas as pd
 
 class BrokerBitGet(broker.Broker):
     def __init__(self, params = None):
+        super().__init__(params)
         self.rtdp = rtdp.RealTimeDataProvider(params)
-        self.trades = []
         self.simulation = False
         self.account = ""
         self.leverage = 0
@@ -106,7 +106,6 @@ class BrokerBitGet(broker.Broker):
                 trade.roi = 100 * (-1) * (trade.gross_price - trade.bought_gross_price - trade.selling_fee - trade.buying_fee) / trade.bought_gross_price
 
         # CEDE COMMENT self.trades never used
-        self.trades.append(trade)
         return trade.success
 
     @authentication_required
