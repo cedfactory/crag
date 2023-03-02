@@ -125,7 +125,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     @authentication_required
     def get_cash(self, baseCoin="USDT"):
         self.get_list_of_account_assets()
-        return self.df_account_assets.loc[self.df_account_assets["symbol"] == baseCoin, "usdtEquity"].values[0]
+        return self.df_account_assets.loc[self.df_account_assets["symbol"] == baseCoin, "crossMaxAvailable"].values[0]
 
     @authentication_required
     def get_balance(self):
@@ -169,7 +169,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         return df
 
     def _account_results_to_df(self, markets):
-        lst_columns = ['symbol', 'marginCoin', 'available', 'equity', 'usdtEquity', 'locked', 'btcEquity',
+        lst_columns = ['symbol', 'marginCoin', 'available', 'crossMaxAvailable', 'equity', 'usdtEquity', 'locked', 'btcEquity',
                        "size", "actualPrice", 'quoteCoin', 'baseCoin', 'symbolType',
                        'makerFeeRate', 'takerFeeRate', 'minTradeNum']
         df = pd.DataFrame(columns=lst_columns)
@@ -180,6 +180,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 lst_info_symbol = [ "",
                                     market['marginCoin'],
                                     float(market['available']),
+                                    float(market['crossMaxAvailable']),
                                     float(market['equity']),
                                     float(market['usdtEquity']),
                                     float(market['locked']),

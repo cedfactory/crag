@@ -108,6 +108,42 @@ def crag_broker():
     #
     # orders
     #
+    #print("### open_positions :\n", my_broker.get_open_position())
+
+    print(my_broker.get_balance())
+    print("get_usdt_equity : ", my_broker.get_usdt_equity())
+    print("cash : ", my_broker.get_cash())
+    return
+    mytrade = trade.Trade()
+    mytrade.symbol = "BTC"
+    mytrade.gross_size = 0.003
+    mytrade.type = "OPEN_LONG"
+    #my_broker.execute_trade(mytrade)
+
+    print("get_usdt_equity : ", my_broker.get_usdt_equity())
+    print("cash : ", my_broker.get_cash())
+
+    #info = my_broker.get_order_fill_detail(my_broker._get_symbol("BTC"), "1012785696986505217")
+    #print("info : ", info)
+    #info = my_broker.single_position(my_broker._get_symbol("BTC"))
+    #print(info)
+
+    #info = my_broker.get_order_fill_detail(my_broker._get_symbol("BTC"), "1012768915542646785")
+    #print("info : ", info)
+    #info = my_broker.get_order_fill_detail(my_broker._get_symbol("BTC"), "1012768915735633924")
+    #print("info : ", info)
+    #info = my_broker.single_position(my_broker._get_symbol("BTC"))
+    #print(info)
+
+    #print(position)
+    return
+    #if position != None:
+    #    position_id = position["id"]
+    #    liquidation_price = my_broker.get_liquidation_price(position_id)
+    #    print("### liquidation price : ", liquidation_price)
+
+    print("### open_positions :\n", my_broker.get_open_position())
+
 
     '''
     order = my_broker.open_long_position("BTC", 0.01)
@@ -261,23 +297,7 @@ def crag_broker():
     #usdt_position_risk = my_broker.get_positions_risk(["BTC/USDT"])
     #print("USDT oposition risk = ", usdt_position_risk)
 
-    '''
-    print("### create_order ###")
-    mytrade = trade.Trade()
-    mytrade.symbol = "BTC/USDT"
-    mytrade.symbol_price = btc_usdt_value["close"]
-    mytrade.net_price = 20 # buy for $20
-    mytrade.type = "BUY"
-    order = my_broker.execute_trade(mytrade)
-    print(order)
-    if order != None:
-        order_id = order["id"]
-        liquidation_price = my_broker.get_liquidation_price(order_id)
-        print("### liquidation price : ", liquidation_price)
 
-    print("### sell everything ###")
-    my_broker.sell_everything()
-    '''
 if __name__ == '__main__':
     # Bear market historical dates
     # https://cointelegraph.com/news/a-brief-history-of-bitcoin-crashes-and-bear-markets-2009-2022
