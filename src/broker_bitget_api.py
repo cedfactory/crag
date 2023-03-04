@@ -118,23 +118,29 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         return self._place_order_api(symbol, marginCoin="USDT", size=amount, side='close_short', orderType='market')
 
     @authentication_required
-    def get_usdt_equity(self):
+    def get_wallet_equity(self):
         self.get_list_of_account_assets()
         return self.df_account_assets['usdtEquity'].sum()
 
     @authentication_required
+    def get_usdt_equity(self):
+        self.get_list_of_account_assets()
+        return self.df_account_assets.loc[(self.df_account_assets['baseCoin'] == 'USDT') & (self.df_market['quoteCoin'] == 'USDT'), "usdtEquity"].values[0]
+
+    @authentication_required
     def get_cash(self, baseCoin="USDT"):
         self.get_list_of_account_assets()
-        return self.df_account_assets.loc[self.df_account_assets["symbol"] == baseCoin, "crossMaxAvailable"].values[0]
+        return self.df_account_assets.loc[self.df_account_assets["symbol"] == baseCoin, "usdtEquity"].values[0]
+
+    # available = size
+    # available = ammount of cash available without any calculation (amount of USDT owned)
+    # equity or usdtEquity = available - unrealizedPL => real value of usdt that can be used
+    # crossMaxAvailable = usdtEquity - usdtEquity of each coin owned => reamaing usdt in casse of liquidation
 
     @authentication_required
     def get_balance(self):
         self.get_list_of_account_assets()
-        df_balance = pd.DataFrame(columns=['symbol', 'usdValue'])
-        df_balance['symbol'] = self.df_account_assets['symbol']
-        df_balance['usdValue'] = self.df_account_assets['usdtEquity']
-        df_balance['size'] = self.df_account_assets['available']
-        return df_balance
+        return self.df_account_assets
 
     @authentication_required
     def get_order_history(self, symbol, startTime, endTime, pageSize):
@@ -150,8 +156,6 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     @authentication_required
     def get_value(self, symbol):
         return float(self.marketApi.market_price(symbol)["data"]["markPrice"])
-
-
 
     def _market_results_to_df(self, markets):
         lst_columns = ['symbol', 'quoteCoin', 'baseCoin', 'symbolType', 'makerFeeRate', 'takerFeeRate', 'minTradeNum']
@@ -169,7 +173,9 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         return df
 
     def _account_results_to_df(self, markets):
-        lst_columns = ['symbol', 'marginCoin', 'available', 'crossMaxAvailable', 'equity', 'usdtEquity', 'locked', 'btcEquity',
+        lst_columns = ['symbol', 'marginCoin', 'available', 'crossMaxAvailable', 'fixedMaxAvailable',
+                       'equity', 'usdtEquity', 'locked', 'btcEquity',
+                       'unrealizedPL',
                        "size", "actualPrice", 'quoteCoin', 'baseCoin', 'symbolType',
                        'makerFeeRate', 'takerFeeRate', 'minTradeNum']
         df = pd.DataFrame(columns=lst_columns)
@@ -177,14 +183,20 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             if float(market['equity']) > 0 \
                     and float(market['usdtEquity']) > 0 \
                     and float(market['btcEquity']) > 0:
-                lst_info_symbol = [ "",
-                                    market['marginCoin'],
+                if market['unrealizedPL'] == None:
+                    unrealizedPL = 0
+                else:
+                    unrealizedPL = float(market['unrealizedPL'])
+                lst_info_symbol = [ market['marginCoin'], # USDT
+                                    market['marginCoin'], # USDT
                                     float(market['available']),
                                     float(market['crossMaxAvailable']),
+                                    float(market['fixedMaxAvailable']),
                                     float(market['equity']),
                                     float(market['usdtEquity']),
                                     float(market['locked']),
                                     float(market['btcEquity']),
+                                    unrealizedPL,
                                     0, 0, "", "", "", 0, 0, 0]
                 df.loc[len(df)] = lst_info_symbol
         return df.copy()
@@ -209,13 +221,24 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     def _get_df_account(self):
         # update market
+        not_usdt = False
         dct_account = self.accountApi.accounts('umcbl')
         df_account_umcbl = self._account_results_to_df(dct_account)
-        dct_account = self.accountApi.accounts('dmcbl')
-        df_account_dmcbl =  self._account_results_to_df(dct_account)
-        dct_account = self.accountApi.accounts('cmcbl')
-        df_account_cmcbl = self._account_results_to_df(dct_account)
-        self.df_account_assets = pd.concat([df_account_umcbl, df_account_dmcbl, df_account_cmcbl])
+        if not_usdt:
+            dct_account = self.accountApi.accounts('dmcbl')
+            df_account_dmcbl =  self._account_results_to_df(dct_account)
+            dct_account = self.accountApi.accounts('cmcbl')
+            df_account_cmcbl = self._account_results_to_df(dct_account)
+            self.df_account_assets = pd.concat([df_account_umcbl, df_account_dmcbl, df_account_cmcbl])
+        else:
+            self.df_account_assets = df_account_umcbl
+
+        self.df_account_open_position = self.get_open_position()
+        self.df_account_open_position.rename(columns={'usdEquity': 'usdtEquity',
+                                                      'total': 'size'},
+                                             inplace=True)
+        self.df_account_open_position['equity'] = self.df_account_open_position['usdtEquity']
+        self.df_account_assets = pd.concat([self.df_account_assets, self.df_account_open_position])
         self.df_account_assets.reset_index(inplace=True, drop=True)
 
     def _fill_df_account_from_market(self):
@@ -230,17 +253,22 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 self.df_account_assets.at[idx, 'takerFeeRate'] = self.df_market.loc[(self.df_market['baseCoin'] == coin) & (self.df_market['quoteCoin'] == 'USDT'), "takerFeeRate"].values[0]
                 self.df_account_assets.at[idx, 'minTradeNum'] = self.df_market.loc[(self.df_market['baseCoin'] == coin) & (self.df_market['quoteCoin'] == 'USDT'), "minTradeNum"].values[0]
             else:
-                self.df_account_assets.at[idx, 'symbol'] = coin
+                symbol_id = self.df_account_assets.at[idx, 'symbol']
+                if not symbol_id.startswith('USDT'):
+                    baseCoin = symbol_id.split('USDT')[0]
+                    marketPrice = self.df_account_assets.at[idx, 'marketPrice']
+                else:
+                    baseCoin = symbol_id
+                    marketPrice = 1.0
                 self.df_account_assets.at[idx, 'quoteCoin'] = coin
-                self.df_account_assets.at[idx, 'baseCoin'] = coin
-                self.df_account_assets.at[idx, 'size'] = self.df_account_assets.loc[self.df_account_assets["symbol"] == coin, "usdtEquity"].values[0]
-                self.df_account_assets.at[idx, 'actualPrice'] = 1
+                self.df_account_assets.at[idx, 'baseCoin'] = baseCoin
+                self.df_account_assets.at[idx, 'size'] = self.df_account_assets.at[idx, 'available']
+                self.df_account_assets.at[idx, 'actualPrice'] = marketPrice
 
     def _fill_price_and_size_from_bitget(self):
         for symbol in self.df_account_assets['symbol'].tolist():
-            if self.df_account_assets.loc[self.df_account_assets['symbol'] == symbol, "symbolType"].values[0] == "perpetual":
+            if not symbol.startswith('USDT'):
                 self.df_account_assets.loc[self.df_account_assets['symbol'] == symbol, "actualPrice"] = self.get_value(symbol)
-                self.df_account_assets.loc[self.df_account_assets['symbol'] == symbol, "size"] = self.df_account_assets.loc[self.df_account_assets['symbol'] == symbol, "available"].values[0]
             else:
                 pass
 
@@ -250,7 +278,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     def get_list_of_account_assets(self):
         self._get_df_account()
         self._fill_df_account_from_market()
-        self._fill_price_and_size_from_bitget()
+        # self._fill_price_and_size_from_bitget()
 
 
     @authentication_required

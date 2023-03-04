@@ -113,6 +113,7 @@ def crag_broker():
     print(my_broker.get_balance())
     print("get_usdt_equity : ", my_broker.get_usdt_equity())
     print("cash : ", my_broker.get_cash())
+    print("wallet : ", my_broker.get_wallet_equity())
     return
     mytrade = trade.Trade()
     mytrade.symbol = "BTC"

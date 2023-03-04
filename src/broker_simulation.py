@@ -48,6 +48,9 @@ class SimBroker(broker.Broker):
     def get_info(self):
         return self.start_date, self.end_date,  self.intervals
 
+    def get_balance(self):
+        return None
+
     def execute_trade(self, trade):
         if trade.type == "OPEN_LONG":
             if round(self.cash, 4) < round(trade.gross_price, 4):

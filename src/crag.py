@@ -220,14 +220,14 @@ class Crag:
 
         print('price: ', prices_symbols)
         current_datetime = self.broker.get_current_datetime()
-        self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(), self.broker.get_cash_borrowed(), prices_symbols, False, self.final_datetime)
+        self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(), self.broker.get_cash_borrowed(), prices_symbols, False, self.final_datetime, self.broker.get_balance())
 
         current_data = self.broker.get_current_data(ds)
         if current_data is None:
             if not self.zero_print:
                 print("[Crag] 💥 no current data")
             # self.force_sell_open_trade()
-            self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(), prices_symbols, True, self.final_datetime)
+            self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(), prices_symbols, True, self.final_datetime, self.broker.get_balance())
             return False
 
         self.rtstr.set_current_data(current_data)
@@ -346,7 +346,7 @@ class Crag:
                     self.log(msg, "symbol sold")
 
         if self.sell_performed:
-            self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(),  self.broker.get_cash_borrowed(), self.rtstr.rtctrl.prices_symbols, False, self.final_datetime)
+            self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(),  self.broker.get_cash_borrowed(), self.rtstr.rtctrl.prices_symbols, False, self.final_datetime, self.broker.get_balance())
             self.sell_performed = False
 
         # buy symbols

@@ -10,7 +10,6 @@ class rtctrl():
         self.df_rtctrl = pd.DataFrame(columns=self.get_df_header())
         self.df_rtctrl_tracking = pd.DataFrame(columns=self.get_df_header_tracking())
         self.symbols = []
-        self.prices_symbols = {}
         self.time = current_datetime
         self.init_cash_value = 0
         self.actual_price = 0
@@ -52,20 +51,39 @@ class rtctrl():
     def get_list_of_asset_fees(self, list_of_current_trades):
         return [sum(current_trade.buying_fee for current_trade in list_of_current_trades if current_trade.type in self.lst_opening_type and current_trade.symbol == symbol) for symbol in self.symbols]
 
+    def get_asset_fees(self, list_of_current_trades, symbol):
+        return sum(current_trade.buying_fee for current_trade in list_of_current_trades if current_trade.type in self.lst_opening_type and current_trade.symbol == symbol)
+
     def get_list_of_asset_gross_price(self, list_of_current_trades):
         return [sum(current_trade.gross_price for current_trade in list_of_current_trades if current_trade.type in self.lst_opening_type and current_trade.symbol == symbol) for symbol in self.symbols]
 
-    def update_rtctrl(self, current_datetime, list_of_current_trades, wallet_cash, wallet_cash_borrowed, prices_symbols, final_date):
-        self.prices_symbols = prices_symbols
+    def get_asset_gross_price(self, list_of_current_trades, symbol):
+        return sum(current_trade.gross_price for current_trade in list_of_current_trades if current_trade.type in self.lst_opening_type and current_trade.symbol == symbol)
+
+    def update_rtctrl(self, current_datetime, list_of_current_trades, wallet_cash, wallet_cash_borrowed, prices_symbols, final_date, df_balance):
+        NoneType = type(None)
+        if isinstance(df_balance, NoneType):
+            self.update_rtctrl_backtest(self, current_datetime, list_of_current_trades, wallet_cash, wallet_cash_borrowed, prices_symbols, final_date)
+        else:
+            wallet_cash_borrowed = 0
+            self.update_rtctrl_live(self, current_datetime, list_of_current_trades, wallet_cash, wallet_cash_borrowed, prices_symbols, final_date, df_balance)
+
+    def update_rtctrl_live(self, current_datetime, list_of_current_trades, wallet_cash, wallet_cash_borrowed, prices_symbols, final_date, df_balance):
         self.time = current_datetime
+
+        df_balance_assets = df_balance.copy()
+        indexUSDT = df_balance_assets[(df_balance_assets['symbol'] == 'USDT')].index
+        df_balance_assets.drop(indexUSDT, inplace=True)
+        df_balance_assets.reset_index(inplace=True, drop=True)
 
         if current_datetime == final_date:
             final_step = True
         else:
             final_step = False
 
+        self.df_rtctrl = self.df_rtctrl[0: 0] # self.df_rtctrl = self.df_rtctr.head(0)
+
         if len(list_of_current_trades) == 0 and (not final_step):
-            self.df_rtctrl = pd.DataFrame(columns=self.get_df_header())
             if self.init_cash_value == 0:
                 self.init_cash_value = wallet_cash
                 self.wallet_cash = wallet_cash
@@ -77,7 +95,68 @@ class rtctrl():
                 self.wallet_cash_borrowed = wallet_cash_borrowed
             return
 
-        self.df_rtctrl = pd.DataFrame(columns=self.get_df_header())
+        # CEDE CROSS CHECK
+        # CEDE AFTER VERIF CROSS CHECK CAN BE REMOVED
+        self.symbols = self.get_list_of_traded_symbols(list_of_current_trades)
+        lst_symbols_from_balance = df_balance_assets['symbol'].tolist()   # self.symbols = df_balances['baseCoin'].tolist() ???
+        lst_symbols_from_current_trade = self.symbols
+        lst_symbols_from_current_trade.sort()
+        lst_symbols_from_balance.sort()
+        if lst_symbols_from_current_trade != lst_symbols_from_balance:
+            print('error list of symbols/current_trades not matching')
+
+        actual_prices = [prices_symbols[symbol] for symbol in self.symbols]
+        self.actual_price = actual_prices
+        self.wallet_cash = wallet_cash
+        self.wallet_cash_borrowed = wallet_cash_borrowed
+
+        self.df_rtctrl['symbol'] = df_balance_assets['symbol'].tolist()
+        self.df_rtctrl['time'] = self.time
+        self.df_rtctrl['actual_price'] = df_balance_assets['actualPrice'].tolist()
+        self.df_rtctrl['size'] = df_balance_assets['size'].tolist()
+        df_balance_assets['price * size'] = df_balance_assets['size'] * df_balance_assets['averageOpenPrice']
+        self.df_rtctrl['buying_gross_price'] = df_balance_assets['price * size'].tolist()
+        self.df_rtctrl['actual_net_price'] = self.df_rtctrl['size'] * self.df_rtctrl['actual_price']
+
+        for symbol in self.df_rtctrl['symbol'].tolist():
+            idx = df_balance_assets[(df_balance_assets['symbol'] == symbol)].index
+            self.df_rtctrl.at[idx, 'fees'] = self.get_asset_fees(list_of_current_trades, symbol)
+            # CEDE for cross check
+            buying_price_cross_check = self.df_rtctrl.at[idx, 'buying_gross_price']
+            self.df_rtctrl.at[idx, 'buying_gross_price'] = self.get_asset_gross_price(list_of_current_trades, symbol)
+            if self.df_rtctrl.at[idx, 'buying_gross_price'] != buying_price_cross_check:
+                print('error buying_gross_price not matching: ', self.df_rtctrl.at[idx, 'buying_gross_price'] - buying_price_cross_check)
+
+        self.df_rtctrl['roi_$'] = df_balance_assets['unrealizedPL']
+        self.df_rtctrl['roi_%'] = self.df_rtctrl['roi_$'] / self.df_rtctrl['buying_gross_price']    # CEDE * 100 ????
+
+        self.df_rtctrl['portfolio_value'] = df_balance_assets['usdtEquity']
+        self.df_rtctrl['cash'] = self.wallet_cash
+        self.df_rtctrl['cash_borrowed'] = self.wallet_cash_borrowed
+        self.df_rtctrl['wallet_value'] = df_balance['usdtEquity'].sum()
+
+    def update_rtctrl_backtest(self, current_datetime, list_of_current_trades, wallet_cash, wallet_cash_borrowed, prices_symbols, final_date):
+        self.time = current_datetime
+
+        if current_datetime == final_date:
+            final_step = True
+        else:
+            final_step = False
+
+        self.df_rtctrl = self.df_rtctrl[0: 0] # self.df_rtctrl = self.df_rtctr.head(0)
+
+        if len(list_of_current_trades) == 0 and (not final_step):
+            if self.init_cash_value == 0:
+                self.init_cash_value = wallet_cash
+                self.wallet_cash = wallet_cash
+                self.wallet_value = wallet_cash
+                self.wallet_cash_borrowed = wallet_cash_borrowed
+            else:
+                self.wallet_cash = wallet_cash
+                self.wallet_value = wallet_cash
+                self.wallet_cash_borrowed = wallet_cash_borrowed
+            return
+
         self.symbols = self.get_list_of_traded_symbols(list_of_current_trades)
         actual_prices = [prices_symbols[symbol] for symbol in self.symbols]
         self.actual_price = actual_prices
@@ -111,49 +190,6 @@ class rtctrl():
         self.df_roi_sl_tp = self.df_rtctrl.copy()
         self.df_roi_sl_tp.set_index('symbol', inplace=True)
         self.df_roi_sl_tp.rename(columns={'roi_%' : 'roi_sl_tp'}, inplace=True)
-
-        '''
-        # Modif CEDE use rtctrl from Bitget Broker
-        # Find solution to access my_broker
-        LIVE_BROKER_CROSS_CHECK = True
-        if LIVE_BROKER_CROSS_CHECK:
-            df_balance = my_broker.get_balance()
-            lst_assets = df_balance['symbol'].to_list()
-            lst_assets.remove('USDT')
-            # sorting both the lists COMMENT CEDE TO BE TESTED IF IT'S WORKS
-            self.symbols.sort()
-            lst_assets.sort()
-            if self.symbols == lst_assets:
-                for symbol in self.symbols:
-                    self.df_rtctrl.loc[self.df_rtctrl['symbol'] == symbol, "size"] = df_balance.loc[df_balance['symbol'] == symbol, 'size'].iloc[0]
-                    self.df_rtctrl.loc[self.df_rtctrl['symbol'] == symbol, "actual_net_price"] = df_balance.loc[df_balance['symbol'] == symbol, 'size'].iloc[0] * self.df_rtctrl.loc[self.df_rtctrl['symbol'] == symbol, 'actual_price'].iloc[0]
-                    self.df_rtctrl.loc[self.df_rtctrl['symbol'] == symbol, "roi_$"] = self.df_rtctrl.loc[self.df_rtctrl['symbol'] == symbol, 'actual_net_price'].iloc[0] - self.df_rtctrl.loc[self.df_rtctrl['symbol'] == symbol, 'buying_gross_price'].iloc[0]
-                    self.df_rtctrl.loc[self.df_rtctrl['symbol'] == symbol, "roi_%"] = self.df_rtctrl.loc[self.df_rtctrl['symbol'] == symbol, 'roi_$'].iloc[0] / self.df_rtctrl.loc[self.df_rtctrl['symbol'] == symbol, 'buying_gross_price'].iloc[0]
-                    self.df_rtctrl.loc[self.df_rtctrl['symbol'] == symbol, "portfolio_value"] = self.df_rtctrl.loc[self.df_rtctrl['symbol'] == symbol, 'actual_net_price'].iloc[0]
-                    self.wallet_cash = my_wallet.get_cash()
-                    unrealizedPL = my_broker.get_open_position_unrealizedPL(symbol)
-                    self.df_rtctrl.loc[self.df_rtctrl['symbol'] == symbol, "unrealizedPL"] = unrealizedPL
-                    
-                self.df_rtctrl['cash'] = self.wallet_cash
-                self.df_rtctrl['cash_borrowed'] = self.wallet_cash_borrowed
-                self.df_rtctrl['wallet_value'] = my_wallet.get_wallet_equity()
-                self.df_rtctrl['wallet_unrealizedPL'] = self.df_rtctrl['unrealizedPL'].sum()
-
-                if len(self.df_rtctrl) > 0:
-                    self.wallet_value = self.df_rtctrl['wallet_value'][0]
-                    self.portfolio_value = self.df_rtctrl['portfolio_value'].sum()
-                else:
-                    self.wallet_value = self.wallet_cash
-                    self.portfolio_value = 0
-                self.df_rtctrl['wallet_%'] = np.where(self.df_rtctrl['wallet_value'] != 0, 100 * self.df_rtctrl['portfolio_value'] / self.df_rtctrl['wallet_value'], 0.)
-
-                self.global_roi_value = self.wallet_value - self.init_cash_value
-                self.global_roi_percent = self.global_roi_value / self.init_cash_value * 100
-                
-                self.df_roi_sl_tp = self.df_rtctrl.copy()
-                self.df_roi_sl_tp.set_index('symbol', inplace=True)
-                self.df_roi_sl_tp.rename(columns={'roi_%' : 'roi_sl_tp'}, inplace=True)
-        '''
 
     def display_summary_info(self, record_info=None):
         wallet_cash = self.wallet_cash

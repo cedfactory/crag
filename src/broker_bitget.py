@@ -113,8 +113,15 @@ class BrokerBitGet(broker.Broker):
         pass
 
     def _build_df_open_positions(self, open_positions):
-        df_open_positions = pd.DataFrame(columns=["symbol", "holdSide", "leverage", "marginCoin", "available", "total", "marketPrice"])
+        df_open_positions = pd.DataFrame(columns=["symbol", "holdSide", "leverage", "marginCoin",
+                                                  "available", "total", "usdtEquity",
+                                                  "marketPrice", "averageOpenPrice",
+                                                  "achievedProfits", "unrealizedPL", "liquidationPrice"])
         for i in range(len(open_positions)):
             data = open_positions[i]
-            df_open_positions.loc[i] = pd.Series({"symbol": data["symbol"], "holdSide": data["holdSide"], "leverage": data["leverage"], "marginCoin": data["marginCoin"],"available": float(data["available"]),"total": float(data["total"]),"marketPrice": data["marketPrice"]})
+            df_open_positions.loc[i] = pd.Series({"symbol": data["symbol"], "holdSide": data["holdSide"], "leverage": data["leverage"], "marginCoin": data["marginCoin"],
+                                                  "available": float(data["available"]), "total": float(data["total"]), "usdtEquity": float(data["margin"]),
+                                                  "marketPrice": data["marketPrice"],  "averageOpenPrice": data["averageOpenPrice"],
+                                                  "achievedProfits": float(data["achievedProfits"]), "unrealizedPL": float(data["unrealizedPL"]), "liquidationPrice": float(data["liquidationPrice"])
+                                                  })
         return df_open_positions
