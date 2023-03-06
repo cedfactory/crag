@@ -4,6 +4,7 @@ from src import rtdp
 from src import broker_simulation,broker_ccxt
 from src import crag
 from src import rtstr,rtstr_super_reversal,rtstr_grid_trading_multi,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC
+from src import broker_bitget_api
 from src import logger
 from src import utils
 from src import benchmark
@@ -139,7 +140,8 @@ def initialization_from_configuration_file(configuration_file):
     if broker_name == "simulator" or broker_name == "simulation" or broker_name == "simu":
         my_broker = broker_simulation.SimBroker(params_broker)
     else:
-        my_broker = broker_ccxt.BrokerCCXT(params_broker)
+        my_broker = broker_bitget_api.BrokerBitGetApi({'account': 'subaccount1'})
+        # my_broker = broker_ccxt.BrokerCCXT(params_broker)
     if my_broker == None or my_broker.ready() == False:
         return None
 

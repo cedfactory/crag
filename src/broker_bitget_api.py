@@ -102,6 +102,13 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         return result
 
     @authentication_required
+    def get_portfolio_value(self):
+        return self.get_usdt_equity()
+
+    def get_info(self):
+        return None, None, None
+
+    @authentication_required
     def _open_long_position(self, symbol, amount):
         return self._place_order_api(symbol, marginCoin="USDT", size=amount, side='open_long', orderType='market')
 
@@ -130,7 +137,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     @authentication_required
     def get_cash(self, baseCoin="USDT"):
         self.get_list_of_account_assets()
-        return self.df_account_assets.loc[self.df_account_assets["symbol"] == baseCoin, "usdtEquity"].values[0]
+        return self.df_account_assets.loc[self.df_account_assets["symbol"] == baseCoin, "crossMaxAvailable"].values[0]
 
     # available = size
     # available = ammount of cash available without any calculation (amount of USDT owned)
@@ -155,6 +162,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     @authentication_required
     def get_value(self, symbol):
+        symbol = symbol + 'USDT_UMCBL'
         return float(self.marketApi.market_price(symbol)["data"]["markPrice"])
 
     def _market_results_to_df(self, markets):
@@ -265,6 +273,9 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 self.df_account_assets.at[idx, 'size'] = self.df_account_assets.at[idx, 'available']
                 self.df_account_assets.at[idx, 'actualPrice'] = marketPrice
 
+        self.df_account_assets['symbol_broker'] = self.df_account_assets['symbol']
+        self.df_account_assets['symbol'] = self.df_account_assets['symbol'].str.split('USDT_').str[0]
+
     def _fill_price_and_size_from_bitget(self):
         for symbol in self.df_account_assets['symbol'].tolist():
             if not symbol.startswith('USDT'):
@@ -335,3 +346,11 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             symbol += "USDT_SPBL"
         product = self.publicApi.product(symbol)
         return float(product["data"]["minTradeAmount"])
+
+    def get_commission(self, symbol):
+        idx = self.df_market[  (self.df_market['baseCoin'] == symbol) & (self.df_market['quoteCoin'] == "USDT")  ].index
+        return  self.df_market.at[idx[0], "takerFeeRate"]
+
+    def get_minimum_size(self, symbol):
+        idx = self.df_market[  (self.df_market['baseCoin'] == symbol) & (self.df_market['quoteCoin'] == "USDT")  ].index
+        return  self.df_market.at[idx[0], "minTradeNum"]

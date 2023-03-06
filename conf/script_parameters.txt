@@ -6,3 +6,7 @@
 --benchmark strategy_benchmark_df_configuration_super_reversal_list.csv
 # Produce benchmark report file
 --report
+# test broker
+--broker
+# test live
+--live strategy_live_dummy_test.xml

@@ -47,10 +47,12 @@ class BrokerBitGet(broker.Broker):
         info += "\nLeverage : {}".format(self.leverage)
         return info
 
-
-
     @authentication_required
     def get_commission(self, symbol):
+        pass
+
+    @authentication_required
+    def get_minimum_size(self, symbol):
         pass
 
     @authentication_required
@@ -59,8 +61,9 @@ class BrokerBitGet(broker.Broker):
         trade.success = False
         symbol = self._get_symbol(trade.symbol)
         amount = trade.gross_size
+        minsize = trade.minsize
         if trade.type == "OPEN_LONG":
-            if amount > self.get_min_order_amount(symbol):
+            if amount > minsize:
                 transaction = self._open_long_position(symbol, trade.gross_size)
                 if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
                     trade.success = True
@@ -72,8 +75,8 @@ class BrokerBitGet(broker.Broker):
                     trade.buying_price = trade.symbol_price
 
         elif trade.type == "OPEN_SHORT":
-            if amount > self.get_min_order_amount(symbol):
-                transaction = self._open_short_position(symbol, trade.gross_size)
+            if amount < -minsize:
+                transaction = self._open_short_position(symbol, -trade.gross_size)
                 if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
                     trade.success = True
                     trade.orderId = transaction["data"]["orderId"]
@@ -121,7 +124,7 @@ class BrokerBitGet(broker.Broker):
             data = open_positions[i]
             df_open_positions.loc[i] = pd.Series({"symbol": data["symbol"], "holdSide": data["holdSide"], "leverage": data["leverage"], "marginCoin": data["marginCoin"],
                                                   "available": float(data["available"]), "total": float(data["total"]), "usdtEquity": float(data["margin"]),
-                                                  "marketPrice": data["marketPrice"],  "averageOpenPrice": data["averageOpenPrice"],
+                                                  "marketPrice": float(data["marketPrice"]),  "averageOpenPrice": float(data["averageOpenPrice"]),
                                                   "achievedProfits": float(data["achievedProfits"]), "unrealizedPL": float(data["unrealizedPL"]), "liquidationPrice": float(data["liquidationPrice"])
                                                   })
         return df_open_positions

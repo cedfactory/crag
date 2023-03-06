@@ -168,7 +168,8 @@ class Crag:
         self.export_history(self.export_filename)
 
     def step(self):
-        portfolio_value = self.broker.get_portfolio_value()
+        # portfolio_value = self.broker.get_portfolio_value()
+        portfolio_value = self.broker.get_wallet_equity()
         current_date = self.broker.get_current_datetime("%Y/%m/%d %H:%M:%S")
         if portfolio_value < self.minimal_portfolio_value:
             self.minimal_portfolio_value = portfolio_value
@@ -190,7 +191,7 @@ class Crag:
         msg += "max drawdown : $ {} ({}%) ({})\n".format(utils.KeepNDecimals(self.minimal_portfolio_value, 2), utils.KeepNDecimals(variation_percent, 2),self.minimal_portfolio_date)
         variation_percent = utils.get_variation(self.maximal_portfolio_value, portfolio_value)
         msg += "maximal portfolio value : $ {} ({}%) ({})\n".format(utils.KeepNDecimals(self.maximal_portfolio_value, 2), utils.KeepNDecimals(variation_percent, 2),self.maximal_portfolio_date)
-        if len(self.rtstr.rtctrl.get_rtctrl_nb_symbols()) > 0:
+        if self.rtstr.rtctrl.get_rtctrl_nb_symbols() > 0:
             msg += "symbols value roi:\n"
             list_symbols = self.rtstr.rtctrl.get_rtctrl_lst_symbols()
             list_value = self.rtstr.rtctrl.get_rtctrl_lst_values()
@@ -252,6 +253,9 @@ class Crag:
         sell_trade.symbol = bought_trade.symbol
         sell_trade.symbol_price = self.broker.get_value(bought_trade.symbol)
         sell_trade.bought_gross_price = bought_trade.gross_price
+
+        sell_trade.commission = self.broker.get_commission(sell_trade.symbol)
+        sell_trade.minsize = self.broker.get_minimum_size(sell_trade.symbol)
 
         sell_trade.cash_borrowed = bought_trade.cash_borrowed
 
@@ -367,6 +371,8 @@ class Crag:
             current_trade.gridzone = df_buying_symbols["gridzone"][symbol]
 
             current_trade.commission = self.broker.get_commission(current_trade.symbol)
+            current_trade.minsize = self.broker.get_minimum_size(current_trade.symbol)
+
             current_trade.gross_size = df_buying_symbols["size"][symbol]  # Gross size
             current_trade.gross_price = round(current_trade.gross_size * current_trade.symbol_price, 4)
 
