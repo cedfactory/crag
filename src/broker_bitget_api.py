@@ -13,8 +13,11 @@ import pandas as pd
 class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     def __init__(self, params = None):
         super().__init__(params)
-        
+
         self.df_market = self.get_future_market()
+        self.df_market.drop( self.df_market[self.df_market['quoteCoin'] != 'USDT'].index, inplace=True)
+        self.df_market.reset_index(drop=True)
+        print('list symbols pertual/USDT: ', self.df_market["baseCoin"].tolist())
 
     def _authentification(self):
         load_dotenv()
@@ -225,7 +228,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         df_market_dmcbl = self._market_results_to_df(dct_market)
         dct_market = self.marketApi.contracts('cmcbl')
         df_market_cmcbl = self._market_results_to_df(dct_market)
-        return pd.concat([df_market_umcbl, df_market_dmcbl, df_market_cmcbl]).reset_index()
+        return pd.concat([df_market_umcbl, df_market_dmcbl, df_market_cmcbl]).reset_index(drop=True)
 
     def _get_df_account(self):
         # update market
