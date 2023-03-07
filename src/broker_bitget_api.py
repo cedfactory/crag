@@ -338,7 +338,6 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     @authentication_required
     def set_account_symbol_leverage(self, symbol, leverage):
-        symbol = self._get_symbol(symbol)
         dct_account = self.accountApi.leverage(symbol, "USDT", leverage)
         return dct_account['data']['crossMarginLeverage'], dct_account['data']['longLeverage'], dct_account['data']['shortLeverage']
 
@@ -357,3 +356,10 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     def get_minimum_size(self, symbol):
         idx = self.df_market[  (self.df_market['baseCoin'] == symbol) & (self.df_market['quoteCoin'] == "USDT")  ].index
         return  self.df_market.at[idx[0], "minTradeNum"]
+
+    def set_symbol_leverage(self, symbol, leverage):
+        crossMarginLeverage, shortLeverage, longLeverage = self.set_account_symbol_leverage(symbol, leverage)
+        if crossMarginLeverage == leverage:
+            return True
+        else:
+            return False

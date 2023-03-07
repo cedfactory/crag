@@ -14,6 +14,7 @@ class BrokerBitGet(broker.Broker):
         self.api_secret = "BITGET_API_SECRET"
         self.api_password = "BITGET_API_PASSWORD"
         self.chase_limit = False
+        self.lst_leverage = []
         if params:
             self.simulation = params.get("simulation", self.simulation)
             if self.simulation == 0 or self.simulation == "0":
@@ -56,10 +57,20 @@ class BrokerBitGet(broker.Broker):
         pass
 
     @authentication_required
+    def set_symbol_leverage(self, symbol, leverage):
+        pass
+
+    @authentication_required
     def execute_trade(self, trade):
         print("!!!!!!! EXECUTE THE TRADE !!!!!!!")
         trade.success = False
         symbol = self._get_symbol(trade.symbol)
+        # CEDE SET LEVERAGE
+        if symbol in self.lst_leverage:
+            pass
+        else:
+            if self.set_symbol_leverage(symbol, self.leverage):
+                self.lst_leverage.append(symbol)
         amount = trade.gross_size
         minsize = trade.minsize
         if trade.type == "OPEN_LONG":

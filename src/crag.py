@@ -137,6 +137,7 @@ class Crag:
 
     def run(self):
         self.start_date = self.broker.get_current_datetime("%Y/%m/%d %H:%M:%S")
+
         self.minimal_portfolio_date = self.start_date
         self.maximal_portfolio_date = self.start_date
         msg_broker_info = self.broker.log_info()
