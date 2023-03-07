@@ -60,17 +60,20 @@ class BrokerBitGet(broker.Broker):
     def set_symbol_leverage(self, symbol, leverage):
         pass
 
-    @authentication_required
-    def execute_trade(self, trade):
-        print("!!!!!!! EXECUTE THE TRADE !!!!!!!")
-        trade.success = False
-        symbol = self._get_symbol(trade.symbol)
+    def set_leverage(self, symbol):
         # CEDE SET LEVERAGE
         if symbol in self.lst_leverage:
             pass
         else:
             if self.set_symbol_leverage(symbol, self.leverage):
                 self.lst_leverage.append(symbol)
+
+    @authentication_required
+    def execute_trade(self, trade):
+        print("!!!!!!! EXECUTE THE TRADE !!!!!!!")
+        trade.success = False
+        symbol = self._get_symbol(trade.symbol)
+        self.set_leverage(symbol)
         amount = trade.gross_size
         minsize = trade.minsize
         if trade.type == "OPEN_LONG":
