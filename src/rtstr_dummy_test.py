@@ -23,7 +23,7 @@ class StrategyDummyTest(rtstr.RealTimeStrategy):
     def get_data_description(self):
         ds = rtdp.DataDescription()
         ds.symbols = self.lst_symbols
-        ds.features = { "close": None,
+        ds.features = { "close": 1,
                         "close_shift_5": 5,
                         "close_shift_10": 10,
                         "close_shift_15": 15
@@ -34,21 +34,25 @@ class StrategyDummyTest(rtstr.RealTimeStrategy):
         return "StrategyDummyTest"
 
     def condition_for_opening_long_position(self, symbol):
+        return False
         return self.df_current_data['close_shift_5'][symbol] <= self.df_current_data['close'][symbol]\
                and self.df_current_data['close_shift_10'][symbol] <= self.df_current_data['close_shift_5'][symbol]\
                and self.df_current_data['close_shift_15'][symbol] <= self.df_current_data['close_shift_10'][symbol]
 
     def condition_for_opening_short_position(self, symbol):
+        return False
         return self.df_current_data['close_shift_5'][symbol] >= self.df_current_data['close'][symbol]\
                and self.df_current_data['close_shift_10'][symbol] >= self.df_current_data['close_shift_5'][symbol]\
                and self.df_current_data['close_shift_15'][symbol] >= self.df_current_data['close_shift_10'][symbol]
 
     def condition_for_closing_long_position(self, symbol):
+        return False
         return self.df_current_data['close_shift_5'][symbol] >= self.df_current_data['close'][symbol] \
                and self.df_current_data['close_shift_10'][symbol] >= self.df_current_data['close_shift_5'][symbol] \
                and self.df_current_data['close_shift_15'][symbol] >= self.df_current_data['close_shift_10'][symbol]
 
     def condition_for_closing_short_position(self, symbol):
+        return False
         return self.df_current_data['close_shift_5'][symbol] <= self.df_current_data['close'][symbol]\
                and self.df_current_data['close_shift_10'][symbol] <= self.df_current_data['close_shift_5'][symbol]\
                and self.df_current_data['close_shift_15'][symbol] <= self.df_current_data['close_shift_10'][symbol]
