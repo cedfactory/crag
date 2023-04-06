@@ -40,6 +40,7 @@ class Crag:
             self.logger = params.get("logger", self.logger)
             self.working_directory = params.get("working_directory", self.working_directory)
             self.id = params.get("id", self.id)
+            self.working_directory = params.get("working_directory", self.working_directory)
 
         self.current_trades = []
 

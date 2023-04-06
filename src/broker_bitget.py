@@ -14,7 +14,6 @@ class BrokerBitGet(broker.Broker):
         self.api_secret = "BITGET_API_SECRET"
         self.api_password = "BITGET_API_PASSWORD"
         self.chase_limit = False
-        self.lst_leverage = []
         if params:
             self.simulation = params.get("simulation", self.simulation)
             if self.simulation == 0 or self.simulation == "0":
@@ -27,6 +26,14 @@ class BrokerBitGet(broker.Broker):
                 self.leverage = int(self.leverage)
         if not self._authentification():
             print("[BrokerBitGet] : Problem encountered during authentification")
+
+        # leverages management
+        self.leveraged_symbols = []
+        self.leverage_short = 1
+        self.leverage_long = 1
+        if params:
+            self.leverage_short = int(params.get("leverage_short", self.leverage_short))
+            self.leverage_long = int(params.get("leverage_long", self.leverage_long))
 
     def authentication_required(fn):
         """decoration for methods that require authentification"""
@@ -60,20 +67,22 @@ class BrokerBitGet(broker.Broker):
     def set_symbol_leverage(self, symbol, leverage):
         pass
 
+    @authentication_required
     def set_leverage(self, symbol):
-        # CEDE SET LEVERAGE
-        if symbol in self.lst_leverage:
-            pass
-        else:
-            if self.set_symbol_leverage(symbol, self.leverage):
-                self.lst_leverage.append(symbol)
+        if symbol not in self.leveraged_symbols:
+            self.set_symbol_leverage(symbol, self.leverage_long, "long")
+            self.set_symbol_leverage(symbol, self.leverage_short, "short")
+            print('leverage symbol - long: ', self.leverage_long, ' short: ', self.leverage_short)
+            self.leveraged_symbols.append(symbol)
 
     @authentication_required
     def execute_trade(self, trade):
         print("!!!!!!! EXECUTE THE TRADE !!!!!!!")
         trade.success = False
         symbol = self._get_symbol(trade.symbol)
+
         self.set_leverage(symbol)
+
         amount = trade.gross_size
         minsize = trade.minsize
         if trade.type == "OPEN_LONG":

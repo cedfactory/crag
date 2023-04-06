@@ -26,7 +26,7 @@ class StrategyBollingerTrend(rtstr.RealTimeStrategy):
         ds = rtdp.DataDescription()
         ds.symbols = self.lst_symbols
         ds.features = { "close": None,
-                        "n1_close": 1,
+                        "n1_close": {"window_size":5000},
                         "bollinger": 500,
                         # "syntheticbollinger": 500,
                         "lower_band": 100,

@@ -17,7 +17,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         self.df_market = self.get_future_market()
         self.df_market.drop( self.df_market[self.df_market['quoteCoin'] != 'USDT'].index, inplace=True)
         self.df_market.reset_index(drop=True)
-        print('list symbols pertual/USDT: ', self.df_market["baseCoin"].tolist())
+        print('list symbols perpetual/USDT: ', self.df_market["baseCoin"].tolist())
 
     def _authentification(self):
         load_dotenv()
@@ -337,8 +337,8 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         return dct_account['data']['crossMarginLeverage'], dct_account['data']['fixedLongLeverage'], dct_account['data']['fixedShortLeverage']
 
     @authentication_required
-    def set_account_symbol_leverage(self, symbol, leverage):
-        dct_account = self.accountApi.leverage(symbol, "USDT", leverage)
+    def set_account_symbol_leverage(self, symbol, leverage, hold="long"):
+        dct_account = self.accountApi.leverage(symbol, "USDT", leverage, hold)
         return dct_account['data']['crossMarginLeverage'], dct_account['data']['longLeverage'], dct_account['data']['shortLeverage']
 
     def get_min_order_amount(self, symbol):
@@ -357,8 +357,10 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         idx = self.df_market[  (self.df_market['baseCoin'] == symbol) & (self.df_market['quoteCoin'] == "USDT")  ].index
         return  self.df_market.at[idx[0], "minTradeNum"]
 
-    def set_symbol_leverage(self, symbol, leverage):
-        crossMarginLeverage, shortLeverage, longLeverage = self.set_account_symbol_leverage(symbol, leverage)
+    def set_symbol_leverage(self, symbol, leverage, hold):
+        print('request leverage: ', hold, ' - long ', leverage)
+        crossMarginLeverage, shortLeverage, longLeverage = self.set_account_symbol_leverage(symbol, leverage, hold)
+        print('result: margin - ', crossMarginLeverage,' short ', shortLeverage, ' long ', longLeverage)
         if crossMarginLeverage == leverage:
             return True
         else:
