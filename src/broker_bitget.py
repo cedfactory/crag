@@ -27,6 +27,7 @@ class BrokerBitGet(broker.Broker):
         if not self._authentification():
             print("[BrokerBitGet] : Problem encountered during authentification")
 
+        self.clientOIdprovider = utils.ClientOIdProvider()
         # leverages management
         self.leveraged_symbols = []
         self.leverage_short = 1
@@ -77,7 +78,6 @@ class BrokerBitGet(broker.Broker):
             self.set_symbol_margin(symbol, "fixed")
             self.set_symbol_leverage(symbol, self.leverage_long, "long")
             self.set_symbol_leverage(symbol, self.leverage_short, "short")
-            print('leverage symbol - long: ', self.leverage_long, ' short: ', self.leverage_short)
             self.leveraged_symbols.append(symbol)
 
     @authentication_required
@@ -92,10 +92,12 @@ class BrokerBitGet(broker.Broker):
         minsize = trade.minsize
         if trade.type == "OPEN_LONG":
             if amount > minsize:
-                transaction = self._open_long_position(symbol, trade.gross_size)
+                clientOid = self.clientOIdprovider.get_name(symbol, "OPEN_LONG")
+                transaction = self._open_long_position(symbol, trade.gross_size, clientOid)
                 if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
                     trade.success = True
                     trade.orderId = transaction["data"]["orderId"]
+                    trade.clientOid = transaction["data"]["clientOid"]
                     trade.tradeId, trade.symbol_price, trade.gross_price, trade.gross_size, trade.buying_fee = self.get_order_fill_detail(symbol, trade.orderId)
                     trade.net_size = trade.gross_size
                     trade.net_price = trade.gross_price
@@ -104,10 +106,12 @@ class BrokerBitGet(broker.Broker):
 
         elif trade.type == "OPEN_SHORT":
             if amount < -minsize:
-                transaction = self._open_short_position(symbol, -trade.gross_size)
+                clientOid = self.clientOIdprovider.get_name(symbol, "OPEN_SHORT")
+                transaction = self._open_short_position(symbol, -trade.gross_size, clientOid)
                 if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
                     trade.success = True
                     trade.orderId = transaction["data"]["orderId"]
+                    trade.clientOid = transaction["data"]["clientOid"]
                     trade.tradeId, trade.symbol_price, trade.gross_price, trade.gross_size, trade.buying_fee = self.get_order_fill_detail(symbol, trade.orderId)
                     trade.net_size = trade.gross_size
                     trade.net_price = trade.gross_price
@@ -115,10 +119,12 @@ class BrokerBitGet(broker.Broker):
                     trade.buying_price = trade.symbol_price
 
         elif trade.type == "CLOSE_LONG":
-            transaction = self._close_long_position(symbol, trade.gross_size)
+            clientOid = self.clientOIdprovider.get_name(symbol, "CLOSE_LONG")
+            transaction = self._close_long_position(symbol, trade.gross_size, clientOid)
             if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
                 trade.success = True
                 trade.orderId = transaction["data"]["orderId"]
+                trade.clientOid = transaction["data"]["clientOid"]
                 trade.tradeId, trade.symbol_price, trade.gross_price, trade.gross_size, trade.selling_fee = self.get_order_fill_detail(symbol, trade.orderId)
                 # CEDE to be confirmed : selling_fee is selling_fee + buying_fee or just selling_fee
                 trade.net_size = trade.gross_size
@@ -126,10 +132,12 @@ class BrokerBitGet(broker.Broker):
                 trade.roi = 100 * (trade.gross_price - trade.bought_gross_price - trade.selling_fee - trade.buying_fee) / trade.bought_gross_price
 
         elif trade.type == "CLOSE_SHORT":
-            transaction = self._close_short_position(symbol, trade.gross_size)
+            clientOid = self.clientOIdprovider.get_name(symbol, "CLOSE_SHORT")
+            transaction = self._close_short_position(symbol, trade.gross_size, clientOid)
             if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
                 trade.success = True
                 trade.orderId = transaction["data"]["orderId"]
+                trade.clientOid = transaction["data"]["clientOid"]
                 trade.tradeId, trade.symbol_price, trade.gross_price, trade.gross_size, trade.selling_fee = self.get_order_fill_detail(symbol, trade.orderId)
                 # CEDE to be confirmed : selling_fee is selling_fee + buying_fee or just selling_fee
                 trade.net_size = trade.gross_size

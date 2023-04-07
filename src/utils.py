@@ -175,3 +175,16 @@ def get_lst_files_start_n_end_with(path, str1, str2):
                 and file.endswith(str2):
             lst_file.append(file)
     return lst_file
+
+class ClientOIdProvider():
+    def __init__(self):
+        self.iter = 0
+
+    def get_name(self, symbol, side):
+        underscore = "_"
+        key = "#"
+        ct = datetime.now()
+        ts = ct.timestamp()
+        id = "".join([symbol, underscore, side, underscore, str(self.iter), key, str(ts)])
+        self.iter += 1
+        return id

@@ -86,11 +86,11 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     - transaction_fee
     '''
     @authentication_required
-    def _place_order_api(self, symbol, marginCoin, size, side, orderType):
+    def _place_order_api(self, symbol, marginCoin, size, side, orderType, clientOId):
         result = {}
         order = self.orderApi.place_order(symbol, marginCoin, size, side, orderType,
                                          price='',
-                                         clientOrderId='', timeInForceValue='normal',
+                                         clientOrderId=clientOId, timeInForceValue='normal',
                                          presetTakeProfitPrice='', presetStopLossPrice='')
         # order structure contains order['data']['orderId'], order['data']['clientOid'] & order['requestTime']
         return order
@@ -112,20 +112,20 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         return None, None, None
 
     @authentication_required
-    def _open_long_position(self, symbol, amount):
-        return self._place_order_api(symbol, marginCoin="USDT", size=amount, side='open_long', orderType='market')
+    def _open_long_position(self, symbol, amount, clientoid):
+        return self._place_order_api(symbol, marginCoin="USDT", size=amount, side='open_long', orderType='market', clientOId=clientoid)
 
     @authentication_required
-    def _close_long_position(self, symbol, amount):
-        return self._place_order_api(symbol, marginCoin="USDT", size=amount, side='close_long', orderType='market')
+    def _close_long_position(self, symbol, amount, clientoid):
+        return self._place_order_api(symbol, marginCoin="USDT", size=amount, side='close_long', orderType='market', clientOId=clientoid)
 
     @authentication_required
-    def _open_short_position(self, symbol, amount):
-        return self._place_order_api(symbol, marginCoin="USDT", size=amount, side='open_short', orderType='market')
+    def _open_short_position(self, symbol, amount, clientoid):
+        return self._place_order_api(symbol, marginCoin="USDT", size=amount, side='open_short', orderType='market', clientOId=clientoid)
 
     @authentication_required
-    def _close_short_position(self, symbol, amount):
-        return self._place_order_api(symbol, marginCoin="USDT", size=amount, side='close_short', orderType='market')
+    def _close_short_position(self, symbol, amount, clientoid):
+        return self._place_order_api(symbol, marginCoin="USDT", size=amount, side='close_short', orderType='market', clientOId=clientoid)
 
     @authentication_required
     def get_wallet_equity(self):
