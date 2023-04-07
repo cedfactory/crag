@@ -341,6 +341,11 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         dct_account = self.accountApi.leverage(symbol, "USDT", leverage, hold)
         return dct_account['data']['crossMarginLeverage'], dct_account['data']['longLeverage'], dct_account['data']['shortLeverage']
 
+    @authentication_required
+    def set_account_symbol_margin(self, symbol, marginMode="fixed"):
+        dct_account = self.accountApi.margin_mode(symbol, "USDT", marginMode)
+        return dct_account['data']['marginMode']
+
     def get_min_order_amount(self, symbol):
         if "_" in symbol:
             symbol = symbol[:3]+"USDT_SPBL"
@@ -355,13 +360,11 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     def get_minimum_size(self, symbol):
         idx = self.df_market[  (self.df_market['baseCoin'] == symbol) & (self.df_market['quoteCoin'] == "USDT")  ].index
-        return  self.df_market.at[idx[0], "minTradeNum"]
+        return self.df_market.at[idx[0], "minTradeNum"]
 
     def set_symbol_leverage(self, symbol, leverage, hold):
-        print('request leverage: ', hold, ' - long ', leverage)
-        crossMarginLeverage, shortLeverage, longLeverage = self.set_account_symbol_leverage(symbol, leverage, hold)
-        print('result: margin - ', crossMarginLeverage,' short ', shortLeverage, ' long ', longLeverage)
-        if crossMarginLeverage == leverage:
-            return True
-        else:
-            return False
+        crossMarginLeverage, longLeverage, shortLeverage = self.set_account_symbol_leverage(symbol, leverage, hold)
+        print(symbol, ' long leverage: ', longLeverage,' short leverage: ', shortLeverage)
+
+    def set_symbol_margin(self, symbol, margin):
+        return self.set_account_symbol_margin(symbol, margin)

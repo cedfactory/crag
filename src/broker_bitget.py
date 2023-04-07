@@ -68,8 +68,13 @@ class BrokerBitGet(broker.Broker):
         pass
 
     @authentication_required
-    def set_leverage(self, symbol):
+    def set_symbol_margin(self, symbol, margin):
+        pass
+
+    @authentication_required
+    def set_margin_and_leverage(self, symbol):
         if symbol not in self.leveraged_symbols:
+            self.set_symbol_margin(symbol, "fixed")
             self.set_symbol_leverage(symbol, self.leverage_long, "long")
             self.set_symbol_leverage(symbol, self.leverage_short, "short")
             print('leverage symbol - long: ', self.leverage_long, ' short: ', self.leverage_short)
@@ -81,7 +86,7 @@ class BrokerBitGet(broker.Broker):
         trade.success = False
         symbol = self._get_symbol(trade.symbol)
 
-        self.set_leverage(symbol)
+        self.set_margin_and_leverage(symbol)
 
         amount = trade.gross_size
         minsize = trade.minsize
