@@ -87,12 +87,11 @@ class BrokerBitGet(broker.Broker):
         symbol = self._get_symbol(trade.symbol)
 
         self.set_margin_and_leverage(symbol)
-
+        clientOid = self.clientOIdprovider.get_name(symbol, trade.type)
         amount = trade.gross_size
         minsize = trade.minsize
         if trade.type == "OPEN_LONG":
             if amount > minsize:
-                clientOid = self.clientOIdprovider.get_name(symbol, "OPEN_LONG")
                 transaction = self._open_long_position(symbol, trade.gross_size, clientOid)
                 if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
                     trade.success = True
@@ -106,7 +105,6 @@ class BrokerBitGet(broker.Broker):
 
         elif trade.type == "OPEN_SHORT":
             if amount < -minsize:
-                clientOid = self.clientOIdprovider.get_name(symbol, "OPEN_SHORT")
                 transaction = self._open_short_position(symbol, -trade.gross_size, clientOid)
                 if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
                     trade.success = True
@@ -119,7 +117,6 @@ class BrokerBitGet(broker.Broker):
                     trade.buying_price = trade.symbol_price
 
         elif trade.type == "CLOSE_LONG":
-            clientOid = self.clientOIdprovider.get_name(symbol, "CLOSE_LONG")
             transaction = self._close_long_position(symbol, trade.gross_size, clientOid)
             if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
                 trade.success = True
@@ -132,7 +129,6 @@ class BrokerBitGet(broker.Broker):
                 trade.roi = 100 * (trade.gross_price - trade.bought_gross_price - trade.selling_fee - trade.buying_fee) / trade.bought_gross_price
 
         elif trade.type == "CLOSE_SHORT":
-            clientOid = self.clientOIdprovider.get_name(symbol, "CLOSE_SHORT")
             transaction = self._close_short_position(symbol, trade.gross_size, clientOid)
             if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
                 trade.success = True
