@@ -1,5 +1,6 @@
 from . import broker,rtdp,utils
 import pandas as pd
+import ast
 
 class BrokerBitGet(broker.Broker):
     def __init__(self, params = None):
@@ -14,6 +15,7 @@ class BrokerBitGet(broker.Broker):
         self.api_secret = "BITGET_API_SECRET"
         self.api_password = "BITGET_API_PASSWORD"
         self.chase_limit = False
+        self.reset_account = False
         if params:
             self.simulation = params.get("simulation", self.simulation)
             if self.simulation == 0 or self.simulation == "0":
@@ -24,6 +26,9 @@ class BrokerBitGet(broker.Broker):
             self.leverage = params.get("leverage", self.leverage)
             if isinstance(self.leverage, str):
                 self.leverage = int(self.leverage)
+            self.reset_account = params.get("reset_account", "")
+            if isinstance(self.reset_account, str):
+                self.reset_account = ast.literal_eval(self.reset_account)
         if not self._authentification():
             print("[BrokerBitGet] : Problem encountered during authentification")
 
@@ -35,6 +40,10 @@ class BrokerBitGet(broker.Broker):
         if params:
             self.leverage_short = int(params.get("leverage_short", self.leverage_short))
             self.leverage_long = int(params.get("leverage_long", self.leverage_long))
+
+        if self.reset_account:
+            print('reset account requested')
+            self.execute_reset_account()
 
     def authentication_required(fn):
         """decoration for methods that require authentification"""
@@ -160,3 +169,32 @@ class BrokerBitGet(broker.Broker):
                                                   "achievedProfits": float(data["achievedProfits"]), "unrealizedPL": float(data["unrealizedPL"]), "liquidationPrice": float(data["liquidationPrice"])
                                                   })
         return df_open_positions
+
+    @authentication_required
+    def execute_reset_account(self):
+        df_positions = self.get_open_position()
+        if len(df_positions) == 0:
+            print("reset - no position - account already cleared")
+            return
+        else:
+            for symbol in df_positions['symbol'].tolist():
+                if df_positions.loc[(df_positions['symbol'] == symbol), "holdSide"].values[0] == 'long':
+                    clientOid = self.clientOIdprovider.get_name(symbol,  "CLOSE_LONG")
+                    gross_size = df_positions.loc[(df_positions['symbol'] == symbol), "available"].values[0]
+                    usdtEquity = df_positions.loc[(df_positions['symbol'] == symbol), "usdtEquity"].values[0]
+                    transaction = self._close_long_position(symbol, gross_size, clientOid)
+                    if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
+                        print('reset - close long position - symbol: ', symbol,' value: ', gross_size, ' - $', usdtEquity)
+                else:
+                    clientOid = self.clientOIdprovider.get_name(symbol,  "CLOSE_SHORT")
+                    gross_size = df_positions.loc[(df_positions['symbol'] == symbol), "available"].values[0]
+                    usdtEquity = df_positions.loc[(df_positions['symbol'] == symbol), "usdtEquity"].values[0]
+                    transaction = self._close_short_position(symbol, gross_size, clientOid)
+                    if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
+                        print('reset - close short position - symbol: ', symbol,' value: ', gross_size, ' - $', usdtEquity)
+
+        df_positions = self.get_open_position()
+        if len(df_positions) != 0:
+            print("reset - failure")
+        else:
+            print('reset - account cleared')
