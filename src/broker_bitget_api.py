@@ -65,6 +65,11 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         return self._build_df_open_positions(lst_all_positions)
 
     #@authentication_required
+    def get_account_equity(self):
+        account_equity = self.positionApi.account(symbol='BTCUSDT_UMCBL',marginCoin='USDT')
+        return account_equity['data']['usdtEquity']
+
+    #@authentication_required
     def get_open_position_unrealizedPL(self, symbol):
         all_positions = self.positionApi.all_position(productType='umcbl',marginCoin='USDT')
         for data in all_positions["data"]:

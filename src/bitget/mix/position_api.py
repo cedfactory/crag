@@ -34,3 +34,12 @@ class PositionApi(Client):
             return self._request_with_params(GET, MIX_POSITION_V1_URL + '/allPosition', params)
         else:
             return "pls check args"
+
+    def account(self, symbol, marginCoin):
+        params = {}
+        if symbol:
+            params["symbol"] = symbol
+            params["marginCoin"] = marginCoin
+            return self._request_with_params(GET, MIX_ACCOUNT_V1_URL + '/account', params)
+        else:
+            return "pls check args"

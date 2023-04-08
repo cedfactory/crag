@@ -174,7 +174,9 @@ class BrokerBitGet(broker.Broker):
     def execute_reset_account(self):
         df_positions = self.get_open_position()
         if len(df_positions) == 0:
+            usdtEquity = self.get_account_equity()
             print("reset - no position - account already cleared")
+            print('equity USDT: ', usdtEquity)
             return
         else:
             for symbol in df_positions['symbol'].tolist():
@@ -197,4 +199,6 @@ class BrokerBitGet(broker.Broker):
         if len(df_positions) != 0:
             print("reset - failure")
         else:
+            usdtEquity = self.get_account_equity()
             print('reset - account cleared')
+            print('equity USDT: ', usdtEquity)
