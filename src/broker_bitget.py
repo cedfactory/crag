@@ -26,9 +26,12 @@ class BrokerBitGet(broker.Broker):
             self.leverage = params.get("leverage", self.leverage)
             if isinstance(self.leverage, str):
                 self.leverage = int(self.leverage)
-            self.reset_account = params.get("reset_account", "")
+            self.reset_account = params.get("reset_account", self.reset_account)
             if isinstance(self.reset_account, str):
-                self.reset_account = ast.literal_eval(self.reset_account)
+                try:
+                    self.reset_account = ast.literal_eval(self.reset_account)
+                except BaseException as err:
+                    self.reset_account = False
         if not self._authentification():
             print("[BrokerBitGet] : Problem encountered during authentification")
 
@@ -178,22 +181,25 @@ class BrokerBitGet(broker.Broker):
             print("reset - no position - account already cleared")
             print('equity USDT: ', usdtEquity)
             return
-        else:
-            for symbol in df_positions['symbol'].tolist():
-                if df_positions.loc[(df_positions['symbol'] == symbol), "holdSide"].values[0] == 'long':
-                    clientOid = self.clientOIdprovider.get_name(symbol,  "CLOSE_LONG")
-                    gross_size = df_positions.loc[(df_positions['symbol'] == symbol), "available"].values[0]
-                    usdtEquity = df_positions.loc[(df_positions['symbol'] == symbol), "usdtEquity"].values[0]
-                    transaction = self._close_long_position(symbol, gross_size, clientOid)
-                    if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
-                        print('reset - close long position - symbol: ', symbol,' value: ', gross_size, ' - $', usdtEquity)
-                else:
-                    clientOid = self.clientOIdprovider.get_name(symbol,  "CLOSE_SHORT")
-                    gross_size = df_positions.loc[(df_positions['symbol'] == symbol), "available"].values[0]
-                    usdtEquity = df_positions.loc[(df_positions['symbol'] == symbol), "usdtEquity"].values[0]
-                    transaction = self._close_short_position(symbol, gross_size, clientOid)
-                    if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
-                        print('reset - close short position - symbol: ', symbol,' value: ', gross_size, ' - $', usdtEquity)
+
+        print(df_positions)
+        return
+
+        for symbol in df_positions['symbol'].tolist():
+            if df_positions.loc[(df_positions['symbol'] == symbol), "holdSide"].values[0] == 'long':
+                clientOid = self.clientOIdprovider.get_name(symbol,  "CLOSE_LONG")
+                gross_size = df_positions.loc[(df_positions['symbol'] == symbol), "available"].values[0]
+                usdtEquity = df_positions.loc[(df_positions['symbol'] == symbol), "usdtEquity"].values[0]
+                transaction = self._close_long_position(symbol, gross_size, clientOid)
+                if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
+                    print('reset - close long position - symbol: ', symbol,' value: ', gross_size, ' - $', usdtEquity)
+            else:
+                clientOid = self.clientOIdprovider.get_name(symbol,  "CLOSE_SHORT")
+                gross_size = df_positions.loc[(df_positions['symbol'] == symbol), "available"].values[0]
+                usdtEquity = df_positions.loc[(df_positions['symbol'] == symbol), "usdtEquity"].values[0]
+                transaction = self._close_short_position(symbol, gross_size, clientOid)
+                if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
+                    print('reset - close short position - symbol: ', symbol,' value: ', gross_size, ' - $', usdtEquity)
 
         df_positions = self.get_open_position()
         if len(df_positions) != 0:
