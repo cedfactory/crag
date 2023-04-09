@@ -51,6 +51,24 @@ class BotSimon(commands.Bot):
             embed=discord.Embed(title=account, description=msg, color=0xFF5733)
             await ctx.channel.send(embed=embed)
 
+        @self.command(name="reset")
+        async def custom_command(ctx, *args):
+            account = ""
+            if len(args) >= 1:
+                account = args[0]
+
+            # get open positions from the broker
+            my_broker = broker_bitget_api.BrokerBitGetApi()
+            original_positions = my_broker.execute_reset_account()
+            log_positions = original_positions[["symbol", "holdSide", "leverage", "usdtEquity"]]
+
+            # convert dataframe to string to display
+            msg = log_positions.to_string(index=True)
+            msg = '```' + msg + '```'
+
+            embed=discord.Embed(title=account, description=msg, color=0xFF5733)
+            await ctx.channel.send(embed=embed)
+            
         @self.command(name="crag")
         async def custom_command(ctx, *args):
             if len(args) != 1:
