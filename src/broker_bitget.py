@@ -176,14 +176,15 @@ class BrokerBitGet(broker.Broker):
     @authentication_required
     def execute_reset_account(self):
         df_positions = self.get_open_position()
+        original_df_positions = df_positions
+
         if len(df_positions) == 0:
             usdtEquity = self.get_account_equity()
             print("reset - no position - account already cleared")
             print('equity USDT: ', usdtEquity)
-            return
+            return original_df_positions
 
         print(df_positions)
-        return
 
         for symbol in df_positions['symbol'].tolist():
             if df_positions.loc[(df_positions['symbol'] == symbol), "holdSide"].values[0] == 'long':
@@ -208,3 +209,5 @@ class BrokerBitGet(broker.Broker):
             usdtEquity = self.get_account_equity()
             print('reset - account cleared')
             print('equity USDT: ', usdtEquity)
+        return original_df_positions
+    
