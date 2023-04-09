@@ -180,7 +180,8 @@ class Crag:
             self.maximal_portfolio_value = portfolio_value
             self.maximal_portfolio_date = current_date
 
-        msg = "original portfolio value : $ {} ({})\n".format(utils.KeepNDecimals(self.original_portfolio_value, 2), self.start_date)
+        msg = "current time : {}\n".format(current_date)
+        msg += "original portfolio value : $ {} ({})\n".format(utils.KeepNDecimals(self.original_portfolio_value, 2), self.start_date)
         variation_percent = utils.get_variation(self.original_portfolio_value, portfolio_value)
         msg += "current portfolio value : $ {} ({}%)\n".format(utils.KeepNDecimals(portfolio_value, 2), utils.KeepNDecimals(variation_percent, 2))
         portfolio_net_value = portfolio_value - (portfolio_value - self.broker.get_cash()) * 0.07 / 100 # CEDE 0.07 could be replaced by get_commission???
