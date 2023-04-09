@@ -1,4 +1,4 @@
-from . import broker,rtdp,utils
+from . import broker,trade,rtdp,utils
 import pandas as pd
 import ast
 
@@ -138,7 +138,7 @@ class BrokerBitGet(broker.Broker):
                 # CEDE to be confirmed : selling_fee is selling_fee + buying_fee or just selling_fee
                 trade.net_size = trade.gross_size
                 trade.net_price = trade.gross_price
-                trade.roi = 100 * (trade.gross_price - trade.bought_gross_price - trade.selling_fee - trade.buying_fee) / trade.bought_gross_price
+                #trade.roi = 100 * (trade.gross_price - trade.bought_gross_price - trade.selling_fee - trade.buying_fee) / trade.bought_gross_price
 
         elif trade.type == "CLOSE_SHORT":
             transaction = self._close_short_position(symbol, trade.gross_size, clientOid)
@@ -150,7 +150,7 @@ class BrokerBitGet(broker.Broker):
                 # CEDE to be confirmed : selling_fee is selling_fee + buying_fee or just selling_fee
                 trade.net_size = trade.gross_size
                 trade.net_price = trade.gross_price
-                trade.roi = 100 * (-1) * (trade.gross_price - trade.bought_gross_price - trade.selling_fee - trade.buying_fee) / trade.bought_gross_price
+                #trade.roi = 100 * (-1) * (trade.gross_price - trade.bought_gross_price - trade.selling_fee - trade.buying_fee) / trade.bought_gross_price
 
         # CEDE COMMENT self.trades never used
         return trade.success
@@ -184,8 +184,24 @@ class BrokerBitGet(broker.Broker):
             print('equity USDT: ', usdtEquity)
             return original_df_positions
 
-        print(df_positions)
+        original_df_positions = df_positions
 
+        for symbol in df_positions['symbol'].tolist():
+            current_trade = trade.Trade()
+            current_trade.symbol = symbol
+            current_trade.gross_size = df_positions.loc[(df_positions['symbol'] == symbol), "available"].values[0]
+            current_trade.type = "CLOSE_LONG"
+            holdSize = df_positions.loc[(df_positions['symbol'] == symbol), "holdSide"].values[0]
+            if holdSize == 'long':
+                current_trade.type = "CLOSE_LONG"
+            else:
+                current_trade.type = "CLOSE_SHORT"
+            current_trade.minsize = 0
+            res = self.execute_trade(current_trade)
+            if res:
+                usdtEquity = df_positions.loc[(df_positions['symbol'] == symbol), "usdtEquity"].values[0]
+                print('reset - close ', holdSize, 'position - symbol: ', symbol,' value: ', current_trade.gross_size, ' - $', usdtEquity)
+        '''
         for symbol in df_positions['symbol'].tolist():
             if df_positions.loc[(df_positions['symbol'] == symbol), "holdSide"].values[0] == 'long':
                 clientOid = self.clientOIdprovider.get_name(symbol,  "CLOSE_LONG")
@@ -201,7 +217,7 @@ class BrokerBitGet(broker.Broker):
                 transaction = self._close_short_position(symbol, gross_size, clientOid)
                 if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
                     print('reset - close short position - symbol: ', symbol,' value: ', gross_size, ' - $', usdtEquity)
-
+        '''
         df_positions = self.get_open_position()
         if len(df_positions) != 0:
             print("reset - failure")
@@ -209,5 +225,7 @@ class BrokerBitGet(broker.Broker):
             usdtEquity = self.get_account_equity()
             print('reset - account cleared')
             print('equity USDT: ', usdtEquity)
+
         return original_df_positions
     
+
