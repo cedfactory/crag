@@ -6,6 +6,8 @@ from . import trade,rtstr,utils
 import pika
 import threading
 import pickle
+from datetime import datetime, timedelta
+from datetime import date
 
 # to launch crag as a rabbitmq receiver :
 # > apt-get install rabbitmq-server
@@ -147,22 +149,44 @@ class Crag:
         self.log(msg, "run")
         self.rtstr.log_info()
 
+        start = datetime.now()
+        start = start.replace(second=0, microsecond=0)
+        if self.interval == 24 * 60 * 60:  # 1d
+            start = start.replace(hour=0, minute=0, second=0, microsecond=0)
+            start += timedelta(days=1)
+        elif self.interval == 60 * 60:  # 1h
+            start = start.replace(minute=0, second=0, microsecond=0)
+            start += timedelta(hours=1)
+        elif self.interval == 60:  # 1m
+            start = start.replace(second=0, microsecond=0)
+            start += timedelta(minutes=1)
+        print("start time: ", start)
+        start = datetime.timestamp(start)
+
         done = False
         while not done:
-            start = time.time()
+            now = time.time()
+            sleeping_time = start - now
+            if self.start_date and self.end_date:
+                # SIM MODE
+                sleeping_time = 0
+            if sleeping_time > 0:
+                time.sleep(sleeping_time)
+            else:
+                self.log(
+                    "warning : time elapsed for the step ({}) is greater than the interval ({})".format(sleeping_time, self.interval))
+            start = datetime.fromtimestamp(start)
+            if self.interval == 24 * 60 * 60:  # 1d
+                start += timedelta(days=1)
+            elif self.interval == 60 * 60:  # 1h
+                start += timedelta(hours=1)
+            elif self.interval == 60:  # 1m
+                start += timedelta(minutes=1)
+            start = datetime.timestamp(start)
+
             done = not self.step()
             if done:
                 break
-            end = time.time()
-            if self.start_date and self.end_date:
-                sleeping_time = 0
-                # self.export_history(self.export_filename) # CEDE DEBUG
-            else:
-                sleeping_time = self.interval - (end - start)
-                if sleeping_time >= 0:
-                    time.sleep(self.interval - (end - start))
-                else:
-                    self.log("warning : time elapsed for the step ({}) is greater than the interval ({})".format(end - start, self.interval))
 
             self.broker.tick() # increment
             self.backup() # backup for reboot
