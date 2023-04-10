@@ -175,11 +175,9 @@ class Crag:
                 if self.safety_run:
                     start_minus_one_sec = datetime.timestamp(datetime.fromtimestamp(start) - timedelta(seconds=1))
                     while time.time() < start_minus_one_sec:
-                        # print("time: ", time.time())
-                        # print("start_minus_one_sec: ", start_minus_one_sec)
                         step_result = self.safety_step()
                         if not step_result:
-                            break # reset -> exit
+                            os._exit(0) # tbc
                     while time.time() < start:
                         pass
                 else:
@@ -594,15 +592,8 @@ class Crag:
 
     def safety_step(self):
         global_unrealizedPL = self.broker.get_global_unrealizedPL()
-        global_SL = self.rtstr.get_global_SL()
-        global_TP = self.rtstr.get_global_TP()
-        SL = self.rtstr.get_global_SL()
-        TP = self.rtstr.get_global_TP()
-
-        if (global_TP != 0) and (global_unrealizedPL >= global_TP):
-            self.broker.execute_reset_account()
-            return False
-        elif (global_SL != 0) and (global_unrealizedPL <= global_SL):
+        print("global_unrealizedPL: ", global_unrealizedPL)
+        if self.rtstr.action_global_SLTP(global_unrealizedPL):
             self.broker.execute_reset_account()
             return False
 
@@ -610,9 +601,8 @@ class Crag:
         lst_symbol_for_closure = []
         for symbol in lst_symbol_position:
             symbol_unrealizedPL = self.broker.get_symbol_unrealizedPL(symbol)
-            if (global_TP != 0) and (symbol_unrealizedPL >= TP):
-                lst_symbol_for_closure.append(symbol)
-            elif (global_SL != 0) and (symbol_unrealizedPL <= SL):
+            print("symbol", symbol, "symbol_unrealizedPL: ", symbol_unrealizedPL)
+            if self.broker.action_SL_TP(self, symbol_unrealizedPL):
                 lst_symbol_for_closure.append(symbol)
 
         if len(lst_symbol_for_closure) > 0:
@@ -621,7 +611,6 @@ class Crag:
                 if self.rtstr.is_open_type(current_trade.type) and current_trade.symbol in lst_symbol_for_closure:
                     sell_trade = self._prepare_sell_trade_from_bought_trade(current_trade,
                                                                             current_datetime)
-
                     done = self.broker.execute_trade(sell_trade)
                     if done:
                         self.sell_performed = True
@@ -641,5 +630,4 @@ class Crag:
                                           self.broker.get_cash_borrowed(), self.rtstr.rtctrl.prices_symbols, False,
                                           self.final_datetime, self.broker.get_balance())
                         self.sell_performed = False
-
         return True

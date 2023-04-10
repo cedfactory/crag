@@ -507,6 +507,14 @@ class RealTimeStrategy(metaclass=ABCMeta):
     def get_TP(self):
         return self.TP
 
+    def action_global_SLTP(self, global_unrealizedPL):
+        return ((self.global_TP != 0) and (global_unrealizedPL >= self.global_TP)) \
+               or ((self.global_SL != 0) and (global_unrealizedPL <= self.global_SL))
+
+    def action_SL_TP(self, unrealizedPL):
+        return ((self.TP != 0) and (unrealizedPL >= self.TP)) \
+               or ((self.SL != 0) and (unrealizedPL <= self.SL))
+
 class ShortLongPosition():
     def __init__(self, lst_symbol, str_short_long_position):
         self.str_short_long_position = str_short_long_position
