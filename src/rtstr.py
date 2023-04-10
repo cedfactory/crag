@@ -495,6 +495,18 @@ class RealTimeStrategy(metaclass=ABCMeta):
     def get_strategy_from_name(name, params=None):
         return RealTimeStrategy.__get_strategy_from_name(RealTimeStrategy, name, params)
 
+    def get_global_SL(self):
+        return self.global_SL
+
+    def get_global_TP(self):
+        return self.global_TP
+
+    def get_SL(self):
+        return self.SL
+
+    def get_TP(self):
+        return self.TP
+
 class ShortLongPosition():
     def __init__(self, lst_symbol, str_short_long_position):
         self.str_short_long_position = str_short_long_position

@@ -227,5 +227,27 @@ class BrokerBitGet(broker.Broker):
             print('equity USDT: ', usdtEquity)
 
         return original_df_positions
-    
+
+    @authentication_required
+    def get_symbol_unrealizedPL(self, symbol):
+        df_positions = self.get_open_position()
+        unrealizedPL = df_positions.loc[(df_positions['symbol'] == symbol), "unrealizedPL"].values[0]
+        return unrealizedPL
+
+    @authentication_required
+    def get_lst_symbol_position(self):
+        df_positions = self.get_open_position()
+        return df_positions['symbol'].tolist()
+
+    @authentication_required
+    def get_global_unrealizedPL(self):
+        df_positions = self.get_open_position()
+        if len(df_positions) > 0:
+            global_unrealizedPL = df_positions["unrealizedPL"].sum()
+            print('global_unrealizedPL: ', global_unrealizedPL)
+            return global_unrealizedPL
+        else:
+            return 0
+
+
 
