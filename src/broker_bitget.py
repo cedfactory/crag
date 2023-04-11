@@ -44,10 +44,6 @@ class BrokerBitGet(broker.Broker):
             self.leverage_short = int(params.get("leverage_short", self.leverage_short))
             self.leverage_long = int(params.get("leverage_long", self.leverage_long))
 
-        if self.reset_account:
-            print('reset account requested')
-            self.execute_reset_account()
-
     def authentication_required(fn):
         """decoration for methods that require authentification"""
         def wrapped(self, *args, **kwargs):
@@ -138,7 +134,8 @@ class BrokerBitGet(broker.Broker):
                 # CEDE to be confirmed : selling_fee is selling_fee + buying_fee or just selling_fee
                 trade.net_size = trade.gross_size
                 trade.net_price = trade.gross_price
-                #trade.roi = 100 * (trade.gross_price - trade.bought_gross_price - trade.selling_fee - trade.buying_fee) / trade.bought_gross_price
+                if hasattr(trade, "bought_gross_price"):
+                   trade.roi = 100 * (trade.gross_price - trade.bought_gross_price - trade.selling_fee - trade.buying_fee) / trade.bought_gross_price
 
         elif trade.type == "CLOSE_SHORT":
             transaction = self._close_short_position(symbol, trade.gross_size, clientOid)
@@ -150,7 +147,8 @@ class BrokerBitGet(broker.Broker):
                 # CEDE to be confirmed : selling_fee is selling_fee + buying_fee or just selling_fee
                 trade.net_size = trade.gross_size
                 trade.net_price = trade.gross_price
-                #trade.roi = 100 * (-1) * (trade.gross_price - trade.bought_gross_price - trade.selling_fee - trade.buying_fee) / trade.bought_gross_price
+                if hasattr(trade, "bought_gross_price"):
+                    trade.roi = 100 * (-1) * (trade.gross_price - trade.bought_gross_price - trade.selling_fee - trade.buying_fee) / trade.bought_gross_price
 
         # CEDE COMMENT self.trades never used
         return trade.success

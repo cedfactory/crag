@@ -20,9 +20,9 @@ class RealTimeStrategy(metaclass=ABCMeta):
         self.trigger_global_TP = False
         self.trigger_global_SL = False
         self.safety_TP = 100
-        self.safety_SL = -50
-        self.liquidation_SL = 0
-        self.trigger_liquidation_SL = False
+        self.safety_SL = -60
+        self.global_safety_TP = 100
+        self.global_safety_SL = -30
         self.trailer_TP = 0
         self.trailer_delta = 0
         self.trigger_trailer = False
@@ -46,10 +46,10 @@ class RealTimeStrategy(metaclass=ABCMeta):
             else:
                 self.lst_symbols = symbols.split(",")
 
-            self.SL = int(params.get("sl", self.SL))
-            self.TP = int(params.get("tp", self.TP))
-            self.global_SL = int(params.get("global_sl", self.global_SL))
-            self.global_TP = int(params.get("global_tp", self.global_TP))
+            self.SL = float(params.get("sl", self.SL))
+            self.TP = float(params.get("tp", self.TP))
+            self.global_SL = float(params.get("global_sl", self.global_SL))
+            self.global_TP = float(params.get("global_tp", self.global_TP))
             self.logger = params.get("logger", self.logger)
             self.id = params.get("id", self.id)
             self.min_bol_spread = params.get("min_bol_spread", self.min_bol_spread)
@@ -64,11 +64,10 @@ class RealTimeStrategy(metaclass=ABCMeta):
             self.short_and_long = params.get("short_and_long", self.short_and_long)
             if isinstance(self.short_and_long, str):
                 self.short_and_long = ast.literal_eval(self.short_and_long)
-            self.trailer_TP = int(params.get("trailer_tp", self.trailer_TP))
-            self.trailer_delta = int(params.get("trailer_delta", self.trailer_delta))
-            self.trailer_global_TP = int(params.get("trailer_global_tp", self.trailer_global_TP))
-            self.trailer_global_delta = int(params.get("trailer_global_delta", self.trailer_global_delta))
-            self.liquidation_SL = int(params.get("liquidation_sl", self.liquidation_SL))
+            self.trailer_TP = float(params.get("trailer_tp", self.trailer_TP))
+            self.trailer_delta = float(params.get("trailer_delta", self.trailer_delta))
+            self.trailer_global_TP = float(params.get("trailer_global_tp", self.trailer_global_TP))
+            self.trailer_global_delta = float(params.get("trailer_global_delta", self.trailer_global_delta))
 
         self.trigger_trailer = self.trailer_TP > 0 and self.trailer_delta > 0
         self.trigger_global_trailer = self.trailer_global_TP > 0 and self.trailer_global_delta > 0
@@ -76,7 +75,6 @@ class RealTimeStrategy(metaclass=ABCMeta):
         self.trigger_TP = self.TP > 0
         self.trigger_global_SL = self.global_SL < 0
         self.trigger_global_TP = self.global_TP > 0
-        self.trigger_liquidation_SL = self.liquidation_SL < 0
 
         self.rtctrl = None
         self.match_full_position = False # disabled
@@ -155,12 +153,6 @@ class RealTimeStrategy(metaclass=ABCMeta):
         return (isinstance(df_sl_tp, pd.DataFrame) and self.trigger_TP and df_sl_tp['roi_sl_tp'][symbol] > self.TP) \
                or (isinstance(df_sl_tp, pd.DataFrame) and self.trigger_SL and df_sl_tp['roi_sl_tp'][symbol] < self.SL)
 
-    def condition_for_sl_liquidation_signal(self, symbol, df_sl_tp):
-        return self.trigger_liquidation_SL \
-               and isinstance(df_sl_tp, pd.DataFrame) \
-               and self.is_open_type_short(symbol) \
-               and df_sl_tp['roi_sl_tp'][symbol] < self.liquidation_SL
-
     def condition_for_safety_sl_tp_signal(self, symbol, df_sl_tp):
         return isinstance(df_sl_tp, pd.DataFrame)\
                and (df_sl_tp['roi_sl_tp'][symbol] < self.safety_SL
@@ -170,37 +162,6 @@ class RealTimeStrategy(metaclass=ABCMeta):
         # SIGNAL SPECIFIC TO GRID STRATEGY
         return False
 
-    def condition_trailer_tp_signal(self, symbol, df_sl_tp):
-        if not self.trigger_trailer:
-            return False
-        if self.df_trailer_TP.is_off_trailer_TP(symbol, df_sl_tp['roi_sl_tp'][symbol])\
-                or self.df_trailer_TP.is_triggered_with_no_signal(symbol, df_sl_tp['roi_sl_tp'][symbol]):
-            # self.df_trailer_TP.print_trailer_status_for_debug(symbol, df_sl_tp['roi_sl_tp'][symbol])
-            return False
-        if self.df_trailer_TP.is_triggered_with_signal(symbol, df_sl_tp['roi_sl_tp'][symbol]):
-            # self.df_trailer_TP.print_trailer_status_for_debug(symbol, df_sl_tp['roi_sl_tp'][symbol])
-            return True
-        return False
-
-    def condition_for_global_trailer_tp_signal(self):
-        if not self.trigger_global_trailer:
-            return False
-        global_roi = (self.rtctrl.wallet_value - self.rtctrl.init_cash_value) * 100 / self.rtctrl.init_cash_value
-        if self.df_trailer_global_TP.is_off_trailer_TP(global_roi)\
-                or self.df_trailer_global_TP.is_triggered_with_no_signal(global_roi):
-            # self.df_trailer_global_TP.print_trailer_status_for_debug(global_roi)
-            return False
-        if self.df_trailer_global_TP.is_triggered_with_signal(global_roi):
-            # self.df_trailer_global_TP.print_trailer_status_for_debug(global_roi)
-            return True
-        return False
-
-    def condition_trailer_tp_turned_off(self, symbol):
-        if self.trigger_trailer:
-            self.df_trailer_TP.set_trailer_turned_off(symbol)
-        if self.trigger_global_trailer:
-            self.df_trailer_global_TP.set_trailer_turned_off()
-
     def condition_for_selling(self, symbol, df_sl_tp):
         result = False
         if self.is_open_type_short(symbol) and self.condition_for_closing_short_position(symbol):
@@ -209,18 +170,10 @@ class RealTimeStrategy(metaclass=ABCMeta):
         elif self.is_open_type_long(symbol) and self.condition_for_closing_long_position(symbol):
             result = True
             print('============= CLOSE_LONG =============')
-        elif self.condition_for_sl_tp_signal(symbol, df_sl_tp) \
-                or self.condition_trailer_tp_signal(symbol, df_sl_tp) \
-                or self.condition_for_global_sl_tp_signal() \
-                or self.condition_for_global_trailer_tp_signal() \
-                or self.condition_for_sl_liquidation_signal(symbol, df_sl_tp) \
-                or self.condition_for_safety_sl_tp_signal(symbol, df_sl_tp) \
-                or self.condition_for_grid_out_of_range_sl_tp_signal(symbol, df_sl_tp):
+        elif self.condition_for_grid_out_of_range_sl_tp_signal(symbol, df_sl_tp):
             result = True
-            print('============= CLOSE_SL_TP =============')
-        if result \
-                and (self.trigger_trailer
-                     or self.trigger_global_trailer):
+            print('============= CLOSE_GRID_SL_TP =============')
+        if result:
             self.condition_trailer_tp_turned_off(symbol)
         return result
 
@@ -507,13 +460,56 @@ class RealTimeStrategy(metaclass=ABCMeta):
     def get_TP(self):
         return self.TP
 
-    def action_global_SLTP(self, global_unrealizedPL):
+    def condition_for_global_SLTP(self, global_unrealizedPL):
         return ((self.global_TP != 0) and (global_unrealizedPL >= self.global_TP)) \
-               or ((self.global_SL != 0) and (global_unrealizedPL <= self.global_SL))
+               or ((self.global_SL != 0) and (global_unrealizedPL <= self.global_SL)) \
+               or ((self.global_safety_TP != 0) and (global_unrealizedPL >= self.global_safety_TP)) \
+               or ((self.global_safety_SL != 0) and (global_unrealizedPL <= self.global_safety_SL))
 
-    def action_SL_TP(self, unrealizedPL):
-        return ((self.TP != 0) and (unrealizedPL >= self.TP)) \
-               or ((self.SL != 0) and (unrealizedPL <= self.SL))
+    def condition_for_global_trailer_TP(self, global_unrealizedPL):
+        if not self.trigger_global_trailer:
+            return False
+        if self.df_trailer_global_TP.is_off_trailer_TP(global_unrealizedPL)\
+                or self.df_trailer_global_TP.is_triggered_with_no_signal(global_unrealizedPL):
+            self.df_trailer_global_TP.print_trailer_status_for_debug(global_unrealizedPL)
+            return False
+        if self.df_trailer_global_TP.is_triggered_with_signal(global_unrealizedPL):
+            self.df_trailer_global_TP.print_trailer_status_for_debug(global_unrealizedPL)
+            return True
+        return False
+
+
+    def condition_for_SLTP(self, unrealizedPL):
+            return ((self.TP != 0) and (unrealizedPL >= self.TP)) \
+                   or ((self.SL != 0) and (unrealizedPL <= self.SL)) \
+                   or ((self.safety_TP != 0) and (unrealizedPL >= self.safety_TP)) \
+                   or ((self.safety_SL != 0) and (unrealizedPL <= self.safety_SL))
+
+    def condition_trailer_TP(self, symbol, unrealizedPL):
+        if not self.trigger_trailer:
+            return False
+        if self.df_trailer_TP.is_off_trailer_TP(symbol, unrealizedPL)\
+                or self.df_trailer_TP.is_triggered_with_no_signal(symbol, unrealizedPL):
+            self.df_trailer_TP.print_trailer_status_for_debug(symbol, unrealizedPL)
+            return False
+        if self.df_trailer_TP.is_triggered_with_signal(symbol, unrealizedPL):
+            self.df_trailer_TP.print_trailer_status_for_debug(symbol, unrealizedPL)
+            return True
+        return False
+
+    def set_symbol_trailer_tp_turned_off(self, symbol):
+        if self.trigger_trailer:
+            self.df_trailer_TP.set_trailer_turned_off(symbol)
+
+    def trigger_global_trailer_status(self):
+        return self.trigger_global_trailer
+
+    def set_global_trailer_tp_turned_off(self):
+        if self.trigger_global_trailer:
+            self.df_trailer_global_TP.set_trailer_turned_off()
+
+    def trigger_global_trailer_status(self):
+        return self.trigger_trailer
 
 class ShortLongPosition():
     def __init__(self, lst_symbol, str_short_long_position):
@@ -638,7 +634,7 @@ class TrailerTP():
         return self.df_trailer.loc[self.df_trailer['symbol'] == symbol, 'delta'].values[0]
 
     def print_trailer_status_for_debug(self, symbol, roi):
-        print("-------------------- DEBUG - ROI: ", roi,
+        print("-------------------- TP DEBUG - ROI: ", roi,
               " - STATUS: ", self.get_trailer_status(symbol),
               " - TP: ", self.get_trailer_TP(symbol),
               " - THRESHOLD: ", self.get_trailer_threshold(symbol))

@@ -63,3 +63,11 @@ class Broker(metaclass = ABCMeta):
     @abstractmethod
     def export_history(self, target):
         pass
+
+    @abstractmethod
+    def _get_symbol(self, coin):
+        pass
+
+    @abstractmethod
+    def _get_coin(self, symbol):
+        pass

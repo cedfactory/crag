@@ -40,13 +40,13 @@ class StrategyDummyTest(rtstr.RealTimeStrategy):
                and self.df_current_data['close_shift_15'][symbol] <= self.df_current_data['close_shift_10'][symbol]
 
     def condition_for_opening_short_position(self, symbol):
-        return False
+        return True
         return self.df_current_data['close_shift_5'][symbol] >= self.df_current_data['close'][symbol]\
                and self.df_current_data['close_shift_10'][symbol] >= self.df_current_data['close_shift_5'][symbol]\
                and self.df_current_data['close_shift_15'][symbol] >= self.df_current_data['close_shift_10'][symbol]
 
     def condition_for_closing_long_position(self, symbol):
-        return True
+        return False
         return self.df_current_data['close_shift_5'][symbol] >= self.df_current_data['close'][symbol] \
                and self.df_current_data['close_shift_10'][symbol] >= self.df_current_data['close_shift_5'][symbol] \
                and self.df_current_data['close_shift_15'][symbol] >= self.df_current_data['close_shift_10'][symbol]

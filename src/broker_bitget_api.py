@@ -19,6 +19,10 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         self.df_market.reset_index(drop=True)
         print('list symbols perpetual/USDT: ', self.df_market["baseCoin"].tolist())
 
+        if self.reset_account:
+            print('reset account requested')
+            self.execute_reset_account()
+
     def _authentification(self):
         load_dotenv()
         exchange_api_key = os.getenv(self.api_key)
@@ -45,8 +49,22 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     def _get_symbol(self, coin, base = "USDT"):
         # self.get_future_market()
+        if coin in self.df_market['symbol'].tolist():
+            return coin
         symbol = self.df_market.loc[(self.df_market['baseCoin'] == coin) & (self.df_market['quoteCoin'] == base), "symbol"].values[0]
         return symbol
+
+    def _get_coin(self, symbol, base = "USDT"):
+        # self.get_future_market()
+        if symbol in self.df_market['baseCoin'].tolist():
+            return symbol
+
+        if symbol in self.df_market['symbol'].tolist():
+            coin = self.df_market.loc[(self.df_market['symbol'] == symbol) & (self.df_market['quoteCoin'] == base), "baseCoin"].values[0]
+            return coin
+        else:
+            print("WARNING COIN NOT IN MARKET LIST")
+            return symbol.split("USDT_UMCBL")[0]
 
     def _get_symbol_min_trade_amount(self, coin, base = "USDT"):
         # self.get_future_market()

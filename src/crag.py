@@ -592,27 +592,36 @@ class Crag:
 
     def safety_step(self):
         global_unrealizedPL = self.broker.get_global_unrealizedPL()
-        print("global_unrealizedPL: ", global_unrealizedPL)
-        if self.rtstr.action_global_SLTP(global_unrealizedPL):
+        print("global_unrealizedPL: ", global_unrealizedPL) # DEBUG CEDE
+        if self.rtstr.condition_for_global_SLTP(global_unrealizedPL)\
+                or self.rtstr.condition_for_global_trailer_TP(global_unrealizedPL):
+            print('reset - global TP')
             self.broker.execute_reset_account()
+            if self.rtstr.get_trigger_global_trailer_status(): # COMMENT CEDE: USELESS
+                self.rtstr.set_global_trailer_tp_turned_off()
             return False
 
         lst_symbol_position = self.broker.get_lst_symbol_position()
         lst_symbol_for_closure = []
         for symbol in lst_symbol_position:
             symbol_unrealizedPL = self.broker.get_symbol_unrealizedPL(symbol)
-            print("symbol", symbol, "symbol_unrealizedPL: ", symbol_unrealizedPL)
-            if self.broker.action_SL_TP(self, symbol_unrealizedPL):
+            print("symbol", symbol, "symbol_unrealizedPL: ", symbol_unrealizedPL) # DEBUG CEDE
+            if self.rtstr.condition_for_SLTP(symbol_unrealizedPL) \
+                    or self.rtstr.condition_trailer_TP(self.broker._get_coin(symbol), symbol_unrealizedPL):
                 lst_symbol_for_closure.append(symbol)
 
         if len(lst_symbol_for_closure) > 0:
             current_datetime = datetime.today().strftime("%Y/%m/%d %H:%M:%S")
             for current_trade in self.current_trades:
-                if self.rtstr.is_open_type(current_trade.type) and current_trade.symbol in lst_symbol_for_closure:
+                symbol = self.broker._get_symbol(current_trade.symbol)
+                coin = current_trade.symbol
+                if self.rtstr.is_open_type(current_trade.type) and symbol in lst_symbol_for_closure:
+                    print("SELL TRIGGERED - SL TP: ", current_trade.symbol) # DEBUG CEDE
                     sell_trade = self._prepare_sell_trade_from_bought_trade(current_trade,
                                                                             current_datetime)
                     done = self.broker.execute_trade(sell_trade)
                     if done:
+                        print("SELL PERFORMED - SL TP: ", current_trade.symbol) # DEBUG CEDE
                         self.sell_performed = True
                         self.rtstr.count_selling_limits(current_trade.symbol)
                         current_trade.type = self.rtstr.get_close_type_and_close(current_trade.symbol)
@@ -629,5 +638,6 @@ class Crag:
                         self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(),
                                           self.broker.get_cash_borrowed(), self.rtstr.rtctrl.prices_symbols, False,
                                           self.final_datetime, self.broker.get_balance())
+                        self.rtstr.set_symbol_trailer_tp_turned_off(coin)
                         self.sell_performed = False
         return True
