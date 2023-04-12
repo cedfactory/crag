@@ -253,8 +253,10 @@ class Crag:
         if self.clear_unused_data:
             self.broker.check_data_description(ds)
             self.clear_unused_data = False
-
-        prices_symbols = {symbol:self.broker.get_value(symbol) for symbol in ds.symbols}
+        try:
+            prices_symbols = {symbol:self.broker.get_value(symbol) for symbol in ds.symbols}
+        except:
+            print("toto")
 
         print('price: ', prices_symbols)
         current_datetime = self.broker.get_current_datetime()
@@ -592,7 +594,7 @@ class Crag:
 
     def safety_step(self):
         global_unrealizedPL = self.broker.get_global_unrealizedPL()
-        print("global_unrealizedPL: ", global_unrealizedPL) # DEBUG CEDE
+        # print("global_unrealizedPL: ", global_unrealizedPL) # DEBUG CEDE
         if self.rtstr.condition_for_global_SLTP(global_unrealizedPL)\
                 or self.rtstr.condition_for_global_trailer_TP(global_unrealizedPL):
             print('reset - global TP')

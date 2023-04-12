@@ -471,10 +471,10 @@ class RealTimeStrategy(metaclass=ABCMeta):
             return False
         if self.df_trailer_global_TP.is_off_trailer_TP(global_unrealizedPL)\
                 or self.df_trailer_global_TP.is_triggered_with_no_signal(global_unrealizedPL):
-            self.df_trailer_global_TP.print_trailer_status_for_debug(global_unrealizedPL)
+            # self.df_trailer_global_TP.print_trailer_status_for_debug(global_unrealizedPL)
             return False
         if self.df_trailer_global_TP.is_triggered_with_signal(global_unrealizedPL):
-            self.df_trailer_global_TP.print_trailer_status_for_debug(global_unrealizedPL)
+            # self.df_trailer_global_TP.print_trailer_status_for_debug(global_unrealizedPL)
             return True
         return False
 
@@ -490,10 +490,10 @@ class RealTimeStrategy(metaclass=ABCMeta):
             return False
         if self.df_trailer_TP.is_off_trailer_TP(symbol, unrealizedPL)\
                 or self.df_trailer_TP.is_triggered_with_no_signal(symbol, unrealizedPL):
-            self.df_trailer_TP.print_trailer_status_for_debug(symbol, unrealizedPL)
+            # self.df_trailer_TP.print_trailer_status_for_debug(symbol, unrealizedPL) #CEDE DEBUG
             return False
         if self.df_trailer_TP.is_triggered_with_signal(symbol, unrealizedPL):
-            self.df_trailer_TP.print_trailer_status_for_debug(symbol, unrealizedPL)
+            # self.df_trailer_TP.print_trailer_status_for_debug(symbol, unrealizedPL) #CEDE DEBUG
             return True
         return False
 

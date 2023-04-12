@@ -242,7 +242,7 @@ class BrokerBitGet(broker.Broker):
         df_positions = self.get_open_position()
         if len(df_positions) > 0:
             global_unrealizedPL = df_positions["unrealizedPL"].sum()
-            print('global_unrealizedPL: ', global_unrealizedPL)
+            # print('global_unrealizedPL: ', global_unrealizedPL) #CEDE DEBUG
             return global_unrealizedPL
         else:
             return 0
