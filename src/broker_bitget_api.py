@@ -339,12 +339,13 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     def get_order_fill_detail(self, symbol, order_id):
         trade_id = price = fillAmount = sizeQty = fee = None
         response = self.orderApi.fills(symbol, order_id)
-        if len(response["data"]) > 0:
-            trade_id = response["data"][0]["tradeId"]
-            price = response["data"][0]["price"]
-            sizeQty = response["data"][0]["sizeQty"]
-            fee = response["data"][0]["fee"]
-            fillAmount = response["data"][0]["fillAmount"]
+        for datum in response["data"]:
+            if datum["orderId"] == order_id:
+                trade_id = datum["tradeId"]
+                price = datum["price"]
+                sizeQty = datum["sizeQty"]
+                fee = datum["fee"]
+                fillAmount = datum["fillAmount"]
         return trade_id, float(price), float(fillAmount), float(sizeQty), float(fee)
 
     @authentication_required
