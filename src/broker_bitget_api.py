@@ -345,6 +345,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             sizeQty = response["data"][0]["sizeQty"]
             fee = response["data"][0]["fee"]
             fillAmount = response["data"][0]["fillAmount"]
+        print("get_order_fill_detail: ", symbol, " - ", order_id, " - ", trade_id, " - ", price, " - ", fillAmount, " - ", sizeQty, " - ", fee)
         return trade_id, float(price), float(fillAmount), float(sizeQty), float(fee)
 
     @authentication_required
