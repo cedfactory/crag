@@ -256,7 +256,11 @@ class Crag:
         try:
             prices_symbols = {symbol:self.broker.get_value(symbol) for symbol in ds.symbols}
         except:
-            print("toto")
+            for symbol in ds.symbols:
+                try:
+                    self.broker.get_value(symbol)
+                except:
+                    print("symbol error: ", symbol)
 
         print('price: ', prices_symbols)
         current_datetime = self.broker.get_current_datetime()
@@ -607,7 +611,7 @@ class Crag:
         lst_symbol_for_closure = []
         for symbol in lst_symbol_position:
             symbol_unrealizedPL = self.broker.get_symbol_unrealizedPL(symbol)
-            print("symbol", symbol, "symbol_unrealizedPL: ", symbol_unrealizedPL) # DEBUG CEDE
+            # print("symbol", symbol, "symbol_unrealizedPL: ", symbol_unrealizedPL) # DEBUG CEDE
             if self.rtstr.condition_for_SLTP(symbol_unrealizedPL) \
                     or self.rtstr.condition_trailer_TP(self.broker._get_coin(symbol), symbol_unrealizedPL):
                 lst_symbol_for_closure.append(symbol)
