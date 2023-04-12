@@ -23,10 +23,10 @@ class StrategyVolatilityTest(rtstr.RealTimeStrategy):
     def get_data_description(self):
         ds = rtdp.DataDescription()
         ds.symbols = self.lst_symbols
-        ds.features = { "close": 1,
-                        "close_shift_5": 5,
-                        "close_shift_10": 10,
-                        "close_shift_15": 15
+        ds.features = { "close": None,
+                        "close_shift_5": None,
+                        "close_shift_10": None,
+                        "close_shift_15": None
                       }
         return ds
 

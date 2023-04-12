@@ -1,6 +1,6 @@
 <configuration>
     <strategy id="strategyvolatility" name="StrategyVolatilityTest">
-        <params symbols="./symbols_df_volatility_test_usdt.csv" max_position="10" share_size="0" sl="-1" tp="0" global_sl="-10" global_tp="10" trailer_tp="1" trailer_delta="0.5" trailer_global_tp="10" trailer_global_delta="0.2"/>
+        <params symbols="./symbols_df_volatility_usdt.csv" max_position="10" share_size="0" sl="-1" tp="0" global_sl="-5" global_tp="10" trailer_tp="1" trailer_delta="0.2" trailer_global_tp="0" trailer_global_delta="0"/>
     </strategy>
     <broker name="bitget">
         <params exchange="binance" account="subaccount1" leverage_short="1" leverage_long="2" simulation="1" intervals="1m" orders="market" reset_account="True"/>
