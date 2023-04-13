@@ -57,6 +57,8 @@ class Client(object):
         # MODIF CEDE  print("status:", response.status_code)
         # exception handle
         if not str(response.status_code).startswith('2'):
+            print("url : ", url)
+            print("response : ", response)
             raise exceptions.BitgetAPIException(response)
         try:
             res_header = response.headers
