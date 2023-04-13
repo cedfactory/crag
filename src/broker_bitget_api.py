@@ -339,14 +339,32 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     def get_order_fill_detail(self, symbol, order_id):
         trade_id = price = fillAmount = sizeQty = fee = None
         response = self.orderApi.fills(symbol, order_id)
-        if len(response["data"]) > 0:
-            trade_id = response["data"][0]["tradeId"]
-            price = response["data"][0]["price"]
-            sizeQty = response["data"][0]["sizeQty"]
-            fee = response["data"][0]["fee"]
-            fillAmount = response["data"][0]["fillAmount"]
-        print("get_order_fill_detail: ", symbol, " - ", order_id, " - ", trade_id, " - ", price, " - ", fillAmount, " - ", sizeQty, " - ", fee)
-        return trade_id, float(price), float(fillAmount), float(sizeQty), float(fee)
+        if len(response["data"]) == 0:
+            # df_positions = self.get_open_position()
+            # if symbol in df_positions["symbol"].tolist():
+            cpt = 0
+            while len(response["data"]) == 0 and cpt < 5:
+                response = self.orderApi.fills(symbol, order_id)
+                cpt += 1
+                if len(response["data"]) > 0:
+                    break
+            if len(response["data"]) == 0:
+                return trade_id, 0, 0, 0, 0
+        if len(response["data"]) > 1:
+            print("get_order_fill_detail multiple order", )
+
+        trade_id = response["data"][0]["tradeId"]
+        price = 0
+        sizeQty = 0
+        fee = 0
+        fillAmount = 0
+        for data in response["data"]:
+            price += float(data["price"])
+            sizeQty += float(data["sizeQty"])
+            fee += float(data["fee"])
+            fillAmount += float(data["fillAmount"])
+
+        return trade_id, price, fillAmount, sizeQty, fee
 
     @authentication_required
     def get_symbol_min_max_leverage(self, symbol):

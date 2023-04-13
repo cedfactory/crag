@@ -101,7 +101,11 @@ class rtctrl():
         lst_symbols_from_current_trade.sort()
         lst_symbols_from_balance.sort()
         if lst_symbols_from_current_trade != lst_symbols_from_balance:
+            print('================================================================')
             print('error list of symbols/current_trades not matching')
+            print('list from current_trade: ', lst_symbols_from_current_trade)
+            print('list from account balance: ', lst_symbols_from_balance)
+            print('================================================================')
 
         # actual_prices = [prices_symbols[symbol] for symbol in self.symbols]
         actual_prices = [prices_symbols[symbol] for symbol in df_balance_assets['symbol'].tolist()]
@@ -123,9 +127,13 @@ class rtctrl():
             # CEDE for cross check
             buying_price_cross_check = self.df_rtctrl.at[idx[0], 'buying_gross_price']
             self.df_rtctrl.at[idx[0], 'buying_gross_price'] = self.get_asset_gross_price(list_of_current_trades, symbol)
-            if self.df_rtctrl.at[idx[0], 'buying_gross_price'] != buying_price_cross_check:
+            if round(self.df_rtctrl.at[idx[0], 'buying_gross_price'], 4) != round(buying_price_cross_check, 4):
+                print('================================================================')
+                print('symbol: ', symbol)
                 print('error buying_gross_price not matching: ', self.df_rtctrl.at[idx[0], 'buying_gross_price'] - buying_price_cross_check)
-
+                print('buying_gross_price rtctrl: ', self.df_rtctrl.at[idx[0], 'buying_gross_price'])
+                print('buying_gross_price: ', buying_price_cross_check)
+                print('================================================================')
 
         self.df_rtctrl['roi_$'] = df_balance_assets['unrealizedPL']
         self.df_rtctrl['roi_%'] = self.df_rtctrl['roi_$'] / self.df_rtctrl['buying_gross_price'] * 100

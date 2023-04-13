@@ -39,8 +39,6 @@ class StrategySlopeIsDope(rtstr.RealTimeStrategy):
                         "slow_slope": None,
                         "last_lowest": None
                         }
-
-
         return ds
 
     def get_info(self):
