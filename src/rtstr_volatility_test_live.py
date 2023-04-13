@@ -26,7 +26,8 @@ class StrategyVolatilityTest(rtstr.RealTimeStrategy):
         ds.features = { "close": None,
                         "close_shift_5": None,
                         "close_shift_10": None,
-                        "close_shift_15": None
+                        "close_shift_15": None,
+                        "close_shift_20": None
                       }
         return ds
 
@@ -36,12 +37,14 @@ class StrategyVolatilityTest(rtstr.RealTimeStrategy):
     def condition_for_opening_long_position(self, symbol):
         return self.df_current_data['close_shift_5'][symbol] <= self.df_current_data['close'][symbol]\
                and self.df_current_data['close_shift_10'][symbol] <= self.df_current_data['close_shift_5'][symbol]\
-               and self.df_current_data['close_shift_15'][symbol] <= self.df_current_data['close_shift_10'][symbol]
+               and self.df_current_data['close_shift_15'][symbol] <= self.df_current_data['close_shift_10'][symbol]\
+               and self.df_current_data['close_shift_15'][symbol] <= self.df_current_data['close_shift_20'][symbol]
 
     def condition_for_opening_short_position(self, symbol):
         return self.df_current_data['close_shift_5'][symbol] >= self.df_current_data['close'][symbol]\
                and self.df_current_data['close_shift_10'][symbol] >= self.df_current_data['close_shift_5'][symbol]\
-               and self.df_current_data['close_shift_15'][symbol] >= self.df_current_data['close_shift_10'][symbol]
+               and self.df_current_data['close_shift_15'][symbol] >= self.df_current_data['close_shift_10'][symbol] \
+               and self.df_current_data['close_shift_15'][symbol] >= self.df_current_data['close_shift_20'][symbol]
 
     def condition_for_closing_long_position(self, symbol):
         return False
