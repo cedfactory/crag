@@ -105,7 +105,9 @@ class BrokerBitGet(broker.Broker):
                     trade.success = True
                     trade.orderId = transaction["data"]["orderId"]
                     trade.clientOid = transaction["data"]["clientOid"]
+                    print('request OPEN_LONG: ', symbol, ' - gross_size: ', trade.gross_size)
                     trade.tradeId, trade.symbol_price, trade.gross_price, trade.gross_size, trade.buying_fee = self.get_order_fill_detail(symbol, trade.orderId)
+                    print('returned OPEN_LONG: ', symbol, ' - gross_size: ', trade.gross_size, ' - price: ', trade.gross_price, ' - fee: ', trade.buying_fee)
                     trade.net_size = trade.gross_size
                     trade.net_price = trade.gross_price
                     trade.bought_gross_price = trade.gross_price
@@ -118,7 +120,9 @@ class BrokerBitGet(broker.Broker):
                     trade.success = True
                     trade.orderId = transaction["data"]["orderId"]
                     trade.clientOid = transaction["data"]["clientOid"]
+                    print('request OPEN_SHORT: ', symbol, ' - gross_size: ', trade.gross_size)
                     trade.tradeId, trade.symbol_price, trade.gross_price, trade.gross_size, trade.buying_fee = self.get_order_fill_detail(symbol, trade.orderId)
+                    print('returned OPEN_SHORT: ', symbol, ' - gross_size: ', trade.gross_size, ' - price: ', trade.gross_price, ' - fee: ', trade.buying_fee)
                     trade.net_size = trade.gross_size
                     trade.net_price = trade.gross_price
                     trade.bought_gross_price = trade.gross_price
@@ -130,7 +134,9 @@ class BrokerBitGet(broker.Broker):
                 trade.success = True
                 trade.orderId = transaction["data"]["orderId"]
                 trade.clientOid = transaction["data"]["clientOid"]
+                print('request CLOSE_LONG: ', symbol, ' - gross_size: ', trade.gross_size)
                 trade.tradeId, trade.symbol_price, trade.gross_price, trade.gross_size, trade.selling_fee = self.get_order_fill_detail(symbol, trade.orderId)
+                print('returned CLOSE_LONG: ', symbol, ' - gross_size: ', trade.gross_size, ' - price: ', trade.gross_price, ' - fee: ', trade.selling_fee)
                 # CEDE to be confirmed : selling_fee is selling_fee + buying_fee or just selling_fee
                 trade.net_size = trade.gross_size
                 trade.net_price = trade.gross_price
@@ -143,7 +149,9 @@ class BrokerBitGet(broker.Broker):
                 trade.success = True
                 trade.orderId = transaction["data"]["orderId"]
                 trade.clientOid = transaction["data"]["clientOid"]
+                print('request CLOSE_SHORT: ', symbol, ' - gross_size: ', trade.gross_size)
                 trade.tradeId, trade.symbol_price, trade.gross_price, trade.gross_size, trade.selling_fee = self.get_order_fill_detail(symbol, trade.orderId)
+                print('returned CLOSE_SHORT: ', symbol, ' - gross_size: ', trade.gross_size, ' - price: ', trade.gross_price, ' - fee: ', trade.selling_fee)
                 # CEDE to be confirmed : selling_fee is selling_fee + buying_fee or just selling_fee
                 trade.net_size = trade.gross_size
                 trade.net_price = trade.gross_price
@@ -199,23 +207,7 @@ class BrokerBitGet(broker.Broker):
             if res:
                 usdtEquity = df_positions.loc[(df_positions['symbol'] == symbol), "usdtEquity"].values[0]
                 print('reset - close ', holdSize, 'position - symbol: ', symbol,' value: ', current_trade.gross_size, ' - $', usdtEquity)
-        '''
-        for symbol in df_positions['symbol'].tolist():
-            if df_positions.loc[(df_positions['symbol'] == symbol), "holdSide"].values[0] == 'long':
-                clientOid = self.clientOIdprovider.get_name(symbol,  "CLOSE_LONG")
-                gross_size = df_positions.loc[(df_positions['symbol'] == symbol), "available"].values[0]
-                usdtEquity = df_positions.loc[(df_positions['symbol'] == symbol), "usdtEquity"].values[0]
-                transaction = self._close_long_position(symbol, gross_size, clientOid)
-                if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
-                    print('reset - close long position - symbol: ', symbol,' value: ', gross_size, ' - $', usdtEquity)
-            else:
-                clientOid = self.clientOIdprovider.get_name(symbol,  "CLOSE_SHORT")
-                gross_size = df_positions.loc[(df_positions['symbol'] == symbol), "available"].values[0]
-                usdtEquity = df_positions.loc[(df_positions['symbol'] == symbol), "usdtEquity"].values[0]
-                transaction = self._close_short_position(symbol, gross_size, clientOid)
-                if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
-                    print('reset - close short position - symbol: ', symbol,' value: ', gross_size, ' - $', usdtEquity)
-        '''
+
         df_positions = self.get_open_position()
         if len(df_positions) != 0:
             print("reset - failure")
