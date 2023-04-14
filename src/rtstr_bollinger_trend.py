@@ -25,18 +25,27 @@ class StrategyBollingerTrend(rtstr.RealTimeStrategy):
     def get_data_description(self):
         ds = rtdp.DataDescription()
         ds.symbols = self.lst_symbols
-        ds.features = { "close": None,
-                        "n1_close": {"window_size":5000},
-                        "bollinger": 500,
-                        # "syntheticbollinger": 500,
-                        "lower_band": 100,
-                        "n1_lower_band": 100,
-                        "higher_band": 100,
-                        "n1_higher_band": 100,
-                        "ma_band": 100,
-                        "n1_ma_band": 100,
-                        'long_ma': 500
-                      }
+        """
+        ds.features = {"close": None,
+                       "n1_close": {"window_size": 1},
+                       "bollinger": {"window_size": 100, "bol_std": 2.25, "min_bol_spread": 0},
+                       "lower_band": {"window_size": None},
+                       "n1_lower_band": {"window_size": None},
+                       "higher_band": {"window_size": None},
+                       "n1_higher_band": {"window_size": None},
+                       "ma_band": {"window_size": None},
+                       "n1_ma_band": {"window_size": None},
+                       "long_ma": {"window_size": 500}
+                       }
+        """
+        ds.fdp_features = {"close": None,
+                           "bollinger1": {"indicator": "bollinger", "id":"1", "window_size": 100, "bol_std": 2.25, "min_bol_spread": 0, "output": ["lower_band", "higher_band", "ma_band"]},
+                           "bollinger2": {"indicator": "bollinger", "id":"2", "window_size": 100, "bol_std": 2.25, "min_bol_spread": 0, "output": ["lower_band", "higher_band", "ma_band"]},
+                           "sma_short": {"indicator": "sma", "window_size": 10},
+                           "sma_long": {"indicator": "sma", "window_size": 20}
+                           }
+        ds.features = self.get_feature_from_fdp_features(ds.fdp_features)
+
         return ds
 
     def get_info(self):

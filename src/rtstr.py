@@ -117,6 +117,21 @@ class RealTimeStrategy(metaclass=ABCMeta):
     def set_current_data(self, current_data):
         self.df_current_data = current_data
 
+    def get_feature_from_fdp_features(self, fdp_features):
+        lst_features = []
+        for feature in fdp_features:
+            lst_features.append(feature)
+            if fdp_features[feature] != None:
+                lst_param = list(fdp_features[feature])
+                if "id" in lst_param:
+                    id = fdp_features[feature]["id"]
+                else:
+                    id = ""
+                if "output" in lst_param:
+                    for output in fdp_features[feature]["output"]:
+                        lst_features.append(output + id)
+        return lst_features
+
     def condition_for_opening_long_position(self, symbol):
         return False
 
