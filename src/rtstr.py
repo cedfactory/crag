@@ -120,16 +120,28 @@ class RealTimeStrategy(metaclass=ABCMeta):
     def get_feature_from_fdp_features(self, fdp_features):
         lst_features = []
         for feature in fdp_features:
-            lst_features.append(feature)
-            if fdp_features[feature] != None:
+            if len(fdp_features[feature]) == 0:
+                lst_features.append(feature)
+            elif fdp_features[feature] != None:
                 lst_param = list(fdp_features[feature])
                 if "id" in lst_param:
-                    id = fdp_features[feature]["id"]
+                    id = "_" + fdp_features[feature]["id"]
                 else:
                     id = ""
+                if "n" in lst_param:
+                    n = "n" + fdp_features[feature]["n"] + "_"
+                else:
+                    n = ""
+                if not feature.startswith("postprocess"):
+                    lst_features.append(fdp_features[feature]["indicator"] + id)
                 if "output" in lst_param:
                     for output in fdp_features[feature]["output"]:
                         lst_features.append(output + id)
+                if "indicator" in fdp_features[feature] \
+                        and fdp_features[feature]["indicator"] == "shift" \
+                        and "input" in lst_param:
+                    for input in fdp_features[feature]["input"]:
+                        lst_features.append(n + input + id)
         return lst_features
 
     def condition_for_opening_long_position(self, symbol):

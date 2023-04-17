@@ -26,26 +26,22 @@ class StrategyBollingerTrend(rtstr.RealTimeStrategy):
         ds = rtdp.DataDescription()
         ds.symbols = self.lst_symbols
 
-        ################################################
-        # CEDE COMMENT EXAMPLE:
-        ds.fdp_features = {"close": None,
-                           "bollinger1": {"indicator": "bollinger", "id":"1", "window_size": 100, "bol_std": 2.25, "min_bol_spread": 0, "output": ["lower_band", "higher_band", "ma_band"]},
-                           "bollinger2": {"indicator": "bollinger", "id":"2", "window_size": 100, "bol_std": 2.25, "min_bol_spread": 0, "output": ["lower_band", "higher_band", "ma_band"]},
-                           "sma_short": {"indicator": "sma", "window_size": 10},
-                           "sma_long": {"indicator": "sma", "window_size": 20}
-                           }
-        ################################################
-
-        ds.fdp_features = {"close": None,
-                           "bollinger": {"indicator": "bollinger", "window_size": 100, "bol_std": 2.25, "min_bol_spread": 0, "output": ["lower_band", "higher_band", "ma_band"]},
-                           "long_ma": {"indicator": "sma", "window_size": 500},
-                           "n1_close":  None,
-                           "n1_lower_band": None,
-                           "n1_higher_band": None,
-                           "n1_ma_band": None
+        ds.fdp_features = {"close": {},
+                           "bollinger_id1": {"indicator": "bollinger", "window_size": 100, "id":"1", "bol_std": 2.25, "min_bol_spread": 0, "output": ["lower_band", "higher_band", "ma_band"]},
+                           "bollinger_id2": {"indicator": "bollinger", "window_size": 100, "id": "2", "bol_std": 2.25, "min_bol_spread": 0, "output": ["lower_band", "higher_band", "ma_band"]},
+                           "long_ma": {"indicator": "sma", "id":"long_ma", "window_size": 500},
+                           "short": {"indicator": "sma", "id": "short", "window_size": 10},
+                           "long": {"indicator": "sma", "id": "long", "window_size": 20},
+                           "postprocess1": {"indicator": "shift", "window_size":"1","id":"1" ,"n":"1", "input": ['lower_band', "higher_band", "ma_band"]},
+                           "postprocess2": {"indicator": "shift", "window_size": "1", "n":"1", "input": ["close"]}
                            }
 
         ds.features = self.get_feature_from_fdp_features(ds.fdp_features)
+        """ output:
+        ['close', 'bollinger_1', 'lower_band_1', 'higher_band_1', 'ma_band_1', 'bollinger_2', 'lower_band_2',
+         'higher_band_2', 'ma_band_2', 'sma_long_ma', 'sma_short', 'sma_long', 'n1_lower_band_1', 'n1_higher_band_1',
+         'n1_ma_band_1', 'n1_close']
+        """
 
         return ds
 
