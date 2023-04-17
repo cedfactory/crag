@@ -22,18 +22,20 @@ class StrategyBollingerTrend(rtstr.RealTimeStrategy):
 
         self.zero_print = True
 
+        self.min_bol_spread = 0
+
     def get_data_description(self):
         ds = rtdp.DataDescription()
         ds.symbols = self.lst_symbols
 
         ds.fdp_features = {"close": {},
-                           "bollinger_id1": {"indicator": "bollinger", "window_size": 100, "id":"1", "bol_std": 2.25, "min_bol_spread": 0, "output": ["lower_band", "higher_band", "ma_band"]},
-                           "bollinger_id2": {"indicator": "bollinger", "window_size": 100, "id": "2", "bol_std": 2.25, "min_bol_spread": 0, "output": ["lower_band", "higher_band", "ma_band"]},
+                           "bollinger_id1": {"indicator": "bollinger", "window_size": 100, "id":"1", "bol_std": 2.25, "output": ["lower_band", "higher_band", "ma_band"]},
+                           "bollinger_id2": {"indicator": "bollinger", "window_size": 100, "id": "2", "bol_std": 2.25, "output": ["lower_band", "higher_band", "ma_band"]},
                            "long_ma": {"indicator": "sma", "id":"long_ma", "window_size": 500},
                            "short": {"indicator": "sma", "id": "short", "window_size": 10},
                            "long": {"indicator": "sma", "id": "long", "window_size": 20},
-                           "postprocess1": {"indicator": "shift", "window_size":"1","id":"1" ,"n":"1", "input": ['lower_band', "higher_band", "ma_band"]},
-                           "postprocess2": {"indicator": "shift", "window_size": "1", "n":"1", "input": ["close"]}
+                           "postprocess1": {"indicator": "shift", "window_size":1,"id":"1" ,"n":"1", "input": ['lower_band', "higher_band", "ma_band"]},
+                           "postprocess2": {"indicator": "shift", "window_size":1, "n":"1", "input": ["close"]}
                            }
 
         ds.features = self.get_feature_from_fdp_features(ds.fdp_features)
