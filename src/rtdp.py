@@ -79,9 +79,9 @@ class RealTimeDataProvider(IRealTimeDataProvider):
         sim_current_date = self.get_current_datetime()
         sim_current_date = sim_current_date.replace(second=0, microsecond=0)
         sim_current_date = None
-        # params = { "service":"history_last", "exchange":"binance", "symbol":symbols, "interval": interval, "start": str(sim_current_date),"indicators": data_description.features}
-        params = {"service": "history_last", "exchange": "bitget", "symbol": symbols, "interval": interval, "start": str(sim_current_date), "indicators": data_description.features}
-        # params = {"service": "history_last", "exchange": "binance", "symbol": symbols, "interval": interval, "indicators": data_description.features}
+        # params = { "service":"history_last", "exchange":"binance", "symbol":symbols, "interval": interval, "start": str(sim_current_date),"indicators": data_description.fdp_features}
+        params = {"service": "history_last", "exchange": "bitget", "symbol": symbols, "interval": interval, "start": str(sim_current_date), "indicators": data_description.fdp_features}
+        # params = {"service": "history_last", "exchange": "binance", "symbol": symbols, "interval": interval, "indicators": data_description.fdp_features}
         # https://fdp-ifxcxetwza-od.a.run.app/history?exchange=bitget&symbol=BTC&start=2023-01-01&indicators=close
         #
         response_json = utils.fdp_request_post("history_last", params)

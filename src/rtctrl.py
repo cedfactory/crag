@@ -127,7 +127,7 @@ class rtctrl():
             # CEDE for cross check
             buying_price_cross_check = self.df_rtctrl.at[idx[0], 'buying_gross_price']
             self.df_rtctrl.at[idx[0], 'buying_gross_price'] = self.get_asset_gross_price(list_of_current_trades, symbol)
-            if round(self.df_rtctrl.at[idx[0], 'buying_gross_price'], 4) != round(buying_price_cross_check, 4):
+            if abs(self.df_rtctrl.at[idx[0], 'buying_gross_price'] - buying_price_cross_check) > 0.0001:
                 print('================================================================')
                 print('symbol: ', symbol)
                 print('error buying_gross_price not matching: ', self.df_rtctrl.at[idx[0], 'buying_gross_price'] - buying_price_cross_check)

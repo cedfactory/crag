@@ -207,23 +207,7 @@ class BrokerBitGet(broker.Broker):
             if res:
                 usdtEquity = df_positions.loc[(df_positions['symbol'] == symbol), "usdtEquity"].values[0]
                 print('reset - close ', holdSize, 'position - symbol: ', symbol,' value: ', current_trade.gross_size, ' - $', usdtEquity)
-        '''
-        for symbol in df_positions['symbol'].tolist():
-            if df_positions.loc[(df_positions['symbol'] == symbol), "holdSide"].values[0] == 'long':
-                clientOid = self.clientOIdprovider.get_name(symbol,  "CLOSE_LONG")
-                gross_size = df_positions.loc[(df_positions['symbol'] == symbol), "available"].values[0]
-                usdtEquity = df_positions.loc[(df_positions['symbol'] == symbol), "usdtEquity"].values[0]
-                transaction = self._close_long_position(symbol, gross_size, clientOid)
-                if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
-                    print('reset - close long position - symbol: ', symbol,' value: ', gross_size, ' - $', usdtEquity)
-            else:
-                clientOid = self.clientOIdprovider.get_name(symbol,  "CLOSE_SHORT")
-                gross_size = df_positions.loc[(df_positions['symbol'] == symbol), "available"].values[0]
-                usdtEquity = df_positions.loc[(df_positions['symbol'] == symbol), "usdtEquity"].values[0]
-                transaction = self._close_short_position(symbol, gross_size, clientOid)
-                if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
-                    print('reset - close short position - symbol: ', symbol,' value: ', gross_size, ' - $', usdtEquity)
-        '''
+
         df_positions = self.get_open_position()
         if len(df_positions) != 0:
             print("reset - failure")

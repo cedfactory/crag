@@ -14,6 +14,17 @@ import yfinance as yf
 
 from datetime import datetime
 
+def get_fdp_url():
+    load_dotenv()
+    fdp_url = os.getenv("FDP_URL")
+    return fdp_url
+
+    with open(".env") as file:
+        for line in file:
+            if line.startswith("FDP_URL="):
+                fdp_url = line.split("FDP_URL=")[1].rstrip()
+    return fdp_url
+
 def convert_ms_to_datetime(ms):
     if isinstance(ms, str):
         ms = int(ms)
@@ -37,8 +48,7 @@ def _atomic_fdp_request(url):
 
 
 def fdp_request(params, multithreading = True):
-    load_dotenv()
-    fdp_url = os.getenv("FDP_URL")
+    fdp_url = get_fdp_url()
     if not fdp_url or fdp_url == "":
         return {"status":"ko", "info":"fdp url not found"}
 
@@ -75,8 +85,7 @@ def fdp_request(params, multithreading = True):
     return final_result
 
 def fdp_request_post(url, params):
-    load_dotenv()
-    fdp_url = os.getenv("FDP_URL")
+    fdp_url = get_fdp_url()
     if not fdp_url or fdp_url == "":
         return {"status":"ko", "info":"fdp url not found"}
 

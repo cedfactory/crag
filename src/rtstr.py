@@ -30,6 +30,8 @@ class RealTimeStrategy(metaclass=ABCMeta):
         self.trailer_global_delta = 0
         self.trigger_global_trailer = False
         self.MAX_POSITION = 5    # Asset Overall Percent Size
+        self.set_buying_size = False
+        self.buying_size = 0
         self.logger = None
         self.id = ""
         self.min_bol_spread = 0   # Bollinger Trend startegy
@@ -114,6 +116,21 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
     def set_current_data(self, current_data):
         self.df_current_data = current_data
+
+    def get_feature_from_fdp_features(self, fdp_features):
+        lst_features = []
+        for feature in fdp_features:
+            lst_features.append(feature)
+            if fdp_features[feature] != None:
+                lst_param = list(fdp_features[feature])
+                if "id" in lst_param:
+                    id = fdp_features[feature]["id"]
+                else:
+                    id = ""
+                if "output" in lst_param:
+                    for output in fdp_features[feature]["output"]:
+                        lst_features.append(output + id)
+        return lst_features
 
     def condition_for_opening_long_position(self, symbol):
         return False
@@ -292,13 +309,25 @@ class RealTimeStrategy(metaclass=ABCMeta):
         if not symbol in self.rtctrl.prices_symbols or self.rtctrl.prices_symbols[symbol] < 0: # first init at -1
             return 0, 0, 0
 
+        if self.rtctrl.init_cash_value == self.rtctrl.wallet_cash \
+                and not self.set_buying_size:
+            self.buying_size = self.rtctrl.init_cash_value * self.MAX_POSITION / 100
+            self.set_buying_size = True
+
+        if self.rtctrl.wallet_cash > self.rtctrl.init_cash_value \
+                and self.set_buying_size:
+            self.buying_size = self.rtctrl.wallet_cash * self.MAX_POSITION / 100
+
         available_cash = self.rtctrl.wallet_cash
         if available_cash == 0:
             return 0, 0, 0
 
         wallet_value = available_cash
 
-        cash_to_buy = wallet_value * self.MAX_POSITION / 100
+        if True:
+            cash_to_buy = self.buying_size  # fixed size
+        else:
+            cash_to_buy = wallet_value * self.MAX_POSITION / 100 # proportional size
 
         if cash_to_buy > available_cash:
             cash_to_buy = available_cash
