@@ -93,8 +93,11 @@ class rtctrl():
             self.df_roi_sl_tp.rename(columns={'roi_%': 'roi_sl_tp'}, inplace=True)
             return
 
-        # CEDE CROSS CHECK
-        # CEDE AFTER VERIF CROSS CHECK CAN BE REMOVED
+        if len(list_of_current_trades) != 0 and self.init_cash_value == 0:
+            self.wallet_value = df_balance.at[indexUSDT[0], 'usdtEquity']
+            self.init_cash_value = self.wallet_value
+            self.wallet_cash = wallet_cash
+
         self.symbols = self.get_list_of_traded_symbols(list_of_current_trades)
         lst_symbols_from_balance = df_balance_assets['symbol'].tolist()   # self.symbols = df_balances['baseCoin'].tolist() ???
         lst_symbols_from_current_trade = self.symbols
@@ -122,18 +125,7 @@ class rtctrl():
 
         for symbol in self.df_rtctrl['symbol'].tolist():
             idx = df_balance_assets[(df_balance_assets['symbol'] == symbol)].index
-            self.df_rtctrl.at[idx[0], 'fees'] = self.get_asset_fees(list_of_current_trades, symbol) # CEDE to be checked with real buy
-
-            # CEDE for cross check
-            buying_price_cross_check = self.df_rtctrl.at[idx[0], 'buying_gross_price']
-            self.df_rtctrl.at[idx[0], 'buying_gross_price'] = self.get_asset_gross_price(list_of_current_trades, symbol)
-            if abs(self.df_rtctrl.at[idx[0], 'buying_gross_price'] - buying_price_cross_check) > 0.0001:
-                print('================================================================')
-                print('symbol: ', symbol)
-                print('error buying_gross_price not matching: ', self.df_rtctrl.at[idx[0], 'buying_gross_price'] - buying_price_cross_check)
-                print('buying_gross_price rtctrl: ', self.df_rtctrl.at[idx[0], 'buying_gross_price'])
-                print('buying_gross_price: ', buying_price_cross_check)
-                print('================================================================')
+            self.df_rtctrl.at[idx[0], 'fees'] = self.get_asset_fees(list_of_current_trades, symbol)
 
         self.df_rtctrl['roi_$'] = df_balance_assets['unrealizedPL']
         self.df_rtctrl['roi_%'] = self.df_rtctrl['roi_$'] / self.df_rtctrl['buying_gross_price'] * 100
@@ -141,7 +133,8 @@ class rtctrl():
         self.df_rtctrl['portfolio_value'] = df_balance_assets['usdtEquity']   # CEDE ???????????? could be net_price
         self.df_rtctrl['cash'] = self.wallet_cash
         self.df_rtctrl['cash_borrowed'] = self.wallet_cash_borrowed
-        self.df_rtctrl['wallet_value'] = df_balance['usdtEquity'].sum()
+        # self.df_rtctrl['wallet_value'] = df_balance['usdtEquity'].sum()
+        self.df_rtctrl['wallet_value'] = df_balance.loc[df_balance['symbol'] == 'USDT', 'usdtEquity'].values[0]
 
         self.df_roi_sl_tp = self.df_rtctrl.copy()
         self.df_roi_sl_tp.set_index('symbol', inplace=True)
