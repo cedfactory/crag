@@ -81,9 +81,17 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     #@authentication_required
     def get_open_position(self):
-        all_positions = self.positionApi.all_position(productType='umcbl',marginCoin='USDT')
-        lst_all_positions = [data for data in all_positions["data"] if float(data["total"]) != 0.]
-        return self._build_df_open_positions(lst_all_positions)
+        res = pd.DataFrame()
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                all_positions = self.positionApi.all_position(productType='umcbl',marginCoin='USDT')
+                lst_all_positions = [data for data in all_positions["data"] if float(data["total"]) != 0.]
+                res = self._build_df_open_positions(lst_all_positions)
+                break
+            except:
+                n_attempts = n_attempts - 1
+        return res
 
     #@authentication_required
     def get_account_equity(self):
