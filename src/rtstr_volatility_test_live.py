@@ -23,28 +23,33 @@ class StrategyVolatilityTest(rtstr.RealTimeStrategy):
     def get_data_description(self):
         ds = rtdp.DataDescription()
         ds.symbols = self.lst_symbols
-        ds.features = { "close": None,
-                        "close_shift_5": None,
-                        "close_shift_10": None,
-                        "close_shift_15": None,
-                        "close_shift_20": None
-                      }
+        ds.fdp_features = { "close": {},
+                            "postprocess1": {"indicator": "shift", "window_size": 1, "n": "5", "input": ["close"]},
+                            "postprocess2": {"indicator": "shift", "window_size": 1, "n": "10", "input": ["close"]},
+                            "postprocess3": {"indicator": "shift", "window_size": 1, "n": "15", "input": ["close"]},
+                            "postprocess4": {"indicator": "shift", "window_size": 1, "n": "20", "input": ["close"]}
+                            }
+
+        ds.features = self.get_feature_from_fdp_features(ds.fdp_features)
+        print("startegy: ", self.get_info())
+        print("strategy features: ", ds.features)
+
         return ds
 
     def get_info(self):
         return "StrategyVolatilityTest"
 
     def condition_for_opening_long_position(self, symbol):
-        return self.df_current_data['close_shift_5'][symbol] <= self.df_current_data['close'][symbol]\
-               and self.df_current_data['close_shift_10'][symbol] <= self.df_current_data['close_shift_5'][symbol]\
-               and self.df_current_data['close_shift_15'][symbol] <= self.df_current_data['close_shift_10'][symbol]\
-               and self.df_current_data['close_shift_15'][symbol] <= self.df_current_data['close_shift_20'][symbol]
+        return self.df_current_data['n5_close'][symbol] <= self.df_current_data['close'][symbol]\
+               and self.df_current_data['n10_close'][symbol] <= self.df_current_data['n5_close'][symbol]\
+               and self.df_current_data['n15_close'][symbol] <= self.df_current_data['n10_close'][symbol]\
+               and self.df_current_data['n15_close'][symbol] <= self.df_current_data['n20_close'][symbol]
 
     def condition_for_opening_short_position(self, symbol):
-        return self.df_current_data['close_shift_5'][symbol] >= self.df_current_data['close'][symbol]\
-               and self.df_current_data['close_shift_10'][symbol] >= self.df_current_data['close_shift_5'][symbol]\
-               and self.df_current_data['close_shift_15'][symbol] >= self.df_current_data['close_shift_10'][symbol] \
-               and self.df_current_data['close_shift_15'][symbol] >= self.df_current_data['close_shift_20'][symbol]
+        return self.df_current_data['n5_close'][symbol] >= self.df_current_data['close'][symbol]\
+               and self.df_current_data['n10_close'][symbol] >= self.df_current_data['n5_close'][symbol]\
+               and self.df_current_data['n15_close'][symbol] >= self.df_current_data['n10_close'][symbol] \
+               and self.df_current_data['n15_close'][symbol] >= self.df_current_data['n20_close'][symbol]
 
     def condition_for_closing_long_position(self, symbol):
         return False

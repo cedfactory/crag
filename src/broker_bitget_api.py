@@ -22,6 +22,9 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         if self.reset_account:
             print('reset account requested')
             self.execute_reset_account()
+        else:
+            print('reset account not requested')
+            print('resume strategy')
 
     def _authentification(self):
         load_dotenv()
@@ -397,12 +400,24 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         return float(product["data"]["minTradeAmount"])
 
     def get_commission(self, symbol):
-        idx = self.df_market[  (self.df_market['baseCoin'] == symbol) & (self.df_market['quoteCoin'] == "USDT")  ].index
-        return  self.df_market.at[idx[0], "takerFeeRate"]
+        if symbol in self.df_market['baseCoin'].tolist():
+            idx = self.df_market[  (self.df_market['baseCoin'] == symbol) & (self.df_market['quoteCoin'] == "USDT")  ].index
+            return  self.df_market.at[idx[0], "takerFeeRate"]
+        elif symbol in self.df_market['symbol'].tolist():
+            idx = self.df_market[  (self.df_market['symbol'] == symbol) & (self.df_market['quoteCoin'] == "USDT")  ].index
+            return  self.df_market.at[idx[0], "takerFeeRate"]
+        else:
+            return 0
 
     def get_minimum_size(self, symbol):
-        idx = self.df_market[  (self.df_market['baseCoin'] == symbol) & (self.df_market['quoteCoin'] == "USDT")  ].index
-        return self.df_market.at[idx[0], "minTradeNum"]
+        if symbol in self.df_market['baseCoin'].tolist():
+            idx = self.df_market[  (self.df_market['baseCoin'] == symbol) & (self.df_market['quoteCoin'] == "USDT")  ].index
+            return self.df_market.at[idx[0], "minTradeNum"]
+        elif symbol in self.df_market['symbol'].tolist():
+            idx = self.df_market[  (self.df_market['symbol'] == symbol) & (self.df_market['quoteCoin'] == "USDT")  ].index
+            return self.df_market.at[idx[0], "minTradeNum"]
+        else:
+            return 0
 
     def set_symbol_leverage(self, symbol, leverage, hold):
         crossMarginLeverage, longLeverage, shortLeverage = self.set_account_symbol_leverage(symbol, leverage, hold)

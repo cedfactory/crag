@@ -120,16 +120,28 @@ class RealTimeStrategy(metaclass=ABCMeta):
     def get_feature_from_fdp_features(self, fdp_features):
         lst_features = []
         for feature in fdp_features:
-            lst_features.append(feature)
-            if fdp_features[feature] != None:
+            if len(fdp_features[feature]) == 0:
+                lst_features.append(feature)
+            elif fdp_features[feature] != None:
                 lst_param = list(fdp_features[feature])
                 if "id" in lst_param:
-                    id = fdp_features[feature]["id"]
+                    id = "_" + fdp_features[feature]["id"]
                 else:
                     id = ""
+                if "n" in lst_param:
+                    n = "n" + fdp_features[feature]["n"] + "_"
+                else:
+                    n = ""
+                if not feature.startswith("postprocess"):
+                    lst_features.append(fdp_features[feature]["indicator"] + id)
                 if "output" in lst_param:
                     for output in fdp_features[feature]["output"]:
                         lst_features.append(output + id)
+                if "indicator" in fdp_features[feature] \
+                        and fdp_features[feature]["indicator"] == "shift" \
+                        and "input" in lst_param:
+                    for input in fdp_features[feature]["input"]:
+                        lst_features.append(n + input + id)
         return lst_features
 
     def condition_for_opening_long_position(self, symbol):
@@ -191,7 +203,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
             result = True
             print('============= CLOSE_GRID_SL_TP =============')
         if result:
-            self.condition_trailer_tp_turned_off(symbol)
+            self.set_symbol_trailer_tp_turned_off(symbol)
         return result
 
     def get_df_buying_symbols(self):
@@ -419,6 +431,9 @@ class RealTimeStrategy(metaclass=ABCMeta):
             return self.close_short
         return self.no_position # ERROR this case should not happen
 
+    def get_bitget_position(self, symbol, bitget_position):
+        return self.df_long_short_record.get_bitget_position(symbol, bitget_position)
+
     def is_open_type_short(self, symbol):
         return self.get_open_type(symbol) == self.open_short
 
@@ -567,6 +582,11 @@ class ShortLongPosition():
     def set_position(self, symbol, position):
         self.df_short_long_position.loc[self.df_short_long_position['symbol'] == symbol, 'position'] = position
 
+    def get_bitget_position(self, symbol, bitget_position):
+        position = self.str_short_long_position.get_bitget_str_position(bitget_position)
+        self.set_position(symbol, position)
+        return position
+
 class StrOpenClosePosition():
     string = {
         "openlong" : 'OPEN_LONG',
@@ -590,6 +610,14 @@ class StrOpenClosePosition():
 
     def get_no_position(self):
         return self.string["noposition"]
+
+    def get_bitget_str_position(self, bitget_position):
+        # ref: https://bitgetlimited.github.io/apidoc/en/mix/#holdmode
+        # holdSide # Position Direction
+        if bitget_position == "long":
+            return self.get_open_long()
+        elif bitget_position == "short":
+            return self.get_open_short()
 
 class TrailerTP():
     def __init__(self, lst_symbol, TP, delta):

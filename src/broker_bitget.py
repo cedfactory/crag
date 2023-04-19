@@ -15,7 +15,7 @@ class BrokerBitGet(broker.Broker):
         self.api_secret = "BITGET_API_SECRET"
         self.api_password = "BITGET_API_PASSWORD"
         self.chase_limit = False
-        self.reset_account = False
+        self.reset_account = True  # Reset account default behavior
         if params:
             self.simulation = params.get("simulation", self.simulation)
             if self.simulation == 0 or self.simulation == "0":
@@ -31,7 +31,7 @@ class BrokerBitGet(broker.Broker):
                 try:
                     self.reset_account = ast.literal_eval(self.reset_account)
                 except BaseException as err:
-                    self.reset_account = False
+                    self.reset_account = True
         if not self._authentification():
             print("[BrokerBitGet] : Problem encountered during authentification")
 
@@ -53,6 +53,9 @@ class BrokerBitGet(broker.Broker):
             else:
                 return fn(self, *args, **kwargs)
         return wrapped
+
+    def resume_strategy(self):
+        return not self.reset_account
 
     def ready(self):
         return self.marketApi != None and self.accountApi != None
@@ -225,6 +228,42 @@ class BrokerBitGet(broker.Broker):
         return unrealizedPL
 
     @authentication_required
+    def get_symbol_holdSide(self, symbol):
+        df_positions = self.get_open_position()
+        holdSide = df_positions.loc[(df_positions['symbol'] == symbol), "holdSide"].values[0]
+        return holdSide
+
+    @authentication_required
+    def get_symbol_averageOpenPrice(self, symbol):
+        df_positions = self.get_open_position()
+        averageOpenPrice = df_positions.loc[(df_positions['symbol'] == symbol), "averageOpenPrice"].values[0]
+        return averageOpenPrice
+
+    @authentication_required
+    def get_symbol_marketPrice(self, symbol):
+        df_positions = self.get_open_position()
+        marketPrice = df_positions.loc[(df_positions['symbol'] == symbol), "marketPrice"].values[0]
+        return marketPrice
+
+    @authentication_required
+    def get_symbol_total(self, symbol):
+        df_positions = self.get_open_position()
+        total = df_positions.loc[(df_positions['symbol'] == symbol), "total"].values[0]
+        return total
+
+    @authentication_required
+    def get_symbol_available(self, symbol):
+        df_positions = self.get_open_position()
+        available = df_positions.loc[(df_positions['symbol'] == symbol), "available"].values[0]
+        return available
+
+    @authentication_required
+    def get_symbol_usdtEquity(self, symbol):
+        df_positions = self.get_open_position()
+        usdtEquity = df_positions.loc[(df_positions['symbol'] == symbol), "usdtEquity"].values[0]
+        return usdtEquity
+
+    @authentication_required
     def get_lst_symbol_position(self):
         df_positions = self.get_open_position()
         return df_positions['symbol'].tolist()
@@ -238,6 +277,3 @@ class BrokerBitGet(broker.Broker):
             return global_unrealizedPL
         else:
             return 0
-
-
-

@@ -45,7 +45,12 @@ class Crag:
             self.id = params.get("id", self.id)
             self.working_directory = params.get("working_directory", self.working_directory)
 
-        self.current_trades = []
+        self.traces_trade_performed = 1 # find a better way to fix the incrementation of it
+        self.traces_trade_total_opened = 0
+        if self.broker.resume_strategy():
+            self.current_trades = self.get_current_trades_from_account()
+        else:
+            self.current_trades = []
 
         self.cash = 0
         self.init_cash_value = 0
@@ -84,10 +89,8 @@ class Crag:
         if self.temp_debug:
             self.df_debug_traces = pd.DataFrame(columns=['time', 'cash_dol', ' coin_size', 'coin_dol', 'cash_pct', 'coin_pct', 'total_cash', 'total_pct'])
 
-        self.traces_trade_total_opened = 0
         self.traces_trade_positive = 0
         self.traces_trade_negative = 0
-        self.traces_trade_performed = 1 # find a better way to fix the incrementation of it
 
         # rabbitmq connection
         try:
@@ -647,3 +650,52 @@ class Crag:
                         self.rtstr.set_symbol_trailer_tp_turned_off(coin)
                         self.sell_performed = False
         return True
+
+
+    def get_current_trades_from_account(self):
+        lst_symbol_position = self.broker.get_lst_symbol_position()
+        current_open_trades = []
+        for symbol in lst_symbol_position:
+            current_datetime = datetime.today().strftime("%Y/%m/%d %H:%M:%S")
+            current_trade = trade.Trade(current_datetime)
+            current_trade.symbol = self.broker._get_coin(symbol)
+            current_trade.buying_time = current_datetime
+            current_trade.type = self.rtstr.get_bitget_position(current_trade.symbol, self.broker.get_symbol_holdSide(symbol))
+
+            # current_trade.symbol_price = self.broker.get_value(symbol)
+            current_trade.symbol_price = self.broker.get_symbol_marketPrice(symbol)
+            current_trade.buying_price = self.broker.get_symbol_averageOpenPrice(symbol)
+
+            current_trade.gridzone = -1
+
+            current_trade.commission = self.broker.get_commission(current_trade.symbol)
+            current_trade.minsize = self.broker.get_minimum_size(current_trade.symbol)
+
+            current_trade.gross_size = self.broker.get_symbol_total(symbol)
+            current_trade.gross_price = self.broker.get_symbol_usdtEquity(symbol)
+            current_trade.bought_gross_price = current_trade.gross_price
+
+            current_trade.net_price = self.broker.get_symbol_usdtEquity(symbol)
+            current_trade.net_size = self.broker.get_symbol_available(symbol)
+
+            if current_trade.net_size != current_trade.gross_size:
+                print("warning size check: ", symbol, " - ", current_trade.net_size, " - ", current_trade.gross_size)
+
+            current_trade.buying_fee = 0
+            current_trade.profit_loss = 0
+
+            if current_trade.type == self.rtstr.open_long:
+                current_trade.cash_borrowed = 0
+            elif current_trade.type == self.rtstr.open_short:
+                current_trade.cash_borrowed = current_trade.net_price
+
+            self.cash = self.broker.get_cash()
+            current_trade.cash = self.cash
+            current_trade.roi = self.broker.get_symbol_unrealizedPL(symbol)
+
+            # Update traces
+            self.traces_trade_total_opened = self.traces_trade_total_opened + 1
+
+            current_open_trades.append(current_trade)
+
+        return current_open_trades
