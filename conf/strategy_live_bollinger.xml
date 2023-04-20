@@ -1,6 +1,6 @@
 <configuration>
     <strategy id="strategybollingertrend" name="StrategyBollingerTrend">
-        <params symbols="./symbols_df_bollinger_usdt.csv" max_position="10" share_size="0" sl="-2" tp="0" global_sl="-10" global_tp="10" trailer_tp="5" trailer_delta="1" trailer_global_tp="0" trailer_global_delta="0"/>
+        <params symbols="./symbols_df_bollinger_usdt.csv" max_position="20" sl="-2" tp="0" global_sl="-10" global_tp="0" trailer_tp="10" trailer_delta="0.5" trailer_global_tp="10" trailer_global_delta="0.5"/>
     </strategy>
     <broker name="bitget">
         <params exchange="bitget" account="subaccount1" leverage_short="1" leverage_long="2" simulation="1" intervals="1h" orders="market" reset_account="True"/>
