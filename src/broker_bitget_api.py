@@ -7,6 +7,7 @@ from .bitget.spot import public_api as public
 from . import broker_bitget
 from . import utils
 from dotenv import load_dotenv
+import time
 import os
 import pandas as pd
 
@@ -90,17 +91,35 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 res = self._build_df_open_positions(lst_all_positions)
                 break
             except:
+                print("failure:   get_open_position  - attempt: ", n_attempts)
+                time.sleep(1)
                 n_attempts = n_attempts - 1
         return res
 
     #@authentication_required
     def get_account_equity(self):
-        account_equity = self.positionApi.account(symbol='BTCUSDT_UMCBL',marginCoin='USDT')
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                account_equity = self.positionApi.account(symbol='BTCUSDT_UMCBL',marginCoin='USDT')
+                break
+            except:
+                print("failure:   get_account_equity  - attempt: ", n_attempts)
+                time.sleep(1)
+                n_attempts = n_attempts - 1
         return account_equity['data']['usdtEquity']
 
     #@authentication_required
     def get_open_position_unrealizedPL(self, symbol):
-        all_positions = self.positionApi.all_position(productType='umcbl',marginCoin='USDT')
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                all_positions = self.positionApi.all_position(productType='umcbl',marginCoin='USDT')
+                break
+            except:
+                print("failure:   get_open_position_unrealizedPL  - attempt: ", n_attempts)
+                time.sleep(1)
+                n_attempts = n_attempts - 1
         for data in all_positions["data"]:
             if data["symbol"] == symbol:
                 if float(data["total"]) != 0.:
@@ -122,10 +141,18 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     @authentication_required
     def _place_order_api(self, symbol, marginCoin, size, side, orderType, clientOId):
         result = {}
-        order = self.orderApi.place_order(symbol, marginCoin, size, side, orderType,
-                                         price='',
-                                         clientOrderId=clientOId, timeInForceValue='normal',
-                                         presetTakeProfitPrice='', presetStopLossPrice='')
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                order = self.orderApi.place_order(symbol, marginCoin, size, side, orderType,
+                                                 price='',
+                                                 clientOrderId=clientOId, timeInForceValue='normal',
+                                                 presetTakeProfitPrice='', presetStopLossPrice='')
+                break
+            except:
+                print("failure:   get_open_position_unrealizedPL  - attempt: ", n_attempts)
+                time.sleep(1)
+                n_attempts = n_attempts - 1
         # order structure contains order['data']['orderId'], order['data']['clientOid'] & order['requestTime']
         return order
         if order['msg'] == 'success':
@@ -163,17 +190,41 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     @authentication_required
     def get_wallet_equity(self):
-        self.get_list_of_account_assets()
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                self.get_list_of_account_assets()
+                break
+            except:
+                print("failure:   get_wallet_equity  - attempt: ", n_attempts)
+                time.sleep(1)
+                n_attempts = n_attempts - 1
         return self.df_account_assets['usdtEquity'].sum()
 
     @authentication_required
     def get_usdt_equity(self):
-        self.get_list_of_account_assets()
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                self.get_list_of_account_assets()
+                break
+            except:
+                print("failure:   get_usdt_equity  - attempt: ", n_attempts)
+                time.sleep(1)
+                n_attempts = n_attempts - 1
         return self.df_account_assets.loc[(self.df_account_assets['baseCoin'] == 'USDT') & (self.df_market['quoteCoin'] == 'USDT'), "usdtEquity"].values[0]
 
     @authentication_required
     def get_cash(self, baseCoin="USDT"):
-        self.get_list_of_account_assets()
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                self.get_list_of_account_assets()
+                break
+            except:
+                print("failure:   get_cash  - attempt: ", n_attempts)
+                time.sleep(1)
+                n_attempts = n_attempts - 1
         return self.df_account_assets.loc[self.df_account_assets["symbol"] == baseCoin, "crossMaxAvailable"].values[0]
 
     # available = size
@@ -183,12 +234,28 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     @authentication_required
     def get_balance(self):
-        self.get_list_of_account_assets()
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                self.get_list_of_account_assets()
+                break
+            except:
+                print("failure:   get_balance  - attempt: ", n_attempts)
+                time.sleep(1)
+                n_attempts = n_attempts - 1
         return self.df_account_assets
 
     @authentication_required
     def get_order_history(self, symbol, startTime, endTime, pageSize):
-        history = self.orderApi.history(symbol, startTime, endTime, pageSize, lastEndId='', isPre=False)
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                history = self.orderApi.history(symbol, startTime, endTime, pageSize, lastEndId='', isPre=False)
+                break
+            except:
+                print("failure:   get_order_history  - attempt: ", n_attempts)
+                time.sleep(1)
+                n_attempts = n_attempts - 1
         df_history = pd.DataFrame(columns=["symbol", "size", "side", "orderId", "filledQty", "leverage", "fee", "orderType", "marginCoin", "totalProfits", "cTime", "uTime"])
         orderList = history["data"]["orderList"]
         if orderList:
@@ -200,7 +267,17 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     @authentication_required
     def get_value(self, symbol):
         symbol = symbol + 'USDT_UMCBL'
-        return float(self.marketApi.market_price(symbol)["data"]["markPrice"])
+        value = 0
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                value = float(self.marketApi.market_price(symbol)["data"]["markPrice"])
+                break
+            except:
+                print("failure:   get_value  - attempt: ", n_attempts)
+                time.sleep(1)
+                n_attempts = n_attempts - 1
+        return value
 
     def _market_results_to_df(self, markets):
         lst_columns = ['symbol', 'quoteCoin', 'baseCoin', 'symbolType', 'makerFeeRate', 'takerFeeRate', 'minTradeNum']
@@ -331,17 +408,40 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     @authentication_required
     def get_account_asset(self):
-        result = self.accountApi.accountAssets(productType='umcbl')
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                result = self.accountApi.accountAssets(productType='umcbl')
+            except:
+                print("failure:   get_account_asset  - attempt: ", n_attempts)
+                time.sleep(1)
+                n_attempts = n_attempts - 1
         return result
 
     @authentication_required
     def get_order_current(self, symbol):
-        current = self.orderApi.current(symbol)
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                current = self.orderApi.current(symbol)
+                break
+            except:
+                print("failure:   get_order_current  - attempt: ", n_attempts)
+                time.sleep(1)
+                n_attempts = n_attempts - 1
         return current
 
     @authentication_required
     def cancel_order(self, symbol, marginCoin, orderId):
-        result = self.orderApi.cancel_orders(symbol, marginCoin, orderId)
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                result = self.orderApi.cancel_orders(symbol, marginCoin, orderId)
+                break
+            except:
+                print("failure:   cancel_order  - attempt: ", n_attempts)
+                time.sleep(1)
+                n_attempts = n_attempts - 1
         if result['msg'] == "success":
             return True, result['data']['orderId']
         else:
@@ -349,7 +449,15 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     def get_order_fill_detail(self, symbol, order_id):
         trade_id = price = fillAmount = sizeQty = fee = None
-        response = self.orderApi.fills(symbol, order_id)
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                response = self.orderApi.fills(symbol, order_id)
+                break
+            except:
+                print("failure:   get_order_fill_detail  - attempt: ", n_attempts)
+                time.sleep(1)
+                n_attempts = n_attempts - 1
         if len(response["data"]) == 0:
             # df_positions = self.get_open_position()
             # if symbol in df_positions["symbol"].tolist():
@@ -379,24 +487,56 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     @authentication_required
     def get_symbol_min_max_leverage(self, symbol):
-        symbol = self._get_symbol(symbol)
-        leverage = self.marketApi.get_symbol_leverage(symbol)
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                symbol = self._get_symbol(symbol)
+                leverage = self.marketApi.get_symbol_leverage(symbol)
+                break
+            except:
+                print("failure:   get_symbol_min_max_leverage  - attempt: ", n_attempts)
+                time.sleep(1)
+                n_attempts = n_attempts - 1
         return leverage['data']['minLeverage'], leverage['data']['maxLeverage']
 
     @authentication_required
     def get_account_symbol_leverage(self, symbol, marginCoin="USDT"):
-        symbol = self._get_symbol(symbol, marginCoin)
-        dct_account = self.accountApi.account(symbol, marginCoin)
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                symbol = self._get_symbol(symbol, marginCoin)
+                dct_account = self.accountApi.account(symbol, marginCoin)
+                break
+            except:
+                print("failure:   get_account_symbol_leverage  - attempt: ", n_attempts)
+                time.sleep(1)
+                n_attempts = n_attempts - 1
         return dct_account['data']['crossMarginLeverage'], dct_account['data']['fixedLongLeverage'], dct_account['data']['fixedShortLeverage']
 
     @authentication_required
     def set_account_symbol_leverage(self, symbol, leverage, hold="long"):
-        dct_account = self.accountApi.leverage(symbol, "USDT", leverage, hold)
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                dct_account = self.accountApi.leverage(symbol, "USDT", leverage, hold)
+                break
+            except:
+                print("failure:   set_account_symbol_leverage  - attempt: ", n_attempts)
+                time.sleep(1)
+                n_attempts = n_attempts - 1
         return dct_account['data']['crossMarginLeverage'], dct_account['data']['longLeverage'], dct_account['data']['shortLeverage']
 
     @authentication_required
     def set_account_symbol_margin(self, symbol, marginMode="fixed"):
-        dct_account = self.accountApi.margin_mode(symbol, "USDT", marginMode)
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                dct_account = self.accountApi.margin_mode(symbol, "USDT", marginMode)
+                break
+            except:
+                print("failure:   set_account_symbol_margin  - attempt: ", n_attempts)
+                time.sleep(1)
+                n_attempts = n_attempts - 1
         return dct_account['data']['marginMode']
 
     def get_min_order_amount(self, symbol):
@@ -428,8 +568,27 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             return 0
 
     def set_symbol_leverage(self, symbol, leverage, hold):
-        crossMarginLeverage, longLeverage, shortLeverage = self.set_account_symbol_leverage(symbol, leverage, hold)
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                crossMarginLeverage, longLeverage, shortLeverage = self.set_account_symbol_leverage(symbol, leverage, hold)
+                break
+            except:
+                print("failure:   set_symbol_leverage  - attempt: ", n_attempts)
+                time.sleep(1)
+                n_attempts = n_attempts - 1
         print(symbol, ' long leverage: ', longLeverage,' short leverage: ', shortLeverage)
 
     def set_symbol_margin(self, symbol, margin):
-        return self.set_account_symbol_margin(symbol, margin)
+        n_attempts = 3
+        set_symbol_margin = False
+        while n_attempts > 0:
+            try:
+                set_symbol_margin = self.set_account_symbol_margin(symbol, margin)
+                print(symbol, ' margin set to ', margin, " ", set_symbol_margin)
+                break
+            except:
+                print("failure:   set_account_symbol_margin  - attempt: ", n_attempts)
+                time.sleep(1)
+                n_attempts = n_attempts - 1
+        return set_symbol_margin
