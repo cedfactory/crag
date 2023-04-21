@@ -20,6 +20,9 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         self.df_market.reset_index(drop=True)
         print('list symbols perpetual/USDT: ', self.df_market["baseCoin"].tolist())
 
+        self.failure = 0
+        self.success = 0
+
         if self.reset_account:
             print('reset account requested')
             self.execute_reset_account()
@@ -89,9 +92,12 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 all_positions = self.positionApi.all_position(productType='umcbl',marginCoin='USDT')
                 lst_all_positions = [data for data in all_positions["data"] if float(data["total"]) != 0.]
                 res = self._build_df_open_positions(lst_all_positions)
+                self.success += 1
                 break
             except:
                 print("failure:  get_open_position  - attempt: ", n_attempts)
+                self.failure += 1
+                print("failure: ", self.failure, " - success: ", self.success, " - percentage failure: ", self.failure / (self.success + self.failure) * 100)
                 time.sleep(1)
                 n_attempts = n_attempts - 1
         return res
@@ -102,9 +108,12 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         while n_attempts > 0:
             try:
                 account_equity = self.positionApi.account(symbol='BTCUSDT_UMCBL',marginCoin='USDT')
+                self.success += 1
                 break
             except:
                 print("failure:  get_account_equity  - attempt: ", n_attempts)
+                self.failure += 1
+                print("failure: ", self.failure, " - success: ", self.success, " - percentage failure: ", self.failure / (self.success + self.failure) * 100)
                 time.sleep(1)
                 n_attempts = n_attempts - 1
         return account_equity['data']['usdtEquity']
@@ -115,9 +124,12 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         while n_attempts > 0:
             try:
                 all_positions = self.positionApi.all_position(productType='umcbl',marginCoin='USDT')
+                self.success += 1
                 break
             except:
                 print("failure:  get_open_position_unrealizedPL  - attempt: ", n_attempts)
+                self.failure += 1
+                print("failure: ", self.failure, " - success: ", self.success, " - percentage failure: ", self.failure / (self.success + self.failure) * 100)
                 time.sleep(1)
                 n_attempts = n_attempts - 1
         for data in all_positions["data"]:
@@ -148,9 +160,12 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                                                  price='',
                                                  clientOrderId=clientOId, timeInForceValue='normal',
                                                  presetTakeProfitPrice='', presetStopLossPrice='')
+                self.success += 1
                 break
             except:
                 print("failure:  get_open_position_unrealizedPL  - attempt: ", n_attempts)
+                self.failure += 1
+                print("failure: ", self.failure, " - success: ", self.success, " - percentage failure: ", self.failure / (self.success + self.failure) * 100)
                 time.sleep(1)
                 n_attempts = n_attempts - 1
         # order structure contains order['data']['orderId'], order['data']['clientOid'] & order['requestTime']
@@ -194,9 +209,12 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         while n_attempts > 0:
             try:
                 self.get_list_of_account_assets()
+                self.success += 1
                 break
             except:
                 print("failure:  get_wallet_equity  - attempt: ", n_attempts)
+                self.failure += 1
+                print("failure: ", self.failure, " - success: ", self.success, " - percentage failure: ", self.failure / (self.success + self.failure) * 100)
                 time.sleep(1)
                 n_attempts = n_attempts - 1
         return self.df_account_assets['usdtEquity'].sum()
@@ -207,9 +225,12 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         while n_attempts > 0:
             try:
                 self.get_list_of_account_assets()
+                self.success += 1
                 break
             except:
                 print("failure:  get_usdt_equity  - attempt: ", n_attempts)
+                self.failure += 1
+                print("failure: ", self.failure, " - success: ", self.success, " - percentage failure: ", self.failure / (self.success + self.failure) * 100)
                 time.sleep(1)
                 n_attempts = n_attempts - 1
         return self.df_account_assets.loc[(self.df_account_assets['baseCoin'] == 'USDT') & (self.df_market['quoteCoin'] == 'USDT'), "usdtEquity"].values[0]
@@ -220,9 +241,12 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         while n_attempts > 0:
             try:
                 self.get_list_of_account_assets()
+                self.success += 1
                 break
             except:
                 print("failure:  get_cash  - attempt: ", n_attempts)
+                self.failure += 1
+                print("failure: ", self.failure, " - success: ", self.success, " - percentage failure: ", self.failure / (self.success + self.failure) * 100)
                 time.sleep(1)
                 n_attempts = n_attempts - 1
         return self.df_account_assets.loc[self.df_account_assets["symbol"] == baseCoin, "crossMaxAvailable"].values[0]
@@ -238,9 +262,12 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         while n_attempts > 0:
             try:
                 self.get_list_of_account_assets()
+                self.success += 1
                 break
             except:
                 print("failure:  get_balance  - attempt: ", n_attempts)
+                self.failure += 1
+                print("failure: ", self.failure, " - success: ", self.success, " - percentage failure: ", self.failure / (self.success + self.failure) * 100)
                 time.sleep(1)
                 n_attempts = n_attempts - 1
         return self.df_account_assets
@@ -251,9 +278,12 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         while n_attempts > 0:
             try:
                 history = self.orderApi.history(symbol, startTime, endTime, pageSize, lastEndId='', isPre=False)
+                self.success += 1
                 break
             except:
                 print("failure:  get_order_history  - attempt: ", n_attempts)
+                self.failure += 1
+                print("failure: ", self.failure, " - success: ", self.success, " - percentage failure: ", self.failure / (self.success + self.failure) * 100)
                 time.sleep(1)
                 n_attempts = n_attempts - 1
         df_history = pd.DataFrame(columns=["symbol", "size", "side", "orderId", "filledQty", "leverage", "fee", "orderType", "marginCoin", "totalProfits", "cTime", "uTime"])
@@ -272,9 +302,12 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         while n_attempts > 0:
             try:
                 value = float(self.marketApi.market_price(symbol)["data"]["markPrice"])
+                self.success += 1
                 break
             except:
                 print("failure:  get_value  - attempt: ", n_attempts)
+                self.failure += 1
+                print("failure: ", self.failure, " - success: ", self.success, " - percentage failure: ", self.failure / (self.success + self.failure) * 100)
                 time.sleep(1)
                 n_attempts = n_attempts - 1
         return value
@@ -414,6 +447,8 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 result = self.accountApi.accountAssets(productType='umcbl')
             except:
                 print("failure:  get_account_asset  - attempt: ", n_attempts)
+                self.failure += 1
+                print("failure: ", self.failure, " - success: ", self.success, " - percentage failure: ", self.failure / (self.success + self.failure) * 100)
                 time.sleep(1)
                 n_attempts = n_attempts - 1
         return result
@@ -424,9 +459,12 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         while n_attempts > 0:
             try:
                 current = self.orderApi.current(symbol)
+                self.success += 1
                 break
             except:
                 print("failure:  get_order_current  - attempt: ", n_attempts)
+                self.failure += 1
+                print("failure: ", self.failure, " - success: ", self.success, " - percentage failure: ", self.failure / (self.success + self.failure) * 100)
                 time.sleep(1)
                 n_attempts = n_attempts - 1
         return current
@@ -437,9 +475,12 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         while n_attempts > 0:
             try:
                 result = self.orderApi.cancel_orders(symbol, marginCoin, orderId)
+                self.success += 1
                 break
             except:
                 print("failure:  cancel_order  - attempt: ", n_attempts)
+                self.failure += 1
+                print("failure: ", self.failure, " - success: ", self.success, " - percentage failure: ", self.failure / (self.success + self.failure) * 100)
                 time.sleep(1)
                 n_attempts = n_attempts - 1
         if result['msg'] == "success":
@@ -453,9 +494,12 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         while n_attempts > 0:
             try:
                 response = self.orderApi.fills(symbol, order_id)
+                self.success += 1
                 break
             except:
                 print("failure:  get_order_fill_detail  - attempt: ", n_attempts)
+                self.failure += 1
+                print("failure: ", self.failure, " - success: ", self.success, " - percentage failure: ", self.failure / (self.success + self.failure) * 100)
                 time.sleep(1)
                 n_attempts = n_attempts - 1
         if len(response["data"]) == 0:
@@ -492,9 +536,12 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             try:
                 symbol = self._get_symbol(symbol)
                 leverage = self.marketApi.get_symbol_leverage(symbol)
+                self.success += 1
                 break
             except:
                 print("failure:  get_symbol_min_max_leverage  - attempt: ", n_attempts)
+                self.failure += 1
+                print("failure: ", self.failure, " - success: ", self.success, " - percentage failure: ", self.failure / (self.success + self.failure) * 100)
                 time.sleep(1)
                 n_attempts = n_attempts - 1
         return leverage['data']['minLeverage'], leverage['data']['maxLeverage']
@@ -506,9 +553,12 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             try:
                 symbol = self._get_symbol(symbol, marginCoin)
                 dct_account = self.accountApi.account(symbol, marginCoin)
+                self.success += 1
                 break
             except:
                 print("failure:  get_account_symbol_leverage  - attempt: ", n_attempts)
+                self.failure += 1
+                print("failure: ", self.failure, " - success: ", self.success, " - percentage failure: ", self.failure / (self.success + self.failure) * 100)
                 time.sleep(1)
                 n_attempts = n_attempts - 1
         return dct_account['data']['crossMarginLeverage'], dct_account['data']['fixedLongLeverage'], dct_account['data']['fixedShortLeverage']
@@ -519,9 +569,12 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         while n_attempts > 0:
             try:
                 dct_account = self.accountApi.leverage(symbol, "USDT", leverage, hold)
+                self.success += 1
                 break
             except:
                 print("failure:  set_account_symbol_leverage  - attempt: ", n_attempts)
+                self.failure += 1
+                print("failure: ", self.failure, " - success: ", self.success, " - percentage failure: ", self.failure / (self.success + self.failure) * 100)
                 time.sleep(1)
                 n_attempts = n_attempts - 1
         return dct_account['data']['crossMarginLeverage'], dct_account['data']['longLeverage'], dct_account['data']['shortLeverage']
@@ -532,9 +585,12 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         while n_attempts > 0:
             try:
                 dct_account = self.accountApi.margin_mode(symbol, "USDT", marginMode)
+                self.success += 1
                 break
             except:
                 print("failure:  set_account_symbol_margin  - attempt: ", n_attempts)
+                self.failure += 1
+                print("failure: ", self.failure, " - success: ", self.success, " - percentage failure: ", self.failure / (self.success + self.failure) * 100)
                 time.sleep(1)
                 n_attempts = n_attempts - 1
         return dct_account['data']['marginMode']
@@ -572,9 +628,12 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         while n_attempts > 0:
             try:
                 crossMarginLeverage, longLeverage, shortLeverage = self.set_account_symbol_leverage(symbol, leverage, hold)
+                self.success += 1
                 break
             except:
                 print("failure:  set_symbol_leverage  - attempt: ", n_attempts)
+                self.failure += 1
+                print("failure: ", self.failure, " - success: ", self.success, " - percentage failure: ", self.failure / (self.success + self.failure) * 100)
                 time.sleep(1)
                 n_attempts = n_attempts - 1
         print(symbol, ' long leverage: ', longLeverage,' short leverage: ', shortLeverage)
@@ -586,9 +645,12 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             try:
                 set_symbol_margin = self.set_account_symbol_margin(symbol, margin)
                 print(symbol, ' margin set to ', margin, " ", set_symbol_margin)
+                self.success += 1
                 break
             except:
                 print("failure:  set_account_symbol_margin  - attempt: ", n_attempts)
+                self.failure += 1
+                print("failure: ", self.failure, " - success: ", self.success, " - percentage failure: ", self.failure / (self.success + self.failure) * 100)
                 time.sleep(1)
                 n_attempts = n_attempts - 1
         return set_symbol_margin
