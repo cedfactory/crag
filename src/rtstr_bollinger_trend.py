@@ -25,6 +25,8 @@ class StrategyBollingerTrend(rtstr.RealTimeStrategy):
 
         self.min_bol_spread = 0
 
+        self.tmp_debug_traces = True
+
     def get_data_description(self):
         ds = rtdp.DataDescription()
         ds.symbols = self.lst_symbols
@@ -47,6 +49,19 @@ class StrategyBollingerTrend(rtstr.RealTimeStrategy):
         return "StrategyBollingerTrend"
 
     def condition_for_opening_long_position(self, symbol):
+        if self.tmp_debug_traces:
+            if (self.df_current_data['n1_close'][symbol] < self.df_current_data['n1_higher_band_1'][symbol])\
+                   & (self.df_current_data['close'][symbol] > self.df_current_data['higher_band_1'][symbol])\
+                   & (abs(self.df_current_data['n1_higher_band_1'][symbol] - self.df_current_data['n1_lower_band_1'][symbol]) / self.df_current_data['n1_lower_band_1'][symbol] > self.min_bol_spread) \
+                   & (self.df_current_data["rsi_1"][symbol] > 52):
+                print("OPENING LONG POSITION: TRUE - ", symbol)
+            else:
+                print("OPENING LONG POSITION: FALSE - ", symbol)
+                print("n1_close < n1_higher_band_1 - ", (self.df_current_data['n1_close'][symbol] < self.df_current_data['n1_higher_band_1'][symbol]), " n1_close : ", self.df_current_data['n1_close'][symbol], " n1_higher_band_1 : ",self.df_current_data['n1_higher_band_1'][symbol])
+                print("close > higher_band_1 - ", (self.df_current_data['close'][symbol] > self.df_current_data['higher_band_1'][symbol]), " close : " ,self.df_current_data['close'][symbol] , " higher_band_1 : ", self.df_current_data['higher_band_1'][symbol])
+                print("n1_higher_band_1 - n1_lower_band_1 / n1_lower_band_1 > min_bol_spread - ", (abs(self.df_current_data['n1_higher_band_1'][symbol] - self.df_current_data['n1_lower_band_1'][symbol]) / self.df_current_data['n1_lower_band_1'][symbol] > self.min_bol_spread))
+                print("rsi_1 > 52 - ", (self.df_current_data["rsi_1"][symbol] > 52), " rsi_1: ",self.df_current_data["rsi_1"][symbol])
+
         return (self.df_current_data['n1_close'][symbol] < self.df_current_data['n1_higher_band_1'][symbol])\
                & (self.df_current_data['close'][symbol] > self.df_current_data['higher_band_1'][symbol])\
                & (abs(self.df_current_data['n1_higher_band_1'][symbol] - self.df_current_data['n1_lower_band_1'][symbol]) / self.df_current_data['n1_lower_band_1'][symbol] > self.min_bol_spread) \
@@ -54,6 +69,19 @@ class StrategyBollingerTrend(rtstr.RealTimeStrategy):
                # & (self.df_current_data["close"][symbol] > self.df_current_data["sma_long_ma"][symbol])
 
     def condition_for_opening_short_position(self, symbol):
+        if self.tmp_debug_traces:
+            if (self.df_current_data['n1_close'][symbol] > self.df_current_data['n1_lower_band_1'][symbol])\
+                   & (self.df_current_data['close'][symbol] < self.df_current_data['lower_band_1'][symbol])\
+                   & (abs(self.df_current_data['n1_higher_band_1'][symbol] - self.df_current_data['n1_lower_band_1'][symbol]) / self.df_current_data['n1_lower_band_1'][symbol] > self.min_bol_spread) \
+                   & (self.df_current_data["rsi_1"][symbol] < 48):
+                print("OPENING SHORT POSITION: TRUE - ", symbol)
+            else:
+                print("OPENING SHORT POSITION: FALSE - ", symbol)
+                print("n1_close > n1_lower_band_1 - ", (self.df_current_data['n1_close'][symbol] > self.df_current_data['n1_lower_band_1'][symbol]), " n1_close : ", self.df_current_data['n1_close'][symbol], " n1_lower_band_1 : ",self.df_current_data['n1_lower_band_1'][symbol])
+                print("close < lower_band_1 - ",  (self.df_current_data['close'][symbol] < self.df_current_data['lower_band_1'][symbol]), " close : " ,self.df_current_data['close'][symbol] , " lower_band_1 : ", self.df_current_data['lower_band_1'][symbol])
+                print("n1_higher_band_1 - n1_lower_band_1 / n1_lower_band_1 > min_bol_spread - ", (abs(self.df_current_data['n1_higher_band_1'][symbol] - self.df_current_data['n1_lower_band_1'][symbol]) / self.df_current_data['n1_lower_band_1'][symbol] > self.min_bol_spread))
+                print("rsi_1 < 48 - ", (self.df_current_data["rsi_1"][symbol] > 52), " rsi_1: ",self.df_current_data["rsi_1"][symbol])
+
         return (self.df_current_data['n1_close'][symbol] > self.df_current_data['n1_lower_band_1'][symbol])\
                & (self.df_current_data['close'][symbol] < self.df_current_data['lower_band_1'][symbol])\
                & (abs(self.df_current_data['n1_higher_band_1'][symbol] - self.df_current_data['n1_lower_band_1'][symbol]) / self.df_current_data['n1_lower_band_1'][symbol] > self.min_bol_spread) \
@@ -61,9 +89,13 @@ class StrategyBollingerTrend(rtstr.RealTimeStrategy):
                # & (self.df_current_data["close"][symbol] < self.df_current_data["sma_long_ma"][symbol])
 
     def condition_for_closing_long_position(self, symbol):
-        return self.df_current_data['close'][symbol] < self.df_current_data['ma_band_1'][symbol]
+        if self.tmp_debug_traces:
+            print("CLOSING LONG POSITION: ", (self.df_current_data['close'][symbol] < self.df_current_data['ma_band_1'][symbol]), " - ", symbol)
+        return (self.df_current_data['close'][symbol] < self.df_current_data['ma_band_1'][symbol])
 
     def condition_for_closing_short_position(self, symbol):
+        if self.tmp_debug_traces:
+            print("CLOSING SHORT POSITION: ", (self.df_current_data['close'][symbol] > self.df_current_data['ma_band_1'][symbol]), " - ", symbol)
         return (self.df_current_data['close'][symbol] > self.df_current_data['ma_band_1'][symbol])
 
 
