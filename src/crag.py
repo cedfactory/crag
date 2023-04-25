@@ -171,6 +171,7 @@ class Crag:
         while not done:
             now = time.time()
             sleeping_time = start - now
+            # sleeping_time = 0 # CEDE DEBUG TO SKIP THE SLEEPING TIME
             if self.start_date and self.end_date:
                 # SIM MODE
                 sleeping_time = 0
