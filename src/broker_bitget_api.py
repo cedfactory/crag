@@ -249,7 +249,8 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 print("failure: ", self.failure, " - success: ", self.success, " - percentage failure: ", self.failure / (self.success + self.failure) * 100)
                 time.sleep(1)
                 n_attempts = n_attempts - 1
-        return self.df_account_assets.loc[self.df_account_assets["symbol"] == baseCoin, "crossMaxAvailable"].values[0]
+        return self.df_account_assets.loc[self.df_account_assets["symbol"] == baseCoin, "available"].values[0]
+        # return self.df_account_assets.loc[self.df_account_assets["symbol"] == baseCoin, "crossMaxAvailable"].values[0]
 
     # available = size
     # available = ammount of cash available without any calculation (amount of USDT owned)
@@ -306,6 +307,42 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 break
             except:
                 print("failure:  get_value  - attempt: ", n_attempts)
+                self.failure += 1
+                print("failure: ", self.failure, " - success: ", self.success, " - percentage failure: ", self.failure / (self.success + self.failure) * 100)
+                time.sleep(1)
+                n_attempts = n_attempts - 1
+        return value
+
+    @authentication_required
+    def get_asset_available(self, symbol):
+        symbol = symbol + 'USDT_UMCBL'
+        value = 0
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                value = float(self.marketApi.market_price(symbol)["data"]["available"])
+                self.success += 1
+                break
+            except:
+                print("failure:  get_asset_equity  - attempt: ", n_attempts)
+                self.failure += 1
+                print("failure: ", self.failure, " - success: ", self.success, " - percentage failure: ", self.failure / (self.success + self.failure) * 100)
+                time.sleep(1)
+                n_attempts = n_attempts - 1
+        return value
+
+    @authentication_required
+    def get_asset_equity(self, symbol):
+        symbol = symbol + 'USDT_UMCBL'
+        value = 0
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                value = float(self.marketApi.market_price(symbol)["data"]["usdtEquity"])
+                self.success += 1
+                break
+            except:
+                print("failure:  get_asset_equity  - attempt: ", n_attempts)
                 self.failure += 1
                 print("failure: ", self.failure, " - success: ", self.success, " - percentage failure: ", self.failure / (self.success + self.failure) * 100)
                 time.sleep(1)

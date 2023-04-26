@@ -220,6 +220,7 @@ class Crag:
 
         msg = "current time : {}\n".format(current_date)
         msg += "original portfolio value : $ {} ({})\n".format(utils.KeepNDecimals(self.original_portfolio_value, 2), self.start_date)
+        msg += "global unrealized PL = {}\n".format(utils.KeepNDecimals(self.broker.get_global_unrealizedPL(), 2))
         variation_percent = utils.get_variation(self.original_portfolio_value, portfolio_value)
         msg += "current portfolio value : $ {} ({}%)\n".format(utils.KeepNDecimals(portfolio_value, 2), utils.KeepNDecimals(variation_percent, 2))
         portfolio_net_value = portfolio_value - (portfolio_value - self.broker.get_cash()) * 0.07 / 100 # CEDE 0.07 could be replaced by get_commission???
@@ -244,8 +245,23 @@ class Crag:
                 list_roi.pop(0)
         else:
             msg += "no positions\n"
+
+        lst_symbol_position = self.broker.get_lst_symbol_position()
+        if len(lst_symbol_position) > 0:
+            for symbol in lst_symbol_position:
+                symbol_unrealizedPL = self.broker.get_symbol_unrealizedPL(symbol)
+                msg += "{} - {} - {} - {} - {}\n".format(symbol,
+                                                    utils.KeepNDecimals(symbol_unrealizedPL, 2),
+                                                    utils.KeepNDecimals(self.broker.get_symbol_available(symbol), 2),
+                                                    utils.KeepNDecimals(self.broker.get_symbol_usdtEquity(symbol), 2),
+                                                    utils.KeepNDecimals(self.broker.get_symbol_unrealizedPL(symbol), 2)
+                                                    )
+
+
+        msg += "global unrealized PL = {}%\n".format(utils.KeepNDecimals(self.broker.get_global_unrealizedPL(), 2))
         msg += "current cash = {}".format(utils.KeepNDecimals(self.broker.get_cash(), 2))
-        self.log(msg, "step")
+
+        self.log(msg, "start step")
         if not self.zero_print:
             print("[Crag] ⌛")
 
@@ -284,6 +300,15 @@ class Crag:
         self.trade()
 
         self.rtstr.log_current_info()
+
+        current_date = self.broker.get_current_datetime("%Y/%m/%d %H:%M:%S")
+        msg = "current time : {}\n".format(current_date)
+        msg += "global unrealized PL = {}%\n".format(utils.KeepNDecimals(self.broker.get_global_unrealizedPL(), 2))
+        msg += "account equity = {}\n".format(utils.KeepNDecimals(self.broker.get_usdt_equity(), 2))
+
+        msg += "current cash = {}".format(utils.KeepNDecimals(self.broker.get_cash(), 2))
+
+        self.log(msg, "end step")
 
         return not self.exit
 

@@ -66,7 +66,7 @@ class StrategyBollingerTrend(rtstr.RealTimeStrategy):
                   " n1_higher_band_1: ", self.df_current_data['n1_higher_band_1'][symbol],
                   " lower_band_1: ", self.df_current_data['lower_band_1'][symbol],
                   " n1_lower_band_1: ", self.df_current_data['n1_lower_band_1'][symbol],
-                  " rsi_1: ", self.df_current_data['rsi_1'][symbol]
+                  # " rsi_1: ", self.df_current_data['rsi_1'][symbol]
                   )
 
             print( "n1_close < n1_higher_band_1 : ", (self.df_current_data['n1_close'][symbol] < self.df_current_data['n1_higher_band_1'][symbol]),
@@ -98,7 +98,7 @@ class StrategyBollingerTrend(rtstr.RealTimeStrategy):
                   " n1_higher_band_1: ", self.df_current_data['n1_higher_band_1'][symbol],
                   " lower_band_1: ", self.df_current_data['lower_band_1'][symbol],
                   " n1_lower_band_1: ", self.df_current_data['n1_lower_band_1'][symbol],
-                  " rsi_1: ", self.df_current_data['rsi_1'][symbol]
+                  # " rsi_1: ", self.df_current_data['rsi_1'][symbol]
                   )
 
             print( "n1_close > n1_lower_band_1 : ", (self.df_current_data['n1_close'][symbol] > self.df_current_data['n1_lower_band_1'][symbol]),
