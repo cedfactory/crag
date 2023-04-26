@@ -249,17 +249,24 @@ class Crag:
         lst_symbol_position = self.broker.get_lst_symbol_position()
         if len(lst_symbol_position) > 0:
             for symbol in lst_symbol_position:
+                symbol_equity = self.broker.get_symbol_usdtEquity(symbol)
                 symbol_unrealizedPL = self.broker.get_symbol_unrealizedPL(symbol)
-                msg += "{} - {} - {} - {} - {}\n".format(symbol,
-                                                    utils.KeepNDecimals(symbol_unrealizedPL, 2),
-                                                    utils.KeepNDecimals(self.broker.get_symbol_available(symbol), 2),
-                                                    utils.KeepNDecimals(self.broker.get_symbol_usdtEquity(symbol), 2),
-                                                    utils.KeepNDecimals(self.broker.get_symbol_unrealizedPL(symbol), 2)
-                                                    )
+                if (symbol_equity - symbol_unrealizedPL) == 0:
+                    symbol_unrealizedPL_percent = 0
+                else:
+                    symbol_unrealizedPL_percent = symbol_unrealizedPL * 100 / (symbol_equity - symbol_unrealizedPL)
+                msg += "{}: {} ${} ${} {}%\n".format(symbol,
+                                                     utils.KeepNDecimals(self.broker.get_symbol_available(symbol), 2),
+                                                     utils.KeepNDecimals(symbol_equity, 2),
+                                                     utils.KeepNDecimals(symbol_unrealizedPL, 2),
+                                                     utils.KeepNDecimals(symbol_unrealizedPL_percent, 2)
+                                                     )
 
 
-        msg += "global unrealized PL = {}%\n".format(utils.KeepNDecimals(self.broker.get_global_unrealizedPL(), 2))
-        msg += "current cash = {}".format(utils.KeepNDecimals(self.broker.get_cash(), 2))
+        msg += "global unrealized PL = ${} - %{}\n".format(utils.KeepNDecimals(self.broker.get_global_unrealizedPL(), 2),
+                                                           utils.KeepNDecimals(self.broker.get_global_unrealizedPL() * 100 / self.original_portfolio_value, 2) )
+        msg += "current cash = {}\n".format(utils.KeepNDecimals(self.broker.get_cash(), 2))
+        msg += "account equity = {}".format(utils.KeepNDecimals(self.broker.get_usdt_equity(), 2))
 
         self.log(msg, "start step")
         if not self.zero_print:
@@ -303,10 +310,10 @@ class Crag:
 
         current_date = self.broker.get_current_datetime("%Y/%m/%d %H:%M:%S")
         msg = "current time : {}\n".format(current_date)
-        msg += "global unrealized PL = {}%\n".format(utils.KeepNDecimals(self.broker.get_global_unrealizedPL(), 2))
-        msg += "account equity = {}\n".format(utils.KeepNDecimals(self.broker.get_usdt_equity(), 2))
-
-        msg += "current cash = {}".format(utils.KeepNDecimals(self.broker.get_cash(), 2))
+        msg += "global unrealized PL = ${} - %{}\n".format(utils.KeepNDecimals(self.broker.get_global_unrealizedPL(), 2),
+                                                           utils.KeepNDecimals(self.broker.get_global_unrealizedPL() * 100 / self.original_portfolio_value, 2))
+        msg += "current cash = {}\n".format(utils.KeepNDecimals(self.broker.get_cash(), 2))
+        msg += "account equity = {}".format(utils.KeepNDecimals(self.broker.get_usdt_equity(), 2))
 
         self.log(msg, "end step")
 
@@ -627,21 +634,27 @@ class Crag:
 
     def safety_step(self):
         global_unrealizedPL = self.broker.get_global_unrealizedPL()
-        # print("global_unrealizedPL: ", global_unrealizedPL) # DEBUG CEDE
-        if self.rtstr.condition_for_global_SLTP(global_unrealizedPL)\
-                or self.rtstr.condition_for_global_trailer_TP(global_unrealizedPL):
+        global_unrealizedPL_percent = self.broker.get_global_unrealizedPL() * 100 / self.original_portfolio_value
+        # print("global_unrealizedPL: ", global_unrealizedPL" - ", global_unrealizedPL_percent, "%") # DEBUG CEDE
+        if self.rtstr.condition_for_global_SLTP(global_unrealizedPL_percent)\
+                or self.rtstr.condition_for_global_trailer_TP(global_unrealizedPL_percent):
             print('reset - global TP')
-            print('unrealizedPL: ', global_unrealizedPL)
+            print('unrealizedPL: $', global_unrealizedPL, " - ", global_unrealizedPL_percent, "%")
             self.broker.execute_reset_account()
             return False
 
         lst_symbol_position = self.broker.get_lst_symbol_position()
         lst_symbol_for_closure = []
         for symbol in lst_symbol_position:
+            symbol_equity = self.broker.get_symbol_usdtEquity(symbol)
             symbol_unrealizedPL = self.broker.get_symbol_unrealizedPL(symbol)
-            # print("symbol", symbol, "symbol_unrealizedPL: ", symbol_unrealizedPL) # DEBUG CEDE
-            if self.rtstr.condition_for_SLTP(symbol_unrealizedPL) \
-                    or self.rtstr.condition_trailer_TP(self.broker._get_coin(symbol), symbol_unrealizedPL):
+            if (symbol_equity - symbol_unrealizedPL) == 0:
+                symbol_unrealizedPL_percent = 0
+            else:
+                symbol_unrealizedPL_percent = symbol_unrealizedPL * 100 / (symbol_equity - symbol_unrealizedPL)
+            # print("symbol", symbol, "symbol_unrealizedPL: $", symbol_unrealizedPL, " - ", symbol_unrealizedPL_percent, "%") # DEBUG CEDE
+            if self.rtstr.condition_for_SLTP(symbol_unrealizedPL_percent) \
+                    or self.rtstr.condition_trailer_TP(self.broker._get_coin(symbol), symbol_unrealizedPL_percent):
                 lst_symbol_for_closure.append(symbol)
 
         if len(lst_symbol_for_closure) > 0:
