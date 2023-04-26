@@ -208,7 +208,9 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
     def get_df_buying_symbols(self):
         data = {'symbol':[], 'stimulus':[], 'size':[], 'percent':[], 'gridzone':[], 'pos_type':[]}
-        for symbol in self.df_current_data.index.to_list():
+        lst_symbols = self.df_current_data.index.to_list()
+        lst_symbols = self.sort_list_symbols(lst_symbols)
+        for symbol in lst_symbols:
             if not self.is_open_type_short_or_long(symbol) and self.condition_for_buying(symbol):
                 size, percent, zone = self.get_symbol_buying_size(symbol)
                 data['symbol'].append(symbol)
@@ -554,6 +556,9 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
     def trigger_global_trailer_status(self):
         return self.trigger_trailer
+
+    def sort_list_symbols(self, lst_symbols):
+        return lst_symbols
 
 class ShortLongPosition():
     def __init__(self, lst_symbol, str_short_long_position):

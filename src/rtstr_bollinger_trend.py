@@ -35,6 +35,7 @@ class StrategyBollingerTrend(rtstr.RealTimeStrategy):
                            # "bollinger_id1": {"indicator": "bollinger", "window_size": 100, "id": "1", "bol_std": 2.25, "output": ["lower_band", "higher_band", "ma_band"]},
                            "bollinger_id1": {"indicator": "bollinger", "window_size": 20, "id": "1", "bol_std": 2, "output": ["lower_band", "higher_band", "ma_band"]},
                            "rsi": {"indicator": "rsi", "id": "1", "window_size": 14},
+                           "atr": {"indicator": "atr", "id": "1", "window_size": 14},
                            "long_ma": {"indicator": "sma", "id": "long_ma", "window_size": 100},
                            "postprocess1": {"indicator": "shift", "window_size": 1, "id": "1", "n": "1", "input": ['lower_band', "higher_band", "ma_band"]},
                            "postprocess2": {"indicator": "shift", "window_size": 1, "n": "1", "input": ["close"]}
@@ -130,6 +131,14 @@ class StrategyBollingerTrend(rtstr.RealTimeStrategy):
                   " ma_band_1: ", self.df_current_data['ma_band_1'][symbol]
                   )
         return (self.df_current_data['close'][symbol] > self.df_current_data['ma_band_1'][symbol])
+
+    def sort_list_symbols(self, lst_symbols):
+        df = pd.DataFrame(index=lst_symbols, columns=['atr'])
+        for symbol in lst_symbols:
+            df.at[symbol, 'atr'] = self.df_current_data['atr_1'][symbol]
+        df.sort_values(by=['atr'], inplace=True, ascending=False)
+        lst_symbols = df.index.to_list()
+        return lst_symbols
 
 
 
