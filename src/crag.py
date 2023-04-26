@@ -631,9 +631,8 @@ class Crag:
         if self.rtstr.condition_for_global_SLTP(global_unrealizedPL)\
                 or self.rtstr.condition_for_global_trailer_TP(global_unrealizedPL):
             print('reset - global TP')
+            print('unrealizedPL: ', global_unrealizedPL)
             self.broker.execute_reset_account()
-            if self.rtstr.get_trigger_global_trailer_status(): # COMMENT CEDE: USELESS
-                self.rtstr.set_global_trailer_tp_turned_off()
             return False
 
         lst_symbol_position = self.broker.get_lst_symbol_position()
