@@ -177,7 +177,7 @@ class Crag:
                 sleeping_time = 0
             if sleeping_time > 0:
                 if self.safety_run:
-                    start_minus_one_sec = datetime.timestamp(datetime.fromtimestamp(start) - timedelta(seconds=2))
+                    start_minus_one_sec = datetime.timestamp(datetime.fromtimestamp(start) - timedelta(seconds=1))
                     while time.time() < start_minus_one_sec:
                         step_result = self.safety_step()
                         if not step_result:

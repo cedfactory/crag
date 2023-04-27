@@ -73,8 +73,8 @@ class StrategyBollingerTrend(rtstr.RealTimeStrategy):
                        # " - (abs(n1_higher_band_1 - n1_lower_band_1 / n1_lower_band_1 > min_bol_spread) : ", (abs(self.df_current_data['n1_higher_band_1'][symbol] - self.df_current_data['n1_lower_band_1'][symbol]) / self.df_current_data['n1_lower_band_1'][symbol] > self.min_bol_spread),
                        # " - rsi_1 > 52)", (self.df_current_data["rsi_1"][symbol] > 52)
                        )
-            else:
-                print("OPENING LONG POSITION: FALSE - ", symbol)
+            # else:
+            #    print("OPENING LONG POSITION: FALSE - ", symbol)
 
         return (self.df_current_data['n1_close'][symbol] < self.df_current_data['n1_higher_band_1'][symbol])\
                & (self.df_current_data['close'][symbol] > self.df_current_data['higher_band_1'][symbol])\
@@ -107,8 +107,8 @@ class StrategyBollingerTrend(rtstr.RealTimeStrategy):
                       " n1_lower_band_1: ", self.df_current_data['n1_lower_band_1'][symbol],
                       # " rsi_1: ", self.df_current_data['rsi_1'][symbol]
                       )
-            else:
-                print("OPENING SHORT POSITION: FALSE - ", symbol)
+            # else:
+            #     print("OPENING SHORT POSITION: FALSE - ", symbol)
 
         return (self.df_current_data['n1_close'][symbol] > self.df_current_data['n1_lower_band_1'][symbol])\
                & (self.df_current_data['close'][symbol] < self.df_current_data['lower_band_1'][symbol])\
