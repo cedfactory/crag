@@ -64,7 +64,7 @@ class BrokerBitGet(broker.Broker):
         info = ""
         info += "{}".format(type(self).__name__)
         info += "\nCash : $ {}".format(utils.KeepNDecimals(self.get_cash(), 2))
-        info += "\nLeverage : {}".format(self.leverage)
+        # info += "\nLeverage : {}".format(self.leverage)
         return info
 
     @authentication_required

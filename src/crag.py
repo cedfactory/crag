@@ -45,7 +45,7 @@ class Crag:
             self.id = params.get("id", self.id)
             self.working_directory = params.get("working_directory", self.working_directory)
 
-        self.traces_trade_performed = 1 # find a better way to fix the incrementation of it
+        self.traces_trade_performed = 0
         self.traces_trade_total_opened = 0
         if self.broker.resume_strategy():
             self.current_trades = self.get_current_trades_from_account()
@@ -220,14 +220,16 @@ class Crag:
 
         msg = "current time : {}\n".format(current_date)
         msg += "original portfolio value : $ {} ({})\n".format(utils.KeepNDecimals(self.original_portfolio_value, 2), self.start_date)
-        msg += "global unrealized PL = {}\n".format(utils.KeepNDecimals(self.broker.get_global_unrealizedPL(), 2))
         variation_percent = utils.get_variation(self.original_portfolio_value, portfolio_value)
         msg += "current portfolio value : $ {} ({}%)\n".format(utils.KeepNDecimals(portfolio_value, 2), utils.KeepNDecimals(variation_percent, 2))
         portfolio_net_value = portfolio_value - (portfolio_value - self.broker.get_cash()) * 0.07 / 100 # CEDE 0.07 could be replaced by get_commission???
         variation_percent = utils.get_variation(self.original_portfolio_value, portfolio_net_value)
-        msg += "current portfolio net value : $ {} ({}%)\n".format(utils.KeepNDecimals(portfolio_net_value, 2), utils.KeepNDecimals(variation_percent, 2))
+        # msg += "current portfolio net value : $ {} ({}%)\n".format(utils.KeepNDecimals(portfolio_net_value, 2), utils.KeepNDecimals(variation_percent, 2))
         msg += "total opened positions : {} remaining open: {}\n".format(self.traces_trade_total_opened, self.traces_trade_total_opened - self.traces_trade_performed)
-        win_rate = 100 * self.traces_trade_positive / self.traces_trade_performed
+        if self.traces_trade_performed == 0:
+            win_rate = 0
+        else:
+            win_rate = 100 * self.traces_trade_positive / self.traces_trade_performed
         msg += "win rate : {}% out of {} trades concluded\n".format(utils.KeepNDecimals(win_rate, 2), self.traces_trade_performed)
         variation_percent = utils.get_variation(self.minimal_portfolio_value, portfolio_value)
         msg += "max drawdown : $ {} ({}%) ({})\n".format(utils.KeepNDecimals(self.minimal_portfolio_value, 2), utils.KeepNDecimals(variation_percent, 2),self.minimal_portfolio_date)
