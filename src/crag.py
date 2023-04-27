@@ -637,7 +637,7 @@ class Crag:
     def safety_step(self):
         global_unrealizedPL = self.broker.get_global_unrealizedPL()
         global_unrealizedPL_percent = self.broker.get_global_unrealizedPL() * 100 / self.original_portfolio_value
-        # print("global_unrealizedPL: ", global_unrealizedPL" - ", global_unrealizedPL_percent, "%") # DEBUG CEDE
+        # print("global_unrealizedPL: ", global_unrealizedPL, " - ", global_unrealizedPL_percent, "%") # DEBUG CEDE
         if self.rtstr.condition_for_global_SLTP(global_unrealizedPL_percent)\
                 or self.rtstr.condition_for_global_trailer_TP(global_unrealizedPL_percent):
             print('reset - global TP')
@@ -654,7 +654,7 @@ class Crag:
                 symbol_unrealizedPL_percent = 0
             else:
                 symbol_unrealizedPL_percent = symbol_unrealizedPL * 100 / (symbol_equity - symbol_unrealizedPL)
-            # print("symbol", symbol, "symbol_unrealizedPL: $", symbol_unrealizedPL, " - ", symbol_unrealizedPL_percent, "%") # DEBUG CEDE
+            print("symbol", symbol, "symbol_unrealizedPL: $", symbol_unrealizedPL, " - ", symbol_unrealizedPL_percent, "%") # DEBUG CEDE
             if self.rtstr.condition_for_SLTP(symbol_unrealizedPL_percent) \
                     or self.rtstr.condition_trailer_TP(self.broker._get_coin(symbol), symbol_unrealizedPL_percent):
                 lst_symbol_for_closure.append(symbol)
