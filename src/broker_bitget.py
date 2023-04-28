@@ -101,6 +101,7 @@ class BrokerBitGet(broker.Broker):
         clientOid = self.clientOIdprovider.get_name(symbol, trade.type)
         amount = trade.gross_size
         minsize = trade.minsize
+        print("TRADE GROSS SIZE: ", trade.gross_size)
         if trade.type == "OPEN_LONG":
             if amount > minsize:
                 transaction = self._open_long_position(symbol, trade.gross_size, clientOid)

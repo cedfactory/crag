@@ -654,7 +654,7 @@ class Crag:
                 symbol_unrealizedPL_percent = 0
             else:
                 symbol_unrealizedPL_percent = symbol_unrealizedPL * 100 / (symbol_equity - symbol_unrealizedPL)
-            print("symbol", symbol, "symbol_unrealizedPL: $", symbol_unrealizedPL, " - ", symbol_unrealizedPL_percent, "%") # DEBUG CEDE
+            # print("symbol", symbol, "symbol_unrealizedPL: $", symbol_unrealizedPL, " - ", symbol_unrealizedPL_percent, "%") # DEBUG CEDE
             if self.rtstr.condition_for_SLTP(symbol_unrealizedPL_percent) \
                     or self.rtstr.condition_trailer_TP(self.broker._get_coin(symbol), symbol_unrealizedPL_percent):
                 lst_symbol_for_closure.append(symbol)

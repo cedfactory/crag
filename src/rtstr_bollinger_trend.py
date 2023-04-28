@@ -135,11 +135,13 @@ class StrategyBollingerTrend(rtstr.RealTimeStrategy):
         return (self.df_current_data['close'][symbol] > self.df_current_data['ma_band_1'][symbol])
 
     def sort_list_symbols(self, lst_symbols):
+        print("symbol list: ", lst_symbols)
         df = pd.DataFrame(index=lst_symbols, columns=['atr'])
         for symbol in lst_symbols:
             df.at[symbol, 'atr'] = self.df_current_data['atr_1'][symbol]
         df.sort_values(by=['atr'], inplace=True, ascending=False)
         lst_symbols = df.index.to_list()
+        print("sorted symbols with atr: ", lst_symbols)
         return lst_symbols
 
 

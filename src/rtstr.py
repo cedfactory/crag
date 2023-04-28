@@ -323,6 +323,10 @@ class RealTimeStrategy(metaclass=ABCMeta):
         if not symbol in self.rtctrl.prices_symbols or self.rtctrl.prices_symbols[symbol] < 0: # first init at -1
             return 0, 0, 0
 
+        if self.rtctrl.init_cash_value == 0: # CEDE DEBUG for resume
+            print("init_cash_value: ", self.rtctrl.init_cash_value, " wallet_cash: ", self.rtctrl.wallet_cash)
+            self.rtctrl.init_cash_value = self.rtctrl.wallet_cash
+
         if self.rtctrl.init_cash_value == self.rtctrl.wallet_cash \
                 and not self.set_buying_size:
             self.buying_size = self.rtctrl.init_cash_value * self.MAX_POSITION / 100
@@ -352,8 +356,17 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
         gridzone = -1
 
-        if self.is_open_type_short(symbol):
-            size = -size
+        # if self.is_open_type_short(symbol):
+        #     size = -size
+
+        # DEBUG CEDE:
+        print("symbol: ", symbol,
+              " size: ", size,
+              " cash_to_buy: ", cash_to_buy,
+              " available cash: ", available_cash,
+              " price symbol: ", self.rtctrl.prices_symbols[symbol],
+              " init_cash_value: ", self.rtctrl.init_cash_value,
+              " wallet_cash: ", self.rtctrl.wallet_cash)
 
         return size, percent, gridzone
 
