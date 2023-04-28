@@ -636,14 +636,38 @@ class Crag:
 
     def safety_step(self):
         global_unrealizedPL = self.broker.get_global_unrealizedPL()
-        global_unrealizedPL_percent = self.broker.get_global_unrealizedPL() * 100 / self.original_portfolio_value
+        if self.original_portfolio_value == 0:
+            global_unrealizedPL_percent = 0
+        else:
+            global_unrealizedPL_percent = self.broker.get_global_unrealizedPL() * 100 / self.original_portfolio_value
         # print("global_unrealizedPL: ", global_unrealizedPL, " - ", global_unrealizedPL_percent, "%") # DEBUG CEDE
-        if self.rtstr.condition_for_global_SLTP(global_unrealizedPL_percent)\
-                or self.rtstr.condition_for_global_trailer_TP(global_unrealizedPL_percent):
-            print('reset - global TP')
-            print('unrealizedPL: $', global_unrealizedPL, " - ", global_unrealizedPL_percent, "%")
-            self.broker.execute_reset_account()
-            return False
+        total_PL = self.broker.get_usdt_equity() - self.original_portfolio_value
+        if self.original_portfolio_value == 0:
+            total_PL_percent = 0
+        else:
+            total_PL_percent = total_PL * 100 / self.original_portfolio_value
+
+        TOTAL_PERCENT = True # CEDE Test
+        if TOTAL_PERCENT:
+            if self.rtstr.condition_for_global_SLTP(total_PL_percent) \
+                    or self.rtstr.condition_for_global_trailer_TP(total_PL_percent):
+                print('reset - global TP')
+                print('total PL: $', total_PL, " - ", total_PL_percent, "%")
+                msg = "reset - total SL TP"
+                self.log(msg, "total SL TP")
+
+                self.broker.execute_reset_account()
+                return False
+        else:
+            if self.rtstr.condition_for_global_SLTP(global_unrealizedPL_percent)\
+                    or self.rtstr.condition_for_global_trailer_TP(global_unrealizedPL_percent):
+                print('reset - global TP')
+                print('unrealizedPL: $', global_unrealizedPL, " - ", global_unrealizedPL_percent, "%")
+                msg = "reset - global unrealizedPL SL TP"
+                self.log(msg, "global PL SL TP")
+
+                self.broker.execute_reset_account()
+                return False
 
         lst_symbol_position = self.broker.get_lst_symbol_position()
         lst_symbol_for_closure = []
