@@ -312,7 +312,7 @@ class Crag:
 
         current_date = self.broker.get_current_datetime("%Y/%m/%d %H:%M:%S")
         msg = "current time : {}\n".format(current_date)
-        msg += "global unrealized PL = ${} - %{}\n".format(utils.KeepNDecimals(self.broker.get_global_unrealizedPL(), 2),
+        msg += "global unrealized PL = ${} / %{}\n".format(utils.KeepNDecimals(self.broker.get_global_unrealizedPL(), 2),
                                                            utils.KeepNDecimals(self.broker.get_global_unrealizedPL() * 100 / self.original_portfolio_value, 2))
         msg += "current cash = {}\n".format(utils.KeepNDecimals(self.broker.get_cash(), 2))
         msg += "account equity = {}".format(utils.KeepNDecimals(self.broker.get_usdt_equity(), 2))
