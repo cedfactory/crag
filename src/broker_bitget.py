@@ -101,32 +101,37 @@ class BrokerBitGet(broker.Broker):
         clientOid = self.clientOIdprovider.get_name(symbol, trade.type)
         amount = trade.gross_size
         minsize = trade.minsize
+
         print("TRADE GROSS SIZE: ", trade.gross_size)
         if trade.type == "OPEN_LONG":
-            if amount > minsize:
+            if amount < minsize:
+                print("less than the minimum order quantity: ", amount, " min size: ", minsize)
+            else:
                 transaction = self._open_long_position(symbol, trade.gross_size, clientOid)
                 if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
                     trade.success = True
                     trade.orderId = transaction["data"]["orderId"]
                     trade.clientOid = transaction["data"]["clientOid"]
-                    print('request OPEN_LONG: ', symbol, ' - gross_size: ', trade.gross_size)
+                    print('request OPEN_LONG: ', symbol, ' gross_size: ', trade.gross_size)
                     trade.tradeId, trade.symbol_price, trade.gross_price, trade.gross_size, trade.buying_fee = self.get_order_fill_detail(symbol, trade.orderId)
-                    print('returned OPEN_LONG: ', symbol, ' - gross_size: ', trade.gross_size, ' - price: ', trade.gross_price, ' - fee: ', trade.buying_fee)
+                    print('OPEN_LONG: ', symbol, ' gross_size: ', trade.gross_size, ' price: ', trade.gross_price, ' fee: ', trade.buying_fee)
                     trade.net_size = trade.gross_size
                     trade.net_price = trade.gross_price
                     trade.bought_gross_price = trade.gross_price
                     trade.buying_price = trade.symbol_price
 
         elif trade.type == "OPEN_SHORT":
-            if amount < -minsize:
-                transaction = self._open_short_position(symbol, -trade.gross_size, clientOid)
+            if amount < minsize:
+                print("less than the minimum order quantity: ", amount, " min size: ", minsize)
+            else:
+                transaction = self._open_short_position(symbol, trade.gross_size, clientOid)
                 if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
                     trade.success = True
                     trade.orderId = transaction["data"]["orderId"]
                     trade.clientOid = transaction["data"]["clientOid"]
-                    print('request OPEN_SHORT: ', symbol, ' - gross_size: ', trade.gross_size)
+                    print('request OPEN_SHORT: ', symbol, ' gross_size: ', trade.gross_size)
                     trade.tradeId, trade.symbol_price, trade.gross_price, trade.gross_size, trade.buying_fee = self.get_order_fill_detail(symbol, trade.orderId)
-                    print('returned OPEN_SHORT: ', symbol, ' - gross_size: ', trade.gross_size, ' - price: ', trade.gross_price, ' - fee: ', trade.buying_fee)
+                    print('OPEN_SHORT: ', symbol, ' gross_size: ', trade.gross_size, ' price: ', trade.gross_price, ' fee: ', trade.buying_fee)
                     trade.net_size = trade.gross_size
                     trade.net_price = trade.gross_price
                     trade.bought_gross_price = trade.gross_price
@@ -138,9 +143,9 @@ class BrokerBitGet(broker.Broker):
                 trade.success = True
                 trade.orderId = transaction["data"]["orderId"]
                 trade.clientOid = transaction["data"]["clientOid"]
-                print('request CLOSE_LONG: ', symbol, ' - gross_size: ', trade.gross_size)
+                print('request CLOSE_LONG: ', symbol, ' gross_size: ', trade.gross_size)
                 trade.tradeId, trade.symbol_price, trade.gross_price, trade.gross_size, trade.selling_fee = self.get_order_fill_detail(symbol, trade.orderId)
-                print('returned CLOSE_LONG: ', symbol, ' - gross_size: ', trade.gross_size, ' - price: ', trade.gross_price, ' - fee: ', trade.selling_fee)
+                print('CLOSE_LONG: ', symbol, ' gross_size: ', trade.gross_size, ' price: ', trade.gross_price, ' fee: ', trade.selling_fee)
                 # CEDE to be confirmed : selling_fee is selling_fee + buying_fee or just selling_fee
                 trade.net_size = trade.gross_size
                 trade.net_price = trade.gross_price
@@ -153,16 +158,17 @@ class BrokerBitGet(broker.Broker):
                 trade.success = True
                 trade.orderId = transaction["data"]["orderId"]
                 trade.clientOid = transaction["data"]["clientOid"]
-                print('request CLOSE_SHORT: ', symbol, ' - gross_size: ', trade.gross_size)
+                print('request CLOSE_SHORT: ', symbol, ' gross_size: ', trade.gross_size)
                 trade.tradeId, trade.symbol_price, trade.gross_price, trade.gross_size, trade.selling_fee = self.get_order_fill_detail(symbol, trade.orderId)
-                print('returned CLOSE_SHORT: ', symbol, ' - gross_size: ', trade.gross_size, ' - price: ', trade.gross_price, ' - fee: ', trade.selling_fee)
+                print('CLOSE_SHORT: ', symbol, ' gross_size: ', trade.gross_size, ' price: ', trade.gross_price, ' fee: ', trade.selling_fee)
                 # CEDE to be confirmed : selling_fee is selling_fee + buying_fee or just selling_fee
                 trade.net_size = trade.gross_size
                 trade.net_price = trade.gross_price
                 if hasattr(trade, "bought_gross_price"):
                     trade.roi = 100 * (-1) * (trade.gross_price - trade.bought_gross_price - trade.selling_fee - trade.buying_fee) / trade.bought_gross_price
 
-        # CEDE COMMENT self.trades never used
+        if not trade.success:
+            print('transaction failed ", trade.type, " : ', symbol, ' - gross_size: ', trade.gross_size)
         return trade.success
 
     @authentication_required

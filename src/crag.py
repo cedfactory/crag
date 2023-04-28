@@ -236,12 +236,12 @@ class Crag:
         variation_percent = utils.get_variation(self.maximal_portfolio_value, portfolio_value)
         msg += "maximal portfolio value : $ {} ({}%) ({})\n".format(utils.KeepNDecimals(self.maximal_portfolio_value, 2), utils.KeepNDecimals(variation_percent, 2),self.maximal_portfolio_date)
         if self.rtstr.rtctrl.get_rtctrl_nb_symbols() > 0:
-            msg += "symbols value roi:\n"
+            # msg += "symbols value roi:\n"
             list_symbols = self.rtstr.rtctrl.get_rtctrl_lst_symbols()
             list_value = self.rtstr.rtctrl.get_rtctrl_lst_values()
             list_roi = self.rtstr.rtctrl.get_rtctrl_lst_roi()
             for symbols in list_symbols:
-                msg += "{} - {} - {}\n".format(list_symbols[0], utils.KeepNDecimals(list_value[0], 2), utils.KeepNDecimals(list_roi[0], 2))
+                msg += "symbol: {} value: ${}  roi: ${}\n".format(list_symbols[0], utils.KeepNDecimals(list_value[0], 2), utils.KeepNDecimals(list_roi[0], 2))
                 list_symbols.pop(0)
                 list_value.pop(0)
                 list_roi.pop(0)
@@ -257,7 +257,7 @@ class Crag:
                     symbol_unrealizedPL_percent = 0
                 else:
                     symbol_unrealizedPL_percent = symbol_unrealizedPL * 100 / (symbol_equity - symbol_unrealizedPL)
-                msg += "{}: {} ${} ${} {}%\n".format(symbol,
+                msg += "{}: size: {} USDT: ${} PL: ${} / {}%\n".format(symbol,
                                                      utils.KeepNDecimals(self.broker.get_symbol_available(symbol), 2),
                                                      utils.KeepNDecimals(symbol_equity, 2),
                                                      utils.KeepNDecimals(symbol_unrealizedPL, 2),
@@ -265,10 +265,10 @@ class Crag:
                                                      )
 
 
-        msg += "global unrealized PL = ${} - %{}\n".format(utils.KeepNDecimals(self.broker.get_global_unrealizedPL(), 2),
+        msg += "global unrealized PL = ${} / %{}\n".format(utils.KeepNDecimals(self.broker.get_global_unrealizedPL(), 2),
                                                            utils.KeepNDecimals(self.broker.get_global_unrealizedPL() * 100 / self.original_portfolio_value, 2) )
-        msg += "current cash = {}\n".format(utils.KeepNDecimals(self.broker.get_cash(), 2))
-        msg += "account equity = {}".format(utils.KeepNDecimals(self.broker.get_usdt_equity(), 2))
+        msg += "current cash = ${}\n".format(utils.KeepNDecimals(self.broker.get_cash(), 2))
+        msg += "account equity = ${}".format(utils.KeepNDecimals(self.broker.get_usdt_equity(), 2))
 
         self.log(msg, "start step")
         if not self.zero_print:
@@ -665,12 +665,16 @@ class Crag:
                 symbol = self.broker._get_symbol(current_trade.symbol)
                 coin = current_trade.symbol
                 if self.rtstr.is_open_type(current_trade.type) and symbol in lst_symbol_for_closure:
-                    print("SELL TRIGGERED - SL TP: ", current_trade.symbol) # DEBUG CEDE
+                    print("SELL TRIGGERED SL TP: ", current_trade.symbol, " at: ", current_datetime) # DEBUG CEDE
+                    msg = "SELL TRIGGERED SL TP: {} at: {}\n".format(current_trade.symbol, current_datetime)
                     sell_trade = self._prepare_sell_trade_from_bought_trade(current_trade,
                                                                             current_datetime)
                     done = self.broker.execute_trade(sell_trade)
                     if done:
-                        print("SELL PERFORMED - SL TP: ", current_trade.symbol) # DEBUG CEDE
+                        print("SELL PERFORMED SL TP: ", current_trade.symbol, " at: ", current_datetime) # DEBUG CEDE
+                        msg += "SELL PERFORMED SL TP"
+                        self.log(msg, "SL TP PERFORMED")
+
                         self.sell_performed = True
                         self.rtstr.count_selling_limits(current_trade.symbol)
                         current_trade.type = self.rtstr.get_close_type_and_close(current_trade.symbol)
@@ -682,6 +686,10 @@ class Crag:
                         sell_trade.gridzone = current_trade.gridzone
 
                         self.current_trades.append(sell_trade)
+                    else:
+                        print("SELL TRANSACTION FAILED SL TP: ", current_trade.symbol, " at: ", current_datetime)  # DEBUG CEDE
+                        msg += "SELL TRANSACTION FAILED SL TP"
+                        self.log(msg, "SL TP FAILED")
 
                     if self.sell_performed:
                         self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(),
