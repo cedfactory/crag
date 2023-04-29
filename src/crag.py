@@ -165,7 +165,7 @@ class Crag:
             start = start.replace(second=0, microsecond=0)
             start += timedelta(minutes=1)
         print("start time: ", start)
-        msg = "start time: " + start
+        msg = "start time: " + start.strftime("%Y/%m/%d %H:%M:%S")
         self.log(msg, "start time")
         start = datetime.timestamp(start)
 
@@ -253,7 +253,7 @@ class Crag:
             df = pd.DataFrame(dict)
             for idx in df.index.tolist():
                 msg += "symbol: {} net value: ${}  roi: ${} / %{}\n".format(df.at[idx, 'symbol'],
-                                                                            utils.KeepNDecimals(df.at[idx, 'symbol'], 2),
+                                                                            utils.KeepNDecimals(df.at[idx, 'value'], 2),
                                                                             utils.KeepNDecimals(df.at[idx, 'roi_dol'], 2),
                                                                             utils.KeepNDecimals(df.at[idx, 'roi_perc'], 2)
                                                                             )
