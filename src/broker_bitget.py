@@ -287,3 +287,6 @@ class BrokerBitGet(broker.Broker):
 
     def get_coin_from_symbol(self, symbol):
         return self._get_coin(symbol)
+
+    def is_reset_account(self):
+        return self.reset_account

@@ -165,6 +165,8 @@ class Crag:
             start = start.replace(second=0, microsecond=0)
             start += timedelta(minutes=1)
         print("start time: ", start)
+        msg = "start time: " + start
+        self.log(msg, "start time")
         start = datetime.timestamp(start)
 
         done = False
@@ -219,6 +221,10 @@ class Crag:
             self.maximal_portfolio_date = current_date
 
         msg = "start step current time : {}\n".format(current_date)
+        if self.broker.is_reset_account():
+            msg += "account reset\n"
+        else:
+            msg += "account resumed\n"
         msg += "original portfolio value : $ {} ({})\n".format(utils.KeepNDecimals(self.original_portfolio_value, 2), self.start_date)
         variation_percent = utils.get_variation(self.original_portfolio_value, portfolio_value)
         msg += "current portfolio value : $ {} ({}%)\n".format(utils.KeepNDecimals(portfolio_value, 2), utils.KeepNDecimals(variation_percent, 2))
@@ -252,7 +258,7 @@ class Crag:
                                                                             utils.KeepNDecimals(df.at[idx, 'roi_perc'], 2)
                                                                             )
         else:
-            msg += "no positions\n"
+            msg += "no position\n"
 
         msg += "global unrealized PL = ${} / %{}\n".format(utils.KeepNDecimals(self.broker.get_global_unrealizedPL(), 2),
                                                            utils.KeepNDecimals(self.broker.get_global_unrealizedPL() * 100 / self.original_portfolio_value, 2) )
