@@ -228,7 +228,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
         if not df_result.empty:
             df_traces = df_result.copy()
             df_traces.drop(columns=['stimulus', 'gridzone'], axis=1, inplace=True)
-            self.log(df_result, header="get_df_buying_symbols")
+            self.log(df_traces, header="get_df_buying_symbols")
             
         return df_result
 
@@ -285,7 +285,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
         if self.logger != None and len(df_result) > 0:
             df_traces = df_result.copy()
             df_traces.drop(columns=['stimulus', 'gridzone'], axis=1, inplace=True)
-            self.logger.log(df_result, header="get_df_selling_symbols", author=self.get_name())
+            self.logger.log(df_traces, header="get_df_selling_symbols", author=self.get_name())
          
         return df_result
 
