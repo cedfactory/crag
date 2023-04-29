@@ -226,6 +226,8 @@ class RealTimeStrategy(metaclass=ABCMeta):
         df_result = self.get_df_selling_symbols_common(df_result)
         
         if not df_result.empty:
+            df_traces = df_result.copy()
+            df_traces.drop(columns=['stimulus', 'gridzone'], axis=1, inplace=True)
             self.log(df_result, header="get_df_buying_symbols")
             
         return df_result
@@ -281,6 +283,8 @@ class RealTimeStrategy(metaclass=ABCMeta):
         df_result = pd.DataFrame(data)
         
         if self.logger != None and len(df_result) > 0:
+            df_traces = df_result.copy()
+            df_traces.drop(columns=['stimulus', 'gridzone'], axis=1, inplace=True)
             self.logger.log(df_result, header="get_df_selling_symbols", author=self.get_name())
          
         return df_result

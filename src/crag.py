@@ -443,7 +443,7 @@ class Crag:
 
                     self.current_trades.append(sell_trade)
                     
-                    msg = "{} ({}) {} {:.2f} roi={:.2f}".format(sell_trade.type, sell_trade.stimulus, sell_trade.symbol, sell_trade.gross_price, sell_trade.roi)
+                    msg = "{} {} gross price: ${:.2f} roi: {:.2f}".format(sell_trade.symbol, sell_trade.type, sell_trade.gross_price, sell_trade.roi)
                     self.log(msg, "symbol sold")
 
         if self.sell_performed:
@@ -508,7 +508,9 @@ class Crag:
         df_symbols_bought = pd.DataFrame(symbols_bought)
 
         if not df_symbols_bought.empty:
-            self.log(df_symbols_bought, "symbols bought")
+            df_traces = df_symbols_bought.copy()
+            df_traces.drop(columns=['gridzone'], axis=1, inplace=True)
+            self.log(df_traces, "symbols bought")
 
         if self.temp_debug:
             self.debug_trace_current_trades('end_trade', self.current_trades)
