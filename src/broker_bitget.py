@@ -284,3 +284,6 @@ class BrokerBitGet(broker.Broker):
             return global_unrealizedPL
         else:
             return 0
+
+    def get_coin_from_symbol(self, symbol):
+        return self._get_coin(symbol)

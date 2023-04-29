@@ -218,7 +218,7 @@ class Crag:
             self.maximal_portfolio_value = portfolio_value
             self.maximal_portfolio_date = current_date
 
-        msg = "current time : {}\n".format(current_date)
+        msg = "start step current time : {}\n".format(current_date)
         msg += "original portfolio value : $ {} ({})\n".format(utils.KeepNDecimals(self.original_portfolio_value, 2), self.start_date)
         variation_percent = utils.get_variation(self.original_portfolio_value, portfolio_value)
         msg += "current portfolio value : $ {} ({}%)\n".format(utils.KeepNDecimals(portfolio_value, 2), utils.KeepNDecimals(variation_percent, 2))
@@ -230,40 +230,29 @@ class Crag:
             win_rate = 0
         else:
             win_rate = 100 * self.traces_trade_positive / self.traces_trade_performed
-        msg += "win rate : {}% out of {} trades concluded\n".format(utils.KeepNDecimals(win_rate, 2), self.traces_trade_performed)
+        msg += "win rate : {}% out of {} trades closed\n".format(utils.KeepNDecimals(win_rate, 2), self.traces_trade_performed)
         variation_percent = utils.get_variation(self.minimal_portfolio_value, portfolio_value)
         msg += "max drawdown : $ {} ({}%) ({})\n".format(utils.KeepNDecimals(self.minimal_portfolio_value, 2), utils.KeepNDecimals(variation_percent, 2),self.minimal_portfolio_date)
         variation_percent = utils.get_variation(self.maximal_portfolio_value, portfolio_value)
         msg += "maximal portfolio value : $ {} ({}%) ({})\n".format(utils.KeepNDecimals(self.maximal_portfolio_value, 2), utils.KeepNDecimals(variation_percent, 2),self.maximal_portfolio_date)
+
         if self.rtstr.rtctrl.get_rtctrl_nb_symbols() > 0:
             # msg += "symbols value roi:\n"
             list_symbols = self.rtstr.rtctrl.get_rtctrl_lst_symbols()
+            msg += "{} open positions\n".format(len(list_symbols))
             list_value = self.rtstr.rtctrl.get_rtctrl_lst_values()
-            list_roi = self.rtstr.rtctrl.get_rtctrl_lst_roi()
-            for symbols in list_symbols:
-                msg += "symbol: {} value: ${}  roi: ${}\n".format(list_symbols[0], utils.KeepNDecimals(list_value[0], 2), utils.KeepNDecimals(list_roi[0], 2))
-                list_symbols.pop(0)
-                list_value.pop(0)
-                list_roi.pop(0)
+            list_roi_dol = self.rtstr.rtctrl.get_rtctrl_lst_roi_dol()
+            list_roi_percent = self.rtstr.rtctrl.get_rtctrl_lst_roi_percent()
+            dict = {'symbol': list_symbols, 'value': list_value, 'roi_dol': list_roi_dol, 'roi_perc': list_roi_percent}
+            df = pd.DataFrame(dict)
+            for idx in df.index.tolist():
+                msg += "symbol: {} net value: ${}  roi: ${} / %{}\n".format(df.at[idx, 'symbol'],
+                                                                            utils.KeepNDecimals(df.at[idx, 'symbol'], 2),
+                                                                            utils.KeepNDecimals(df.at[idx, 'roi_dol'], 2),
+                                                                            utils.KeepNDecimals(df.at[idx, 'roi_perc'], 2)
+                                                                            )
         else:
             msg += "no positions\n"
-
-        lst_symbol_position = self.broker.get_lst_symbol_position()
-        if len(lst_symbol_position) > 0:
-            for symbol in lst_symbol_position:
-                symbol_equity = self.broker.get_symbol_usdtEquity(symbol)
-                symbol_unrealizedPL = self.broker.get_symbol_unrealizedPL(symbol)
-                if (symbol_equity - symbol_unrealizedPL) == 0:
-                    symbol_unrealizedPL_percent = 0
-                else:
-                    symbol_unrealizedPL_percent = symbol_unrealizedPL * 100 / (symbol_equity - symbol_unrealizedPL)
-                msg += "{}: size: {} USDT: ${} PL: ${} / {}%\n".format(symbol,
-                                                     utils.KeepNDecimals(self.broker.get_symbol_available(symbol), 2),
-                                                     utils.KeepNDecimals(symbol_equity, 2),
-                                                     utils.KeepNDecimals(symbol_unrealizedPL, 2),
-                                                     utils.KeepNDecimals(symbol_unrealizedPL_percent, 2)
-                                                     )
-
 
         msg += "global unrealized PL = ${} / %{}\n".format(utils.KeepNDecimals(self.broker.get_global_unrealizedPL(), 2),
                                                            utils.KeepNDecimals(self.broker.get_global_unrealizedPL() * 100 / self.original_portfolio_value, 2) )
@@ -310,8 +299,29 @@ class Crag:
 
         self.rtstr.log_current_info()
 
+        lst_symbol_position = self.broker.get_lst_symbol_position()
+        if len(lst_symbol_position) > 0:
+            msg = "{} open positions\n".format(len(lst_symbol_position))
+            for symbol in lst_symbol_position:
+                symbol_equity = self.broker.get_symbol_usdtEquity(symbol)
+                symbol_unrealizedPL = self.broker.get_symbol_unrealizedPL(symbol)
+                if (symbol_equity - symbol_unrealizedPL) == 0:
+                    symbol_unrealizedPL_percent = 0
+                else:
+                    symbol_unrealizedPL_percent = symbol_unrealizedPL * 100 / (symbol_equity - symbol_unrealizedPL)
+                msg += "{}: {}\n size: {} / ${} PL: ${} / {}%\n".format(self.broker.get_coin_from_symbol(symbol),
+                                                                        self.broker.get_symbol_holdSide,
+                                                                        utils.KeepNDecimals(self.broker.get_symbol_available(symbol), 2),
+                                                                        utils.KeepNDecimals(symbol_equity, 2),
+                                                                        utils.KeepNDecimals(symbol_unrealizedPL, 2),
+                                                                        utils.KeepNDecimals(symbol_unrealizedPL_percent, 2)
+                                                                        )
+            else:
+                msg = "no position\n"
+        self.log(msg, "position")
+
         current_date = self.broker.get_current_datetime("%Y/%m/%d %H:%M:%S")
-        msg = "current time : {}\n".format(current_date)
+        msg = "end step current time : {}\n".format(current_date)
         msg += "global unrealized PL = ${} / %{}\n".format(utils.KeepNDecimals(self.broker.get_global_unrealizedPL(), 2),
                                                            utils.KeepNDecimals(self.broker.get_global_unrealizedPL() * 100 / self.original_portfolio_value, 2))
         msg += "current cash = {}\n".format(utils.KeepNDecimals(self.broker.get_cash(), 2))

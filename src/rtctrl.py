@@ -259,8 +259,11 @@ class rtctrl():
     def get_rtctrl_lst_values(self):
         return self.df_rtctrl['actual_net_price'].to_list()
 
-    def get_rtctrl_lst_roi(self):
+    def get_rtctrl_lst_roi_percent(self):
         return self.df_rtctrl['roi_%'].to_list()
+
+    def get_rtctrl_lst_roi_dol(self):
+        return self.df_rtctrl['roi_$'].to_list()
 
     def get_rtctrl_df_roi_sl_tp(self):
         return self.df_roi_sl_tp
