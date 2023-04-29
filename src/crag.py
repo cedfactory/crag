@@ -315,15 +315,15 @@ class Crag:
                     symbol_unrealizedPL_percent = 0
                 else:
                     symbol_unrealizedPL_percent = symbol_unrealizedPL * 100 / (symbol_equity - symbol_unrealizedPL)
-                msg += "{}: {}\n size: {} / ${} PL: ${} / {}%\n".format(self.broker.get_coin_from_symbol(symbol),
-                                                                        self.broker.get_symbol_holdSide,
+                msg += "{}: {}\n size: {} / ${} PL: ${} / %{}\n".format(self.broker.get_coin_from_symbol(symbol),
+                                                                        self.broker.get_symbol_holdSide(symbol).upper(),
                                                                         utils.KeepNDecimals(self.broker.get_symbol_available(symbol), 2),
                                                                         utils.KeepNDecimals(symbol_equity, 2),
                                                                         utils.KeepNDecimals(symbol_unrealizedPL, 2),
                                                                         utils.KeepNDecimals(symbol_unrealizedPL_percent, 2)
                                                                         )
-            else:
-                msg = "no position\n"
+        else:
+            msg = "no position\n"
         self.log(msg, "position")
 
         current_date = self.broker.get_current_datetime("%Y/%m/%d %H:%M:%S")
