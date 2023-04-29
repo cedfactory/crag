@@ -198,6 +198,7 @@ class Crag:
                 start += timedelta(hours=1)
             elif self.interval == 60:  # 1m
                 start += timedelta(minutes=1)
+            self.strategy_start_time = start
             start = datetime.timestamp(start)
 
             done = not self.step()
@@ -221,6 +222,7 @@ class Crag:
             self.maximal_portfolio_date = current_date
 
         msg = "start step current time : {}\n".format(current_date)
+        msg += "startegy duration : {}\n".format(current_date - self.strategy_start_time)
         if self.broker.is_reset_account():
             msg += "account reset\n"
         else:
