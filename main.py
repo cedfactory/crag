@@ -326,8 +326,9 @@ if __name__ == '__main__':
                 while True:
                     try:
                         crag_live(sys.argv[3])
-                    except:
+                    except Exception as e:
                         print("!!!!!!! EXCEPTION RAISED !!!!!!!")
+                        print(e)
                         print("!!!!!!!   CRAG RESUMED   !!!!!!!")
                         time.sleep(30)
                         pass
