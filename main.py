@@ -320,7 +320,7 @@ if __name__ == '__main__':
         elif len(sys.argv) > 2 and (sys.argv[1] == "--reboot"):
             crag_reboot(sys.argv[2])
         elif len(sys.argv) > 2 and (sys.argv[1] == "--live"):
-            if (sys.argv[2] == "--forever"):
+            if (sys.argv[2] == "--autorestart"):
                 while True:
                     try:
                         crag_live(sys.argv[3])
