@@ -2,6 +2,7 @@ from src import rtdp,rtdp_simulation,broker_simulation,broker_ccxt,broker_bitget
 from src import crag,crag_helper,trade
 import pandas as pd
 import os, sys
+import time
 import cProfile,pstats
 from datetime import datetime
 import concurrent.futures
@@ -328,6 +329,7 @@ if __name__ == '__main__':
                     except:
                         print("!!!!!!! EXCEPTION RAISED !!!!!!!")
                         print("!!!!!!!   CRAG RESUMED   !!!!!!!")
+                        time.sleep(30)
                         pass
             else:
                 crag_live(sys.argv[2])
