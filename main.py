@@ -320,7 +320,16 @@ if __name__ == '__main__':
         elif len(sys.argv) > 2 and (sys.argv[1] == "--reboot"):
             crag_reboot(sys.argv[2])
         elif len(sys.argv) > 2 and (sys.argv[1] == "--live"):
-            crag_live(sys.argv[2])
+            if (sys.argv[2] == "--forever"):
+                while True:
+                    try:
+                        crag_live(sys.argv[3])
+                    except:
+                        print("!!!!!!! EXCEPTION RAISED !!!!!!!")
+                        print("!!!!!!!   CRAG RESUMED   !!!!!!!")
+                        pass
+            else:
+                crag_live(sys.argv[2])
         elif len(sys.argv) > 2 and (sys.argv[1] == "--benchmark"):
             crag_benchmark(sys.argv[2])
         elif len(sys.argv) >= 2 and (sys.argv[1] == "--report"):
