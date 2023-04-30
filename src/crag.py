@@ -222,7 +222,6 @@ class Crag:
             self.maximal_portfolio_date = current_date
 
         msg = "start step current time : {}\n".format(current_date)
-        msg += "startegy duration : {}\n".format(current_date - self.strategy_start_time)
         if self.broker.is_reset_account():
             msg += "account reset\n"
         else:
