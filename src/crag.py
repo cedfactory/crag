@@ -47,6 +47,8 @@ class Crag:
 
         self.traces_trade_performed = 0
         self.traces_trade_total_opened = 0
+        self.traces_trade_total_closed = 0
+        self.traces_trade_total_remaining = 0
         if self.broker.resume_strategy():
             self.current_trades = self.get_current_trades_from_account()
         else:
@@ -212,41 +214,45 @@ class Crag:
 
     def step(self):
         # portfolio_value = self.broker.get_portfolio_value()
-        portfolio_value = self.broker.get_wallet_equity()
+        # portfolio_value = self.broker.get_wallet_equity()
+        portfolio_value = self.broker.get_usdt_equity()
         current_date = self.broker.get_current_datetime("%Y/%m/%d %H:%M:%S")
         if portfolio_value < self.minimal_portfolio_value:
             self.minimal_portfolio_value = portfolio_value
             self.minimal_portfolio_date = current_date
+            self.minimal_portfolio_variation = utils.get_variation(self.original_portfolio_value, self.minimal_portfolio_value)
         if portfolio_value > self.maximal_portfolio_value:
             self.maximal_portfolio_value = portfolio_value
             self.maximal_portfolio_date = current_date
+            self.maximal_portfolio_variation = utils.get_variation(self.original_portfolio_value, self.maximal_portfolio_date)
 
         msg = "start step current time : {}\n".format(current_date)
         if self.broker.is_reset_account():
             msg += "account reset\n"
         else:
             msg += "account resumed\n"
-        msg += "original portfolio value : $ {} ({})\n".format(utils.KeepNDecimals(self.original_portfolio_value, 2), self.start_date)
+        msg += "original portfolio value : ${} ({})\n".format(utils.KeepNDecimals(self.original_portfolio_value, 2), self.start_date)
         variation_percent = utils.get_variation(self.original_portfolio_value, portfolio_value)
-        msg += "current portfolio value : $ {} ({}%)\n".format(utils.KeepNDecimals(portfolio_value, 2), utils.KeepNDecimals(variation_percent, 2))
-        portfolio_net_value = portfolio_value - (portfolio_value - self.broker.get_cash()) * 0.07 / 100 # CEDE 0.07 could be replaced by get_commission???
-        variation_percent = utils.get_variation(self.original_portfolio_value, portfolio_net_value)
-        # msg += "current portfolio net value : $ {} ({}%)\n".format(utils.KeepNDecimals(portfolio_net_value, 2), utils.KeepNDecimals(variation_percent, 2))
-        msg += "total opened positions : {} remaining open: {}\n".format(self.traces_trade_total_opened, self.traces_trade_total_opened - self.traces_trade_performed)
-        if self.traces_trade_performed == 0:
+        msg += "current portfolio value : ${} %{})\n".format(utils.KeepNDecimals(portfolio_value, 2), utils.KeepNDecimals(variation_percent, 2))
+        msg += "max portfolio value : ${} {} ({})\n".format(utils.KeepNDecimals(self.maximal_portfolio_value, 2),
+                                                            utils.KeepNDecimals(self.maximal_portfolio_variation, 2),
+                                                            utils.KeepNDecimals(self.maximal_portfolio_date, 2))
+        msg += "min portfolio value : ${} %{} ({})\n".format(utils.KeepNDecimals(self.minimal_portfolio_value, 2),
+                                                             utils.KeepNDecimals(self.minimall_portfolio_variation, 2),
+                                                             utils.KeepNDecimals(self.minimal_portfolio_date, 2))
+        self.traces_trade_total_remaining = self.traces_trade_total_opened - self.traces_trade_total_closed
+        msg += "transactions opened : {} closed : {} remaining open: {}\n".format(self.traces_trade_total_opened,
+                                                                                  self.traces_trade_total_closed,
+                                                                                  self.traces_trade_total_remaining)
+        if self.traces_trade_total_closed == 0:
             win_rate = 0
         else:
-            win_rate = 100 * self.traces_trade_positive / self.traces_trade_performed
-        msg += "win rate : {}% out of {} trades closed\n".format(utils.KeepNDecimals(win_rate, 2), self.traces_trade_performed)
-        variation_percent = utils.get_variation(self.minimal_portfolio_value, portfolio_value)
-        msg += "max drawdown : $ {} ({}%) ({})\n".format(utils.KeepNDecimals(self.minimal_portfolio_value, 2), utils.KeepNDecimals(variation_percent, 2),self.minimal_portfolio_date)
-        variation_percent = utils.get_variation(self.maximal_portfolio_value, portfolio_value)
-        msg += "maximal portfolio value : $ {} ({}%) ({})\n".format(utils.KeepNDecimals(self.maximal_portfolio_value, 2), utils.KeepNDecimals(variation_percent, 2),self.maximal_portfolio_date)
+            win_rate = 100 * self.traces_trade_positive / self.traces_trade_total_closed
+        msg += "win rate : %{}\n\n".format(utils.KeepNDecimals(win_rate, 2), self.traces_trade_performed)
 
         if self.rtstr.rtctrl.get_rtctrl_nb_symbols() > 0:
-            # msg += "symbols value roi:\n"
             list_symbols = self.rtstr.rtctrl.get_rtctrl_lst_symbols()
-            msg += "{} open positions\n".format(len(list_symbols))
+            msg += "open position: {}\n".format(len(list_symbols))
             list_value = self.rtstr.rtctrl.get_rtctrl_lst_values()
             list_roi_dol = self.rtstr.rtctrl.get_rtctrl_lst_roi_dol()
             list_roi_percent = self.rtstr.rtctrl.get_rtctrl_lst_roi_percent()
@@ -261,10 +267,13 @@ class Crag:
         else:
             msg += "no position\n"
 
-        msg += "global unrealized PL = ${} / %{}\n".format(utils.KeepNDecimals(self.broker.get_global_unrealizedPL(), 2),
-                                                           utils.KeepNDecimals(self.broker.get_global_unrealizedPL() * 100 / self.original_portfolio_value, 2) )
+        msg += "\nglobal unrealized PL = ${} / %{}\n".format(utils.KeepNDecimals(self.broker.get_global_unrealizedPL(), 2),
+                                                             utils.KeepNDecimals(self.broker.get_global_unrealizedPL() * 100 / self.original_portfolio_value, 2) )
         msg += "current cash = ${}\n".format(utils.KeepNDecimals(self.broker.get_cash(), 2))
-        msg += "account equity = ${}".format(utils.KeepNDecimals(self.broker.get_usdt_equity(), 2))
+        usdt_equity = self.broker.get_usdt_equity()
+        variation_percent = utils.get_variation(self.original_portfolio_value, usdt_equity)
+        msg += "account equity = ${} %{}".format(utils.KeepNDecimals(usdt_equity, 2),
+                                                 utils.KeepNDecimals(variation_percent, 2))
 
         self.log(msg, "start step")
         if not self.zero_print:
@@ -308,7 +317,7 @@ class Crag:
 
         lst_symbol_position = self.broker.get_lst_symbol_position()
         if len(lst_symbol_position) > 0:
-            msg = "{} open positions\n".format(len(lst_symbol_position))
+            msg = "open position: {} \n".format(len(lst_symbol_position))
             for symbol in lst_symbol_position:
                 symbol_equity = self.broker.get_symbol_usdtEquity(symbol)
                 symbol_unrealizedPL = self.broker.get_symbol_unrealizedPL(symbol)
@@ -329,11 +338,14 @@ class Crag:
 
         current_date = self.broker.get_current_datetime("%Y/%m/%d %H:%M:%S")
         msg = "end step current time : {}\n".format(current_date)
+        msg += "original portfolio value : $ {} ({})\n".format(utils.KeepNDecimals(self.original_portfolio_value, 2), self.start_date)
         msg += "global unrealized PL = ${} / %{}\n".format(utils.KeepNDecimals(self.broker.get_global_unrealizedPL(), 2),
                                                            utils.KeepNDecimals(self.broker.get_global_unrealizedPL() * 100 / self.original_portfolio_value, 2))
         msg += "current cash = {}\n".format(utils.KeepNDecimals(self.broker.get_cash(), 2))
-        msg += "account equity = {}".format(utils.KeepNDecimals(self.broker.get_usdt_equity(), 2))
-
+        usdt_equity = self.broker.get_usdt_equity()
+        variation_percent = utils.get_variation(self.original_portfolio_value, usdt_equity)
+        msg += "account equity = ${} %{}".format(utils.KeepNDecimals(usdt_equity, 2),
+                                                 utils.KeepNDecimals(variation_percent, 2))
         self.log(msg, "end step")
 
         return not self.exit
@@ -378,21 +390,12 @@ class Crag:
         sell_trade.buying_fee = bought_trade.buying_fee
         sell_trade.selling_fee = sell_trade.gross_price - sell_trade.net_price
         sell_trade.roi = 100 * (sell_trade.net_price - bought_trade.gross_price) / bought_trade.gross_price
-        if sell_trade.type == self.rtstr.close_short:
-            sell_trade.roi = -sell_trade.roi
-        self.traces_trade_performed = self.traces_trade_performed + 1
+        # if sell_trade.type == self.rtstr.close_short:
+        #    sell_trade.roi = -sell_trade.roi
         if sell_trade.roi < 0:
-            self.traces_trade_negative = self.traces_trade_negative + 1
-            '''
-            # CEDE DEBUG:
-            if (sell_trade.symbol_price - sell_trade.buying_price) < 0:
-                print('NEGATIVE TRADE: $', sell_trade.net_price - bought_trade.gross_price)
-            else:
-                print('NEGATIVE TRADE DUE TO FEES: $', sell_trade.net_price - bought_trade.gross_price)
-            print('BUYING AT: $', sell_trade.buying_price, ' SELLING AT: $', sell_trade.symbol_price)
-            '''
+            self.traces_trade_negative += self.traces_trade_negative
         else:
-            self.traces_trade_positive = self.traces_trade_positive + 1
+            self.traces_trade_positive += self.traces_trade_positive
         return sell_trade
 
     def trade(self):
@@ -438,6 +441,7 @@ class Crag:
                     self.cash = self.broker.get_cash()
                     sell_trade.cash = self.cash
 
+                    self.traces_trade_total_closed += 1
                     # Update grid strategy
                     self.rtstr.set_lower_zone_unengaged_position(current_trade.symbol, current_trade.gridzone)
                     sell_trade.gridzone = current_trade.gridzone
@@ -490,8 +494,7 @@ class Crag:
                     self.cash = self.broker.get_cash()
                     current_trade.cash = self.cash
 
-                    # Update traces
-                    self.traces_trade_total_opened = self.traces_trade_total_opened + 1
+                    self.traces_trade_total_opened += 1
 
                     # Update grid strategy
                     self.rtstr.set_zone_engaged(current_trade.symbol, current_trade.symbol_price)
