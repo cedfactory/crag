@@ -225,7 +225,7 @@ class Crag:
         if portfolio_value > self.maximal_portfolio_value:
             self.maximal_portfolio_value = portfolio_value
             self.maximal_portfolio_date = current_date
-            self.maximal_portfolio_variation = utils.get_variation(self.original_portfolio_value, self.maximal_portfolio_date)
+            self.maximal_portfolio_variation = utils.get_variation(self.original_portfolio_value, self.maximal_portfolio_value)
 
         msg = "start step current time : {}\n".format(current_date)
         if self.broker.is_reset_account():
@@ -347,7 +347,7 @@ class Crag:
         usdt_equity = self.broker.get_usdt_equity()
         variation_percent = utils.get_variation(self.original_portfolio_value, usdt_equity)
         msg += "account equity = ${} / %{}".format(utils.KeepNDecimals(usdt_equity, 2),
-                                                 utils.KeepNDecimals(variation_percent, 2))
+                                                   utils.KeepNDecimals(variation_percent, 2))
         self.log(msg, "end step")
 
         return not self.exit
