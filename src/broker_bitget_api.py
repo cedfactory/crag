@@ -17,9 +17,10 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         super().__init__(params)
 
         self.df_market = self.get_future_market()
-        self.df_market.drop( self.df_market[self.df_market['quoteCoin'] != 'USDT'].index, inplace=True)
-        self.df_market.reset_index(drop=True)
-        print('list symbols perpetual/USDT: ', self.df_market["baseCoin"].tolist())
+        if isinstance(self.df_market, pd.DataFrame):
+            self.df_market.drop( self.df_market[self.df_market['quoteCoin'] != 'USDT'].index, inplace=True)
+            self.df_market.reset_index(drop=True)
+            print('list symbols perpetual/USDT: ', self.df_market["baseCoin"].tolist())
 
         self.failure = 0
         self.success = 0
@@ -32,6 +33,14 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             print('resume strategy')
 
     def _authentification(self):
+
+        if False:
+            if self.account == None:
+                return False
+            exchange_api_key = self.account.get("api_key", None)
+            exchange_api_secret = self.account.get("api_secret", None)
+            exchange_api_password = self.account.get("api_password", None)
+
         load_dotenv()
         exchange_api_key = os.getenv(self.api_key)
         exchange_api_secret = os.getenv(self.api_secret)
@@ -396,6 +405,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 df.loc[len(df)] = lst_info_symbol
         return df.copy()
 
+    @authentication_required
     def get_future_market(self):
         """
         productType

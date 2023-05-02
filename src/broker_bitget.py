@@ -7,7 +7,6 @@ class BrokerBitGet(broker.Broker):
         super().__init__(params)
         self.rtdp = rtdp.RealTimeDataProvider(params)
         self.simulation = False
-        self.account = ""
         self.leverage = 0
         self.name = ""
         self.exchange_name = "bitget"
@@ -22,7 +21,6 @@ class BrokerBitGet(broker.Broker):
                 self.simulation = False
             if self.simulation == 1 or self.simulation == "1":
                 self.simulation = True
-            self.account = params.get("account", self.account)
             self.leverage = params.get("leverage", self.leverage)
             if isinstance(self.leverage, str):
                 self.leverage = int(self.leverage)

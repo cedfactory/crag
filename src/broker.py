@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+from . import accounts
 
 class Broker(metaclass = ABCMeta):
     
@@ -8,6 +9,9 @@ class Broker(metaclass = ABCMeta):
             self.cash = params.get("cash", self.cash)
         self.cash_borrowed = 0
         self.rtdp = None
+        accountId = params.get("account", None)
+        if accountId:
+            self.account = accounts.get_account_info(accountId)
 
     def ready(self):
         return False
