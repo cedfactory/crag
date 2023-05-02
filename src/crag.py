@@ -45,7 +45,6 @@ class Crag:
             self.id = params.get("id", self.id)
             self.working_directory = params.get("working_directory", self.working_directory)
 
-        self.traces_trade_performed = 0
         self.traces_trade_total_opened = 0
         self.traces_trade_total_closed = 0
         self.traces_trade_total_remaining = 0
@@ -241,14 +240,14 @@ class Crag:
                                                              utils.KeepNDecimals(self.minimall_portfolio_variation, 2),
                                                              utils.KeepNDecimals(self.minimal_portfolio_date, 2))
         self.traces_trade_total_remaining = self.traces_trade_total_opened - self.traces_trade_total_closed
-        msg += "transactions opened : {} closed : {} remaining open: {}\n".format(self.traces_trade_total_opened,
+        msg += "transactions opened : {} closed : {} remaining open : {}\n".format(self.traces_trade_total_opened,
                                                                                   self.traces_trade_total_closed,
                                                                                   self.traces_trade_total_remaining)
         if self.traces_trade_total_closed == 0:
             win_rate = 0
         else:
             win_rate = 100 * self.traces_trade_positive / self.traces_trade_total_closed
-        msg += "win rate : %{}\n\n".format(utils.KeepNDecimals(win_rate, 2), self.traces_trade_performed)
+        msg += "win rate : %{}\n\n".format(utils.KeepNDecimals(win_rate, 2))
 
         if self.rtstr.rtctrl.get_rtctrl_nb_symbols() > 0:
             list_symbols = self.rtstr.rtctrl.get_rtctrl_lst_symbols()
