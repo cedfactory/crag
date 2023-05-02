@@ -31,6 +31,8 @@ class Crag:
         self.minimal_portfolio_value = 0
         self.minimal_portfolio_date = ""
         self.maximal_portfolio_value = 0
+        self.minimal_portfolio_variation = 0
+        self.maximal_portfolio_variation = 0
         self.maximal_portfolio_date = ""
         self.id = str(utils.get_random_id())
         if params:
@@ -232,13 +234,14 @@ class Crag:
             msg += "account resumed\n"
         msg += "original portfolio value : ${} ({})\n".format(utils.KeepNDecimals(self.original_portfolio_value, 2), self.start_date)
         variation_percent = utils.get_variation(self.original_portfolio_value, portfolio_value)
-        msg += "current portfolio value : ${} %{})\n".format(utils.KeepNDecimals(portfolio_value, 2), utils.KeepNDecimals(variation_percent, 2))
-        msg += "max portfolio value : ${} {} ({})\n".format(utils.KeepNDecimals(self.maximal_portfolio_value, 2),
-                                                            utils.KeepNDecimals(self.maximal_portfolio_variation, 2),
-                                                            utils.KeepNDecimals(self.maximal_portfolio_date, 2))
-        msg += "min portfolio value : ${} %{} ({})\n".format(utils.KeepNDecimals(self.minimal_portfolio_value, 2),
-                                                             utils.KeepNDecimals(self.minimall_portfolio_variation, 2),
-                                                             utils.KeepNDecimals(self.minimal_portfolio_date, 2))
+        msg += "current portfolio value : ${} / %{}\n".format(utils.KeepNDecimals(portfolio_value, 2),
+                                                              utils.KeepNDecimals(variation_percent, 2))
+        msg += "max value : ${} %{} ({})\n".format(utils.KeepNDecimals(self.maximal_portfolio_value, 2),
+                                                   utils.KeepNDecimals(self.maximal_portfolio_variation, 2),
+                                                   self.maximal_portfolio_date)
+        msg += "min value : ${} %{} ({})\n".format(utils.KeepNDecimals(self.minimal_portfolio_value, 2),
+                                                   utils.KeepNDecimals(self.minimal_portfolio_variation, 2),
+                                                   self.minimal_portfolio_date)
         self.traces_trade_total_remaining = self.traces_trade_total_opened - self.traces_trade_total_closed
         msg += "transactions opened : {} closed : {} remaining open : {}\n".format(self.traces_trade_total_opened,
                                                                                   self.traces_trade_total_closed,
@@ -271,8 +274,8 @@ class Crag:
         msg += "current cash = ${}\n".format(utils.KeepNDecimals(self.broker.get_cash(), 2))
         usdt_equity = self.broker.get_usdt_equity()
         variation_percent = utils.get_variation(self.original_portfolio_value, usdt_equity)
-        msg += "account equity = ${} %{}".format(utils.KeepNDecimals(usdt_equity, 2),
-                                                 utils.KeepNDecimals(variation_percent, 2))
+        msg += "account equity = ${} / %{}".format(utils.KeepNDecimals(usdt_equity, 2),
+                                                   utils.KeepNDecimals(variation_percent, 2))
 
         self.log(msg, "start step")
         if not self.zero_print:
@@ -343,7 +346,7 @@ class Crag:
         msg += "current cash = {}\n".format(utils.KeepNDecimals(self.broker.get_cash(), 2))
         usdt_equity = self.broker.get_usdt_equity()
         variation_percent = utils.get_variation(self.original_portfolio_value, usdt_equity)
-        msg += "account equity = ${} %{}".format(utils.KeepNDecimals(usdt_equity, 2),
+        msg += "account equity = ${} / %{}".format(utils.KeepNDecimals(usdt_equity, 2),
                                                  utils.KeepNDecimals(variation_percent, 2))
         self.log(msg, "end step")
 
