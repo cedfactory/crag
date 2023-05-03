@@ -33,6 +33,7 @@ class Crag:
         self.maximal_portfolio_value = 0
         self.minimal_portfolio_variation = 0
         self.maximal_portfolio_variation = 0
+        self.previous_usdt_equity = 0
         self.maximal_portfolio_date = ""
         self.id = str(utils.get_random_id())
         if params:
@@ -214,6 +215,20 @@ class Crag:
         self.export_history(self.export_filename)
 
     def step(self):
+        prices_symbols, ds = self.get_ds_and_price_symbols()
+        current_datetime = self.broker.get_current_datetime()
+        self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(), self.broker.get_cash_borrowed(), prices_symbols, False, self.final_datetime, self.broker.get_balance())
+
+        current_data = self.broker.get_current_data(ds)
+        if current_data is None:
+            if not self.zero_print:
+                print("[Crag] 💥 no current data")
+            # self.force_sell_open_trade()
+            self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(), prices_symbols, True, self.final_datetime, self.broker.get_balance())
+            return False
+
+        self.rtstr.set_current_data(current_data)
+
         # portfolio_value = self.broker.get_portfolio_value()
         # portfolio_value = self.broker.get_wallet_equity()
         portfolio_value = self.broker.get_usdt_equity()
@@ -250,6 +265,9 @@ class Crag:
             win_rate = 0
         else:
             win_rate = 100 * self.traces_trade_positive / self.traces_trade_total_closed
+        msg += "positive / negative trades : %{} / %{}\n".format(utils.KeepNDecimals(self.traces_trade_positive, 2),
+                                                                 utils.KeepNDecimals(self.traces_trade_negative, 2)
+                                                                 )
         msg += "win rate : %{}\n\n".format(utils.KeepNDecimals(win_rate, 2))
 
         if self.rtstr.rtctrl.get_rtctrl_nb_symbols() > 0:
@@ -260,12 +278,13 @@ class Crag:
             list_roi_percent = self.rtstr.rtctrl.get_rtctrl_lst_roi_percent()
             dict = {'symbol': list_symbols, 'value': list_value, 'roi_dol': list_roi_dol, 'roi_perc': list_roi_percent}
             df = pd.DataFrame(dict)
+            df.sort_values(by=['roi_dol'], ascending=True, inplace=True)
             for idx in df.index.tolist():
-                msg += "symbol: {} net value: ${}  roi: ${} / %{}\n".format(df.at[idx, 'symbol'],
-                                                                            utils.KeepNDecimals(df.at[idx, 'value'], 2),
-                                                                            utils.KeepNDecimals(df.at[idx, 'roi_dol'], 2),
-                                                                            utils.KeepNDecimals(df.at[idx, 'roi_perc'], 2)
-                                                                            )
+                msg += "{} value: ${} roi: ${} / %{}\n".format(df.at[idx, 'symbol'],
+                                                               utils.KeepNDecimals(df.at[idx, 'value'], 2),
+                                                               utils.KeepNDecimals(df.at[idx, 'roi_dol'], 2),
+                                                               utils.KeepNDecimals(df.at[idx, 'roi_perc'], 2)
+                                                               )
         else:
             msg += "no position\n"
 
@@ -281,45 +300,20 @@ class Crag:
         if not self.zero_print:
             print("[Crag] ⌛")
 
-        # update all the data
-        # TODO : this call should be done once, during the initialization of the system
-        ds = self.rtstr.get_data_description()
-        ds.interval = self.interval # probably better to let the strategy provide this info
-
-        if self.clear_unused_data:
-            self.broker.check_data_description(ds)
-            self.clear_unused_data = False
-        try:
-            prices_symbols = {symbol:self.broker.get_value(symbol) for symbol in ds.symbols}
-        except:
-            for symbol in ds.symbols:
-                try:
-                    self.broker.get_value(symbol)
-                except:
-                    print("symbol error: ", symbol)
-
-        print('price: ', prices_symbols)
-        current_datetime = self.broker.get_current_datetime()
-        self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(), self.broker.get_cash_borrowed(), prices_symbols, False, self.final_datetime, self.broker.get_balance())
-
-        current_data = self.broker.get_current_data(ds)
-        if current_data is None:
-            if not self.zero_print:
-                print("[Crag] 💥 no current data")
-            # self.force_sell_open_trade()
-            self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(), prices_symbols, True, self.final_datetime, self.broker.get_balance())
-            return False
-
-        self.rtstr.set_current_data(current_data)
-
         # execute trading
         self.trade()
 
         self.rtstr.log_current_info()
 
+        msg_short = ""
+        msg_long = ""
+        unrealised_PL_long = 0
+        unrealised_PL_short = 0
+        unrealised_PL_long_percent = 0
+        unrealised_PL_short_percent = 0
         lst_symbol_position = self.broker.get_lst_symbol_position()
         if len(lst_symbol_position) > 0:
-            msg = "open position: {} \n".format(len(lst_symbol_position))
+            msg = "open position: {}\n".format(len(lst_symbol_position))
             for symbol in lst_symbol_position:
                 symbol_equity = self.broker.get_symbol_usdtEquity(symbol)
                 symbol_unrealizedPL = self.broker.get_symbol_unrealizedPL(symbol)
@@ -327,13 +321,27 @@ class Crag:
                     symbol_unrealizedPL_percent = 0
                 else:
                     symbol_unrealizedPL_percent = symbol_unrealizedPL * 100 / (symbol_equity - symbol_unrealizedPL)
-                msg += "{}: {}\n size: {} / ${} PL: ${} / %{}\n".format(self.broker.get_coin_from_symbol(symbol),
-                                                                        self.broker.get_symbol_holdSide(symbol).upper(),
-                                                                        utils.KeepNDecimals(self.broker.get_symbol_available(symbol), 2),
-                                                                        utils.KeepNDecimals(symbol_equity, 2),
-                                                                        utils.KeepNDecimals(symbol_unrealizedPL, 2),
-                                                                        utils.KeepNDecimals(symbol_unrealizedPL_percent, 2)
-                                                                        )
+                if self.broker.get_symbol_holdSide(symbol).upper() == "LONG":
+                    msg_long += "{}: {}\n size: {} / ${} PL: ${} / %{}\n".format(self.broker.get_coin_from_symbol(symbol),
+                                                                                 self.broker.get_symbol_holdSide(symbol).upper(),
+                                                                                 utils.KeepNDecimals(self.broker.get_symbol_available(symbol), 2),
+                                                                                 utils.KeepNDecimals(symbol_equity, 2),
+                                                                                 utils.KeepNDecimals(symbol_unrealizedPL, 2),
+                                                                                 utils.KeepNDecimals(symbol_unrealizedPL_percent, 2)
+                                                                                 )
+                    unrealised_PL_long += symbol_unrealizedPL
+                    unrealised_PL_long_percent += symbol_unrealizedPL_percent
+                else:
+                    msg_short += "{}: {}\n size: {} / ${} PL: ${} / %{}\n".format(self.broker.get_coin_from_symbol(symbol),
+                                                                                  self.broker.get_symbol_holdSide(symbol).upper(),
+                                                                                  utils.KeepNDecimals(self.broker.get_symbol_available(symbol), 2),
+                                                                                  utils.KeepNDecimals(symbol_equity, 2),
+                                                                                  utils.KeepNDecimals(symbol_unrealizedPL, 2),
+                                                                                  utils.KeepNDecimals(symbol_unrealizedPL_percent, 2)
+                                                                                  )
+                    unrealised_PL_short += symbol_unrealizedPL
+                    unrealised_PL_short_percent += symbol_unrealizedPL_percent
+            msg += msg_long + msg_short
         else:
             msg = "no position\n"
         self.log(msg, "position")
@@ -341,13 +349,24 @@ class Crag:
         current_date = self.broker.get_current_datetime("%Y/%m/%d %H:%M:%S")
         msg = "end step current time : {}\n".format(current_date)
         msg += "original portfolio value : $ {} ({})\n".format(utils.KeepNDecimals(self.original_portfolio_value, 2), self.start_date)
-        msg += "global unrealized PL = ${} / %{}\n".format(utils.KeepNDecimals(self.broker.get_global_unrealizedPL(), 2),
+        msg += "sum unrealized PL LONG : ${} / %{}\n".format(utils.KeepNDecimals(unrealised_PL_long, 2),
+                                                             utils.KeepNDecimals(unrealised_PL_long_percent, 2))
+        msg += "sum unrealized PL SHORT : ${} / %{}\n".format(utils.KeepNDecimals(unrealised_PL_short, 2),
+                                                              utils.KeepNDecimals(unrealised_PL_short_percent, 2))
+        msg += "global unrealized PL : ${} / %{}\n".format(utils.KeepNDecimals(self.broker.get_global_unrealizedPL(), 2),
                                                            utils.KeepNDecimals(self.broker.get_global_unrealizedPL() * 100 / self.original_portfolio_value, 2))
         msg += "current cash = {}\n".format(utils.KeepNDecimals(self.broker.get_cash(), 2))
         usdt_equity = self.broker.get_usdt_equity()
+        if self.previous_usdt_equity == 0:
+            self.previous_usdt_equity = usdt_equity
         variation_percent = utils.get_variation(self.original_portfolio_value, usdt_equity)
-        msg += "account equity = ${} / %{}".format(utils.KeepNDecimals(usdt_equity, 2),
+        msg += "account equity : ${} / %{}".format(utils.KeepNDecimals(usdt_equity, 2),
                                                    utils.KeepNDecimals(variation_percent, 2))
+        variation_percent = utils.get_variation(self.previous_usdt_equity, usdt_equity)
+        msg += "previous account equity : ${} / ${} / %{} ".format(utils.KeepNDecimals(self.previous_usdt_equity, 2),
+                                                                   utils.KeepNDecimals(usdt_equity - self.previous_usdt_equity, 2),
+                                                                   utils.KeepNDecimals(variation_percent, 2))
+        self.previous_usdt_equity = usdt_equity
         self.log(msg, "end step")
 
         return not self.exit
@@ -795,3 +814,25 @@ class Crag:
             current_open_trades.append(current_trade)
 
         return current_open_trades
+
+    def get_ds_and_price_symbols(self):
+        # update all the data
+        # TODO : this call should be done once, during the initialization of the system
+        ds = self.rtstr.get_data_description()
+        ds.interval = self.interval # probably better to let the strategy provide this info
+
+        if self.clear_unused_data:
+            self.broker.check_data_description(ds)
+            self.clear_unused_data = False
+        try:
+            prices_symbols = {symbol:self.broker.get_value(symbol) for symbol in ds.symbols}
+        except:
+            for symbol in ds.symbols:
+                try:
+                    self.broker.get_value(symbol)
+                except:
+                    print("symbol error: ", symbol)
+
+        print('price: ', prices_symbols)
+
+        return prices_symbols, ds
