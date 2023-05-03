@@ -33,18 +33,11 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             print('resume strategy')
 
     def _authentification(self):
-
-        if False:
-            if self.account == None:
-                return False
-            exchange_api_key = self.account.get("api_key", None)
-            exchange_api_secret = self.account.get("api_secret", None)
-            exchange_api_password = self.account.get("api_password", None)
-
-        load_dotenv()
-        exchange_api_key = os.getenv(self.api_key)
-        exchange_api_secret = os.getenv(self.api_secret)
-        exchange_api_password = os.getenv(self.api_password)
+        if self.account == None:
+            return False
+        exchange_api_key = self.account.get("api_key", None)
+        exchange_api_secret = self.account.get("api_secret", None)
+        exchange_api_password = self.account.get("api_password", None)
 
         self.marketApi = market.MarketApi(exchange_api_key, exchange_api_secret, exchange_api_password, use_server_time=False, first=False)
         self.accountApi = account.AccountApi(exchange_api_key, exchange_api_secret, exchange_api_password, use_server_time=False, first=False)

@@ -3,7 +3,7 @@
         <params symbols="./symbols_df_bollinger_usdt.csv" max_position="10" sl="-10" tp="10" global_sl="-5" global_tp="10" trailer_tp="0" trailer_delta="0" trailer_global_tp="0" trailer_global_delta="0"/>
     </strategy>
     <broker name="bitget">
-        <params exchange="bitget" account="subaccount1" leverage_short="2" leverage_long="2" simulation="1" intervals="1h" orders="market" reset_account="True"/>
+        <params exchange="bitget" account="bitget_cl1" leverage_short="2" leverage_long="2" simulation="1" intervals="1h" orders="market" reset_account="True"/>
     </broker>
     <crag id="bolinger_test" interval="3600" />
 </configuration>
