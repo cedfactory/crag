@@ -285,6 +285,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
         if self.logger != None and len(df_result) > 0:
             df_traces = df_result.copy()
             df_traces.drop(columns=['stimulus', 'gridzone'], axis=1, inplace=True)
+            df_traces['percent'].round(decimals=2)
             self.logger.log(df_traces, header="get_df_selling_symbols", author=self.get_name())
          
         return df_result

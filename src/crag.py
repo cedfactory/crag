@@ -265,9 +265,9 @@ class Crag:
             win_rate = 0
         else:
             win_rate = 100 * self.traces_trade_positive / self.traces_trade_total_closed
-        msg += "positive / negative trades : %{} / %{}\n".format(utils.KeepNDecimals(self.traces_trade_positive, 2),
-                                                                 utils.KeepNDecimals(self.traces_trade_negative, 2)
-                                                                 )
+        msg += "positive / negative trades : {} / {}\n".format(utils.KeepNDecimals(self.traces_trade_positive, 2),
+                                                               utils.KeepNDecimals(self.traces_trade_negative, 2)
+                                                               )
         msg += "win rate : %{}\n\n".format(utils.KeepNDecimals(win_rate, 2))
 
         if self.rtstr.rtctrl.get_rtctrl_nb_symbols() > 0:
@@ -277,16 +277,15 @@ class Crag:
             list_roi_dol = self.rtstr.rtctrl.get_rtctrl_lst_roi_dol()
             list_roi_percent = self.rtstr.rtctrl.get_rtctrl_lst_roi_percent()
             dict = {'symbol': list_symbols, 'value': list_value, 'roi_dol': list_roi_dol, 'roi_perc': list_roi_percent}
-            df = pd.DataFrame(dict)
-            df.sort_values(by=['roi_dol'], ascending=True, inplace=True)
-            for idx in df.index.tolist():
-                msg += "{} value: ${} roi: ${} / %{}\n".format(df.at[idx, 'symbol'],
-                                                               utils.KeepNDecimals(df.at[idx, 'value'], 2),
-                                                               utils.KeepNDecimals(df.at[idx, 'roi_dol'], 2),
-                                                               utils.KeepNDecimals(df.at[idx, 'roi_perc'], 2)
-                                                               )
+            df_position_at_start = pd.DataFrame(dict)
+            df_position_at_start.sort_values(by=['roi_dol'], ascending=True, inplace=True)
+            df_position_at_start["value"].round(2)
+            df_position_at_start["roi_dol"].round(2)
+            df_position_at_start["roi_perc"].round(2)
+            positions_at_step_start = True
         else:
             msg += "no position\n"
+            positions_at_step_start = False
 
         msg += "\nglobal unrealized PL = ${} / %{}\n".format(utils.KeepNDecimals(self.broker.get_global_unrealizedPL(), 2),
                                                              utils.KeepNDecimals(self.broker.get_global_unrealizedPL() * 100 / self.original_portfolio_value, 2) )
@@ -297,6 +296,11 @@ class Crag:
                                                    utils.KeepNDecimals(variation_percent, 2))
 
         self.log(msg, "start step")
+
+        if positions_at_step_start and len(df_position_at_start) >= 0:
+            log_title = "step start open position: {}".format(len(df_position_at_start))
+            self.log(df_position_at_start, log_title)
+
         if not self.zero_print:
             print("[Crag] ⌛")
 
@@ -314,6 +318,7 @@ class Crag:
         lst_symbol_position = self.broker.get_lst_symbol_position()
         if len(lst_symbol_position) > 0:
             msg = "open position: {}\n".format(len(lst_symbol_position))
+            df_open_positions = pd.DataFrame(columns=["symbol", "pos_type", "size", "equity", "PL", "PL%"])
             for symbol in lst_symbol_position:
                 symbol_equity = self.broker.get_symbol_usdtEquity(symbol)
                 symbol_unrealizedPL = self.broker.get_symbol_unrealizedPL(symbol)
@@ -321,38 +326,29 @@ class Crag:
                     symbol_unrealizedPL_percent = 0
                 else:
                     symbol_unrealizedPL_percent = symbol_unrealizedPL * 100 / (symbol_equity - symbol_unrealizedPL)
+
+                df_open_positions.append([self.broker.get_coin_from_symbol(symbol),
+                                          self.broker.get_symbol_holdSide(symbol).upper(),
+                                          utils.KeepNDecimals(self.broker.get_symbol_available(symbol), 2),
+                                          utils.KeepNDecimals(symbol_equity, 2),
+                                          utils.KeepNDecimals(symbol_unrealizedPL, 2),
+                                          utils.KeepNDecimals(symbol_unrealizedPL_percent, 2)
+                                          ])
                 if self.broker.get_symbol_holdSide(symbol).upper() == "LONG":
-                    msg_long += "{}: {}\n size: {} / ${} PL: ${} / %{}\n".format(self.broker.get_coin_from_symbol(symbol),
-                                                                                 self.broker.get_symbol_holdSide(symbol).upper(),
-                                                                                 utils.KeepNDecimals(self.broker.get_symbol_available(symbol), 2),
-                                                                                 utils.KeepNDecimals(symbol_equity, 2),
-                                                                                 utils.KeepNDecimals(symbol_unrealizedPL, 2),
-                                                                                 utils.KeepNDecimals(symbol_unrealizedPL_percent, 2)
-                                                                                 )
                     unrealised_PL_long += symbol_unrealizedPL
-                    unrealised_PL_long_percent += symbol_unrealizedPL_percent
                 else:
-                    msg_short += "{}: {}\n size: {} / ${} PL: ${} / %{}\n".format(self.broker.get_coin_from_symbol(symbol),
-                                                                                  self.broker.get_symbol_holdSide(symbol).upper(),
-                                                                                  utils.KeepNDecimals(self.broker.get_symbol_available(symbol), 2),
-                                                                                  utils.KeepNDecimals(symbol_equity, 2),
-                                                                                  utils.KeepNDecimals(symbol_unrealizedPL, 2),
-                                                                                  utils.KeepNDecimals(symbol_unrealizedPL_percent, 2)
-                                                                                  )
                     unrealised_PL_short += symbol_unrealizedPL
-                    unrealised_PL_short_percent += symbol_unrealizedPL_percent
-            msg += msg_long + msg_short
+
+            self.log(df_open_positions, "position")
         else:
             msg = "no position\n"
-        self.log(msg, "position")
+            self.log(msg, "position")
 
         current_date = self.broker.get_current_datetime("%Y/%m/%d %H:%M:%S")
         msg = "end step current time : {}\n".format(current_date)
         msg += "original portfolio value : $ {} ({})\n".format(utils.KeepNDecimals(self.original_portfolio_value, 2), self.start_date)
-        msg += "sum unrealized PL LONG : ${} / %{}\n".format(utils.KeepNDecimals(unrealised_PL_long, 2),
-                                                             utils.KeepNDecimals(unrealised_PL_long_percent, 2))
-        msg += "sum unrealized PL SHORT : ${} / %{}\n".format(utils.KeepNDecimals(unrealised_PL_short, 2),
-                                                              utils.KeepNDecimals(unrealised_PL_short_percent, 2))
+        msg += "sum unrealized PL LONG : ${}\n".format(utils.KeepNDecimals(unrealised_PL_long, 2))
+        msg += "sum unrealized PL SHORT : ${}\n".format(utils.KeepNDecimals(unrealised_PL_short, 2))
         msg += "global unrealized PL : ${} / %{}\n".format(utils.KeepNDecimals(self.broker.get_global_unrealizedPL(), 2),
                                                            utils.KeepNDecimals(self.broker.get_global_unrealizedPL() * 100 / self.original_portfolio_value, 2))
         msg += "current cash = {}\n".format(utils.KeepNDecimals(self.broker.get_cash(), 2))
@@ -413,10 +409,6 @@ class Crag:
         sell_trade.roi = 100 * (sell_trade.net_price - bought_trade.gross_price) / bought_trade.gross_price
         # if sell_trade.type == self.rtstr.close_short:
         #    sell_trade.roi = -sell_trade.roi
-        if sell_trade.roi < 0:
-            self.traces_trade_negative += self.traces_trade_negative
-        else:
-            self.traces_trade_positive += self.traces_trade_positive
         return sell_trade
 
     def trade(self):
@@ -446,7 +438,7 @@ class Crag:
 
         list_symbols_to_sell = df_selling_symbols.symbol.to_list()
         df_selling_symbols.set_index("symbol", inplace=True)
-
+        df_sell_performed = pd.DataFrame(columns=["symbol", "price", "roi%", "pos_type"])
         for current_trade in self.current_trades:
             if self.rtstr.is_open_type(current_trade.type) and current_trade.symbol in list_symbols_to_sell \
                     and (self.flush_current_trade
@@ -468,11 +460,16 @@ class Crag:
                     sell_trade.gridzone = current_trade.gridzone
 
                     self.current_trades.append(sell_trade)
-                    
-                    msg = "{} {} gross price: ${:.2f} roi: {:.2f}".format(sell_trade.symbol, sell_trade.type, sell_trade.gross_price, sell_trade.roi)
-                    self.log(msg, "symbol sold")
+                    df_sell_performed.loc[len(df_sell_performed.index)] = [sell_trade.symbol, round(sell_trade.gross_price, 2), round(sell_trade.roi, 2), sell_trade.type]
+                    # msg = "{} : {} price: ${:.2f} roi: ${:.2f}".format(sell_trade.symbol, sell_trade.type, sell_trade.gross_price, sell_trade.roi)
+                    if sell_trade.roi < 0:
+                        self.traces_trade_negative += self.traces_trade_negative
+                    else:
+                        self.traces_trade_positive += self.traces_trade_positive
 
         if self.sell_performed:
+            if len(df_sell_performed) > 0:
+                self.log(df_sell_performed, "symbol sold - performed")
             self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(),  self.broker.get_cash_borrowed(), self.rtstr.rtctrl.prices_symbols, False, self.final_datetime, self.broker.get_balance())
             self.sell_performed = False
 
