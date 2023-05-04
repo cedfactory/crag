@@ -279,9 +279,9 @@ class Crag:
             dict = {'symbol': list_symbols, 'value': list_value, 'roi_dol': list_roi_dol, 'roi_perc': list_roi_percent}
             df_position_at_start = pd.DataFrame(dict)
             df_position_at_start.sort_values(by=['roi_dol'], ascending=True, inplace=True)
-            df_position_at_start["value"].round(2)
-            df_position_at_start["roi_dol"].round(2)
-            df_position_at_start["roi_perc"].round(2)
+            df_position_at_start["value"] = df_position_at_start["value"].round(2)
+            df_position_at_start["roi_dol"] = df_position_at_start["roi_dol"].round(2)
+            df_position_at_start["roi_perc"] = df_position_at_start["roi_perc"].round(2)
             positions_at_step_start = True
         else:
             msg += "no position\n"
@@ -298,7 +298,7 @@ class Crag:
         self.log(msg, "start step")
 
         if positions_at_step_start and len(df_position_at_start) >= 0:
-            log_title = "step start open position: {}".format(len(df_position_at_start))
+            log_title = "step start with {} open position".format(len(df_position_at_start))
             self.log(df_position_at_start, log_title)
 
         if not self.zero_print:
@@ -309,15 +309,14 @@ class Crag:
 
         self.rtstr.log_current_info()
 
-        msg_short = ""
-        msg_long = ""
         unrealised_PL_long = 0
         unrealised_PL_short = 0
-        unrealised_PL_long_percent = 0
-        unrealised_PL_short_percent = 0
         lst_symbol_position = self.broker.get_lst_symbol_position()
+
+        print("lst_symbol_position", lst_symbol_position)  # CEDE DEBUG
+
         if len(lst_symbol_position) > 0:
-            msg = "open position: {}\n".format(len(lst_symbol_position))
+            msg = "end step with {} open position\n".format(len(lst_symbol_position))
             df_open_positions = pd.DataFrame(columns=["symbol", "pos_type", "size", "equity", "PL", "PL%"])
             for symbol in lst_symbol_position:
                 symbol_equity = self.broker.get_symbol_usdtEquity(symbol)
@@ -339,10 +338,16 @@ class Crag:
                 else:
                     unrealised_PL_short += symbol_unrealizedPL
 
-            self.log(df_open_positions, "position")
+            print("df_open_positions", df_open_positions)  # CEDE DEBUG
+
+            if len(df_open_positions) > 0:
+                self.log(df_open_positions, msg)
+            else:
+                msg = "no position\n"
+                self.log(msg, "no open position")
         else:
             msg = "no position\n"
-            self.log(msg, "position")
+            self.log(msg, "no open position")
 
         current_date = self.broker.get_current_datetime("%Y/%m/%d %H:%M:%S")
         msg = "end step current time : {}\n".format(current_date)
