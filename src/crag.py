@@ -364,7 +364,7 @@ class Crag:
         msg += "account equity : ${} / %{}\n".format(utils.KeepNDecimals(usdt_equity, 2),
                                                    utils.KeepNDecimals(variation_percent, 2))
         variation_percent = utils.get_variation(self.previous_usdt_equity, usdt_equity)
-        msg += "previous account equity : ${} / ${} / %{}".format(utils.KeepNDecimals(self.previous_usdt_equity, 2),
+        msg += "previous equity : ${} / ${} / %{}".format(utils.KeepNDecimals(self.previous_usdt_equity, 2),
                                                                    utils.KeepNDecimals(usdt_equity - self.previous_usdt_equity, 2),
                                                                    utils.KeepNDecimals(variation_percent, 2))
         self.previous_usdt_equity = usdt_equity
