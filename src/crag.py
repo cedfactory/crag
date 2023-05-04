@@ -326,13 +326,15 @@ class Crag:
                 else:
                     symbol_unrealizedPL_percent = symbol_unrealizedPL * 100 / (symbol_equity - symbol_unrealizedPL)
 
-                df_open_positions.append([self.broker.get_coin_from_symbol(symbol),
-                                          self.broker.get_symbol_holdSide(symbol).upper(),
-                                          utils.KeepNDecimals(self.broker.get_symbol_available(symbol), 2),
-                                          utils.KeepNDecimals(symbol_equity, 2),
-                                          utils.KeepNDecimals(symbol_unrealizedPL, 2),
-                                          utils.KeepNDecimals(symbol_unrealizedPL_percent, 2)
-                                          ])
+                list_row = [self.broker.get_coin_from_symbol(symbol),
+                            self.broker.get_symbol_holdSide(symbol).upper(),
+                            utils.KeepNDecimals(self.broker.get_symbol_available(symbol), 2),
+                            utils.KeepNDecimals(symbol_equity, 2),
+                            utils.KeepNDecimals(symbol_unrealizedPL, 2),
+                            utils.KeepNDecimals(symbol_unrealizedPL_percent, 2)
+                            ]
+                df_open_positions.loc[len(df_open_positions)] = list_row
+
                 if self.broker.get_symbol_holdSide(symbol).upper() == "LONG":
                     unrealised_PL_long += symbol_unrealizedPL
                 else:
