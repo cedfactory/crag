@@ -313,8 +313,6 @@ class Crag:
         unrealised_PL_short = 0
         lst_symbol_position = self.broker.get_lst_symbol_position()
 
-        print("lst_symbol_position", lst_symbol_position)  # CEDE DEBUG
-
         if len(lst_symbol_position) > 0:
             msg = "end step with {} open position\n".format(len(lst_symbol_position))
             df_open_positions = pd.DataFrame(columns=["symbol", "pos_type", "size", "equity", "PL", "PL%"])
@@ -339,8 +337,6 @@ class Crag:
                     unrealised_PL_long += symbol_unrealizedPL
                 else:
                     unrealised_PL_short += symbol_unrealizedPL
-
-            print("df_open_positions", df_open_positions)  # CEDE DEBUG
 
             if len(df_open_positions) > 0:
                 self.log(df_open_positions, msg)
