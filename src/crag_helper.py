@@ -3,7 +3,7 @@ import pandas as pd
 from src import rtdp
 from src import broker_simulation,broker_ccxt
 from src import crag
-from src import rtstr,rtstr_super_reversal,rtstr_grid_trading_multi,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC
+from src import rtstr
 from src import broker_bitget_api
 from src import logger
 from src import utils
@@ -16,7 +16,14 @@ import glob
 import shutil
 import pickle
 
-def _initialize_crag_discord_bot():
+def _initialize_crag_discord_bot(botId=""):
+    if botId != None and botId != "":
+        bot_info = logger.get_discord_bot_info(botId)
+        token = bot_info.get("token", None)
+        channel_id = bot_info.get("channel", None)
+        webhook = bot_info.get("webhook", None)
+        return logger.LoggerDiscordBot(params={"token":token, "channel_id":channel_id, "webhook":webhook})
+
     load_dotenv()
     token = os.getenv("CRAG_DISCORD_BOT_TOKEN")
     channel_id = os.getenv("CRAG_DISCORD_BOT_CHANNEL")
@@ -125,8 +132,9 @@ def initialization_from_configuration_file(configuration_file):
     crag_interval = crag_node.get("interval", 10)
     crag_interval = int(crag_interval)
     crag_id = crag_node.get("id", "")
+    bot_id = crag_node.get("botId", "")
 
-    crag_discord_bot = _initialize_crag_discord_bot()
+    crag_discord_bot = _initialize_crag_discord_bot(bot_id)
     params_strategy["logger"] = crag_discord_bot
     available_strategies = rtstr.RealTimeStrategy.get_strategies_list()
     if strategy_name in available_strategies:
