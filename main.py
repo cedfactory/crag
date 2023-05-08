@@ -82,7 +82,9 @@ def crag_report():
     crag_helper.export_benchmark_df_report()
 
 def crag_live(configuration_file):
-    bot = crag_helper.initialization_from_configuration_file(configuration_file)
+    crag_params = crag_helper.initialization_from_configuration_file(configuration_file)
+    # if params need to be overriden, that's where it can be done
+    bot = crag.Crag(crag_params)
     start_time = datetime.now()
     bot.run()
     bot.export_status()

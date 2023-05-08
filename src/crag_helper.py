@@ -153,9 +153,7 @@ def initialization_from_configuration_file(configuration_file):
     if my_broker == None or my_broker.ready() == False:
         return None
 
-    params = {'broker':my_broker, 'rtstr':my_strategy, "id": crag_id, 'interval':crag_interval, 'logger':crag_discord_bot}
-    bot = crag.Crag(params)
-    return bot
+    return {'broker':my_broker, 'rtstr':my_strategy, "id": crag_id, 'interval':crag_interval, 'logger':crag_discord_bot}
 
 def initialization_from_pickle(picklefilename):
     with open(picklefilename, 'rb') as file:
