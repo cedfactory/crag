@@ -73,6 +73,8 @@ class rtctrl():
 
         self.prices_symbols = prices_symbols
 
+        self.cash_available = float(df_balance.loc[df_balance['symbol'] == 'USDT', 'available'].values[0])
+
         df_balance_assets = df_balance.copy()
         indexUSDT = df_balance_assets[(df_balance_assets['symbol'] == 'USDT')].index
         df_balance_assets.drop(indexUSDT, inplace=True)

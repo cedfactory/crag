@@ -185,6 +185,7 @@ class Crag:
                 if self.safety_run:
                     start_minus_one_sec = datetime.timestamp(datetime.fromtimestamp(start) - timedelta(seconds=1))
                     while time.time() < start_minus_one_sec:
+                        print("SAFETY RUN")
                         step_result = self.safety_step()
                         if not step_result:
                             os._exit(0) # tbc
@@ -312,6 +313,8 @@ class Crag:
         unrealised_PL_long = 0
         unrealised_PL_short = 0
         lst_symbol_position = self.broker.get_lst_symbol_position()
+
+        print("lst_symbol_position", lst_symbol_position)  # CEDE DEBUG
 
         if len(lst_symbol_position) > 0:
             msg = "end step with {} open position\n".format(len(lst_symbol_position))

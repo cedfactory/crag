@@ -38,7 +38,11 @@ class RealTimeStrategy(metaclass=ABCMeta):
         self.trade_over_range_limits = False
         self.tradingview_condition = False
         self.short_and_long = False
+        self.strategy_interval = 0
         if params:
+            self.strategy_interval = params.get("strategy_interval", self.strategy_interval)
+            if isinstance(self.strategy_interval, str):
+                self.strategy_interval = int(self.strategy_interval)
             self.MAX_POSITION = params.get("max_position", self.MAX_POSITION)
             if isinstance(self.MAX_POSITION, str):
                 self.MAX_POSITION = int(self.MAX_POSITION)
@@ -87,6 +91,8 @@ class RealTimeStrategy(metaclass=ABCMeta):
         self.open_short = self.str_short_long_position.get_open_short()
         self.close_short = self.str_short_long_position.get_close_short()
         self.no_position = self.str_short_long_position.get_no_position()
+
+        self.position_recorder = PositionRecorder(self.lst_symbols, self.MAX_POSITION)
 
         self.df_long_short_record = ShortLongPosition(self.lst_symbols, self.str_short_long_position)
         if self.trigger_trailer:
@@ -191,6 +197,10 @@ class RealTimeStrategy(metaclass=ABCMeta):
         # SIGNAL SPECIFIC TO GRID STRATEGY
         return False
 
+    def authorize_multi_transaction_for_symbols(self):
+        # Multi buy have to be specified in the strategy
+        return False
+
     def condition_for_selling(self, symbol, df_sl_tp):
         result = False
         if self.is_open_type_short(symbol) and self.condition_for_closing_short_position(symbol):
@@ -211,7 +221,8 @@ class RealTimeStrategy(metaclass=ABCMeta):
         lst_symbols = self.df_current_data.index.to_list()
         lst_symbols = self.sort_list_symbols(lst_symbols)
         for symbol in lst_symbols:
-            if not self.is_open_type_short_or_long(symbol) and self.condition_for_buying(symbol):
+            if ((not self.is_open_type_short_or_long(symbol)) or self.authorize_multi_transaction_for_symbols()) \
+                    and self.condition_for_buying(symbol):
                 size, percent, zone = self.get_symbol_buying_size(symbol)
                 data['symbol'].append(symbol)
                 data["stimulus"].append(self.get_open_type(symbol))
@@ -324,46 +335,58 @@ class RealTimeStrategy(metaclass=ABCMeta):
         if self.rtctrl:
             self.rtctrl.update_rtctrl(current_datetime, current_trades, broker_cash, broker_cash_borrowed, prices_symbols, final_date, df_balance)
             self.rtctrl.display_summary_info(record_info)
-        
+
+    def envelope_strategy_on(self):
+        return False
+
+    def get_nb_envelope_to_purchase(self, symbol):
+        return 1
+
+    def get_nb_symbol_position_engaged(self, symbol):
+        return self.get_nb_symbol_position_engaged(symbol)
+
+    def get_nb_position_engaged(self):
+        return self.position_recorder.get_total_position_engaged()
+
+    def reset_position_recorder_for_symbol(self, symbol):
+        self.position_recorder.reset_position_record(symbol)
+
     def get_symbol_buying_size(self, symbol):
-        if not symbol in self.rtctrl.prices_symbols or self.rtctrl.prices_symbols[symbol] < 0: # first init at -1
+        if not symbol in self.rtctrl.prices_symbols or self.rtctrl.prices_symbols[symbol] < 0:  # first init at -1
             return 0, 0, 0
 
-        if self.rtctrl.init_cash_value == 0: # CEDE DEBUG for resume
+        if self.rtctrl.init_cash_value == 0:  # CEDE DEBUG for resume
             print("init_cash_value: ", self.rtctrl.init_cash_value, " wallet_cash: ", self.rtctrl.wallet_cash)
             self.rtctrl.init_cash_value = self.rtctrl.wallet_cash
 
-        if self.rtctrl.init_cash_value == self.rtctrl.wallet_cash \
-                and not self.set_buying_size:
-            self.buying_size = self.rtctrl.init_cash_value * self.MAX_POSITION / 100
-            self.set_buying_size = True
+        if round(self.rtctrl.wallet_cash, 2) != round(self.rtctrl.cash_available, 2):
+            print("traces get_symbol_buying_size - wallet cash: ", round(self.rtctrl.wallet_cash, 2),
+                  " cash available: ", round(self.rtctrl.cash_available, 2))
 
-        if self.rtctrl.wallet_cash > self.rtctrl.init_cash_value \
-                and self.set_buying_size:
-            self.buying_size = self.rtctrl.wallet_cash * self.MAX_POSITION / 100
+        if self.envelope_strategy_on():
+            self.buying_size = self.rtctrl.cash_available * self.get_nb_envelope_to_purchase(symbol)
+        else:
+            total_postion_engaged = self.get_nb_position_engaged()
+            if total_postion_engaged == self.MAX_POSITION:
+                return 0, 0, 0
+            else:
+                self.buying_size = self.rtctrl.cash_available / (self.MAX_POSITION - total_postion_engaged)
+                self.set_increase_position_record(1, symbol)
 
-        available_cash = self.rtctrl.wallet_cash
+        available_cash = self.rtctrl.cash_available
         if available_cash == 0:
             return 0, 0, 0
 
-        wallet_value = available_cash
-
-        if True:
-            cash_to_buy = self.buying_size  # fixed size
-        else:
-            cash_to_buy = wallet_value * self.MAX_POSITION / 100 # proportional size
+        cash_to_buy = self.buying_size
 
         if cash_to_buy > available_cash:
             cash_to_buy = available_cash
 
         size = cash_to_buy / self.rtctrl.prices_symbols[symbol]
 
-        percent = cash_to_buy * 100 / wallet_value
+        percent = cash_to_buy * 100 / self.rtctrl.init_cash_value
 
         gridzone = -1
-
-        # if self.is_open_type_short(symbol):
-        #     size = -size
 
         # DEBUG CEDE:
         print("symbol: ", symbol,
@@ -372,7 +395,9 @@ class RealTimeStrategy(metaclass=ABCMeta):
               " available cash: ", available_cash,
               " price symbol: ", self.rtctrl.prices_symbols[symbol],
               " init_cash_value: ", self.rtctrl.init_cash_value,
-              " wallet_cash: ", self.rtctrl.wallet_cash)
+              " wallet_cash: ", self.rtctrl.wallet_cash,
+              " available cash: ", self.rtctrl.cash_available
+              )
 
         return size, percent, gridzone
 
@@ -381,6 +406,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
             return 0, 0, 0
 
         size = self.rtctrl.df_rtctrl.loc[self.rtctrl.df_rtctrl['symbol'] == symbol, "size"].values[0]
+        self.reset_position_recorder_for_symbol(symbol)
 
         if self.rtctrl.wallet_cash > 0:
             percent = size * self.rtctrl.prices_symbols[symbol] * 100 / self.rtctrl.wallet_cash
@@ -794,3 +820,37 @@ class TrailerGlobalTP():
               " - STATUS: ", self.get_trailer_status(),
               " - TP: ", self.get_trailer_TP(),
               " - THRESHOLD: ", self.get_trailer_threshold())
+
+class PositionRecorder():
+    def __init__(self, lst_symbols, max_position):
+        self.df_position_record = pd.DataFrame(columns=["nb_position_engaged"],
+                                               index=lst_symbols)
+        self.df_position_record["nb_position_engaged"] = 0
+
+        self.max_position = max_position
+
+    def set_increase_position_record(self, nb, symbol):
+        self.df_position_record.at[symbol, "nb_position_engaged"] += nb
+        if self.df_position_record.at[symbol, "nb_position_engaged"] > self.max_position:
+            self.df_position_record.at[symbol, "nb_position_engaged"] = self.max_position
+            return False
+        else:
+            return True
+
+    def set_decrease_position_record(self, nb, symbol):
+        self.df_position_record.at[symbol, "nb_position_engaged"] -= nb
+        if self.df_position_record.at[symbol, "nb_position_engaged"] < 0:
+            self.df_position_record.at[symbol, "nb_position_engaged"] = 0
+            return False
+        else:
+            return True
+
+    def reset_position_record(self, symbol):
+        self.df_position_record.at[symbol, "nb_position_engaged"] = 0
+
+    def get_nb_symbol_position_engaged(self, symbol):
+        return self.df_position_record.at[symbol, "nb_position_engaged"]
+
+    def get_total_position_engaged(self):
+        return self.df_position_record["nb_position_engaged"].sum()
+

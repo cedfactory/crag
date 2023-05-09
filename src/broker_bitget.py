@@ -92,6 +92,8 @@ class BrokerBitGet(broker.Broker):
     @authentication_required
     def execute_trade(self, trade):
         print("!!!!!!! EXECUTE THE TRADE !!!!!!!")
+        if trade.time != None:
+            print("execute trade at: ", trade.time)
         trade.success = False
         symbol = self._get_symbol(trade.symbol)
 
@@ -149,7 +151,7 @@ class BrokerBitGet(broker.Broker):
                 trade.net_price = trade.gross_price
                 if hasattr(trade, "bought_gross_price"):
                    # trade.roi = 100 * (trade.gross_price - trade.bought_gross_price - trade.selling_fee - trade.buying_fee) / trade.bought_gross_price
-                   trade.roi = utils.KeepNDecimals(utils.get_variation(trade.bought_gross_price, trade.gross_price))
+                   trade.roi = utils.get_variation(trade.bought_gross_price, trade.gross_price)
 
         elif trade.type == "CLOSE_SHORT":
             transaction = self._close_short_position(symbol, trade.gross_size, clientOid)
@@ -165,7 +167,7 @@ class BrokerBitGet(broker.Broker):
                 trade.net_price = trade.gross_price
                 if hasattr(trade, "bought_gross_price"):
                     # trade.roi = 100 * (-1) * (trade.gross_price - trade.bought_gross_price - trade.selling_fee - trade.buying_fee) / trade.bought_gross_price
-                    trade.roi = (-1) * utils.KeepNDecimals(utils.get_variation(trade.bought_gross_price, trade.gross_price))
+                    trade.roi = (-1) * utils.get_variation(trade.bought_gross_price, trade.gross_price)
 
         if not trade.success:
             print('transaction failed ", trade.type, " : ', symbol, ' - gross_size: ', trade.gross_size)

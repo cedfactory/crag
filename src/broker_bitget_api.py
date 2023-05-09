@@ -124,6 +124,22 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         return account_equity['data']['usdtEquity']
 
     #@authentication_required
+    def get_account_available(self):
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                account_equity = self.positionApi.account(symbol='BTCUSDT_UMCBL',marginCoin='USDT')
+                self.success += 1
+                break
+            except:
+                print("failure:  get_account_equity  - attempt: ", n_attempts)
+                self.failure += 1
+                print("failure: ", self.failure, " - success: ", self.success, " - percentage failure: ", self.failure / (self.success + self.failure) * 100)
+                time.sleep(2)
+                n_attempts = n_attempts - 1
+        return account_equity['data']['available']
+
+    #@authentication_required
     def get_open_position_unrealizedPL(self, symbol):
         n_attempts = 3
         while n_attempts > 0:
