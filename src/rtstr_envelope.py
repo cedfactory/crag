@@ -33,6 +33,7 @@ class StrategyEnvelope(rtstr.RealTimeStrategy):
         ds = rtdp.DataDescription()
         ds.symbols = self.lst_symbols
         ds.interval = self.strategy_interval
+        ds.candle_stick = self.candle_stick
 
         ds.fdp_features = {"close": {},
                            "envelope": {"indicator": "envelope", "window_size": 5, "ma": "sma",

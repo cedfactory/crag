@@ -39,10 +39,12 @@ class RealTimeStrategy(metaclass=ABCMeta):
         self.tradingview_condition = False
         self.short_and_long = False
         self.strategy_interval = 0
+        self.candle_stick = "released"  # last released from broker vs live
         if params:
             self.strategy_interval = params.get("strategy_interval", self.strategy_interval)
             if isinstance(self.strategy_interval, str):
                 self.strategy_interval = int(self.strategy_interval)
+            self.candle_stick = params.get("candle_stick", self.candle_stick)
             self.MAX_POSITION = params.get("max_position", self.MAX_POSITION)
             if isinstance(self.MAX_POSITION, str):
                 self.MAX_POSITION = int(self.MAX_POSITION)
