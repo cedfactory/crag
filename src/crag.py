@@ -168,6 +168,9 @@ class Crag:
         elif self.interval == 60:  # 1m
             start = start.replace(second=0, microsecond=0)
             start += timedelta(minutes=1)
+        elif self.interval == 1:  # 1s
+            start = start.replace(second=0, microsecond=0)
+            start += timedelta(seconds=1)
         print("start time: ", start)
         msg = "start time: " + start.strftime("%Y/%m/%d %H:%M:%S")
         self.log(msg, "start time")
@@ -211,7 +214,11 @@ class Crag:
                 break
 
             self.broker.tick() # increment
-            self.backup() # backup for reboot
+            # self.backup() # backup for reboot
+
+            if self.interval == 1:  # 1m # CEDE: CL to find cleaner solution
+                start = datetime.now() + timedelta(seconds=2)
+                start = datetime.timestamp(start)
 
         self.export_history(self.export_filename)
 

@@ -1,9 +1,0 @@
-<configuration>
-    <strategy id="strategysuperreversal" name="StrategySuperReversal">
-        <params symbols="./symbols_df_single_usdt.csv" max_position="100" share_size="1" sl="0" tp="0" global_sl="0"  global_tp="0" min_bol_spread="0" tradingview_condition="False" short_and_long="False"/>
-    </strategy>
-    <broker name="simulator">
-        <params cash="1000" start_date="2019-01-01" end_date="2020-01-01" intervals="1h" orders="market"/>
-    </broker>
-    <crag interval="3600" />
-</configuration>

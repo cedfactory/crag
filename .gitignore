@@ -129,4 +129,5 @@ dmypy.json
 .pyre/
 
 *~
-/accounts.xml
+/conf/accounts.xml
+/conf/discord_bots.xml
