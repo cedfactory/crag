@@ -14,6 +14,7 @@ class DataDescription():
         self.symbols = default_symbols
         self.features = default_features
         self.interval = "1d"
+        self.candle_stick = "released"
 
 class IRealTimeDataProvider(metaclass = ABCMeta):
     def __init__(self, params = None):
@@ -79,12 +80,12 @@ class RealTimeDataProvider(IRealTimeDataProvider):
         sim_current_date = self.get_current_datetime()
         sim_current_date = sim_current_date.replace(second=0, microsecond=0)
         sim_current_date = None
-        # params = { "service":"history_last", "exchange":"binance", "symbol":symbols, "interval": interval, "start": str(sim_current_date),"indicators": data_description.fdp_features}
-        params = {"service": "history_last", "exchange": "bitget", "symbol": symbols, "interval": interval, "start": str(sim_current_date), "indicators": data_description.fdp_features}
-        # params = {"service": "history_last", "exchange": "binance", "symbol": symbols, "interval": interval, "indicators": data_description.fdp_features}
+        # params = { "service":"last", "exchange":"binance", "symbol":symbols, "interval": interval, "start": str(sim_current_date),"indicators": data_description.fdp_features}
+        params = {"service": "last", "exchange": "bitget", "symbol": symbols, "interval": interval, "candle_stick":data_description.candle_stick, "start": str(sim_current_date), "indicators": data_description.fdp_features}
+        # params = {"service": "last", "exchange": "binance", "symbol": symbols, "interval": interval, "indicators": data_description.fdp_features}
         # https://fdp-ifxcxetwza-od.a.run.app/history?exchange=bitget&symbol=BTC&start=2023-01-01&indicators=close
         #
-        response_json = utils.fdp_request_post("history_last", params)
+        response_json = utils.fdp_request_post("last", params)
 
         data = {feature: [] for feature in data_description.features}
         data["symbol"] = []

@@ -39,7 +39,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
         self.tradingview_condition = False
         self.short_and_long = False
         self.strategy_interval = 0
-        self.candle_stick = "released"  # last released from broker vs live
+        self.candle_stick = "released"  # last released from broker vs alive
         if params:
             self.strategy_interval = params.get("strategy_interval", self.strategy_interval)
             if isinstance(self.strategy_interval, str):
