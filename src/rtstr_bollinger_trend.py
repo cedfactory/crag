@@ -42,6 +42,7 @@ class StrategyBollingerTrend(rtstr.RealTimeStrategy):
                            }
 
         ds.features = self.get_feature_from_fdp_features(ds.fdp_features)
+        ds.interval = self.strategy_interval
         print("startegy: ", self.get_info())
         print("strategy features: ", ds.features)
 
