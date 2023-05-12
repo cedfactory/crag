@@ -1,6 +1,10 @@
+--live --autorestart strategy_live_bollinger.xml
+--live --autorestart strategy_live_envelope.xml
+
+
 # run one scenario
 --live strategy_simulation_bollinger_trend_real.xml
---live strategy_simulation_slope_is_dope_test.xml
+
 # run multiple scenarios store the results and produce the report file
 --benchmark strategy_benchmark_df_configuration_bollinger_list.csv
 --benchmark strategy_benchmark_df_configuration_super_reversal_list.csv
