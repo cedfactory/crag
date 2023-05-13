@@ -101,8 +101,13 @@ class RealTimeDataProvider(IRealTimeDataProvider):
                 data["symbol"].append(symbol)
                 for feature in data_description.features:
                     if feature not in columns:
+                        print("FDP MISSING FEATURE COLUMN")
                         return None
-                    data[feature].append(df[feature].iloc[-1])
+                    if len(df[feature]) > 0:
+                        data[feature].append(df[feature].iloc[-1])
+                    else:
+                        print("FDP MISSING FEATURE VALUE")
+                        return None
 
         df_result = pd.DataFrame(data)
         df_result.set_index("symbol", inplace=True)

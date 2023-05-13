@@ -188,7 +188,6 @@ class Crag:
                 if self.safety_run:
                     start_minus_one_sec = datetime.timestamp(datetime.fromtimestamp(start) - timedelta(seconds=1))
                     while time.time() < start_minus_one_sec:
-                        print("SAFETY RUN")
                         step_result = self.safety_step()
                         if not step_result:
                             os._exit(0) # tbc
@@ -227,7 +226,21 @@ class Crag:
         current_datetime = self.broker.get_current_datetime()
         self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(), self.broker.get_cash_borrowed(), prices_symbols, False, self.final_datetime, self.broker.get_balance())
 
-        current_data = self.broker.get_current_data(ds)
+        measure_time_fdp_start = datetime.now()
+
+        nb_try = 0
+        current_data_received = False
+        while current_data_received != True:
+            current_data = self.broker.get_current_data(ds)
+            if current_data is None:
+                print("current_data not received: ", nb_try)
+                nb_try += 1
+            else:
+                current_data_received = True
+
+        measure_time_fdp_end = datetime.now()
+        print("measure time fdp:", measure_time_fdp_end - measure_time_fdp_start)
+
         if current_data is None:
             if not self.zero_print:
                 print("[Crag] 💥 no current data")

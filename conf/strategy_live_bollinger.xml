@@ -1,9 +1,9 @@
 <configuration>
     <strategy id="strategybollingertrend" name="StrategyBollingerTrend">
-        <params symbols="./symbols_df_bollinger_usdt.csv" strategy_interval="3600" candle_stick="released" max_position="10" sl="-10" tp="10" global_sl="-10" global_tp="10" trailer_tp="0" trailer_delta="0" trailer_global_tp="0" trailer_global_delta="0"/>
+        <params symbols="./symbols_df_bollinger_usdt.csv" strategy_interval="3600" candle_stick="released" max_position="10" sl="-10" tp="10" global_sl="-10" global_tp="0" trailer_tp="0" trailer_delta="0" trailer_global_tp="0" trailer_global_delta="0"/>
     </strategy>
     <broker name="bitget">
-        <params exchange="bitget" account="subfortest1" leverage_short="2" leverage_long="2" simulation="1" intervals="1h" orders="market" reset_account="False"/>
+        <params exchange="bitget" account="subfortest1" leverage_short="2" leverage_long="2" simulation="1" intervals="1h" orders="market" reset_account="True"/>
     </broker>
     <crag id="bolinger" interval="3600" botId="kamiji"/>
 </configuration>
