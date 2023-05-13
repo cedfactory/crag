@@ -260,7 +260,10 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 print("failure: ", self.failure, " - success: ", self.success, " - percentage failure: ", self.failure / (self.success + self.failure) * 100)
                 time.sleep(2)
                 n_attempts = n_attempts - 1
-        return self.df_account_assets.loc[(self.df_account_assets['baseCoin'] == 'USDT') & (self.df_market['quoteCoin'] == 'USDT'), "usdtEquity"].values[0]
+        cell = self.df_account_assets.loc[(self.df_account_assets['baseCoin'] == 'USDT') & (self.df_market['quoteCoin'] == 'USDT'), "usdtEquity"]
+        if len(cell.values) > 0:
+            return cell.values[0]
+        return 0
 
     @authentication_required
     def get_cash(self, baseCoin="USDT"):
