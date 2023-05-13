@@ -17,6 +17,9 @@ import shutil
 import pickle
 
 def _initialize_crag_discord_bot(botId=""):
+    if botId == None or botId == "":
+        return None
+
     if botId != None and botId != "":
         bot_info = logger.get_discord_bot_info(botId)
         token = bot_info.get("token", None)
@@ -100,6 +103,71 @@ def benchmark_results(configuration_file):
     png_files = glob.glob(source_dir + './*.png')
     for file in png_files:
         shutil.move(file, dest_dir)
+
+def load_configuration_file(configuration_file):
+    config_path = './conf'
+    configuration_file = os.path.join(config_path, configuration_file)
+    tree = ET.parse(configuration_file)
+    root = tree.getroot()
+    if root.tag != "configuration":
+        print("!!! tag {} encountered. expecting configuration".format(root.tag))
+        return
+
+    strategy_node = root.find("strategy")
+    strategy_id = strategy_node.get("id", "")
+    strategy_name = strategy_node.get("name", None)
+    params_node = list(strategy_node.iter('params'))
+    params_strategy = {"id": strategy_id, "name": strategy_name}
+    if len(params_node) == 1:
+        for name, value in params_node[0].attrib.items():
+            params_strategy[name] = value
+
+    broker_node = root.find("broker")
+    broker_name = broker_node.get("name", None)
+    params_node = list(broker_node.iter('params'))
+    params_broker = {"name": broker_name}
+    if len(params_node) == 1:
+        for name, value in params_node[0].attrib.items():
+            params_broker[name] = value
+
+    crag_node = root.find("crag")
+    params_crag = {
+        "id": crag_node.get("id", ""),
+        "interval": int(crag_node.get("interval", 10)),
+        "bot_id": crag_node.get("botId", "")
+    }
+
+    return {'broker': params_broker, 'strategy': params_strategy, "crag": params_crag}
+
+def get_crag_params_from_configuration(configuration):
+    params_broker = configuration["broker"]
+    params_strategy = configuration["strategy"]
+    params_crag = configuration["crag"]
+
+    crag_id = params_crag.get("id", "")
+    crag_interval = params_crag.get("interval", "")
+    bot_id = params_crag.get("bot_id", None)
+    crag_discord_bot = _initialize_crag_discord_bot(bot_id)
+    params_strategy["logger"] = crag_discord_bot
+    available_strategies = rtstr.RealTimeStrategy.get_strategies_list()
+    strategy_name = params_strategy.get("name", "")
+    if strategy_name in available_strategies:
+        my_strategy = rtstr.RealTimeStrategy.get_strategy_from_name(strategy_name, params_strategy)
+    else:
+        print("💥 unknown strategy ({})".format(strategy_name))
+        print("available strategies : ", available_strategies)
+        return None
+
+    my_broker = None
+    broker_name = params_broker.get("name", "")
+    if broker_name == "simulator" or broker_name == "simulation" or broker_name == "simu":
+        my_broker = broker_simulation.SimBroker(params_broker)
+    else:
+        my_broker = broker_bitget_api.BrokerBitGetApi(params_broker)
+    if my_broker == None or not my_broker.ready():
+        return None
+
+    return {"broker": my_broker, "rtstr": my_strategy, "id": crag_id, "interval": crag_interval, "logger": crag_discord_bot}
 
 def initialization_from_configuration_file(configuration_file):
     config_path = './conf'

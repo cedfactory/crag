@@ -81,10 +81,23 @@ def crag_benchmark(scenarios_df_lst):
 def crag_report():
     crag_helper.export_benchmark_df_report()
 
-def crag_live(configuration_file):
-    crag_params = crag_helper.initialization_from_configuration_file(configuration_file)
-    # if params need to be overriden, that's where it can be done
-    bot = crag.Crag(crag_params)
+def crag_live(configuration_file, ForceDoNotResetAccount = False):
+    # previous code
+    #crag_params = crag_helper.initialization_from_configuration_file(configuration_file)
+    #bot = crag.Crag(crag_params)
+
+    configuration = crag_helper.load_configuration_file(configuration_file)
+
+    # if configuration needs to be overriden, that's where it can be done
+    if ForceDoNotResetAccount:
+        broker_params = configuration.get("broker", None)
+        reset_account = broker_params.get("reset_account", False)
+        if reset_account:
+            broker_params["reset_account"] = False
+
+    params = crag_helper.get_crag_params_from_configuration(configuration)
+    bot = crag.Crag(params)
+
     start_time = datetime.now()
     bot.run()
     bot.export_status()
