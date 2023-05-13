@@ -16,6 +16,12 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     def __init__(self, params = None):
         super().__init__(params)
 
+        self.marketApi = None
+        self.accountApi = None
+        self.positionApi = None
+        self.orderApi = None
+        self.publicApi = None
+
         self.df_market = self.get_future_market()
         if isinstance(self.df_market, pd.DataFrame):
             self.df_market.drop( self.df_market[self.df_market['quoteCoin'] != 'USDT'].index, inplace=True)
@@ -33,7 +39,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             print('resume strategy')
 
     def _authentification(self):
-        if self.account == None:
+        if not self.account:
             return False
         exchange_api_key = self.account.get("api_key", None)
         exchange_api_secret = self.account.get("api_secret", None)
@@ -45,7 +51,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         self.orderApi = order.OrderApi(exchange_api_key, exchange_api_secret, exchange_api_password, use_server_time=False, first=False)
         self.publicApi = public.PublicApi(exchange_api_key, exchange_api_secret, exchange_api_password, use_server_time=False, first=False)
 
-        return self.marketApi != None
+        return True
 
     def authentication_required(fn):
         """decoration for methods that require authentification"""
@@ -254,7 +260,10 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 print("failure: ", self.failure, " - success: ", self.success, " - percentage failure: ", self.failure / (self.success + self.failure) * 100)
                 time.sleep(2)
                 n_attempts = n_attempts - 1
-        return self.df_account_assets.loc[(self.df_account_assets['baseCoin'] == 'USDT') & (self.df_market['quoteCoin'] == 'USDT'), "usdtEquity"].values[0]
+        cell = self.df_account_assets.loc[(self.df_account_assets['baseCoin'] == 'USDT') & (self.df_market['quoteCoin'] == 'USDT'), "usdtEquity"]
+        if len(cell.values) > 0:
+            return cell.values[0]
+        return 0
 
     @authentication_required
     def get_cash(self, baseCoin="USDT"):

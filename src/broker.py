@@ -9,9 +9,10 @@ class Broker(metaclass = ABCMeta):
             self.cash = params.get("cash", self.cash)
         self.cash_borrowed = 0
         self.rtdp = None
-        accountId = params.get("account", None)
-        if accountId:
-            self.account = accounts.get_account_info(accountId)
+        account_id = params.get("account", "")
+        self.account = accounts.get_account_info(account_id)
+        if not self.account:
+            print("[Broker] : ⚠ account {} not found".format(account_id))
 
     def ready(self):
         return False
