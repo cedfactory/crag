@@ -87,6 +87,9 @@ def crag_live(configuration_file, ForceDoNotResetAccount = False):
     #bot = crag.Crag(crag_params)
 
     configuration = crag_helper.load_configuration_file(configuration_file)
+    if not configuration:
+        print("💥 A problem occurred while loading {}".format(configuration_file))
+        return
 
     # if configuration needs to be overriden, that's where it can be done
     if ForceDoNotResetAccount:
@@ -96,6 +99,9 @@ def crag_live(configuration_file, ForceDoNotResetAccount = False):
             broker_params["reset_account"] = False
 
     params = crag_helper.get_crag_params_from_configuration(configuration)
+    if not params:
+        print("💥 A problem occurred while treating {}".format(configuration_file))
+        return
     bot = crag.Crag(params)
 
     start_time = datetime.now()

@@ -10,9 +10,6 @@ class BrokerBitGet(broker.Broker):
         self.leverage = 0
         self.name = ""
         self.exchange_name = "bitget"
-        self.api_key = "BITGET_API_KEY"
-        self.api_secret = "BITGET_API_SECRET"
-        self.api_password = "BITGET_API_PASSWORD"
         self.chase_limit = False
         self.reset_account = True  # Reset account default behavior
         if params:

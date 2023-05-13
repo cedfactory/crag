@@ -107,11 +107,14 @@ def benchmark_results(configuration_file):
 def load_configuration_file(configuration_file):
     config_path = './conf'
     configuration_file = os.path.join(config_path, configuration_file)
+    if not os.path.isfile(configuration_file):
+        print("!!! {} not found".format(configuration_file))
+        return {}
     tree = ET.parse(configuration_file)
     root = tree.getroot()
     if root.tag != "configuration":
         print("!!! tag {} encountered. expecting configuration".format(root.tag))
-        return
+        return {}
 
     strategy_node = root.find("strategy")
     strategy_id = strategy_node.get("id", "")
@@ -164,7 +167,7 @@ def get_crag_params_from_configuration(configuration):
         my_broker = broker_simulation.SimBroker(params_broker)
     else:
         my_broker = broker_bitget_api.BrokerBitGetApi(params_broker)
-    if my_broker == None or not my_broker.ready():
+    if not my_broker or not my_broker.ready():
         return None
 
     return {"broker": my_broker, "rtstr": my_strategy, "id": crag_id, "interval": crag_interval, "logger": crag_discord_bot}
