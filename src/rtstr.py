@@ -350,6 +350,10 @@ class RealTimeStrategy(metaclass=ABCMeta):
     def get_nb_position_engaged(self):
         return self.position_recorder.get_total_position_engaged()
 
+    def set_nb_increase_symbol_position_engaged(self, nb_position, symbol):
+        self.position_recorder.set_increase_position_record(nb_position, symbol)
+
+
     def reset_position_recorder_for_symbol(self, symbol):
         self.position_recorder.reset_position_record(symbol)
 
@@ -373,7 +377,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
                 return 0, 0, 0
             else:
                 self.buying_size = self.rtctrl.cash_available / (self.MAX_POSITION - total_postion_engaged)
-                self.set_increase_position_record(1, symbol)
+                self.set_nb_increase_symbol_position_engaged(1, symbol)
 
         available_cash = self.rtctrl.cash_available
         if available_cash == 0:

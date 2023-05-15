@@ -52,6 +52,11 @@ class StrategyBollingerTrend(rtstr.RealTimeStrategy):
         return "StrategyBollingerTrend"
 
     def condition_for_opening_long_position(self, symbol):
+        msg = ""
+        for col in ['close', 'bollinger_1', 'lower_band_1', 'higher_band_1', 'ma_band_1', 'rsi_1', 'atr_1', 'sma_long_ma', 'n1_lower_band_1', 'n1_higher_band_1', 'n1_ma_band_1', 'n1_close']:
+            msg += col + " " + str(self.df_current_data[col][symbol]) + " + "
+        print(msg)
+
         if self.tmp_debug_traces:
             if (self.df_current_data['n1_close'][symbol] < self.df_current_data['n1_higher_band_1'][symbol])\
                & (self.df_current_data['close'][symbol] > self.df_current_data['higher_band_1'][symbol])\
