@@ -1,10 +1,10 @@
 from src import rtdp,rtdp_simulation,broker_simulation,broker_ccxt,broker_bitget,broker_bitget_api,broker_bitget_ccxt,rtstr,rtstr_dummy_test,rtstr_envelope,rtstr_dummy_test_tp,rtstr_grid_trading_multi,rtstr_balance_trading,rtstr_bollinger_trend,rtstr_tv_recommendation_mid,rtstr_balance_trading_multi,rtstr_super_reversal,rtstr_volatility_test_live,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC,analyser,benchmark,automatic_test_plan
-from src import crag,crag_helper,trade,accounts
+from src import crag,crag_helper,trade
 import pandas as pd
 import os, sys
 import time
 import cProfile,pstats
-from datetime import datetime, timedelta
+from datetime import datetime
 import concurrent.futures
 
 _usage_str = """
@@ -80,48 +80,6 @@ def crag_benchmark(scenarios_df_lst):
 
 def crag_report():
     crag_helper.export_benchmark_df_report()
-
-def crag_update_history():
-    print("updating history...")
-    accounts_info = accounts.import_accounts()
-    ct = datetime.now()
-    ts = ct.timestamp()
-
-    while True:
-        print("UPDATE")
-        start = datetime.now()
-        end = start + timedelta(seconds=3600)
-
-        for key, value in accounts_info.items():
-            my_broker = None
-            broker_name = value.get("broker", "")
-            account_id = value.get("id", "")
-            if broker_name == "bitget":
-                my_broker = broker_bitget_api.BrokerBitGetApi({"account": account_id, "reset_account": False})
-
-            if my_broker:
-                usdt_equity = my_broker.get_usdt_equity()
-                
-                filename = "history_"+account_id+".csv"
-                if not os.path.isfile(filename):
-                    data = [[ts, usdt_equity]]
-                    df = pd.DataFrame(data, columns=["timestamp", "usdt_equity"])
-                    df.reset_index()
-                    df.set_index("timestamp", inplace=True)
-                    df.to_csv(filename)
-                else:
-                    print("get file")
-                    df = pd.read_csv(filename, delimiter=',')
-                    new_row = {"timestamp":ts, "usdt_equity":usdt_equity}
-                    df = df.append(new_row, ignore_index=True)
-                    df.reset_index()
-                    df.set_index("timestamp", inplace=True)
-                    df.to_csv(filename)
-
-        current_end = datetime.now()
-        sleeping_time = datetime.timestamp(end) - datetime.timestamp(current_end)
-        if sleeping_time > 0:
-            time.sleep(sleeping_time)
 
 
 def crag_live(configuration_file, ForceDoNotResetAccount = False):
@@ -382,8 +340,6 @@ if __name__ == '__main__':
     if len(sys.argv) >= 2:
         if len(sys.argv) > 2 and (sys.argv[1] == "--simulation"):
             crag_simulation(sys.argv[2])
-        elif len(sys.argv) >= 2 and (sys.argv[1] == "--history"):
-            crag_update_history()
         elif len(sys.argv) > 2 and (sys.argv[1] == "--reboot"):
             crag_reboot(sys.argv[2])
         elif len(sys.argv) > 2 and (sys.argv[1] == "--live"):
