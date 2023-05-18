@@ -128,6 +128,10 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# pycharm
+.idea/
+
 *~
 /conf/accounts.xml
 /conf/discord_bots.xml
+/conf/
