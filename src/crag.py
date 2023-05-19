@@ -522,7 +522,7 @@ class Crag:
             current_trade.minsize = self.broker.get_minimum_size(current_trade.symbol)
 
             current_trade.gross_size = df_buying_symbols["size"][symbol]  # Gross size
-            current_trade.gross_price = round(current_trade.gross_size * current_trade.symbol_price, 4)
+            current_trade.gross_price = current_trade.gross_size * current_trade.symbol_price
             while abs(round(current_trade.gross_price, 4)) >= round(self.cash, 4):
                 print("=========== > gross price do not fit cash value:")
                 print('=========== > current_trade.gross_size: ', current_trade.gross_size)
@@ -531,7 +531,7 @@ class Crag:
                 current_trade.symbol_price = self.broker.get_value(symbol)
                 df_buying_symbols["size"][symbol] = df_buying_symbols["size"][symbol] - df_buying_symbols["size"][symbol] * self.epsilon_size_reduce / 100
                 current_trade.gross_size = df_buying_symbols["size"][symbol]
-                current_trade.gross_price = round(current_trade.gross_size * current_trade.symbol_price, 4)
+                current_trade.gross_price = current_trade.gross_size * current_trade.symbol_price
                 print("=========== > size and price reduced:")
                 print('=========== > reduced current_trade.gross_price: ', current_trade.gross_price)
                 print('=========== > reduced current_trade.gross_size: ', current_trade.gross_size)
@@ -547,7 +547,7 @@ class Crag:
             elif current_trade.type == self.rtstr.open_short:
                 current_trade.cash_borrowed = current_trade.net_price
 
-            if abs(round(current_trade.gross_price, 4)) <= round(self.cash, 4):
+            if abs(current_trade.gross_price) <= self.cash:
                 done = self.broker.execute_trade(current_trade)
                 if done:
                     self.cash = self.broker.get_cash()
