@@ -61,6 +61,7 @@ class Crag:
         self.portfolio_value = 0
         self.wallet_value = 0
         self.sell_performed = False
+        self.epsilon_size_reduce = 0.1
 
         self.zero_print = True
         self.flush_current_trade = False
@@ -507,6 +508,7 @@ class Crag:
             df_buying_symbols.drop(df_buying_symbols.index, inplace=True)
         symbols_bought = {"symbol":[], "size":[], "percent":[], "gross_price":[], "gridzone":[], "pos_type": []}
         for symbol in df_buying_symbols.index.to_list():
+            print("buying symbol: ", symbol)
             current_trade = trade.Trade(current_datetime)
             # current_trade.type = self.rtstr.get_open_type(symbol)
             current_trade.type = df_buying_symbols['pos_type'][symbol]
@@ -521,11 +523,24 @@ class Crag:
 
             current_trade.gross_size = df_buying_symbols["size"][symbol]  # Gross size
             current_trade.gross_price = round(current_trade.gross_size * current_trade.symbol_price, 4)
+            while abs(round(current_trade.gross_price, 4)) >= round(self.cash, 4):
+                print("=========== > gross price do not fit cash value:")
+                print('=========== > current_trade.gross_size: ', current_trade.gross_size)
+                print('=========== > current_trade.gross_price: ', current_trade.gross_price)
+                print('=========== > self.cash: ', self.cash)
+                current_trade.symbol_price = self.broker.get_value(symbol)
+                df_buying_symbols["size"][symbol] = df_buying_symbols["size"][symbol] - df_buying_symbols["size"][symbol] * self.epsilon_size_reduce / 100
+                current_trade.gross_size = df_buying_symbols["size"][symbol]
+                current_trade.gross_price = round(current_trade.gross_size * current_trade.symbol_price, 4)
+                print("=========== > size and price reduced:")
+                print('=========== > reduced current_trade.gross_price: ', current_trade.gross_price)
+                print('=========== > reduced current_trade.gross_size: ', current_trade.gross_size)
+                print('=========== > self.cash: ', self.cash)
 
             current_trade.net_price = round(current_trade.gross_price * (1 - current_trade.commission), 4)
             current_trade.net_size = round(current_trade.net_price / current_trade.symbol_price, 6)
 
-            current_trade.buying_fee = abs(round(current_trade.gross_price - current_trade.net_price, 4)) # COMMENT CEDE abs to be confirmed
+            current_trade.buying_fee = abs(round(current_trade.gross_price - current_trade.net_price, 4))
             current_trade.profit_loss = -current_trade.buying_fee
             if current_trade.type == self.rtstr.open_long:
                 current_trade.cash_borrowed = 0
@@ -553,6 +568,14 @@ class Crag:
                     symbols_bought["pos_type"].append(df_buying_symbols["pos_type"][current_trade.symbol])
                 else:
                     self.rtstr.open_position_failed(symbol)
+            else:
+                print("=========== > execute trade not actioned - gross price do not fit cash value:")
+                print("=========== >abs(round(current_trade.gross_price, 4)) <= round(self.cash, 4)",
+                      abs(round(current_trade.gross_price, 4)) <= round(self.cash, 4))
+                print('=========== >current_trade.gross_price: ', current_trade.gross_price)
+                print('=========== >self.cash: ', self.cash)
+                self.rtstr.open_position_failed(symbol)
+
         df_symbols_bought = pd.DataFrame(symbols_bought)
 
         if not df_symbols_bought.empty:
