@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
 from src import accounts,broker_bitget_api
-from src.toolbox import pdf_helper
+from src.toolbox import pdf_helper, mail_helper
 
 def export_graph(title, df, filename):
     dates = [datetime.fromtimestamp(ts) for ts in df["timestamp"]]
@@ -97,6 +97,8 @@ if __name__ == '__main__':
     if len(sys.argv) == 2:
         if sys.argv[1] == "--export":
             export_all()
+        if sys.argv[1] == "--mail":
+            mail_helper.send_mail("receiver@foobar.com", "Subject", "message")
         else:
             freq = int(sys.argv[1])
             loop(freq)
