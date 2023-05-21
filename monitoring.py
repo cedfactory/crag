@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
 from src import accounts,broker_bitget_api
+from src.toolbox import pdf_helper
 
 def export_graph(title, df, filename):
     dates = [datetime.fromtimestamp(ts) for ts in df["timestamp"]]
@@ -41,6 +42,9 @@ def export_all():
         df = pd.read_csv(filename, delimiter=',')
         pngfilename = rootpath + "history_" + account_id + ".png"
         export_graph(account_id, df, pngfilename)
+
+        pdffilename = rootpath + "history_" + account_id + ".pdf"
+        pdf_helper.export_report(pdffilename, df, pngfilename)
 
 def update_history():
     print("updating history...")
