@@ -21,6 +21,8 @@ class StrategyBollingerTrend(rtstr.RealTimeStrategy):
         self.rtctrl.set_list_open_position_type(self.get_lst_opening_type())
         self.rtctrl.set_list_close_position_type(self.get_lst_closing_type())
 
+        self.epsilon = 0.1 # CEDE specific for bollinger - to be included to .xml depending on results...
+
         self.zero_print = True
 
         self.min_bol_spread = 0
@@ -133,18 +135,20 @@ class StrategyBollingerTrend(rtstr.RealTimeStrategy):
             print("CLOSING LONG POSITION: ", (self.df_current_data['close'][symbol] < self.df_current_data['ma_band_1'][symbol]), " - ", symbol)
             print("symbol: ", symbol,
                   " close: ", self.df_current_data['close'][symbol],
-                  " ma_band_1: ", self.df_current_data['ma_band_1'][symbol]
+                  " ma_band_1: ", self.df_current_data['ma_band_1'][symbol],
+                  " ma_band_1 - epsilon: ", self.df_current_data['ma_band_1'][symbol] + self.df_current_data['ma_band_1'][symbol] * self.epsilon / 100
                   )
-        return (self.df_current_data['close'][symbol] < self.df_current_data['ma_band_1'][symbol])
+        return (self.df_current_data['close'][symbol] < self.df_current_data['ma_band_1'][symbol] + self.df_current_data['ma_band_1'][symbol] * self.epsilon / 100)
 
     def condition_for_closing_short_position(self, symbol):
         if self.tmp_debug_traces:
             print("CLOSING SHORT POSITION: ", (self.df_current_data['close'][symbol] > self.df_current_data['ma_band_1'][symbol]), " - ", symbol)
             print("symbol: ", symbol,
                   " close: ", self.df_current_data['close'][symbol],
-                  " ma_band_1: ", self.df_current_data['ma_band_1'][symbol]
+                  " ma_band_1: ", self.df_current_data['ma_band_1'][symbol],
+                  " ma_band_1 - epsilon: ", self.df_current_data['ma_band_1'][symbol] - self.df_current_data['ma_band_1'][symbol] * self.epsilon / 100
                   )
-        return (self.df_current_data['close'][symbol] > self.df_current_data['ma_band_1'][symbol])
+        return (self.df_current_data['close'][symbol] > self.df_current_data['ma_band_1'][symbol] - self.df_current_data['ma_band_1'][symbol] * self.epsilon / 100)
 
     def sort_list_symbols(self, lst_symbols):
         print("symbol list: ", lst_symbols)
