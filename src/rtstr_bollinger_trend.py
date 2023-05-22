@@ -138,7 +138,7 @@ class StrategyBollingerTrend(rtstr.RealTimeStrategy):
             print("symbol: ", symbol,
                   " close: ", self.df_current_data['close'][symbol],
                   " ma_band_1: ", self.df_current_data['ma_band_1'][symbol],
-                  " ma_band_1 - epsilon: ", ma_band_epsilon
+                  " ma_band_1 + epsilon: ", ma_band_epsilon
                   )
         return (self.df_current_data['close'][symbol] < ma_band_epsilon)
 
