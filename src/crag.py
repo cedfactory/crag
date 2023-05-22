@@ -490,9 +490,9 @@ class Crag:
                     df_sell_performed.loc[len(df_sell_performed.index)] = [sell_trade.symbol, round(sell_trade.gross_price, 2), round(sell_trade.roi, 2), sell_trade.type]
                     # msg = "{} : {} price: ${:.2f} roi: ${:.2f}".format(sell_trade.symbol, sell_trade.type, sell_trade.gross_price, sell_trade.roi)
                     if sell_trade.roi < 0:
-                        self.traces_trade_negative += self.traces_trade_negative
+                        self.traces_trade_negative += 1
                     else:
-                        self.traces_trade_positive += self.traces_trade_positive
+                        self.traces_trade_positive += 1
 
         if self.sell_performed:
             if len(df_sell_performed) > 0:
