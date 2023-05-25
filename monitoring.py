@@ -6,8 +6,9 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
 from src import accounts,broker_bitget_api
-from src.toolbox import pdf_helper, mail_helper
+from src.toolbox import pdf_helper, mail_helper, ftp_helper
 
+g_use_ftp = True
 def export_graph(title, df, filename):
     dates = [datetime.fromtimestamp(ts) for ts in df["timestamp"]]
     datenums = mdates.date2num(dates)
@@ -63,21 +64,30 @@ def update_history():
         if my_broker:
             usdt_equity = my_broker.get_usdt_equity()
 
-            filename = rootpath + "history_" + account_id + ".csv"
-            if not os.path.isfile(filename):
+            local_filename = rootpath + "history_" + account_id + ".csv"
+            if g_use_ftp:
+                remote_path = "./customers/history/"
+                remote_filename = "history_" + account_id + ".csv"
+                ftp_helper.pull_file("default", remote_path, remote_filename, local_filename)
+
+            if not os.path.isfile(local_filename):
                 data = [[ts, usdt_equity]]
                 df = pd.DataFrame(data, columns=["timestamp", "usdt_equity"])
                 df.reset_index()
                 df.set_index("timestamp", inplace=True)
-                df.to_csv(filename)
+                df.to_csv(local_filename)
             else:
-                df = pd.read_csv(filename, delimiter=',')
+                df = pd.read_csv(local_filename, delimiter=',')
                 new_row = {"timestamp": ts, "usdt_equity": usdt_equity}
                 df = df.append(new_row, ignore_index=True)
                 df.reset_index()
                 df.set_index("timestamp", inplace=True)
-                df.to_csv(filename)
+                df.to_csv(local_filename)
 
+            if g_use_ftp:
+                remote_path = "./customers/history/"
+                remote_filename = "history_" + account_id + ".csv"
+                ftp_helper.push_file("default", local_filename, remote_path+remote_filename)
 
 def loop(freq):
     while True:
@@ -97,7 +107,7 @@ if __name__ == '__main__':
     if len(sys.argv) == 2:
         if sys.argv[1] == "--export":
             export_all()
-        if sys.argv[1] == "--mail":
+        elif sys.argv[1] == "--mail":
             mail_helper.send_mail("receiver@foobar.com", "Subject", "message")
         else:
             freq = int(sys.argv[1])
