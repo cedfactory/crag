@@ -291,7 +291,7 @@ class Crag:
             else:
                 start_date_for_log = self.start_date
         msg += "original portfolio value : ${} ({})\n".format(utils.KeepNDecimals(self.original_portfolio_value, 2), start_date_for_log)
-        lst_stored_data_for_reboot.append(self.start_date)
+        lst_stored_data_for_reboot.append(self.start_date_for_log)
         lst_stored_data_for_reboot.append(self.original_portfolio_value)
         variation_percent = utils.get_variation(self.original_portfolio_value, portfolio_value)
         msg += "current portfolio value : ${} / %{}\n".format(utils.KeepNDecimals(portfolio_value, 2),
