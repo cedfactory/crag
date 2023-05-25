@@ -264,32 +264,47 @@ class Crag:
             self.maximal_portfolio_date = current_date
             self.maximal_portfolio_variation = utils.get_variation(self.original_portfolio_value, self.maximal_portfolio_value)
 
+        lst_stored_data_for_reboot = []
         msg = "start step current time : {}\n".format(current_date)
         if self.broker.is_reset_account():
             msg += "account reset\n"
         else:
             msg += "account resumed\n"
         msg += "original portfolio value : ${} ({})\n".format(utils.KeepNDecimals(self.original_portfolio_value, 2), self.start_date)
+        lst_stored_data_for_reboot.append(self.start_date)
+        lst_stored_data_for_reboot.append(self.original_portfolio_value)
         variation_percent = utils.get_variation(self.original_portfolio_value, portfolio_value)
         msg += "current portfolio value : ${} / %{}\n".format(utils.KeepNDecimals(portfolio_value, 2),
                                                               utils.KeepNDecimals(variation_percent, 2))
         msg += "max value : ${} %{} ({})\n".format(utils.KeepNDecimals(self.maximal_portfolio_value, 2),
                                                    utils.KeepNDecimals(self.maximal_portfolio_variation, 2),
                                                    self.maximal_portfolio_date)
+        lst_stored_data_for_reboot.append(self.maximal_portfolio_value)
+        lst_stored_data_for_reboot.append(self.maximal_portfolio_variation)
+        lst_stored_data_for_reboot.append(self.maximal_portfolio_date)
         msg += "min value : ${} %{} ({})\n".format(utils.KeepNDecimals(self.minimal_portfolio_value, 2),
                                                    utils.KeepNDecimals(self.minimal_portfolio_variation, 2),
                                                    self.minimal_portfolio_date)
+        lst_stored_data_for_reboot.append(self.minimal_portfolio_value)
+        lst_stored_data_for_reboot.append(self.minimal_portfolio_variation)
+        lst_stored_data_for_reboot.append(self.minimal_portfolio_date)
         self.traces_trade_total_remaining = self.traces_trade_total_opened - self.traces_trade_total_closed
         msg += "transactions opened : {} closed : {} remaining open : {}\n".format(self.traces_trade_total_opened,
-                                                                                  self.traces_trade_total_closed,
-                                                                                  self.traces_trade_total_remaining)
+                                                                                   self.traces_trade_total_closed,
+                                                                                   self.traces_trade_total_remaining)
+        lst_stored_data_for_reboot.append(self.traces_trade_total_opened)
+        lst_stored_data_for_reboot.append(self.traces_trade_total_closed)
+        lst_stored_data_for_reboot.append(self.traces_trade_total_remaining)
         if self.traces_trade_total_closed == 0:
             win_rate = 0
         else:
             win_rate = 100 * self.traces_trade_positive / self.traces_trade_total_closed
-        msg += "positive / negative trades : {} / {}\n".format(utils.KeepNDecimals(self.traces_trade_positive, 2),
-                                                               utils.KeepNDecimals(self.traces_trade_negative, 2)
+        msg += "positive / negative trades : {} / {}\n".format(utils.KeepNDecimals(self.traces_trade_positive, 0),
+                                                               utils.KeepNDecimals(self.traces_trade_negative, 0)
                                                                )
+        lst_stored_data_for_reboot.append(self.traces_trade_positive)
+        lst_stored_data_for_reboot.append(self.traces_trade_negative)
+        self.save_reboot_data(lst_stored_data_for_reboot)
         msg += "win rate : %{}\n\n".format(utils.KeepNDecimals(win_rate, 2))
 
         if self.rtstr.rtctrl.get_rtctrl_nb_symbols() > 0:
@@ -881,3 +896,23 @@ class Crag:
         print('price: ', prices_symbols)
 
         return prices_symbols, ds
+
+    def get_stored_data_list(self):
+        return ["original start",
+                "original portfolio value",
+                "max value",
+                "max value variation",
+                "date max value",
+                "min value",
+                "min value variation",
+                "date min value",
+                "transactions opened",
+                "closed",
+                "remaining open",
+                "positive trades",
+                "negative trades"]
+
+    def save_reboot_data(self, lst_data):
+        df = pd.DataFrame(columns=self.get_stored_data_list())
+        df.loc[len(df)] = lst_data
+        self.broker.save_reboot_data(df)
