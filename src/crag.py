@@ -96,6 +96,22 @@ class Crag:
 
         self.traces_trade_positive = 0
         self.traces_trade_negative = 0
+        self.start_date_from_resumed_data = ""
+        self.start_date_for_log = ""
+
+        if self.broker.broker_resumed():
+            self.df_reboot_data = self.get_reboot_data()
+            if self.df_reboot_data is not None:
+                self.traces_trade_positive = self.df_reboot_data["positive trades"][0]
+                self.traces_trade_negative = self.df_reboot_data["negative trades"][0]
+                self.traces_trade_total_opened = self.df_reboot_data["transactions opened"][0]
+                self.traces_trade_total_closed = self.df_reboot_data["closed"][0]
+                self.start_date_from_resumed_data = self.df_reboot_data["original start"][0]
+                self.original_portfolio_value = self.df_reboot_data["original portfolio value"][0]
+                self.maximal_portfolio_value = self.df_reboot_data["max value"][0]
+                self.maximal_portfolio_date = self.df_reboot_data["date max value"][0]
+                self.minimal_portfolio_value = self.df_reboot_data["min value"][0]
+                self.minimal_portfolio_date = self.df_reboot_data["date min value"][0]
 
         # rabbitmq connection
         try:
@@ -264,32 +280,51 @@ class Crag:
             self.maximal_portfolio_date = current_date
             self.maximal_portfolio_variation = utils.get_variation(self.original_portfolio_value, self.maximal_portfolio_value)
 
+        lst_stored_data_for_reboot = []
         msg = "start step current time : {}\n".format(current_date)
         if self.broker.is_reset_account():
             msg += "account reset\n"
+            self.start_date_for_log = self.start_date
         else:
             msg += "account resumed\n"
-        msg += "original portfolio value : ${} ({})\n".format(utils.KeepNDecimals(self.original_portfolio_value, 2), self.start_date)
+            if self.start_date_from_resumed_data != "":
+                self.start_date_for_log = self.start_date_from_resumed_data
+            else:
+                self.start_date_for_log = self.start_date
+        msg += "original portfolio value : ${} ({})\n".format(utils.KeepNDecimals(self.original_portfolio_value, 2),
+                                                              self.start_date_for_log)
+        lst_stored_data_for_reboot.append(self.start_date_for_log)
+        lst_stored_data_for_reboot.append(self.original_portfolio_value)
         variation_percent = utils.get_variation(self.original_portfolio_value, portfolio_value)
         msg += "current portfolio value : ${} / %{}\n".format(utils.KeepNDecimals(portfolio_value, 2),
                                                               utils.KeepNDecimals(variation_percent, 2))
         msg += "max value : ${} %{} ({})\n".format(utils.KeepNDecimals(self.maximal_portfolio_value, 2),
                                                    utils.KeepNDecimals(self.maximal_portfolio_variation, 2),
                                                    self.maximal_portfolio_date)
+        lst_stored_data_for_reboot.append(self.maximal_portfolio_value)
+        lst_stored_data_for_reboot.append(self.maximal_portfolio_date)
         msg += "min value : ${} %{} ({})\n".format(utils.KeepNDecimals(self.minimal_portfolio_value, 2),
                                                    utils.KeepNDecimals(self.minimal_portfolio_variation, 2),
                                                    self.minimal_portfolio_date)
+        lst_stored_data_for_reboot.append(self.minimal_portfolio_value)
+        lst_stored_data_for_reboot.append(self.minimal_portfolio_date)
         self.traces_trade_total_remaining = self.traces_trade_total_opened - self.traces_trade_total_closed
-        msg += "transactions opened : {} closed : {} remaining open : {}\n".format(self.traces_trade_total_opened,
-                                                                                  self.traces_trade_total_closed,
-                                                                                  self.traces_trade_total_remaining)
+        msg += "transactions opened : {} / closed : {} / remaining open : {}\n".format(int(self.traces_trade_total_opened),
+                                                                                       int(self.traces_trade_total_closed),
+                                                                                       int(self.traces_trade_total_remaining))
+        lst_stored_data_for_reboot.append(self.traces_trade_total_opened)
+        lst_stored_data_for_reboot.append(self.traces_trade_total_closed)
+        lst_stored_data_for_reboot.append(self.traces_trade_total_remaining)
         if self.traces_trade_total_closed == 0:
             win_rate = 0
         else:
             win_rate = 100 * self.traces_trade_positive / self.traces_trade_total_closed
-        msg += "positive / negative trades : {} / {}\n".format(utils.KeepNDecimals(self.traces_trade_positive, 2),
-                                                               utils.KeepNDecimals(self.traces_trade_negative, 2)
+        msg += "positive / negative trades : {} / {}\n".format(int(self.traces_trade_positive),
+                                                               int(self.traces_trade_negative)
                                                                )
+        lst_stored_data_for_reboot.append(self.traces_trade_positive)
+        lst_stored_data_for_reboot.append(self.traces_trade_negative)
+        self.save_reboot_data(lst_stored_data_for_reboot)
         msg += "win rate : %{}\n\n".format(utils.KeepNDecimals(win_rate, 2))
 
         if self.rtstr.rtctrl.get_rtctrl_nb_symbols() > 0:
@@ -881,3 +916,26 @@ class Crag:
         print('price: ', prices_symbols)
 
         return prices_symbols, ds
+
+    def get_stored_data_list(self):
+        return [
+            "original start",             # OK
+            "original portfolio value",   # OK
+            "max value",            # OK
+            "date max value",       # OK
+            "min value",            # OK
+            "date min value",       # OK
+            "transactions opened",  # OK
+            "closed",           # OK
+            "remaining open",   # OK
+            "positive trades",  # OK
+            "negative trades"   # OK
+        ]
+
+    def save_reboot_data(self, lst_data):
+        df = pd.DataFrame(columns=self.get_stored_data_list())
+        df.loc[len(df)] = lst_data
+        self.broker.save_reboot_data(df)
+
+    def get_reboot_data(self):
+        return self.broker.get_broker_boot_data()

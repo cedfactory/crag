@@ -9,7 +9,7 @@ from . import utils
 from datetime import datetime
 from dotenv import load_dotenv
 import time
-import os
+import os, shutil
 import pandas as pd
 
 class BrokerBitGetApi(broker_bitget.BrokerBitGet):
@@ -31,12 +31,18 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         self.failure = 0
         self.success = 0
 
+        self.boot_status = ""
+        self.broker_dir_path = "./broker_data"
+        self.broker_dir_path_filename = self.broker_dir_path + "./broker_init_data.csv"
         if self.reset_account:
             print('reset account requested')
             self.execute_reset_account()
+            self.clear_broker_reset_data()
+            self.set_boot_status_to_reseted()
         else:
             print('reset account not requested')
             print('resume strategy')
+            self.set_boot_status_to_resumed()
 
     def _authentification(self):
         if not self.account:
@@ -332,7 +338,8 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         n_attempts = 3
         while n_attempts > 0:
             try:
-                value = float(self.marketApi.market_price(symbol)["data"]["markPrice"])
+                # value = float(self.marketApi.market_price(symbol)["data"]["markPrice"])
+                value = float(self.marketApi.ticker(symbol)["data"]["last"])
                 self.success += 1
                 break
             except:
@@ -722,3 +729,37 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 time.sleep(2)
                 n_attempts = n_attempts - 1
         return set_symbol_margin
+
+    def clear_broker_reset_data(self):
+        folder = self.broker_dir_path
+        if os.path.exists(folder):
+            shutil.rmtree(folder)
+        os.mkdir(folder)
+
+    def get_broker_boot_data(self):
+        if self.boot_status == "RESUMED" and os.path.exists(self.broker_dir_path_filename):
+            df = pd.read_csv(self.broker_dir_path_filename)
+            return df
+        else:
+            return None
+
+    def get_broker_data_path(self):
+        return self.broker_dir_path
+
+    def set_boot_status_to_reseted(self):
+        self.boot_status = "RESETED"
+
+    def set_boot_status_to_resumed(self):
+        self.boot_status = "RESUMED"
+        folder = self.broker_dir_path
+        if not os.path.exists(folder):
+            os.mkdir(folder)
+
+    def get_boot_status(self):
+        return self.boot_status
+
+    def broker_resumed(self):
+        return self.get_boot_status() == "RESUMED"
+
+    def save_reboot_data(self, df):
+        df.to_csv(self.broker_dir_path_filename)
