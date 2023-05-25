@@ -347,7 +347,6 @@ if __name__ == '__main__':
                 print("automatic restart is on")
                 forceDoNotReset = False
                 while True:
-                    crag_live(sys.argv[3], forceDoNotReset)
                     try:
                         crag_live(sys.argv[3], forceDoNotReset)
                     except Exception as e:
