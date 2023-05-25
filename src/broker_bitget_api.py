@@ -737,7 +737,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         os.mkdir(folder)
 
     def get_broker_boot_data(self):
-        if os.path.exists(self.broker_dir_path_filename):
+        if self.boot_status == "RESUMED" and os.path.exists(self.broker_dir_path_filename):
             df = pd.read_csv(self.broker_dir_path_filename)
             return df
         else:
@@ -757,6 +757,9 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     def get_boot_status(self):
         return self.boot_status
+
+    def broker_resumed(self):
+        return self.get_boot_status() == "RESUMED"
 
     def save_reboot_data(self, df):
         df.to_csv(self.broker_dir_path_filename)
