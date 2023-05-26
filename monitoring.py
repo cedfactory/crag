@@ -81,9 +81,13 @@ def update_history():
                 df.set_index("timestamp", inplace=True)
                 df.to_csv(local_filename)
             else:
-                df = pd.read_csv(local_filename, delimiter=',')
-                new_row = {"timestamp": ts, "usdt_equity": usdt_equity}
-                df = df.append(new_row, ignore_index=True)
+                try:
+                    df = pd.read_csv(local_filename, delimiter=',')
+                    new_row = {"timestamp": ts, "usdt_equity": usdt_equity}
+                    df = df.append(new_row, ignore_index=True)
+                except:
+                    data = [[ts, usdt_equity]]
+                    df = pd.DataFrame(data, columns=["timestamp", "usdt_equity"])
                 df.reset_index()
                 df.set_index("timestamp", inplace=True)
                 df.to_csv(local_filename)
