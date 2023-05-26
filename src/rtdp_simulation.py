@@ -52,7 +52,7 @@ class SimRealTimeDataProvider(rtdp.IRealTimeDataProvider):
                     if column not in data_description.features and column != 'close':
                         self.data[symbol].drop(column, axis=1, inplace=True)
 
-    def get_current_data(self, data_description):
+    def get_current_data(self, data_description, fdp_url_id=""):
         self.current_position = self.scheduler.get_current_position()
         if not self._is_in_dataframe():
             return None

@@ -5,8 +5,10 @@ class Broker(metaclass = ABCMeta):
     
     def __init__(self, params = None):
         self.cash = 0
+        self.fdp_url_id = "localhost:5000"
         if params:
             self.cash = params.get("cash", self.cash)
+            self.fdp_url_id = params.get("fdp_url_id", self.fdp_url_id)
         self.cash_borrowed = 0
         self.rtdp = None
         account_id = params.get("account", "")
@@ -30,7 +32,7 @@ class Broker(metaclass = ABCMeta):
 
     def get_current_data(self, data_description):
         if self.rtdp:
-            return self.rtdp.get_current_data(data_description)
+            return self.rtdp.get_current_data(data_description, self.fdp_url_id)
         return None
 
     def get_cash(self):
