@@ -20,8 +20,12 @@ def export_graph(title, df, filename):
     xfmt = mdates.DateFormatter('%d-%m-%Y')
     ax.xaxis.set_major_formatter(xfmt)
 
-    y_max = max(y)
-    ax.set_ylim([0, y_max + 100])
+    margin = 100
+    y_min = min(y) - margin
+    if y_min < 0:
+        y_min = 0
+    y_max = max(y) + margin
+    ax.set_ylim([y_min, y_max])
 
     ax.plot(datenums, y)
 
