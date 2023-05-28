@@ -67,6 +67,7 @@ def update_history():
 
         if my_broker:
             usdt_equity = my_broker.get_usdt_equity()
+            btcusd = my_broker.get_value("BTC")
 
             local_filename = rootpath + "history_" + account_id + ".csv"
             if g_use_ftp:
@@ -76,18 +77,18 @@ def update_history():
 
             if not os.path.isfile(local_filename):
                 data = [[ts, usdt_equity]]
-                df = pd.DataFrame(data, columns=["timestamp", "usdt_equity"])
+                df = pd.DataFrame(data, columns=["timestamp", "usdt_equity", "btcusd"])
                 df.reset_index()
                 df.set_index("timestamp", inplace=True)
                 df.to_csv(local_filename)
             else:
                 try:
                     df = pd.read_csv(local_filename, delimiter=',')
-                    new_row = {"timestamp": ts, "usdt_equity": usdt_equity}
+                    new_row = {"timestamp": ts, "usdt_equity": usdt_equity, "btcusd": btcusd}
                     df = df.append(new_row, ignore_index=True)
                 except:
-                    data = [[ts, usdt_equity]]
-                    df = pd.DataFrame(data, columns=["timestamp", "usdt_equity"])
+                    data = [[ts, usdt_equity, btcusd]]
+                    df = pd.DataFrame(data, columns=["timestamp", "usdt_equity", "btcusd"])
                 df.reset_index()
                 df.set_index("timestamp", inplace=True)
                 df.to_csv(local_filename)
