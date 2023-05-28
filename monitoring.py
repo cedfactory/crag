@@ -9,10 +9,10 @@ from src import accounts,broker_bitget_api
 from src.toolbox import pdf_helper, mail_helper, ftp_helper
 
 g_use_ftp = True
-def export_graph(title, df, filename):
+def export_graph(title, df, column_name, filename):
     dates = [datetime.fromtimestamp(ts) for ts in df["timestamp"]]
     datenums = mdates.date2num(dates)
-    y = df["usdt_equity"]
+    y = df[column_name]
 
     fig = plt.subplots()
 
@@ -30,7 +30,7 @@ def export_graph(title, df, filename):
     ax.plot(datenums, y)
 
     plt.title(title)
-    plt.ylabel("USDT equity")
+    plt.ylabel(column_name)
     plt.fill_between(datenums, y, alpha=0.3)
     plt.xticks(rotation=25)
     plt.subplots_adjust(bottom=0.2)
@@ -45,11 +45,25 @@ def export_all():
         account_id = value.get("id", "")
         filename = rootpath + "history_" + account_id + ".csv"
         df = pd.read_csv(filename, delimiter=',')
-        pngfilename = rootpath + "history_" + account_id + ".png"
-        export_graph(account_id, df, pngfilename)
 
+        report = pdf_helper.PdfDocument("report", "logo.png")
+
+        # page with a figure
+        pngfilename = rootpath + "history_" + account_id + ".png"
+        export_graph(account_id, df, "usdt_equity", pngfilename)
+        #report.add_page("usdt_equity", [pngfilename])
+
+        pngfilename_btcusd = rootpath + "history_" + account_id + "_btcusd.png"
+        export_graph(account_id, df.dropna(), "btcusd", pngfilename_btcusd)
+        report.add_page(account_id, [pngfilename, pngfilename_btcusd])
+
+        # page with a dataframe
+        df["timestamp"] = [datetime.fromtimestamp(x) for x in df["timestamp"]]
+        report.add_page("Details", [df])
+
+        # write the pdf file
         pdffilename = rootpath + "history_" + account_id + ".pdf"
-        pdf_helper.export_report(pdffilename, df, pngfilename)
+        report.save(pdffilename)
 
 def update_history():
     print("updating history...")
