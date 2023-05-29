@@ -97,6 +97,7 @@ class Crag:
         self.traces_trade_positive = 0
         self.traces_trade_negative = 0
         self.start_date_from_resumed_data = ""
+        self.start_date_for_log = ""
 
         if self.broker.broker_resumed():
             self.df_reboot_data = self.get_reboot_data()
@@ -283,14 +284,15 @@ class Crag:
         msg = "start step current time : {}\n".format(current_date)
         if self.broker.is_reset_account():
             msg += "account reset\n"
-            start_date_for_log = self.start_date
+            self.start_date_for_log = self.start_date
         else:
             msg += "account resumed\n"
             if self.start_date_from_resumed_data != "":
-                start_date_for_log = self.start_date_from_resumed_data
+                self.start_date_for_log = self.start_date_from_resumed_data
             else:
-                start_date_for_log = self.start_date
-        msg += "original portfolio value : ${} ({})\n".format(utils.KeepNDecimals(self.original_portfolio_value, 2), start_date_for_log)
+                self.start_date_for_log = self.start_date
+        msg += "original portfolio value : ${} ({})\n".format(utils.KeepNDecimals(self.original_portfolio_value, 2),
+                                                              self.start_date_for_log)
         lst_stored_data_for_reboot.append(self.start_date_for_log)
         lst_stored_data_for_reboot.append(self.original_portfolio_value)
         variation_percent = utils.get_variation(self.original_portfolio_value, portfolio_value)

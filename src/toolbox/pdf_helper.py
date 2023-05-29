@@ -95,7 +95,7 @@ class PdfDocument():
             if isinstance(content, pd.DataFrame):
                 df = content
                 df = df.round(decimals=3)  # keep 3 decimals
-                df = df.reset_index()  # reset the index to consider it as a column
+                #df = df.reset_index()  # reset the index to consider it as a column
                 table_content = [df.columns[:, ].values.astype(str).tolist()] + df.values.tolist()
                 table = Table(table_content, rowHeights=[8] * (len(df) + 1))
                 table_content_style = TableStyle([('FONTSIZE', (0, 0), (-1, -1), 4),
@@ -129,35 +129,4 @@ class PdfDocument():
     def save(self, filename):
         doc = SimpleDocTemplate(filename, pagesize=A4)
         doc.build(self.elements, canvasmaker=FooterCanvas, onLaterPages=self.onMyLaterPages)
-
-
-def export_report(pdffilename, df, pngfilename):
-    report = PdfDocument("report", "logo.png")
-
-    # page with a dataframe
-    #report.add_page("Element", [df])
-
-    # page with a figure
-    report.add_page("Element", [pngfilename])
-    '''
-    n = 50
-    dates = [datetime.fromtimestamp(ts) for ts in df["timestamp"]]
-    datenums = mdates.date2num(dates)
-    data = df["usdt_equity"]
-    df = pd.DataFrame({'date': datenums, 'value': data})
-    df.set_index("date", inplace=True)
-
-    fig = plt.figure(figsize=(7, 7), dpi=50)
-    fig.add_subplot(111)
-    df['value'].plot()
-    plt.title("title")
-
-    report.add_page("Element 2", [fig, df])
-    '''
-
-    plt.close()
-
-    # write the pdf file
-    report.save(pdffilename)
-
 

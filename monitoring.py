@@ -6,12 +6,13 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
 from src import accounts,broker_bitget_api
-from src.toolbox import pdf_helper, mail_helper
+from src.toolbox import pdf_helper, mail_helper, ftp_helper
 
-def export_graph(title, df, filename):
+g_use_ftp = True
+def export_graph(title, df, column_name, filename):
     dates = [datetime.fromtimestamp(ts) for ts in df["timestamp"]]
     datenums = mdates.date2num(dates)
-    y = df["usdt_equity"]
+    y = df[column_name]
 
     fig = plt.subplots()
 
@@ -19,13 +20,17 @@ def export_graph(title, df, filename):
     xfmt = mdates.DateFormatter('%d-%m-%Y')
     ax.xaxis.set_major_formatter(xfmt)
 
-    y_max = max(y)
-    ax.set_ylim([0, y_max + 100])
+    margin = 100
+    y_min = min(y) - margin
+    if y_min < 0:
+        y_min = 0
+    y_max = max(y) + margin
+    ax.set_ylim([y_min, y_max])
 
     ax.plot(datenums, y)
 
     plt.title(title)
-    plt.ylabel("USDT equity")
+    plt.ylabel(column_name)
     plt.fill_between(datenums, y, alpha=0.3)
     plt.xticks(rotation=25)
     plt.subplots_adjust(bottom=0.2)
@@ -40,11 +45,25 @@ def export_all():
         account_id = value.get("id", "")
         filename = rootpath + "history_" + account_id + ".csv"
         df = pd.read_csv(filename, delimiter=',')
-        pngfilename = rootpath + "history_" + account_id + ".png"
-        export_graph(account_id, df, pngfilename)
 
+        report = pdf_helper.PdfDocument("report", "logo.png")
+
+        # page with a figure
+        pngfilename = rootpath + "history_" + account_id + ".png"
+        export_graph(account_id, df, "usdt_equity", pngfilename)
+        #report.add_page("usdt_equity", [pngfilename])
+
+        pngfilename_btcusd = rootpath + "history_" + account_id + "_btcusd.png"
+        export_graph(account_id, df.dropna(), "btcusd", pngfilename_btcusd)
+        report.add_page(account_id, [pngfilename, pngfilename_btcusd])
+
+        # page with a dataframe
+        df["timestamp"] = [datetime.fromtimestamp(x) for x in df["timestamp"]]
+        report.add_page("Details", [df])
+
+        # write the pdf file
         pdffilename = rootpath + "history_" + account_id + ".pdf"
-        pdf_helper.export_report(pdffilename, df, pngfilename)
+        report.save(pdffilename)
 
 def update_history():
     print("updating history...")
@@ -62,22 +81,36 @@ def update_history():
 
         if my_broker:
             usdt_equity = my_broker.get_usdt_equity()
+            btcusd = my_broker.get_value("BTC")
 
-            filename = rootpath + "history_" + account_id + ".csv"
-            if not os.path.isfile(filename):
+            local_filename = rootpath + "history_" + account_id + ".csv"
+            if g_use_ftp:
+                remote_path = "./customers/history/"
+                remote_filename = "history_" + account_id + ".csv"
+                ftp_helper.pull_file("default", remote_path, remote_filename, local_filename)
+
+            if not os.path.isfile(local_filename):
                 data = [[ts, usdt_equity]]
-                df = pd.DataFrame(data, columns=["timestamp", "usdt_equity"])
+                df = pd.DataFrame(data, columns=["timestamp", "usdt_equity", "btcusd"])
                 df.reset_index()
                 df.set_index("timestamp", inplace=True)
-                df.to_csv(filename)
+                df.to_csv(local_filename)
             else:
-                df = pd.read_csv(filename, delimiter=',')
-                new_row = {"timestamp": ts, "usdt_equity": usdt_equity}
-                df = df.append(new_row, ignore_index=True)
+                try:
+                    df = pd.read_csv(local_filename, delimiter=',')
+                    new_row = {"timestamp": ts, "usdt_equity": usdt_equity, "btcusd": btcusd}
+                    df = df.append(new_row, ignore_index=True)
+                except:
+                    data = [[ts, usdt_equity, btcusd]]
+                    df = pd.DataFrame(data, columns=["timestamp", "usdt_equity", "btcusd"])
                 df.reset_index()
                 df.set_index("timestamp", inplace=True)
-                df.to_csv(filename)
+                df.to_csv(local_filename)
 
+            if g_use_ftp:
+                remote_path = "./customers/history/"
+                remote_filename = "history_" + account_id + ".csv"
+                ftp_helper.push_file("default", local_filename, remote_path+remote_filename)
 
 def loop(freq):
     while True:
@@ -97,7 +130,7 @@ if __name__ == '__main__':
     if len(sys.argv) == 2:
         if sys.argv[1] == "--export":
             export_all()
-        if sys.argv[1] == "--mail":
+        elif sys.argv[1] == "--mail":
             mail_helper.send_mail("receiver@foobar.com", "Subject", "message")
         else:
             freq = int(sys.argv[1])

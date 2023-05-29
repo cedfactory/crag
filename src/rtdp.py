@@ -25,7 +25,7 @@ class IRealTimeDataProvider(metaclass = ABCMeta):
         pass
 
     @abstractmethod
-    def get_current_data(self, data_description):
+    def get_current_data(self, data_description, fdp_url_id):
         return None
 
     @abstractmethod
@@ -64,7 +64,7 @@ class RealTimeDataProvider(IRealTimeDataProvider):
         else:
             pass
 
-    def get_current_data(self, data_description):
+    def get_current_data(self, data_description, fdp_url_id):
 
         symbols = ','.join(data_description.symbols)
         symbols = symbols.replace('/','_')
@@ -85,7 +85,7 @@ class RealTimeDataProvider(IRealTimeDataProvider):
         # params = {"service": "last", "exchange": "binance", "symbol": symbols, "interval": interval, "indicators": data_description.fdp_features}
         # https://fdp-ifxcxetwza-od.a.run.app/history?exchange=bitget&symbol=BTC&start=2023-01-01&indicators=close
         #
-        response_json = utils.fdp_request_post("last", params)
+        response_json = utils.fdp_request_post("last", params, fdp_url_id)
 
         data = {feature: [] for feature in data_description.features}
         data["symbol"] = []

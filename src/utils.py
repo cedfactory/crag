@@ -84,7 +84,7 @@ def _atomic_fdp_request(url):
             print('FDP ERROR : ', reason)
     return response_json
 
-
+'''
 def fdp_request(params, multithreading = True):
     fdp_url = get_fdp_url()
     if not fdp_url or fdp_url == "":
@@ -121,9 +121,9 @@ def fdp_request(params, multithreading = True):
                     final_result["result"][current_symbol] = res["result"][current_symbol]
 
     return final_result
-
-def fdp_request_post(url, params):
-    fdp_url = get_fdp_url()
+'''
+def fdp_request_post(url, params, fdp_url_id):
+    fdp_url = get_fdp_url_info(fdp_url_id)
     if not fdp_url or fdp_url == "":
         return {"status":"ko", "info":"fdp url not found"}
 
