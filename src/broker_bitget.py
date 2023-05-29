@@ -135,6 +135,7 @@ class BrokerBitGet(broker.Broker):
                     trade.buying_price = trade.symbol_price
 
         elif trade.type == "CLOSE_LONG":
+            trade.gross_size = self.get_symbol_available(symbol)
             transaction = self._close_long_position(symbol, trade.gross_size, clientOid)
             if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
                 trade.success = True
@@ -151,6 +152,7 @@ class BrokerBitGet(broker.Broker):
                    trade.roi = utils.get_variation(trade.bought_gross_price, trade.gross_price)
 
         elif trade.type == "CLOSE_SHORT":
+            trade.gross_size = self.get_symbol_available(symbol)
             transaction = self._close_short_position(symbol, trade.gross_size, clientOid)
             if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
                 trade.success = True
@@ -260,8 +262,11 @@ class BrokerBitGet(broker.Broker):
     @authentication_required
     def get_symbol_available(self, symbol):
         df_positions = self.get_open_position()
-        available = df_positions.loc[(df_positions['symbol'] == symbol), "available"].values[0]
-        return available
+        if symbol in df_positions['symbol'].tolist():
+            available = df_positions.loc[(df_positions['symbol'] == symbol), "available"].values[0]
+            return available
+        else:
+            return 0
 
     @authentication_required
     def get_symbol_usdtEquity(self, symbol):
