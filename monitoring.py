@@ -10,7 +10,10 @@ from src.toolbox import pdf_helper, mail_helper, ftp_helper
 
 g_use_ftp = True
 def export_graph(title, df, column_name, filename):
-    dates = [datetime.fromtimestamp(ts) for ts in df["timestamp"]]
+    if title == "Sum":
+        dates = df["timestamp"]
+    else:
+        dates = [datetime.fromtimestamp(ts) for ts in df["timestamp"]]
     datenums = mdates.date2num(dates)
     y = df[column_name]
 
@@ -41,29 +44,43 @@ def export_graph(title, df, column_name, filename):
 def export_all():
     rootpath = "./conf/"
     accounts_info = accounts.import_accounts()
+
+    report = pdf_helper.PdfDocument("report", "logo.png")
+
+    df_sum = pd.DataFrame([], columns=["timestamp", "usdt_equity"])
+    df_sum.set_index("timestamp", inplace=True)
+
     for key, value in accounts_info.items():
         account_id = value.get("id", "")
         filename = rootpath + "history_" + account_id + ".csv"
         df = pd.read_csv(filename, delimiter=',')
 
-        report = pdf_helper.PdfDocument("report", "logo.png")
-
         # page with a figure
         pngfilename = rootpath + "history_" + account_id + ".png"
         export_graph(account_id, df, "usdt_equity", pngfilename)
-        #report.add_page("usdt_equity", [pngfilename])
 
         pngfilename_btcusd = rootpath + "history_" + account_id + "_btcusd.png"
         export_graph(account_id, df.dropna(), "btcusd", pngfilename_btcusd)
-        report.add_page(account_id, [pngfilename, pngfilename_btcusd])
 
-        # page with a dataframe
-        df["timestamp"] = [datetime.fromtimestamp(x) for x in df["timestamp"]]
-        report.add_page("Details", [df])
+        df["timestamp"] = [datetime.fromtimestamp(x).replace(minute=0, second=0, microsecond=0) for x in df["timestamp"]]
+        df.drop_duplicates(subset=["timestamp"], inplace=True)
+        report.add_page(account_id, [pngfilename, pngfilename_btcusd, df])
 
-        # write the pdf file
-        pdffilename = rootpath + "history_" + account_id + ".pdf"
-        report.save(pdffilename)
+        df = df.drop(["btcusd"], axis=1)
+        df.set_index("timestamp", inplace=True)
+        df1 = df.resample("6H").interpolate()
+        df_sum = df_sum.groupby('timestamp').sum().add(df1.groupby('timestamp').sum(), fill_value=0)
+
+    pngfilename_sum = rootpath + "history_sum.png"
+    df_sum = df_sum.iloc[1:] # temporary hack
+    df_sum.reset_index(inplace=True)
+    df_sum["usdt_equity"] = pd.to_numeric(df_sum["usdt_equity"])
+    export_graph("Sum", df_sum, "usdt_equity", pngfilename_sum)
+    report.add_page("Sum", [pngfilename_sum])
+
+    # write the pdf file
+    pdffilename = rootpath + "history_report.pdf"
+    report.save(pdffilename)
 
 def update_history():
     print("updating history...")
