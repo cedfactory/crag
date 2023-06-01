@@ -50,6 +50,8 @@ def export_all():
     df_sum = pd.DataFrame([], columns=["timestamp", "usdt_equity"])
     df_sum.set_index("timestamp", inplace=True)
 
+    accounts_export_info = []
+
     for key, value in accounts_info.items():
         account_id = value.get("id", "")
         filename = rootpath + "history_" + account_id + ".csv"
@@ -64,7 +66,14 @@ def export_all():
 
         df["timestamp"] = [datetime.fromtimestamp(x).replace(minute=0, second=0, microsecond=0) for x in df["timestamp"]]
         df.drop_duplicates(subset=["timestamp"], inplace=True)
-        report.add_page(account_id, [pngfilename, pngfilename_btcusd, df])
+        #report.add_page(account_id, [pngfilename, pngfilename_btcusd, df])
+
+        account_export_info = {
+            "account_id": account_id,
+            "usdt_equity": pngfilename,
+            "df": df
+        }
+        accounts_export_info.append(account_export_info)
 
         df = df.drop(["btcusd"], axis=1)
         df.set_index("timestamp", inplace=True)
@@ -77,6 +86,13 @@ def export_all():
     df_sum["usdt_equity"] = pd.to_numeric(df_sum["usdt_equity"])
     export_graph("Sum", df_sum, "usdt_equity", pngfilename_sum)
     report.add_page("Sum", [pngfilename_sum])
+
+    # export each account info
+    for account_export_info in accounts_export_info:
+        account_id = account_export_info["account_id"]
+        pngfilename_usdt_equity = account_export_info["usdt_equity"]
+        df = account_export_info["df"]
+        report.add_page(account_id, [pngfilename_usdt_equity, df])
 
     # write the pdf file
     pdffilename = rootpath + "history_report.pdf"
