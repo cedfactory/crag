@@ -71,35 +71,51 @@ def export_btcusd(filename, past_days):
     # mpf.plot(df_ohlvc,type='candle',mav=(5, 3),volume=True, title='BTC')
     mpf.plot(df_ohlvc,type='candle', volume=True, title='BTC',savefig=filename)
 
+    return df_ohlvc
 #####
 
 
-def export_graph(title, df, column_name, filename):
+def export_graph(filename, title, df, lst_columns, df2=None, lst_columns2=None):
     if title == "Sum":
         dates = df["timestamp"]
     else:
         dates = [datetime.fromtimestamp(ts) for ts in df["timestamp"]]
     datenums = mdates.date2num(dates)
-    y = df[column_name]
-
     fig = plt.subplots()
+    plt.figure(figsize=(10, 4))
 
     ax = plt.gca()
     xfmt = mdates.DateFormatter('%d-%m-%Y')
     ax.xaxis.set_major_formatter(xfmt)
 
-    margin = 100
-    y_min = min(y) - margin
-    if y_min < 0:
-        y_min = 0
-    y_max = max(y) + margin
+    ymin = []
+    ymax = []
+    for column_name in lst_columns:
+        y = df[column_name]
+        ymin.append(min(y))
+        ymax.append(max(y))
+        ax.plot(datenums, y, label=column_name)
+        plt.fill_between(datenums, y, alpha=0.3)
+
+    if lst_columns2:
+        dates = df2.index
+        datenums = mdates.date2num(dates)
+        for column_name in lst_columns2:
+            y = df2[column_name]
+            ymin.append(min(y))
+            ymax.append(max(y))
+            ax.plot(datenums, y, label=column_name)
+            plt.fill_between(datenums, y, alpha=0.3)
+
+    y_min = min(ymin)
+    y_max = max(ymax)
+    margin = 0.1*(y_max-y_min)
+    y_min = y_min - margin
+    y_max = y_max + margin
     ax.set_ylim([y_min, y_max])
 
-    ax.plot(datenums, y)
-
     plt.title(title)
-    plt.ylabel(column_name)
-    plt.fill_between(datenums, y, alpha=0.3)
+    plt.legend()
     plt.xticks(rotation=25)
     plt.subplots_adjust(bottom=0.2)
 
@@ -130,7 +146,7 @@ def export_all():
 
         # page with a figure
         pngfilename = rootpath + "history_" + account_id + ".png"
-        export_graph(account_id, df, "usdt_equity", pngfilename)
+        export_graph(pngfilename, account_id, df, ["usdt_equity"])
 
         timestamp_start = df.iloc[0]["timestamp"]
         timestamp_end = df.iloc[-1]["timestamp"]
@@ -138,6 +154,15 @@ def export_all():
         delta_days = delta_seconds / (60*60*24)
         pngfilename_btcusd = rootpath + "history_" + account_id + "_btcusd.png"
         export_btcusd(pngfilename_btcusd, delta_days)
+
+        pngfilename_usdt_equity_btcusd_normalized = rootpath + "history_" + account_id + "_usdt_equity_btcusd_normalized.png"
+        if df.at[0, "usdt_equity"]:
+            df["usdt_equity_normalized"] = 1000 * df["usdt_equity"] / df.at[0, "usdt_equity"]
+        else:
+            df["usdt_equity_normalized"] = df["usdt_equity"]
+        df_btcusd = export_btcusd(pngfilename_usdt_equity_btcusd_normalized, delta_days)
+        df_btcusd["close_normalized"] = 1000 * df_btcusd["close"] / df_btcusd.iloc[0]["close"]
+        export_graph(pngfilename_usdt_equity_btcusd_normalized, "Normalized", df, ["usdt_equity_normalized"], df_btcusd, ["close_normalized"])
 
         # Not used ?
         df["timestamp"] = [datetime.fromtimestamp(x).replace(minute=0, second=0, microsecond=0) for x in df["timestamp"]]
@@ -147,6 +172,7 @@ def export_all():
             "account_id": account_id,
             "usdt_equity": pngfilename,
             "btcusd": pngfilename_btcusd,
+            "usdt_equity_btcusd_normalized": pngfilename_usdt_equity_btcusd_normalized,
             "df": df
         }
         accounts_export_info.append(account_export_info)
@@ -161,7 +187,10 @@ def export_all():
     df_sum = df_sum.iloc[1:] # temporary hack
     df_sum.reset_index(inplace=True)
     df_sum["usdt_equity"] = pd.to_numeric(df_sum["usdt_equity"])
-    export_graph("Sum", df_sum, "usdt_equity", pngfilename_sum)
+    export_graph(pngfilename_sum, "Sum", df_sum, ["usdt_equity"])
+
+    df_sum["usdt_equity_normalized"] = 1000 * df_sum["usdt_equity"] / df_sum.at[0, "usdt_equity"]
+    pngfilename_sum_normalized = rootpath + "history_sum_normalized.png"
 
     # sum : btcusd
     date_start = df_sum.iloc[0]["timestamp"]
@@ -169,17 +198,20 @@ def export_all():
     delta = date_end - date_start
     delta_days = delta.days
     pngfilename_sum_btcusd = rootpath + "history_sum_btcusd.png"
-    export_btcusd(pngfilename_sum_btcusd, delta_days)
+    df_btcusd = export_btcusd(pngfilename_sum_btcusd, delta_days)
+    df_btcusd["close_normalized"] = 1000 * df_btcusd["close"] / df_btcusd.iloc[0]["close"]
 
-    report.add_page("Sum", [pngfilename_sum, pngfilename_sum_btcusd])
+    export_graph(pngfilename_sum_normalized, "Sum", df_sum, ["usdt_equity_normalized"], df_btcusd, ["close_normalized"])
+    report.add_page("Sum", [pngfilename_sum, pngfilename_sum_normalized, pngfilename_sum_btcusd])
 
     # export each account info
     for account_export_info in accounts_export_info:
         account_id = account_export_info["account_id"]
         pngfilename_usdt_equity = account_export_info["usdt_equity"]
         pngfilename_btcusd = account_export_info["btcusd"]
+        usdt_equity_btcusd_normalized = account_export_info["usdt_equity_btcusd_normalized"]
         df = account_export_info["df"]
-        report.add_page(account_id, [pngfilename_usdt_equity, pngfilename_btcusd])
+        report.add_page(account_id, [pngfilename_usdt_equity, usdt_equity_btcusd_normalized, pngfilename_btcusd])
 
     # write the pdf file
     pdffilename = rootpath + "history_report.pdf"

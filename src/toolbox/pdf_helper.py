@@ -116,7 +116,7 @@ class PdfDocument():
                 self.elements.append(Image(imgBuffer))
 
             else:
-                img = get_image(content, 11 * cm)
+                img = get_image(content, 14 * cm)
                 self.elements.append(img)
 
         self.elements.append(PageBreak())
