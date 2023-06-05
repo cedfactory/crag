@@ -338,9 +338,6 @@ class RealTimeStrategy(metaclass=ABCMeta):
             self.rtctrl.update_rtctrl(current_datetime, current_trades, broker_cash, broker_cash_borrowed, prices_symbols, final_date, df_balance)
             self.rtctrl.display_summary_info(record_info)
 
-    def envelope_strategy_on(self):
-        return False
-
     def get_nb_envelope_to_purchase(self, symbol):
         return 1
 
@@ -352,7 +349,6 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
     def set_nb_increase_symbol_position_engaged(self, nb_position, symbol):
         self.position_recorder.set_increase_position_record(nb_position, symbol)
-
 
     def reset_position_recorder_for_symbol(self, symbol):
         self.position_recorder.reset_position_record(symbol)
@@ -369,18 +365,25 @@ class RealTimeStrategy(metaclass=ABCMeta):
             print("traces get_symbol_buying_size - wallet cash: ", round(self.rtctrl.wallet_cash, 2),
                   " cash available: ", round(self.rtctrl.cash_available, 2))
 
-        if self.envelope_strategy_on():
-            self.buying_size = self.rtctrl.cash_available * self.get_nb_envelope_to_purchase(symbol)
+        total_postion_engaged = self.get_nb_position_engaged()
+        print("DEBUG - nb  position engaged: ", total_postion_engaged, " max position: ", self.MAX_POSITION)
+        if total_postion_engaged > self.MAX_POSITION:
+            print("max position reached: ", self.MAX_POSITION)
+            print("symbol: ", symbol, "size: 0")
+            return 0, 0, 0
         else:
-            total_postion_engaged = self.get_nb_position_engaged()
-            if total_postion_engaged == self.MAX_POSITION:
-                return 0, 0, 0
+            if self.MAX_POSITION == total_postion_engaged:
+                self.buying_size = self.rtctrl.cash_available
             else:
                 self.buying_size = self.rtctrl.cash_available / (self.MAX_POSITION - total_postion_engaged)
-                self.set_nb_increase_symbol_position_engaged(1, symbol)
+
+            self.set_nb_increase_symbol_position_engaged(1, symbol)
+            total_postion_engaged = self.get_nb_position_engaged()
+            print("DEBUG - nb  position engaged increased to: ", total_postion_engaged, " max position: ", self.MAX_POSITION)
 
         available_cash = self.rtctrl.cash_available
         if available_cash == 0:
+            print("symbol: ", symbol, "size: 0 cash: 0")
             return 0, 0, 0
 
         cash_to_buy = self.buying_size

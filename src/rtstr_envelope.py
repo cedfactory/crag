@@ -38,7 +38,9 @@ class StrategyEnvelope(rtstr.RealTimeStrategy):
         ds.fdp_features = {"close": {},
                            "envelope": {"indicator": "envelope", "window_size": 10,
                                         "ma": "sma", "ma_window_size": 5,
-                                        "ma_offset_1": "3", "ma_offset_2": "5", "ma_offset_3": "7",
+                                        # "ma_offset_1": "2", "ma_offset_2": "5", "ma_offset_3": "7",
+                                        # "ma_offset_1": "3", "ma_offset_2": "5", "ma_offset_3": "7",
+                                        "ma_offset_1": "2", "ma_offset_2": "3", "ma_offset_3": "5",
                                         "output": ["ma_base",
                                                    "envelope_long_1", "envelope_long_2", "envelope_long_3",
                                                    "envelope_short_1", "envelope_short_2", "envelope_short_3"]
@@ -105,6 +107,64 @@ class StrategyEnvelope(rtstr.RealTimeStrategy):
                 self.envelope.set_nb_short_position_already_purchased(nb_to_purchase, symbol)
                 self.envelope.reset_nb_short_position_to_purchase(symbol)
                 return nb_to_purchase / (self.nb_envelope - nb_to_already_purchased)
+
+    def get_symbol_buying_size(self, symbol):
+        if not symbol in self.rtctrl.prices_symbols or self.rtctrl.prices_symbols[symbol] < 0:  # first init at -1
+            return 0, 0, 0
+
+        if self.rtctrl.init_cash_value == 0:  # CEDE DEBUG for resume
+            print("init_cash_value: ", self.rtctrl.init_cash_value, " wallet_cash: ", self.rtctrl.wallet_cash)
+            self.rtctrl.init_cash_value = self.rtctrl.wallet_cash
+
+        if round(self.rtctrl.wallet_cash, 2) != round(self.rtctrl.cash_available, 2):
+            print("traces get_symbol_buying_size - wallet cash: ", round(self.rtctrl.wallet_cash, 2),
+                  " cash available: ", round(self.rtctrl.cash_available, 2))
+
+        total_postion_engaged = self.get_nb_position_engaged()
+        print("DEBUG - nb  position engaged: ", total_postion_engaged, " max position: ", self.MAX_POSITION)
+        if total_postion_engaged > self.MAX_POSITION:
+            print("max position reached: ", self.MAX_POSITION)
+            print("symbol: ", symbol, "size: 0")
+            return 0, 0, 0
+        else:
+            if self.MAX_POSITION == total_postion_engaged:
+                self.buying_size = self.rtctrl.cash_available
+            else:
+                self.buying_size = self.rtctrl.cash_available * self.get_nb_envelope_to_purchase(symbol)
+                print(symbol," get_nb_envelope_to_purchase: ", self.get_nb_envelope_to_purchase(symbol), " buying_size: ", self.buying_size)
+            self.set_nb_increase_symbol_position_engaged(1, symbol)
+            total_postion_engaged = self.get_nb_position_engaged()
+            print("DEBUG - nb  position engaged increased to: ", total_postion_engaged, " max position: ", self.MAX_POSITION)
+
+
+        available_cash = self.rtctrl.cash_available
+        if available_cash == 0:
+            print("symbol: ", symbol, "size: 0 cash: 0")
+            return 0, 0, 0
+
+        cash_to_buy = self.buying_size
+
+        if cash_to_buy > available_cash:
+            cash_to_buy = available_cash
+
+        size = cash_to_buy / self.rtctrl.prices_symbols[symbol]
+
+        percent = cash_to_buy * 100 / self.rtctrl.init_cash_value
+
+        gridzone = -1
+
+        # DEBUG CEDE:
+        print("symbol: ", symbol,
+              " size: ", size,
+              " cash_to_buy: ", cash_to_buy,
+              " available cash: ", available_cash,
+              " price symbol: ", self.rtctrl.prices_symbols[symbol],
+              " init_cash_value: ", self.rtctrl.init_cash_value,
+              " wallet_cash: ", self.rtctrl.wallet_cash,
+              " available cash: ", self.rtctrl.cash_available
+              )
+
+        return size, percent, gridzone
 
     def get_nb_envelope(self):
         return 3
@@ -202,6 +262,19 @@ class EnvelopeLevelStatus():
 
     ####### CONDITION #######
     def get_open_long_position_condition(self, df_current_data, symbol):
+        if False:
+            print("get_open_long_position_condition - symbol: ", symbol,
+                  " envelope_long_1 ", df_current_data['envelope_long_1'][symbol],
+                  " close: ", df_current_data['close'][symbol],
+                  " test 1: ", df_current_data['close'][symbol] > df_current_data['envelope_long_1'][symbol],
+                  " test 2: ", df_current_data['close'][symbol] < df_current_data['envelope_long_1'][symbol] \
+                    and df_current_data['close'][symbol] > df_current_data['envelope_long_2'][symbol]\
+                    and self.confirm_open_long(symbol, 1),
+                  " self.confirm_open_long(symbol, 1): ", self.confirm_open_long(symbol, 1),
+                  " test 3: ", df_current_data['close'][symbol] < df_current_data['envelope_long_2'][symbol] \
+                    and df_current_data['close'][symbol] > df_current_data['envelope_long_3'][symbol] \
+                    and self.confirm_open_long(symbol, 2)
+                  )
         if df_current_data['close'][symbol] > df_current_data['envelope_long_1'][symbol]:
             return False
         elif df_current_data['close'][symbol] < df_current_data['envelope_long_1'][symbol] \
@@ -222,6 +295,19 @@ class EnvelopeLevelStatus():
             return False
 
     def get_open_short_position_condition(self, df_current_data, symbol):
+        if False:
+            print("get_open_short_position_condition - symbol: ", symbol,
+                  " envelope_short_1 ", df_current_data['envelope_short_1'][symbol],
+                  " close: ", df_current_data['close'][symbol],
+                  " test 1: ", df_current_data['close'][symbol] < df_current_data['envelope_short_1'][symbol],
+                  " test 2: ", df_current_data['close'][symbol] > df_current_data['envelope_short_1'][symbol] \
+                    and df_current_data['close'][symbol] < df_current_data['envelope_short_2'][symbol] \
+                    and self.confirm_open_short(symbol, 1),
+                  " self.confirm_open_short(symbol, 1): ", self.confirm_open_short(symbol, 1),
+                  " test 3: ", df_current_data['close'][symbol] > df_current_data['envelope_short_2'][symbol] \
+                    and df_current_data['close'][symbol] < df_current_data['envelope_short_3'][symbol] \
+                    and self.confirm_open_short(symbol, 2)
+                  )
         if df_current_data['close'][symbol] < df_current_data['envelope_short_1'][symbol]:
             return False
         elif df_current_data['close'][symbol] > df_current_data['envelope_short_1'][symbol] \
