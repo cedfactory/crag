@@ -564,7 +564,8 @@ class Crag:
                 print('=========== > current_trade.gross_price: ', current_trade.gross_price)
                 print('=========== > self.cash: ', self.cash)
                 current_trade.symbol_price = self.broker.get_value(symbol)
-                df_buying_symbols["size"][symbol] = df_buying_symbols["size"][symbol] - df_buying_symbols["size"][symbol] * self.epsilon_size_reduce / 100
+                symbol_size = df_buying_symbols["size"][symbol]
+                df_buying_symbols["size"][symbol] = symbol_size - symbol_size * self.epsilon_size_reduce / 100
                 current_trade.gross_size = df_buying_symbols["size"][symbol]
                 current_trade.gross_price = current_trade.gross_size * current_trade.symbol_price
                 print("=========== > size and price reduced:")
