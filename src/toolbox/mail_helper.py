@@ -68,7 +68,8 @@ def send_mail(receiver, subject, message, attachments=None):
         server.ehlo()  # Can be omitted
         server.login(sender_email, password)
 
-        if attachments == None:
+        if not attachments or (isinstance(attachments, list) and len(attachments) == 0):
+            message = "From: {}\nTo: {}\nSubject: {}\n{}".format(sender_email, receiver_email, subject, message)
             server.sendmail(sender_email, receiver_email, message)
         else:
             msg = EmailMessage()
