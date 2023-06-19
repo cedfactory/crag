@@ -76,6 +76,11 @@ def export_all():
     df_sum.reset_index(inplace=True)
     df_sum["usdt_equity"] = pd.to_numeric(df_sum["usdt_equity"])
 
+    if g_use_ftp:
+        remote_path = "./customers/history/"
+        remote_filename = "transferts.csv"
+        ftp_helper.pull_file("default", remote_path, remote_filename, "./conf/transferts.csv")
+
     df_transferts = pd.read_csv("./conf/transferts.csv", keep_default_na=False)
     df_transferts = df_transferts[(df_transferts.account_src == "") | (df_transferts.account_dst == "")]
     df_transferts.sort_values(by=["timestamp"], inplace=True)
