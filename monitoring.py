@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import os, sys
 import time
@@ -48,6 +49,7 @@ def export_all():
             df["usdt_equity_normalized"] = df["usdt_equity"]
         df_btcusd = graph_helper.export_btcusd(pngfilename_usdt_equity_btcusd_normalized, delta_days)
         df_btcusd["close_normalized"] = 1000 * df_btcusd["close"] / df_btcusd.iloc[0]["close"]
+        df_btcusd["timestamp"] = df_btcusd.index
         graph_helper.export_graph(pngfilename_usdt_equity_btcusd_normalized, "Normalized", df, ["usdt_equity_normalized"], df_btcusd, ["close_normalized"])
 
         # Not used ?
@@ -73,7 +75,21 @@ def export_all():
     df_sum = df_sum.iloc[1:] # temporary hack
     df_sum.reset_index(inplace=True)
     df_sum["usdt_equity"] = pd.to_numeric(df_sum["usdt_equity"])
-    graph_helper.export_graph(pngfilename_sum, "Sum", df_sum, ["usdt_equity"])
+
+    df_transferts = pd.read_csv("./conf/transferts.csv", keep_default_na=False)
+    df_transferts = df_transferts[(df_transferts.account_src == "") | (df_transferts.account_dst == "")]
+    df_transferts.sort_values(by=["timestamp"], inplace=True)
+    df_transferts["placed"] = np.where(df_transferts.account_src == "", df_transferts.amount, -df_transferts.amount)
+    df_transferts["placed_cumsum"] = df_transferts["placed"].cumsum()
+    df_transferts = df_transferts[["timestamp", "placed_cumsum"]]
+
+    # add a row
+    last_timestamp = datetime.timestamp(df_sum.tail(1)["timestamp"].iloc[0])
+    last_placed_cumsum = df_transferts.tail(1)["placed_cumsum"].iloc[0]
+    row = pd.DataFrame({"timestamp": last_timestamp, "placed_cumsum": last_placed_cumsum}, index=[1])
+    df_transferts = pd.concat([df_transferts, row])
+
+    graph_helper.export_graph(pngfilename_sum, "Global Investment", df_sum, ["usdt_equity"], df_transferts, ["placed_cumsum"])
 
     df_sum["usdt_equity_normalized"] = 1000 * df_sum["usdt_equity"] / df_sum.at[0, "usdt_equity"]
     pngfilename_sum_normalized = rootpath + "history_sum_normalized.png"
@@ -86,8 +102,8 @@ def export_all():
     pngfilename_sum_btcusd = rootpath + "history_sum_btcusd.png"
     df_btcusd = graph_helper.export_btcusd(pngfilename_sum_btcusd, delta_days)
     df_btcusd["close_normalized"] = 1000 * df_btcusd["close"] / df_btcusd.iloc[0]["close"]
-
-    graph_helper.export_graph(pngfilename_sum_normalized, "Sum", df_sum, ["usdt_equity_normalized"], df_btcusd, ["close_normalized"])
+    df_btcusd["timestamp"] = df_btcusd.index
+    graph_helper.export_graph(pngfilename_sum_normalized, "Normalized Investment", df_sum, ["usdt_equity_normalized"], df_btcusd, ["close_normalized"])
     report.add_page("Sum", [pngfilename_sum, pngfilename_sum_normalized, pngfilename_sum_btcusd])
 
     # export each account info

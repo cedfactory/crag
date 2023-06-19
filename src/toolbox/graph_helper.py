@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from datetime import datetime
 
 import matplotlib.pyplot as plt
@@ -43,7 +44,7 @@ def get_ohlcv_values(df_ohlvc, time):
 def export_btcusd(filename, past_days):
     df_ohlvc = get_historical_ohlc_data("BTCUSDT", past_days=past_days)
 
-    print(df_ohlvc)
+    #print(df_ohlvc)
 
     df_ohlvc["date"] = pd.to_datetime(df_ohlvc["open_date_time"])
     df_ohlvc.reset_index(inplace=True)
@@ -62,10 +63,10 @@ def export_btcusd(filename, past_days):
 
 
 def export_graph(filename, title, df, lst_columns, df2=None, lst_columns2=None):
-    if title == "Sum":
-        dates = df["timestamp"]
-    else:
+    if df["timestamp"].dtype == np.float64 or df["timestamp"].dtype == np.int64:
         dates = [datetime.fromtimestamp(ts) for ts in df["timestamp"]]
+    else:
+        dates = df["timestamp"]
     datenums = mdates.date2num(dates)
     fig = plt.subplots()
     plt.figure(figsize=(10, 4))
@@ -84,7 +85,11 @@ def export_graph(filename, title, df, lst_columns, df2=None, lst_columns2=None):
         plt.fill_between(datenums, y, alpha=0.3)
 
     if lst_columns2:
-        dates = df2.index
+        #dates = df2.index
+        if df2["timestamp"].dtype == np.float64 or df2["timestamp"].dtype == np.int64:
+            dates = [datetime.fromtimestamp(ts) for ts in df2["timestamp"]]
+        else:
+            dates = df2["timestamp"]
         datenums = mdates.date2num(dates)
         for column_name in lst_columns2:
             y = df2[column_name]
@@ -98,6 +103,8 @@ def export_graph(filename, title, df, lst_columns, df2=None, lst_columns2=None):
     margin = 0.1*(y_max-y_min)
     y_min = y_min - margin
     y_max = y_max + margin
+    if y_min == 0 and y_max == 0:
+        y_max = 10
     ax.set_ylim([y_min, y_max])
 
     plt.title(title)
@@ -107,3 +114,4 @@ def export_graph(filename, title, df, lst_columns, df2=None, lst_columns2=None):
 
     plt.savefig(filename)
     #plt.show()
+    plt.close()
