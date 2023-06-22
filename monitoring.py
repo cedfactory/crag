@@ -22,7 +22,7 @@ def export_all():
 
     for key, value in accounts_info.items():
         account_id = value.get("id", "")
-        if account_id in ["bitget_cl1", "bitget_ayato", "bitget_ayato_sub3", "bitget_ayato_sub4", "bitget_kamiji", "subfortest1", "subfortest2"]:
+        if account_id in ["bitget_cl1", "bitget_kamiji"]:
             continue
         filename = rootpath + "history_" + account_id + ".csv"
 
@@ -65,7 +65,8 @@ def export_all():
             "usdt_equity_btcusd_normalized": pngfilename_usdt_equity_btcusd_normalized,
             "df": df
         }
-        accounts_export_info.append(account_export_info)
+        if not account_id in ["bitget_ayato", "bitget_ayato_sub3", "bitget_ayato_sub4", "subfortest1", "subfortest2"]:
+            accounts_export_info.append(account_export_info)
 
         #df = df.drop(["btcusd"], axis=1)
         df.set_index("timestamp", inplace=True)
@@ -74,7 +75,7 @@ def export_all():
 
     # sum : usdt_equity
     pngfilename_sum = rootpath + "history_sum.png"
-    df_sum = df_sum.iloc[1:] # temporary hack
+    df_sum = df_sum.iloc[2:] # temporary hack
     df_sum.reset_index(inplace=True)
     df_sum["usdt_equity"] = pd.to_numeric(df_sum["usdt_equity"])
 
