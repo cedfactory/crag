@@ -58,6 +58,7 @@ class PdfDocument():
         self.logo = logo
         self.elements = []
 
+        return
         # First page
         spacer = Spacer(30, 200)
         self.elements.append(spacer)
