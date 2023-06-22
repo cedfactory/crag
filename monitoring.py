@@ -22,7 +22,7 @@ def export_all():
 
     for key, value in accounts_info.items():
         account_id = value.get("id", "")
-        if account_id in ["bitget_cl1", "bitget_ayato", "bitget_kamiji", "subfortest1"]:
+        if account_id in ["bitget_cl1", "bitget_ayato", "bitget_ayato_sub3", "bitget_ayato_sub4", "bitget_kamiji", "subfortest1", "subfortest2"]:
             continue
         filename = rootpath + "history_" + account_id + ".csv"
 
@@ -113,7 +113,7 @@ def export_all():
     graph_helper.export_graph(pngfilename_sum_normalized, "Normalized Investment", df_sum, ["usdt_equity_normalized"], df_btcusd, ["close_normalized"])
 
     now = datetime.now()
-    current_time = now.strftime("%d/%m/%Y")
+    current_time = now.strftime("%d/%m/%Y %H:%M:%S")
 
     report.add_page("Global report (generation : {})".format(current_time), [pngfilename_sum, pngfilename_sum_normalized, pngfilename_sum_btcusd])
 
@@ -130,6 +130,8 @@ def export_all():
     # write the pdf file
     pdffilename = rootpath + "history_report.pdf"
     report.save(pdffilename)
+
+    return pdffilename
 
 def update_history():
     print("updating history...")
@@ -193,11 +195,17 @@ def loop(freq):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) == 2:
+    if len(sys.argv) >= 2:
         if sys.argv[1] == "--export":
             export_all()
         elif sys.argv[1] == "--mail":
-            mail_helper.send_mail("receiver@foobar.com", "Subject", "message")
+            if len(sys.argv) >= 3:
+                pdf_report = export_all()
+                emails = sys.argv[2:]
+                for email in emails:
+                    mail_helper.send_mail(email, "Report", "Here is your new report", [pdf_report])
+            else:
+                print("receiver is missing")
         else:
             freq = int(sys.argv[1])
             loop(freq)
