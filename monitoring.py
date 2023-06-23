@@ -22,6 +22,8 @@ def export_all():
 
     for key, value in accounts_info.items():
         account_id = value.get("id", "")
+        if account_id in ["bitget_cl1", "bitget_kamiji"]:
+            continue
         filename = rootpath + "history_" + account_id + ".csv"
 
         if g_use_ftp:
@@ -63,7 +65,8 @@ def export_all():
             "usdt_equity_btcusd_normalized": pngfilename_usdt_equity_btcusd_normalized,
             "df": df
         }
-        accounts_export_info.append(account_export_info)
+        if not account_id in ["bitget_ayato", "bitget_ayato_sub3", "bitget_ayato_sub4", "subfortest1", "subfortest2"]:
+            accounts_export_info.append(account_export_info)
 
         #df = df.drop(["btcusd"], axis=1)
         df.set_index("timestamp", inplace=True)
@@ -72,7 +75,7 @@ def export_all():
 
     # sum : usdt_equity
     pngfilename_sum = rootpath + "history_sum.png"
-    df_sum = df_sum.iloc[1:] # temporary hack
+    df_sum = df_sum.iloc[2:] # temporary hack
     df_sum.reset_index(inplace=True)
     df_sum["usdt_equity"] = pd.to_numeric(df_sum["usdt_equity"])
 
@@ -94,7 +97,7 @@ def export_all():
     row = pd.DataFrame({"timestamp": last_timestamp, "placed_cumsum": last_placed_cumsum}, index=[1])
     df_transferts = pd.concat([df_transferts, row])
 
-    graph_helper.export_graph(pngfilename_sum, "Global Investment", df_sum, ["usdt_equity"], df_transferts, ["placed_cumsum"])
+    graph_helper.export_graph(pngfilename_sum, "Absolute Investment", df_sum, ["usdt_equity"], df_transferts, ["placed_cumsum"])
 
     df_sum["usdt_equity_normalized"] = 1000 * df_sum["usdt_equity"] / df_sum.at[0, "usdt_equity"]
     pngfilename_sum_normalized = rootpath + "history_sum_normalized.png"
@@ -109,7 +112,11 @@ def export_all():
     df_btcusd["close_normalized"] = 1000 * df_btcusd["close"] / df_btcusd.iloc[0]["close"]
     df_btcusd["timestamp"] = df_btcusd.index
     graph_helper.export_graph(pngfilename_sum_normalized, "Normalized Investment", df_sum, ["usdt_equity_normalized"], df_btcusd, ["close_normalized"])
-    report.add_page("Sum", [pngfilename_sum, pngfilename_sum_normalized, pngfilename_sum_btcusd])
+
+    now = datetime.now()
+    current_time = now.strftime("%d/%m/%Y %H:%M:%S")
+
+    report.add_page("Global report (generation : {})".format(current_time), [pngfilename_sum, pngfilename_sum_normalized, pngfilename_sum_btcusd])
 
     # export each account info
     for account_export_info in accounts_export_info:
@@ -118,11 +125,14 @@ def export_all():
         pngfilename_btcusd = account_export_info["btcusd"]
         usdt_equity_btcusd_normalized = account_export_info["usdt_equity_btcusd_normalized"]
         df = account_export_info["df"]
-        report.add_page(account_id, [pngfilename_usdt_equity, usdt_equity_btcusd_normalized, pngfilename_btcusd])
+        #report.add_page(account_id, [pngfilename_usdt_equity, usdt_equity_btcusd_normalized, pngfilename_btcusd])
+        report.add_page(account_id, [pngfilename_usdt_equity, usdt_equity_btcusd_normalized])
 
     # write the pdf file
     pdffilename = rootpath + "history_report.pdf"
     report.save(pdffilename)
+
+    return pdffilename
 
 def update_history():
     print("updating history...")
@@ -186,11 +196,17 @@ def loop(freq):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) == 2:
+    if len(sys.argv) >= 2:
         if sys.argv[1] == "--export":
             export_all()
         elif sys.argv[1] == "--mail":
-            mail_helper.send_mail("receiver@foobar.com", "Subject", "message")
+            if len(sys.argv) >= 3:
+                pdf_report = export_all()
+                emails = sys.argv[2:]
+                for email in emails:
+                    mail_helper.send_mail(email, "Report", "Here is your new report", [pdf_report])
+            else:
+                print("receiver is missing")
         else:
             freq = int(sys.argv[1])
             loop(freq)
