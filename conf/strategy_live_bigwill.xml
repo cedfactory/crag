@@ -1,0 +1,9 @@
+<configuration>
+    <strategy id="strategybigwill" name="StrategyBigWill">
+        <params symbols="./symbols_df_bigwill_usdt.csv" strategy_interval="3600" candle_stick="alive" max_position="3" sl="0" tp="0" global_sl="-10" global_tp="20" trailer_tp="0" trailer_delta="0" trailer_global_tp="0" trailer_global_delta="0" high_volatility="True"/>
+    </strategy>
+    <broker name="bitget">
+        <params exchange="bitget" fdp_url_id="local" account="bitget_ayato" leverage_short="2" leverage_long="2" simulation="1" intervals="1h" orders="market" reset_account="True"/>
+    </broker>
+    <crag id="bigwill" interval="1" botId="ayato"/>
+</configuration>

@@ -1,4 +1,5 @@
 from . import rtdp, rtstr, rtctrl
+import pandas as pd
 
 class StrategyBigWill(rtstr.RealTimeStrategy):
 
@@ -20,26 +21,53 @@ class StrategyBigWill(rtstr.RealTimeStrategy):
     def get_data_description(self):
         ds = rtdp.DataDescription()
         ds.symbols = self.lst_symbols
-        ds.features = { "low" : None,
-                        "high" : None,
-                        "AO" : {"feature": "AO", "period": 22},
-                        "previous_AO": {"feature": "previous_AO", "period": 22},
-                        "EMA100" : {"feature": "EMA100", "period": 100},
-                        "EMA200": {"feature": "EMA200", "period": 200},
-                        "STOCH_RSI": {"feature": "STOCH_RSI", "period": 14},
-                        "WILLR" : {"feature": "WILLR", "period": 14}
-                        }
+
+        ds.fdp_features = { "ao" : {"indicator": "ao", "ao_window_1": 6, "ao_window_2": 22, "window_size": 22},
+                            "ema100" : {"indicator": "ema", "id": "100", "window_size": 100},
+                            "ema200": {"indicator": "ema", "id": "200", "window_size": 200},
+                            "stoch_rsi": {"indicator": "stoch_rsi", "window_size": 14},
+                            "willr" : {"indicator": "willr", "window_size": 14},
+                            "postprocess1": {"indicator": "shift", "window_size": 1, "n": "1", "input": ["ao"]}
+                            }
+
+        ds.features = self.get_feature_from_fdp_features(ds.fdp_features)
+        ds.interval = self.strategy_interval
+        print("startegy: ", self.get_info())
+        print("strategy features: ", ds.features)
+
         return ds
 
+    def get_info(self):
+        return "StrategyBigWill"
+
     def condition_for_opening_long_position(self, symbol):
-        return self.df_current_data['AO'][symbol] >= self.AO_Threshold and \
-               self.df_current_data['previous_AO'][symbol] > self.df_current_data['AO'][symbol] and \
-               self.df_current_data['WILLR'][symbol] < self.willOverSold and \
-               self.df_current_data['EMA100'][symbol] > self.df_current_data['EMA200'][symbol]
+        return self.df_current_data['ao'][symbol] >= self.AO_Threshold and \
+               self.df_current_data['n1_ao'][symbol] > self.df_current_data['ao'][symbol] and \
+               self.df_current_data['willr'][symbol] < self.willOverSold and \
+               self.df_current_data['ema_100'][symbol] > self.df_current_data['ema_200'][symbol]
+
+    def condition_for_opening_short_position(self, symbol):
+        return self.df_current_data['ao'][symbol] <= self.AO_Threshold and \
+               self.df_current_data['n1_ao'][symbol] < self.df_current_data['ao'][symbol] and \
+               self.df_current_data['willr'][symbol] > self.willOverSold and \
+               self.df_current_data['ema_100'][symbol] < self.df_current_data['ema_200'][symbol]
 
     def condition_for_closing_long_position(self, symbol):
-        return (self.df_current_data['AO'][symbol] < self.AO_Threshold
-                and self.df_current_data['STOCH_RSI'][symbol] > self.stochOverSold) \
-               or self.df_current_data['WILLR'][symbol] > self.willOverBought
+        return (self.df_current_data['ao'][symbol] < self.AO_Threshold
+                and self.df_current_data['stoch_rsi'][symbol] > self.stochOverSold) \
+               or self.df_current_data['willr'][symbol] > self.willOverBought
 
+    def condition_for_closing_short_position(self, symbol):
+        return (self.df_current_data['ao'][symbol] > self.AO_Threshold
+                and self.df_current_data['stoch_rsi'][symbol] < self.stochOverBought) \
+               or self.df_current_data['willr'][symbol] < self.willOverSold
 
+    def sort_list_symbols(self, lst_symbols):
+        print("symbol list: ", lst_symbols)
+        df = pd.DataFrame(index=lst_symbols, columns=['ao'])
+        for symbol in lst_symbols:
+            df.at[symbol, 'ao'] = self.df_current_data['ao'][symbol]
+        df.sort_values(by=['ao'], inplace=True, ascending=False)
+        lst_symbols = df.index.to_list()
+        print("sorted symbols with AO: ", lst_symbols)
+        return lst_symbols
