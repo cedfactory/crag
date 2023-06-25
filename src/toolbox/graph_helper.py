@@ -56,18 +56,24 @@ def export_btcusd(filename, past_days):
     df_ohlvc['low'] = df_ohlvc['low'].astype(float)
     df_ohlvc['volume'] = df_ohlvc['volume'].astype(float)
 
-    mpf.plot(df_ohlvc,type='candle', volume=True, title='BTC',savefig=filename)
+    mpf.plot(df_ohlvc,type="line", volume=False, title="BTC",savefig=filename, ylabel="")
 
     return df_ohlvc
 #####
 
 
-def export_graph(filename, title, df, lst_columns, df2=None, lst_columns2=None):
-    if df["timestamp"].dtype == np.float64 or df["timestamp"].dtype == np.int64:
-        dates = [datetime.fromtimestamp(ts) for ts in df["timestamp"]]
-    else:
-        dates = df["timestamp"]
-    datenums = mdates.date2num(dates)
+'''
+filename
+title
+[
+{
+dataframe
+[lst_columns]
+[lst_labels]
+}
+]df, lst_columns, df2=None, lst_columns2=None
+'''
+def export_graph(filename, title, dataframe_infos):
     fig = plt.subplots()
     plt.figure(figsize=(10, 4))
 
@@ -77,25 +83,26 @@ def export_graph(filename, title, df, lst_columns, df2=None, lst_columns2=None):
 
     ymin = []
     ymax = []
-    for column_name in lst_columns:
-        y = df[column_name]
-        ymin.append(min(y))
-        ymax.append(max(y))
-        ax.plot(datenums, y, label=column_name)
-        plt.fill_between(datenums, y, alpha=0.3)
 
-    if lst_columns2:
-        #dates = df2.index
-        if df2["timestamp"].dtype == np.float64 or df2["timestamp"].dtype == np.int64:
-            dates = [datetime.fromtimestamp(ts) for ts in df2["timestamp"]]
+    # go through the dataframes
+    for df_info in dataframe_infos:
+        df = df_info["dataframe"]
+
+        if df["timestamp"].dtype == np.float64 or df["timestamp"].dtype == np.int64:
+            dates = [datetime.fromtimestamp(ts) for ts in df["timestamp"]]
         else:
-            dates = df2["timestamp"]
+            dates = df["timestamp"]
         datenums = mdates.date2num(dates)
-        for column_name in lst_columns2:
-            y = df2[column_name]
+
+        for column_info in df_info["plots"]:
+            column_name = column_info.get("column", None)
+            if not column_name:
+                continue
+            y = df[column_name]
             ymin.append(min(y))
             ymax.append(max(y))
-            ax.plot(datenums, y, label=column_name)
+            column_label = column_info.get("label", column_name)
+            ax.plot(datenums, y, label=column_label)
             plt.fill_between(datenums, y, alpha=0.3)
 
     y_min = min(ymin)
@@ -103,8 +110,8 @@ def export_graph(filename, title, df, lst_columns, df2=None, lst_columns2=None):
     margin = 0.1*(y_max-y_min)
     y_min = y_min - margin
     y_max = y_max + margin
-    if y_min == 0 and y_max == 0:
-        y_max = 10
+    if y_min == y_max:
+        y_max = y_min + 10
     ax.set_ylim([y_min, y_max])
 
     plt.title(title)
