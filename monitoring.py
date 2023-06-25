@@ -35,7 +35,7 @@ def export_all():
 
         # page with a figure
         pngfilename = rootpath + "history_" + account_id + ".png"
-        graph_helper.export_graph(pngfilename, account_id,
+        pngfilename = graph_helper.export_graph(pngfilename, account_id,
                                   [{"dataframe": df, "plots": [{"column": "usdt_equity", "label": "USDT equity"}]}])
 
         timestamp_start = df.iloc[0]["timestamp"]
@@ -53,7 +53,7 @@ def export_all():
         df_btcusd = graph_helper.export_btcusd(pngfilename_usdt_equity_btcusd_normalized, delta_days)
         df_btcusd["close_normalized"] = 1000 * df_btcusd["close"] / df_btcusd.iloc[0]["close"]
         df_btcusd["timestamp"] = df_btcusd.index
-        graph_helper.export_graph(pngfilename_usdt_equity_btcusd_normalized, "Normalized",
+        pngfilename_usdt_equity_btcusd_normalized = graph_helper.export_graph(pngfilename_usdt_equity_btcusd_normalized, "Normalized",
                                   [{"dataframe": df, "plots": [{"column": "usdt_equity_normalized"}]},
                                    {"dataframe": df_btcusd, "plots": [{"column": "close_normalized"}]}])
 
@@ -100,7 +100,7 @@ def export_all():
     row = pd.DataFrame({"timestamp": last_timestamp, "placed_cumsum": last_placed_cumsum}, index=[1])
     df_transferts = pd.concat([df_transferts, row])
 
-    graph_helper.export_graph(pngfilename_sum, "Absolute Investment",
+    pngfilename_sum = graph_helper.export_graph(pngfilename_sum, "Absolute Investment",
                               [{"dataframe": df_sum, "plots": [{"column": "usdt_equity", "label": "USDT equity"}]},
                                {"dataframe": df_transferts, "plots": [{"column": "placed_cumsum"}]}])
 
@@ -116,7 +116,7 @@ def export_all():
     df_btcusd = graph_helper.export_btcusd(pngfilename_sum_btcusd, delta_days)
     df_btcusd["close_normalized"] = 1000 * df_btcusd["close"] / df_btcusd.iloc[0]["close"]
     df_btcusd["timestamp"] = df_btcusd.index
-    graph_helper.export_graph(pngfilename_sum_normalized, "Normalized Investment",
+    pngfilename_sum_normalized = graph_helper.export_graph(pngfilename_sum_normalized, "Normalized Investment",
                               [{"dataframe": df_sum, "plots": [{"column": "usdt_equity_normalized"}]},
                                {"dataframe": df_btcusd, "plots": [{"column": "close_normalized"}]}])
     now = datetime.now()
