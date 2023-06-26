@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 import pika
 import pandas as pd
-from src import broker_ccxt,broker_bitget_api
+from src import accounts,broker_bitget_api
 
 class BotSimon(commands.Bot):
     def __init__(self):
@@ -14,25 +14,57 @@ class BotSimon(commands.Bot):
         async def custom_command(ctx):
             print("hello")
             await ctx.channel.send("Hello {}".format(ctx.author.name))
-        
+
+        @self.command(name="accounts")
+        async def custom_command(ctx, *args):
+            accounts_info = accounts.import_accounts()
+            lst_accounts = []
+            lst_usdt_equities = []
+            for key, value in accounts_info.items():
+                account_id = value.get("id", "")
+                my_broker = None
+                broker_name = value.get("broker", "")
+                if broker_name == "bitget":
+                    my_broker = broker_bitget_api.BrokerBitGetApi({"account": account_id, "reset_account": False})
+                    if my_broker:
+                        usdt_equity = my_broker.get_usdt_equity()
+
+                        lst_accounts.append(account_id)
+                        lst_usdt_equities.append(usdt_equity)
+
+            df = pd.DataFrame({"Accounts": lst_accounts, "USDT_Equity": lst_usdt_equities},
+                              index=range(len(lst_accounts)))
+            msg = '```' + df.to_string(index=False) + '```'
+
+            embed=discord.Embed(title="accounts", description=msg, color=0xFF5733)
+            await ctx.channel.send(embed=embed)
+
         @self.command(name="open_positions")
         async def custom_command(ctx, *args):
-            account = ""
-            if len(args) >= 1:
-                account = args[0]
+            if len(args) < 1:
+                embed = discord.Embed(title="open_positions", description="? which account ?", color=0xFF5733)
+                await ctx.channel.send(embed=embed)
+                return
+
+            account_id = args[0]
 
             # get open positions from the broker
-            my_broker = broker_bitget_api.BrokerBitGetApi()
+            my_broker = broker_bitget_api.BrokerBitGetApi({"account": account_id, "reset_account": False})
+            if not my_broker:
+                embed = discord.Embed(title="open_positions", description="! can't connect on this account !", color=0xFF5733)
+                await ctx.channel.send(embed=embed)
+                return
+
             open_positions = my_broker.get_open_position()
-            open_positions.drop("available", axis=1, inplace=True)
+            useless_columns = ["available", "marginCoin", "total", "marketPrice", "averageOpenPrice", "achievedProfits", "usdtEquity", "unrealizedPL", "liquidationPrice"]
+            open_positions.drop(useless_columns, axis=1, inplace=True)
             open_positions.reset_index(drop=True, inplace=True)
 
             # convert dataframe to string to display
             msg = open_positions.to_string(index=True)
             msg = '```' + msg + '```'
-            #msg += "Total : {:2f}".format(value)
 
-            embed=discord.Embed(title=account, description=msg, color=0xFF5733)
+            embed=discord.Embed(title=account_id, description=msg, color=0xFF5733)
             await ctx.channel.send(embed=embed)
             
         @self.command(name="cash")
@@ -53,20 +85,15 @@ class BotSimon(commands.Bot):
 
         @self.command(name="reset")
         async def custom_command(ctx, *args):
-            account = ""
-            if len(args) >= 1:
-                account = args[0]
+            if len(args) < 1:
+                embed = discord.Embed(title="open_positions", description="? which account ?", color=0xFF5733)
+                await ctx.channel.send(embed=embed)
+                return
 
-            # get open positions from the broker
-            my_broker = broker_bitget_api.BrokerBitGetApi()
-            original_positions = my_broker.execute_reset_account()
-            log_positions = original_positions[["symbol", "holdSide", "leverage", "usdtEquity"]]
+            account_id = args[0]
+            broker_bitget_api.BrokerBitGetApi({"account": account_id, "reset_account": True})
 
-            # convert dataframe to string to display
-            msg = log_positions.to_string(index=True)
-            msg = '```' + msg + '```'
-
-            embed=discord.Embed(title=account, description=msg, color=0xFF5733)
+            embed=discord.Embed(title="reset".format(account_id), description="reset done on {}".format(account_id), color=0xFF5733)
             await ctx.channel.send(embed=embed)
             
         @self.command(name="crag")
