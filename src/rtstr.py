@@ -863,3 +863,7 @@ class PositionRecorder():
     def get_total_position_engaged(self):
         return self.df_position_record["nb_position_engaged"].sum()
 
+    def update_position_recorder(self, lst_positions):
+        for symbol in lst_positions:
+            self.set_increase_position_record(1, symbol)
+

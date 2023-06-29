@@ -12,11 +12,16 @@ class StrategyBigWill(rtstr.RealTimeStrategy):
 
         self.zero_print = True
 
-        self.willOverSold = -85
-        self.willOverBought = -10
         self.AO_Threshold = 0
-        self.stochOverBought = 0.8
-        self.stochOverSold = 0.2
+        # self.stochOverBought = 0.8 # Initial
+        self.stochOverBought = 0.7
+        # self.stochOverSold = 0.2 # Initial
+        self.stochOverSold = 0.3
+        # self.willOverSold = -85 # Initial
+        self.willOverSold = -80
+        # self.willOverBought = -10 # Initial
+        self.willOverBought = -20
+
 
     def get_data_description(self):
         ds = rtdp.DataDescription()

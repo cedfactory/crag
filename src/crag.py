@@ -243,6 +243,15 @@ class Crag:
         current_datetime = self.broker.get_current_datetime()
         self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(), self.broker.get_cash_borrowed(), prices_symbols, False, self.final_datetime, self.broker.get_balance())
 
+        if (self.rtstr.rtctrl.get_rtctrl_nb_symbols() > 0)\
+                and (self.rtstr.position_recorder.get_total_position_engaged() == 0):
+            # After reset PositionRecorder have to be updated
+            print('reset PositionRecorder')
+            self.rtstr.position_recorder.update_position_recorder(self.rtstr.rtctrl.get_rtctrl_lst_symbols())
+        else:
+            print('DEBUG - nb positions from rctctrl:          ', self.rtstr.rtctrl.get_rtctrl_nb_symbols())
+            print('DEBUG - nb positions from PositionRecorder: ', self.rtstr.position_recorder.get_total_position_engaged())
+
         measure_time_fdp_start = datetime.now()
 
         nb_try = 0
@@ -558,7 +567,18 @@ class Crag:
 
             current_trade.gross_size = df_buying_symbols["size"][symbol]  # Gross size
             current_trade.gross_price = current_trade.gross_size * current_trade.symbol_price
-            while abs(round(current_trade.gross_price, 4)) >= round(self.cash, 4):
+
+            # TMP HACK CEDE
+            if abs(round(current_trade.gross_price, 4)) >= round(self.cash, 4):
+                print("=========== > gross price do not fit cash value:")
+                print("===========================================================================")
+                print('cash', self.cash)
+                print('gross_price', current_trade.gross_price)
+                current_trade.gross_price = self.cash
+                current_trade.gross_price = 0
+                print("===========================================================================")
+
+            while abs(round(current_trade.gross_price, 4)) > round(self.cash, 4):
                 print("=========== > gross price do not fit cash value:")
                 print('=========== > current_trade.gross_size: ', current_trade.gross_size)
                 print('=========== > current_trade.gross_price: ', current_trade.gross_price)
