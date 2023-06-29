@@ -6,6 +6,7 @@ import importlib
 import os
 import ast
 from os import path
+from datetime import datetime, timedelta
 
 class RealTimeStrategy(metaclass=ABCMeta):
 
@@ -29,6 +30,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
         self.trailer_global_TP = 0
         self.trailer_global_delta = 0
         self.trigger_global_trailer = False
+        self.drawdown_SL = 0
         self.MAX_POSITION = 5    # Asset Overall Percent Size
         self.set_buying_size = False
         self.buying_size = 0
@@ -40,6 +42,8 @@ class RealTimeStrategy(metaclass=ABCMeta):
         self.short_and_long = False
         self.strategy_interval = 0
         self.candle_stick = "released"  # last released from broker vs alive
+        self.high_volatility_protection = False
+
         if params:
             self.strategy_interval = params.get("strategy_interval", self.strategy_interval)
             if isinstance(self.strategy_interval, str):
@@ -76,6 +80,13 @@ class RealTimeStrategy(metaclass=ABCMeta):
             self.trailer_delta = float(params.get("trailer_delta", self.trailer_delta))
             self.trailer_global_TP = float(params.get("trailer_global_tp", self.trailer_global_TP))
             self.trailer_global_delta = float(params.get("trailer_global_delta", self.trailer_global_delta))
+            self.drawdown_SL = float(params.get("drawdown_SL", self.drawdown_SL))
+            self.high_volatility_protection = params.get("high_volatility", self.high_volatility_protection)
+            if isinstance(self.high_volatility_protection, str):
+                self.high_volatility_protection = ast.literal_eval(self.high_volatility_protection)
+
+        if self.high_volatility_protection:
+            self.high_volatility = HighVolatilityPause()
 
         self.trigger_trailer = self.trailer_TP > 0 and self.trailer_delta > 0
         self.trigger_global_trailer = self.trailer_global_TP > 0 and self.trailer_global_delta > 0
@@ -566,6 +577,9 @@ class RealTimeStrategy(metaclass=ABCMeta):
                or ((self.global_safety_TP != 0) and (global_unrealizedPL >= self.global_safety_TP)) \
                or ((self.global_safety_SL != 0) and (global_unrealizedPL <= self.global_safety_SL))
 
+    def condition_for_max_drawdown_SL(self, drawdown_SL_percent):
+        return ((self.drawdown_SL != 0) and (drawdown_SL_percent <= self.drawdown_SL))
+
     def condition_for_global_trailer_TP(self, global_unrealizedPL):
         if not self.trigger_global_trailer:
             return False
@@ -577,7 +591,6 @@ class RealTimeStrategy(metaclass=ABCMeta):
             # self.df_trailer_global_TP.print_trailer_status_for_debug(global_unrealizedPL)
             return True
         return False
-
 
     def condition_for_SLTP(self, unrealizedPL):
             return ((self.TP != 0) and (unrealizedPL >= self.TP)) \
@@ -613,6 +626,127 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
     def sort_list_symbols(self, lst_symbols):
         return lst_symbols
+
+    def trigger_high_volatility_protection(self):
+        return self.high_volatility_protection
+
+    def set_high_volatility_protection_data(self, lst_row):
+        self.high_volatility.set_high_volatility_protection_data(lst_row)
+
+    def high_volatility_protection_activation(self):
+        if self.high_volatility.get_len_df_high_volatility() >= 2:
+            max_equity = self.high_volatility.get_max_equity()
+            min_equity = self.high_volatility.get_min_equity()
+            equity = self.high_volatility.get_equity()
+            max_BTC = self.high_volatility.get_max_BTC()
+            min_BTC = self.high_volatility.get_min_BTC()
+            price_BTC = self.high_volatility.get_price_BTC()
+            max_equity_pct = self.high_volatility.get_max_equity_pct()
+            mean_equity_pct = self.high_volatility.get_mean_equity_pct()
+            max_BTC_pct = self.high_volatility.get_max_BTC_pct()
+
+            equipty_high_vs_low = max_equity - min_equity
+            equipty_high_vs_low_percent = 100 * equipty_high_vs_low / max_equity
+            print("delta equity (high vs low): ", equipty_high_vs_low, " % ", equipty_high_vs_low_percent)
+            equipty_high_vs_now = max_equity - equity
+            equipty_high_vs_now_percent = 100 * equipty_high_vs_now / max_equity
+            print("delta equity (vs now): ", equipty_high_vs_now, " % ", equipty_high_vs_now_percent)
+            BTC_high_vs_low = max_BTC - min_BTC
+            BTC_high_vs_low_percent = 100 * BTC_high_vs_low / max_BTC
+            print("delta BTC (high vs low): ", BTC_high_vs_low, " % ", BTC_high_vs_low_percent)
+            BTC_high_vs_now = max(abs(max_BTC - price_BTC), abs(min_BTC - price_BTC))
+            BTC_high_vs_now_percent = 100 * BTC_high_vs_now / max_BTC
+            print("delta BTC (vs now): ", BTC_high_vs_now, " % ", BTC_high_vs_now_percent)
+            print("delta equity pct: ", max_equity_pct)
+            print("mean equity pct: ", mean_equity_pct)
+            print("delta BTC pct max: ", max_BTC_pct)
+
+            """
+            if (equipty_high_vs_low_percent >= 3) \
+                    | (equipty_high_vs_now_percent >= 3) \
+                    | (BTC_high_vs_low_percent >= 2) \
+                    | (BTC_high_vs_now_percent >= 0.8) \
+                    | (max_equity_pct >= 0.5) \
+                    | (max_BTC_pct >= 0.5):
+                print("PAUSE STRATEGY DUE TO HIGH VOLATILITY")
+                return True
+            """
+            if True | (equipty_high_vs_low_percent >= 3) \
+                    | (equipty_high_vs_now_percent >= 3)\
+                    | (BTC_high_vs_now_percent >= 1.2):
+                print("PAUSE STRATEGY DUE TO HIGH VOLATILITY")
+                self.high_volatility.trigger()
+                return True
+
+        self.high_volatility.shut_down()
+        return False
+
+class HighVolatilityPause():
+    def __init__(self):
+        self.status = False
+        self.duration = 60 * 60 * 6
+        self.high_volatility_period = 2 * 60  # min
+        self.df_high_volatility = pd.DataFrame(columns=['datetime', 'timestamp', 'symbol', 'price_BTC', 'pct_BTC', 'equity', 'pct_equity'])
+
+    def trigger(self):
+        self.status = True
+        self.reset_df_high_volatility()
+
+    def shut_down(self):
+        self.status = False
+
+    def high_volatility_pause_status(self):
+        return self.status
+
+    def high_volatility_get_duration(self):
+        return self.duration
+
+    def reset_df_high_volatility(self):
+        self.df_high_volatility = pd.DataFrame(columns=['datetime', 'timestamp', 'symbol', 'price_BTC', 'pct_BTC', 'equity', 'pct_equity'])
+
+    def set_high_volatility_protection_data(self, lst_row):
+        # ['datetime', 'timestamp', 'symbol', 'price_BTC', 'pct_BTC', 'equity', 'pct_equity']
+        self.df_high_volatility.loc[len(self.df_high_volatility)] = lst_row
+        self.df_high_volatility.sort_values('timestamp', ascending=True,inplace=True)
+        self.df_high_volatility.reset_index(inplace=True, drop=True)
+
+        self.df_high_volatility['pct_BTC'] = self.df_high_volatility['price_BTC'].pct_change().abs()
+        self.df_high_volatility['pct_equity'] = self.df_high_volatility['equity'].pct_change().abs()
+
+        timestamp_start_window = datetime.timestamp(self.df_high_volatility.at[len(self.df_high_volatility)-1, 'datetime'] - timedelta(minutes=self.high_volatility_period))
+
+        self.df_high_volatility.drop(self.df_high_volatility[self.df_high_volatility['timestamp'] < timestamp_start_window].index, inplace=True)
+        self.df_high_volatility.reset_index(inplace=True, drop=True)
+
+    def get_len_df_high_volatility(self):
+        return len(self.df_high_volatility)
+
+    def get_max_equity(self):
+        return self.df_high_volatility["equity"].max()
+
+    def get_min_equity(self):
+        return self.df_high_volatility["equity"].min()
+
+    def get_equity(self):
+        return self.df_high_volatility.at[len(self.df_high_volatility) - 1, "equity"]
+
+    def get_max_BTC(self):
+        return self.df_high_volatility["price_BTC"].max()
+
+    def get_min_BTC(self):
+        return self.df_high_volatility["price_BTC"].min()
+
+    def get_price_BTC(self):
+        return self.df_high_volatility.at[len(self.df_high_volatility) - 1, "price_BTC"]
+
+    def get_max_equity_pct(self):
+        return self.df_high_volatility["pct_equity"].max()
+
+    def get_mean_equity_pct(self):
+        return self.df_high_volatility["pct_equity"].mean()
+
+    def get_max_BTC_pct(self):
+        return self.df_high_volatility["pct_BTC"].max()
 
 class ShortLongPosition():
     def __init__(self, lst_symbol, str_short_long_position):

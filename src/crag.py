@@ -4,6 +4,7 @@ import time
 import pandas as pd
 from . import trade,rtstr,utils
 import pika
+import ast
 import threading
 import pickle
 from datetime import datetime, timedelta
@@ -36,6 +37,9 @@ class Crag:
         self.previous_usdt_equity = 0
         self.maximal_portfolio_date = ""
         self.id = str(utils.get_random_id())
+        self.high_volatility_sleep_duration = 0
+        self.activate_volatility_sleep = False
+
         if params:
             self.broker = params.get("broker", self.broker)
             self.original_portfolio_value = self.broker.get_portfolio_value()
@@ -208,6 +212,10 @@ class Crag:
                         step_result = self.safety_step()
                         if not step_result:
                             os._exit(0) # tbc
+                        if self.rtstr.high_volatility.high_volatility_pause_status():
+                            msg = "duration: " + str(self.rtstr.high_volatility.high_volatility_get_duration()) + "seconds"
+                            self.log(msg, "PAUSE DUE HIGH VOLATILITY")
+                            time.sleep(self.rtstr.high_volatility.high_volatility_get_duration())
                     while time.time() < start:
                         pass
                 else:
@@ -780,39 +788,35 @@ class Crag:
         print(msg)
 
     def safety_step(self):
-        global_unrealizedPL = self.broker.get_global_unrealizedPL()
-        if self.original_portfolio_value == 0:
-            global_unrealizedPL_percent = 0
+        usdt_equity = self.broker.get_usdt_equity()
+        total_PL = usdt_equity - self.original_portfolio_value
+        if usdt_equity >= self.maximal_portfolio_value:
+            self.maximal_portfolio_value = usdt_equity
+            drawdown_SL = 0
         else:
-            global_unrealizedPL_percent = self.broker.get_global_unrealizedPL() * 100 / self.original_portfolio_value
-        # print("global_unrealizedPL: ", global_unrealizedPL, " - ", global_unrealizedPL_percent, "%") # DEBUG CEDE
-        total_PL = self.broker.get_usdt_equity() - self.original_portfolio_value
+            drawdown_SL = usdt_equity - self.maximal_portfolio_value
+
         if self.original_portfolio_value == 0:
             total_PL_percent = 0
         else:
             total_PL_percent = total_PL * 100 / self.original_portfolio_value
 
-        TOTAL_PERCENT = True # CEDE Test
-        if TOTAL_PERCENT:
-            if self.rtstr.condition_for_global_SLTP(total_PL_percent) \
-                    or self.rtstr.condition_for_global_trailer_TP(total_PL_percent):
-                print('reset - global TP')
-                print('total PL: $', total_PL, " - ", total_PL_percent, "%")
-                msg = "reset - total SL TP"
-                self.log(msg, "total SL TP")
-
-                self.broker.execute_reset_account()
-                return False
+        if self.maximal_portfolio_value == 0:
+            self.maximal_portfolio_value = max(usdt_equity, self.original_portfolio_value)
+            drawdown_SL_percent = 0
         else:
-            if self.rtstr.condition_for_global_SLTP(global_unrealizedPL_percent)\
-                    or self.rtstr.condition_for_global_trailer_TP(global_unrealizedPL_percent):
-                print('reset - global TP')
-                print('unrealizedPL: $', global_unrealizedPL, " - ", global_unrealizedPL_percent, "%")
-                msg = "reset - global unrealizedPL SL TP"
-                self.log(msg, "global PL SL TP")
+            drawdown_SL_percent = drawdown_SL * 100 / self.maximal_portfolio_value
 
-                self.broker.execute_reset_account()
-                return False
+        if self.rtstr.condition_for_global_SLTP(total_PL_percent) \
+                or self.rtstr.condition_for_global_trailer_TP(total_PL_percent)\
+                or self.rtstr.condition_for_max_drawdown_SL(drawdown_SL_percent):
+            print('reset - global TP')
+            print('total PL: $', total_PL, " - ", total_PL_percent, "%")
+            msg = "reset - total SL TP"
+            self.log(msg, "total SL TP")
+
+            self.broker.execute_reset_account()
+            return False
 
         lst_symbol_position = self.broker.get_lst_symbol_position()
         lst_symbol_for_closure = []
@@ -827,6 +831,18 @@ class Crag:
             if self.rtstr.condition_for_SLTP(symbol_unrealizedPL_percent) \
                     or self.rtstr.condition_trailer_TP(self.broker._get_coin(symbol), symbol_unrealizedPL_percent):
                 lst_symbol_for_closure.append(symbol)
+
+        if self.rtstr.trigger_high_volatility_protection():
+            BTC_price = self.broker.get_value('BTC')
+            current_datetime = datetime.now()
+            current_timestamp = datetime.timestamp(current_datetime)
+            equity = self.broker.get_usdt_equity()
+            # ['datetime', 'timestamp', 'symbol', 'pice', 'pct_BTC', 'equity', 'pct_equity']
+            lst_record_volatility = [current_datetime, current_timestamp, 'BTC', BTC_price, 0, equity, 0]
+            self.rtstr.set_high_volatility_protection_data(lst_record_volatility)
+            if self.rtstr.high_volatility_protection_activation():
+                print("DUMP POSITIONS DUE TO HIGH VOLATILITY")
+                lst_symbol_for_closure = self.broker.get_lst_symbol_position()
 
         if len(lst_symbol_for_closure) > 0:
             current_datetime = datetime.today().strftime("%Y/%m/%d %H:%M:%S")
