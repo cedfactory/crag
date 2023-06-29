@@ -35,7 +35,8 @@ def export_all():
 
         # page with a figure
         pngfilename = rootpath + "history_" + account_id + ".png"
-        graph_helper.export_graph(pngfilename, account_id, df, ["usdt_equity"])
+        pngfilename = graph_helper.export_graph(pngfilename, account_id,
+                                  [{"dataframe": df, "plots": [{"column": "usdt_equity", "label": "USDT equity"}]}])
 
         timestamp_start = df.iloc[0]["timestamp"]
         timestamp_end = df.iloc[-1]["timestamp"]
@@ -52,7 +53,9 @@ def export_all():
         df_btcusd = graph_helper.export_btcusd(pngfilename_usdt_equity_btcusd_normalized, delta_days)
         df_btcusd["close_normalized"] = 1000 * df_btcusd["close"] / df_btcusd.iloc[0]["close"]
         df_btcusd["timestamp"] = df_btcusd.index
-        graph_helper.export_graph(pngfilename_usdt_equity_btcusd_normalized, "Normalized", df, ["usdt_equity_normalized"], df_btcusd, ["close_normalized"])
+        pngfilename_usdt_equity_btcusd_normalized = graph_helper.export_graph(pngfilename_usdt_equity_btcusd_normalized, "Normalized",
+                                  [{"dataframe": df, "plots": [{"column": "usdt_equity_normalized"}]},
+                                   {"dataframe": df_btcusd, "plots": [{"column": "close_normalized"}]}])
 
         # Not used ?
         df["timestamp"] = [datetime.fromtimestamp(x).replace(minute=0, second=0, microsecond=0) for x in df["timestamp"]]
@@ -97,7 +100,9 @@ def export_all():
     row = pd.DataFrame({"timestamp": last_timestamp, "placed_cumsum": last_placed_cumsum}, index=[1])
     df_transferts = pd.concat([df_transferts, row])
 
-    graph_helper.export_graph(pngfilename_sum, "Absolute Investment", df_sum, ["usdt_equity"], df_transferts, ["placed_cumsum"])
+    pngfilename_sum = graph_helper.export_graph(pngfilename_sum, "Absolute Investment",
+                              [{"dataframe": df_sum, "plots": [{"column": "usdt_equity", "label": "USDT equity"}]},
+                               {"dataframe": df_transferts, "plots": [{"column": "placed_cumsum"}]}])
 
     df_sum["usdt_equity_normalized"] = 1000 * df_sum["usdt_equity"] / df_sum.at[0, "usdt_equity"]
     pngfilename_sum_normalized = rootpath + "history_sum_normalized.png"
@@ -111,8 +116,9 @@ def export_all():
     df_btcusd = graph_helper.export_btcusd(pngfilename_sum_btcusd, delta_days)
     df_btcusd["close_normalized"] = 1000 * df_btcusd["close"] / df_btcusd.iloc[0]["close"]
     df_btcusd["timestamp"] = df_btcusd.index
-    graph_helper.export_graph(pngfilename_sum_normalized, "Normalized Investment", df_sum, ["usdt_equity_normalized"], df_btcusd, ["close_normalized"])
-
+    pngfilename_sum_normalized = graph_helper.export_graph(pngfilename_sum_normalized, "Normalized Investment",
+                              [{"dataframe": df_sum, "plots": [{"column": "usdt_equity_normalized"}]},
+                               {"dataframe": df_btcusd, "plots": [{"column": "close_normalized"}]}])
     now = datetime.now()
     current_time = now.strftime("%d/%m/%Y %H:%M:%S")
 

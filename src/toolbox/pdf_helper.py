@@ -1,4 +1,4 @@
-import io
+import io,os
 from datetime import datetime
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -11,16 +11,15 @@ from reportlab.lib import utils,colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm
 from reportlab.lib.enums import TA_LEFT, TA_RIGHT, TA_CENTER
-from reportlab.platypus import SimpleDocTemplate,Spacer,Paragraph,Table,TableStyle,Image,PageBreak
+from reportlab.platypus import SimpleDocTemplate,Spacer,Flowable,Paragraph,Table,TableStyle,Image,PageBreak
 from reportlab.lib.styles import getSampleStyleSheet,ParagraphStyle
-
+from svglib.svglib import svg2rlg
 
 def get_image(path, width=70 * cm):
     img = utils.ImageReader(path)
     iw, ih = img.getSize()
     aspect = ih / float(iw)
     return Image(path, width=width, height=(width * aspect))
-
 
 class FooterCanvas(canvas.Canvas):
     def __init__(self, *args, **kwargs):
@@ -110,15 +109,20 @@ class PdfDocument():
 
             elif isinstance(content, plt.Figure):
                 fig = content
-                imgBuffer = io.BytesIO()
-                fig.savefig(imgBuffer, format='png')
-                imgBuffer.seek(0)
+                fig.savefig("./conf/tmp.svg")
+                drawing = svg2rlg("./conf/tmp.svg")
+                print(drawing.minWidth(), " ", drawing.width)
+                scale = (14.8 * cm) / drawing.width
+                drawing.width, drawing.height = drawing.minWidth() * scale, drawing.height * scale
+                drawing.scale(scale, scale)
+                self.elements.append(drawing)
 
-                self.elements.append(Image(imgBuffer))
-
-            else:
-                img = get_image(content, 14 * cm)
-                self.elements.append(img)
+            elif isinstance(content, str):
+                if content.endswith(".png"):
+                    img = get_image(content, 14 * cm)
+                    self.elements.append(img)
+                else:
+                    self.elements.append(Paragraph(content, style_page_title))
 
         self.elements.append(PageBreak())
 
