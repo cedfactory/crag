@@ -671,9 +671,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
                 print("PAUSE STRATEGY DUE TO HIGH VOLATILITY")
                 return True
             """
-            if True | (equipty_high_vs_low_percent >= 3) \
-                    | (equipty_high_vs_now_percent >= 3)\
-                    | (BTC_high_vs_now_percent >= 1.2):
+            if (equipty_high_vs_low_percent >= 3) | (equipty_high_vs_now_percent >= 3) | (BTC_high_vs_now_percent >= 1.2):
                 print("PAUSE STRATEGY DUE TO HIGH VOLATILITY")
                 self.high_volatility.trigger()
                 return True
