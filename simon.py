@@ -15,6 +15,14 @@ class BotSimon(commands.Bot):
             print("hello")
             await ctx.channel.send("Hello {}".format(ctx.author.name))
 
+        @self.command(name="commands")
+        async def custom_command(ctx):
+            msg = "Available commands :"
+            msg += "\n- accounts : list of the registered accounts"
+            msg += "\n- open_positions <account_id> : open positions for a specified account"
+            msg += "\n- reset <account_id> : reset a specified account"
+            await ctx.channel.send(msg)
+
         @self.command(name="accounts")
         async def custom_command(ctx, *args):
             accounts_info = accounts.import_accounts()
@@ -86,7 +94,7 @@ class BotSimon(commands.Bot):
         @self.command(name="reset")
         async def custom_command(ctx, *args):
             if len(args) < 1:
-                embed = discord.Embed(title="open_positions", description="? which account ?", color=0xFF5733)
+                embed = discord.Embed(title="reset", description="? which account ?", color=0xFF5733)
                 await ctx.channel.send(embed=embed)
                 return
 
