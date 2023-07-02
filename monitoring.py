@@ -31,7 +31,15 @@ def export_all():
             remote_filename = "history_" + account_id + ".csv"
             ftp_helper.pull_file("default", remote_path, remote_filename, filename)
 
-        df = pd.read_csv(filename, delimiter=',')
+        df_orig = pd.read_csv(filename, delimiter=',')
+
+        df = df_orig
+
+        # remove the repeated values in the first rows
+        while len(df) > 2 and df.iloc[0]["usdt_equity"] == df.iloc[1]["usdt_equity"]:
+            df = df.iloc[1:, :]
+        df.reset_index(inplace=True)
+
 
         # page with a figure
         pngfilename = rootpath + "history_" + account_id + ".png"
@@ -57,10 +65,6 @@ def export_all():
                                   [{"dataframe": df, "plots": [{"column": "usdt_equity_normalized"}]},
                                    {"dataframe": df_btcusd, "plots": [{"column": "close_normalized"}]}])
 
-        # Not used ?
-        df["timestamp"] = [datetime.fromtimestamp(x).replace(minute=0, second=0, microsecond=0) for x in df["timestamp"]]
-        df.drop_duplicates(subset=["timestamp"], inplace=True)
-
         account_export_info = {
             "account_id": account_id,
             "usdt_equity": pngfilename,
@@ -68,8 +72,12 @@ def export_all():
             "usdt_equity_btcusd_normalized": pngfilename_usdt_equity_btcusd_normalized,
             "df": df
         }
-        if not account_id in ["bitget_ayato", "bitget_ayato_sub3", "bitget_ayato_sub4", "subfortest1", "subfortest2"]:
+        if not account_id in ["bitget_ayato", "bitget_ayato_sub4", "subfortest1", "subfortest2"]:
             accounts_export_info.append(account_export_info)
+
+        df = df_orig
+        df["timestamp"] = [datetime.fromtimestamp(x).replace(minute=0, second=0, microsecond=0) for x in df["timestamp"]]
+        df.drop_duplicates(subset=["timestamp"], inplace=True)
 
         #df = df.drop(["btcusd"], axis=1)
         df.set_index("timestamp", inplace=True)
@@ -130,7 +138,7 @@ def export_all():
         pngfilename_usdt_equity = account_export_info["usdt_equity"]
         pngfilename_btcusd = account_export_info["btcusd"]
         usdt_equity_btcusd_normalized = account_export_info["usdt_equity_btcusd_normalized"]
-        df = account_export_info["df"]
+        #df = account_export_info["df"]
         #report.add_page(account_id, [pngfilename_usdt_equity, usdt_equity_btcusd_normalized, pngfilename_btcusd])
         report.add_page(account_id, [pngfilename_usdt_equity, usdt_equity_btcusd_normalized])
 
