@@ -36,6 +36,7 @@ class StrategyEnvelope(rtstr.RealTimeStrategy):
         ds.candle_stick = self.candle_stick
 
         ds.fdp_features = {"close": {},
+                           "stoch_rsi": {"indicator": "stoch_rsi", "window_size": 14},
                            "envelope": {"indicator": "envelope", "window_size": 10,
                                         "ma": "sma", "ma_window_size": 5,
                                         # "ma_offset_1": "2", "ma_offset_2": "5", "ma_offset_3": "7",

@@ -16,12 +16,38 @@ class StrategyBigWill(rtstr.RealTimeStrategy):
         # self.stochOverBought = 0.8 # Initial
         self.stochOverBought = 0.7
         # self.stochOverSold = 0.2 # Initial
-        self.stochOverSold = 0.3
+        # self.stochOverSold = 0.3 # test 1
+        self.stochOverSold = 0.4 # Changed by 0.4
         # self.willOverSold = -85 # Initial
         self.willOverSold = -80
         # self.willOverBought = -10 # Initial
-        self.willOverBought = -20
+        self.willOverBought = -20 # or -15
 
+        """
+        sl:  0  stochOverBought:  0.7  stochOverSold:  0.4  willOverSold:  -80  willOverBought:  -20
+        nb pair:  38
+        final_wallet mean:  4129.783947368422
+        final_wallet max:  17301.44
+        vs_hold_pct mean:  2.42078947368421
+        vs_hold_pct max:  18.28
+        global_win_rate mean:  0.6805263157894736
+        global_win_rate max:  0.75
+        total_trades mean:  63.71052631578947
+        total_trades max:  74.0
+        list pairs:  ['DOGE', 'MATIC', 'XLM', 'ATOM', 'MANA', 'CRV', 'EGLD', 'PEOPLE', 'ENJ', 'ZIL', 'APE', 'ROSE', 'C98', 'STORJ', 'COMP', 'LUNA2', 'LUNC', 'ONE', 'MAGIC', 'ASTR', 'ANKR', 'FET', 'HOOK', 'HBAR', 'COTI', 'LIT', 'TLM', 'HOT', 'HFT', 'ZEC', 'UNFI', 'DAR', 'SFP', 'SKL', 'STMX', 'UMA', 'KEY', 'SLP']
+        
+        sl:  0  stochOverBought:  0.7  stochOverSold:  0.4  willOverSold:  -80  willOverBought:  -15
+        nb pair:  42
+        final_wallet mean:  4236.242380952381
+        final_wallet max:  15574.82
+        vs_hold_pct mean:  2.176190476190476
+        vs_hold_pct max:  12.79
+        global_win_rate mean:  0.6802380952380952
+        global_win_rate max:  0.75
+        total_trades mean:  57.61904761904762
+        total_trades max:  69.0
+        list pairs:  ['LINK', 'MATIC', 'ICP', 'XLM', 'AVAX', 'MANA', 'CRV', 'EGLD', 'PEOPLE', 'ENJ', 'ZIL', 'APE', 'XMR', 'ROSE', 'C98', 'STORJ', 'COMP', 'LUNA2', 'LUNC', 'ONE', 'BAT', 'MAGIC', 'ANKR', 'FET', 'RNDR', 'HOOK', 'HBAR', 'COTI', 'VET', 'LIT', 'TLM', 'HOT', 'HFT', 'ZEC', 'UNFI', 'DAR', 'SFP', 'SKL', 'UMA', 'DENT', 'KEY', 'SLP']
+        """
 
     def get_data_description(self):
         ds = rtdp.DataDescription()
