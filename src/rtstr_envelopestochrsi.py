@@ -12,6 +12,22 @@ from . import rtdp, rtstr, utils, rtctrl
 # Reference: https://crypto-robot.com/blog/bollinger-trend
 # Reference: https://github.com/CryptoRobotFr/backtest_tools/blob/main/backtest/single_coin/bol_trend.ipynb
 
+"""
+===========================
+sl:  0  stochOverBought:  0.95  stochOverSold:  0.05  offset:  2
+nb pair:  34
+final_wallet mean:  39149.95676470589
+final_wallet max:  911640.2
+vs_hold_pct mean:  18.317647058823532
+vs_hold_pct max:  239.58
+global_win_rate mean:  0.695
+global_win_rate max:  0.83
+total_trades mean:  84.1470588235294
+total_trades max:  187.0
+list pairs:  ['XRP', 'BCH', 'DOGE', 'AAVE', 'ATOM', 'SUSHI', 'SHIB', 'EGLD', 'AR', 'PEOPLE', 'IOTA', 'ZIL', 'APE', 'STORJ', '1INCH', 'LUNA2', 'FLOW', 'REEF', 'LUNC', 'MINA', 'ASTR', 'ANKR', 'ACH', 'HBAR', 'CKB', 'RDNT', 'HFT', 'ZEC', 'FLOKI', 'SPELL', 'SUI', 'STMX', 'UMA', 'SLP']
+===========================
+"""
+
 class StrategyEnvelopeStochRSI(rtstr.RealTimeStrategy):
 
     def __init__(self, params=None):
