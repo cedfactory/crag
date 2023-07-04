@@ -73,14 +73,14 @@ class StrategyEnvelopeStochRSI(rtstr.RealTimeStrategy):
         if self.df_current_data['close'][symbol] > self.df_current_data['envelope_long_1'][symbol]:
             return False
         elif self.df_current_data['close'][symbol] < self.df_current_data['envelope_long_1'][symbol]\
-                and self.df_current_data['stoch_rsi'][symbol] > self.stochOverSold:
+                and self.df_current_data['stoch_rsi'][symbol] < self.stochOverSold:
             return True
 
     def condition_for_opening_short_position(self, symbol):
         if self.df_current_data['close'][symbol] < self.df_current_data['envelope_short_1'][symbol]:
             return False
         elif self.df_current_data['close'][symbol] > self.df_current_data['envelope_short_1'][symbol] \
-                and self.df_current_data['stoch_rsi'][symbol] < self.stochOverBought:
+                and self.df_current_data['stoch_rsi'][symbol] > self.stochOverBought:
             return True
 
     def condition_for_closing_long_position(self, symbol):
