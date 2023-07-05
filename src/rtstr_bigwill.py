@@ -13,6 +13,7 @@ class StrategyBigWill(rtstr.RealTimeStrategy):
         self.zero_print = True
 
         self.AO_Threshold = 0
+        # stochOverBought:  0.7  stochOverSold:  0.4  willOverSold:  -85  willOverBought:  -10
         # self.stochOverBought = 0.8 # Initial
         self.stochOverBought = 0.7
         # self.stochOverSold = 0.2 # Initial
