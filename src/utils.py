@@ -132,8 +132,6 @@ def fdp_request_post(url, params, fdp_url_id):
     n_attempts = 3
     while n_attempts > 0:
         try:
-            final_result = {"status":"ko", "info":"red alert"}
-            break
             response = requests.post(fdp_url+'/'+url, json=params)
             if response.status_code == 200:
                 response_json = json.loads(response.text)
