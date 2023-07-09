@@ -3,7 +3,7 @@
         <params symbols="./symbols_df_envelope_stochrsi_usdt.csv" strategy_interval="3600" candle_stick="alive" max_position="3" sl="-5" tp="20" global_sl="-10" global_tp="20" trailer_tp="0" trailer_delta="0" trailer_global_tp="0" trailer_global_delta="0" drawdown_SL="-5" high_volatility="False"/>
     </strategy>
     <broker name="bitget">
-        <params exchange="bitget" fdp_url_id="local" account="bitget_ayato_sub2" leverage_short="2" leverage_long="2" simulation="1" intervals="1h" orders="market" reset_account="True"/>
+        <params exchange="bitget" fdp_url_id="gc1" account="bitget_ayato_sub2" leverage_short="2" leverage_long="2" simulation="1" intervals="1h" orders="market" reset_account="True"/>
     </broker>
     <crag id="envelope_stochrsi" interval="1" botId="ayato_sub3"/>
 </configuration>
