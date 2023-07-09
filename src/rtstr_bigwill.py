@@ -58,7 +58,7 @@ class StrategyBigWill(rtstr.RealTimeStrategy):
         ds.fdp_features = { "ao" : {"indicator": "ao", "ao_window_1": 6, "ao_window_2": 22, "window_size": 22},
                             "ema100" : {"indicator": "ema", "id": "100", "window_size": 100},
                             "ema200": {"indicator": "ema", "id": "200", "window_size": 200},
-                            "stoch_rsi": {"indicator": "stoch_rsi", "window_size": 14},
+                            "stoch_rsi": {"indicator": "stoch_rsi", "window_size": 30, "stoch_rsi_window_size":14},
                             "willr" : {"indicator": "willr", "window_size": 14},
                             "postprocess1": {"indicator": "shift", "window_size": 1, "n": "1", "input": ["ao"]}
                             }
