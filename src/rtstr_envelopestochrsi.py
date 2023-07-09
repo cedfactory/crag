@@ -56,7 +56,7 @@ class StrategyEnvelopeStochRSI(rtstr.RealTimeStrategy):
 
         ds.fdp_features = {"close": {},
                            "ao": {"indicator": "ao", "ao_window_1": 6, "ao_window_2": 22, "window_size": 22},
-                           "stoch_rsi": {"indicator": "stoch_rsi", "window_size": 14},
+                           "stoch_rsi": {"indicator": "stoch_rsi", "window_size": 30, "stoch_rsi_window_size":14},
                            "envelope": {"indicator": "envelope", "window_size": 10,
                                         "ma": "sma", "ma_window_size": 5,
                                         # "ma_offset_1": "2", "ma_offset_2": "5", "ma_offset_3": "7",

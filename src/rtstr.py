@@ -85,8 +85,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
             if isinstance(self.high_volatility_protection, str):
                 self.high_volatility_protection = ast.literal_eval(self.high_volatility_protection)
 
-        if self.high_volatility_protection:
-            self.high_volatility = HighVolatilityPause()
+        self.high_volatility = HighVolatilityPause(self.high_volatility_protection)
 
         self.trigger_trailer = self.trailer_TP > 0 and self.trailer_delta > 0
         self.trigger_global_trailer = self.trailer_global_TP > 0 and self.trailer_global_delta > 0
@@ -680,11 +679,16 @@ class RealTimeStrategy(metaclass=ABCMeta):
         return False
 
 class HighVolatilityPause():
-    def __init__(self):
+    def __init__(self, activate):
         self.status = False
         self.duration = 60 * 60 * 6
         self.high_volatility_period = 2 * 60  # min
         self.df_high_volatility = pd.DataFrame(columns=['datetime', 'timestamp', 'symbol', 'price_BTC', 'pct_BTC', 'equity', 'pct_equity'])
+
+        if activate:
+            self.inactive = False
+        else:
+            self.inactive = True
 
     def trigger(self):
         self.status = True
@@ -694,7 +698,10 @@ class HighVolatilityPause():
         self.status = False
 
     def high_volatility_pause_status(self):
-        return self.status
+        if self.inactive:
+            return False
+        else:
+            return self.status
 
     def high_volatility_get_duration(self):
         return self.duration
