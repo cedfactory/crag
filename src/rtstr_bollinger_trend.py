@@ -54,104 +54,29 @@ class StrategyBollingerTrend(rtstr.RealTimeStrategy):
         return "StrategyBollingerTrend"
 
     def condition_for_opening_long_position(self, symbol):
-        msg = ""
-        for col in ['close', 'bollinger_1', 'lower_band_1', 'higher_band_1', 'ma_band_1', 'rsi_1', 'atr_1', 'sma_long_ma', 'n1_lower_band_1', 'n1_higher_band_1', 'n1_ma_band_1', 'n1_close']:
-            msg += col + " " + str(self.df_current_data[col][symbol]) + " + "
-        print(msg)
-
-        if self.tmp_debug_traces:
-            if (self.df_current_data['n1_close'][symbol] < self.df_current_data['n1_higher_band_1'][symbol])\
-               & (self.df_current_data['close'][symbol] > self.df_current_data['higher_band_1'][symbol])\
-               & (self.df_current_data["close"][symbol] > self.df_current_data["sma_long_ma"][symbol]):
-                print("OPENING LONG POSITION: TRUE - ", symbol)
-            else:
-                print("OPENING LONG POSITION: FALSE - ", symbol)
-
-            print("condition long - ",
-                  "symbol: ", symbol,
-                  " close: ", self.df_current_data['close'][symbol],
-                  " n1_close: ", self.df_current_data['n1_close'][symbol],
-                  " higher_band_1: ", self.df_current_data['higher_band_1'][symbol],
-                  " n1_higher_band_1: ", self.df_current_data['n1_higher_band_1'][symbol],
-                  " lower_band_1: ", self.df_current_data['lower_band_1'][symbol],
-                  " n1_lower_band_1: ", self.df_current_data['n1_lower_band_1'][symbol],
-                  # " rsi_1: ", self.df_current_data['rsi_1'][symbol]
-                  )
-
-            print( "n1_close < n1_higher_band_1 : ", (self.df_current_data['n1_close'][symbol] < self.df_current_data['n1_higher_band_1'][symbol]),
-                   " - close > higher_band_1 : ", (self.df_current_data['close'][symbol] > self.df_current_data['higher_band_1'][symbol]),
-                   " - close > sma_long_ma : ", (self.df_current_data["close"][symbol] > self.df_current_data["sma_long_ma"][symbol])
-                   # " - (abs(n1_higher_band_1 - n1_lower_band_1 / n1_lower_band_1 > min_bol_spread) : ", (abs(self.df_current_data['n1_higher_band_1'][symbol] - self.df_current_data['n1_lower_band_1'][symbol]) / self.df_current_data['n1_lower_band_1'][symbol] > self.min_bol_spread),
-                   # " - rsi_1 > 52)", (self.df_current_data["rsi_1"][symbol] > 52)
-                   )
-            # else:
-            #    print("OPENING LONG POSITION: FALSE - ", symbol)
-
         return (self.df_current_data['n1_close'][symbol] < self.df_current_data['n1_higher_band_1'][symbol])\
-               & (self.df_current_data['close'][symbol] > self.df_current_data['higher_band_1'][symbol])\
-               & (self.df_current_data["close"][symbol] > self.df_current_data["sma_long_ma"][symbol])
+            & (self.df_current_data['close'][symbol] > self.df_current_data['higher_band_1'][symbol])
+               # & (self.df_current_data["close"][symbol] > self.df_current_data["sma_long_ma"][symbol])
                # & (abs(self.df_current_data['n1_higher_band_1'][symbol] - self.df_current_data['n1_lower_band_1'][symbol]) / self.df_current_data['n1_lower_band_1'][symbol] > self.min_bol_spread) \
                # & (self.df_current_data['rsi_1'][symbol] > 52)
 
     def condition_for_opening_short_position(self, symbol):
-        if self.tmp_debug_traces:
-            if (self.df_current_data['n1_close'][symbol] > self.df_current_data['n1_lower_band_1'][symbol])\
-                    & (self.df_current_data['close'][symbol] < self.df_current_data['lower_band_1'][symbol])\
-                    & (self.df_current_data["close"][symbol] < self.df_current_data["sma_long_ma"][symbol]):
-                print("OPENING SHORT POSITION: TRUE - ", symbol)
-            else:
-                print("OPENING SHORT POSITION: FALSE - ", symbol)
-            print("n1_close > n1_lower_band_1 : ",
-                  (self.df_current_data['n1_close'][symbol] > self.df_current_data['n1_lower_band_1'][symbol]),
-                  " - close < lower_band_1 : ",
-                  (self.df_current_data['close'][symbol] < self.df_current_data['lower_band_1'][symbol]),
-                  " - close < sma_long_ma : ",
-                  (self.df_current_data["close"][symbol] < self.df_current_data["sma_long_ma"][symbol])
-                  # " - (abs(n1_higher_band_1 - n1_lower_band_1 / n1_lower_band_1 > min_bol_spread) : ", (abs(self.df_current_data['n1_higher_band_1'][symbol] - self.df_current_data['n1_lower_band_1'][symbol]) / self.df_current_data['n1_lower_band_1'][symbol] > self.min_bol_spread),
-                  # " - rsi_1 > 52)", (self.df_current_data["rsi_1"][symbol] < 48)
-                  )
-
-            print("condition short - ",
-                  "symbol: ", symbol,
-                  " close: ", self.df_current_data['close'][symbol],
-                  " n1_close: ", self.df_current_data['n1_close'][symbol],
-                  " higher_band_1: ", self.df_current_data['higher_band_1'][symbol],
-                  " n1_higher_band_1: ", self.df_current_data['n1_higher_band_1'][symbol],
-                  " lower_band_1: ", self.df_current_data['lower_band_1'][symbol],
-                  " n1_lower_band_1: ", self.df_current_data['n1_lower_band_1'][symbol],
-                  # " rsi_1: ", self.df_current_data['rsi_1'][symbol]
-                  )
-            # else:
-            #     print("OPENING SHORT POSITION: FALSE - ", symbol)
-
         return (self.df_current_data['n1_close'][symbol] > self.df_current_data['n1_lower_band_1'][symbol])\
-               & (self.df_current_data['close'][symbol] < self.df_current_data['lower_band_1'][symbol])\
-               & (self.df_current_data["close"][symbol] < self.df_current_data["sma_long_ma"][symbol])
+               & (self.df_current_data['close'][symbol] < self.df_current_data['lower_band_1'][symbol])
+               # & (self.df_current_data["close"][symbol] < self.df_current_data["sma_long_ma"][symbol])
                # & (abs(self.df_current_data['n1_higher_band_1'][symbol] - self.df_current_data['n1_lower_band_1'][symbol]) / self.df_current_data['n1_lower_band_1'][symbol] > self.min_bol_spread) \
                # & (self.df_current_data["rsi_1"][symbol] < 48)
 
     def condition_for_closing_long_position(self, symbol):
         ma_band_epsilon = self.df_current_data['ma_band_1'][symbol]
         ma_band_epsilon = ma_band_epsilon + ma_band_epsilon * self.epsilon / 100
-        if self.tmp_debug_traces:
-            print("CLOSING LONG POSITION: ", (self.df_current_data['close'][symbol] < self.df_current_data['ma_band_1'][symbol]), " - ", symbol)
-            print("symbol: ", symbol,
-                  " close: ", self.df_current_data['close'][symbol],
-                  " ma_band_1: ", self.df_current_data['ma_band_1'][symbol],
-                  " ma_band_1 + epsilon: ", ma_band_epsilon
-                  )
+
         return (self.df_current_data['close'][symbol] < ma_band_epsilon)
 
     def condition_for_closing_short_position(self, symbol):
         ma_band_epsilon = self.df_current_data['ma_band_1'][symbol]
         ma_band_epsilon = ma_band_epsilon - ma_band_epsilon * self.epsilon / 100
-        if self.tmp_debug_traces:
-            print("CLOSING SHORT POSITION: ", (self.df_current_data['close'][symbol] > self.df_current_data['ma_band_1'][symbol]), " - ", symbol)
-            print("symbol: ", symbol,
-                  " close: ", self.df_current_data['close'][symbol],
-                  " ma_band_1: ", self.df_current_data['ma_band_1'][symbol],
-                  " ma_band_1 - epsilon: ", ma_band_epsilon
-                  )
+
         return (self.df_current_data['close'][symbol] > ma_band_epsilon)
 
     def sort_list_symbols(self, lst_symbols):
