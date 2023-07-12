@@ -2,7 +2,7 @@ import os
 import shutil
 import time
 import pandas as pd
-from . import trade,rtstr,utils
+from . import trade,rtstr,utils,strategy_monitoring
 import pika
 import ast
 import threading
@@ -118,10 +118,12 @@ class Crag:
                 self.minimal_portfolio_date = self.df_reboot_data["date min value"][0]
 
         # rabbitmq connection
+        self.send_alive_notification()
+        '''
         try:
             connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
             channel = connection.channel()
-            channel.queue_declare(queue='crag')
+            channel.queue_declare(queue='strategies')
 
             def callback(ch, method, properties, bbody):
                 print(" [x] Received {}".format(bbody))
@@ -160,12 +162,18 @@ class Crag:
             thread.start()
         except:
             print("Problem encountered while configuring the rabbitmq receiver")
-
+        '''
 
     def log(self, msg, header="", attachments=[]):
         if self.logger:
             self.logger.log(msg, header="["+self.id+"] "+header, author=type(self).__name__, attachments=attachments)
 
+    def send_alive_notification(self):
+        try:
+            if self.broker.account.get("id") != "" and self.rtstr.id != "":
+                strategy_monitoring.publish_alive_strategy(self.broker.account.get("id"), self.rtstr.id)
+        except:
+            print("Problem encountered while sending a notification")
 
     def run(self):
         self.start_date = self.broker.get_current_datetime("%Y/%m/%d %H:%M:%S")
@@ -247,6 +255,7 @@ class Crag:
         self.export_history(self.export_filename)
 
     def step(self):
+        self.send_alive_notification()
         prices_symbols, ds = self.get_ds_and_price_symbols()
         current_datetime = self.broker.get_current_datetime()
         self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(), self.broker.get_cash_borrowed(), prices_symbols, False, self.final_datetime, self.broker.get_balance())

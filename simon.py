@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 import pika
 import pandas as pd
-from src import accounts,broker_bitget_api
+from src import accounts,broker_bitget_api,strategy_monitoring
 
 class BotSimon(commands.Bot):
     def __init__(self):
@@ -17,10 +17,12 @@ class BotSimon(commands.Bot):
 
         @self.command(name="commands")
         async def custom_command(ctx):
-            msg = "Available commands :"
-            msg += "\n- accounts : list of the registered accounts"
-            msg += "\n- open_positions <account_id> : open positions for a specified account"
-            msg += "\n- reset <account_id> : reset a specified account"
+            msg = "Available commands for accounts:\n"
+            msg += "- accounts : list of the registered accounts\n"
+            msg += "- open_positions <account_id> : open positions for a specified account\n"
+            msg += "- reset <account_id> : reset a specified account\n"
+            msg += "Available commands for strategies:\n"
+            msg += "- strategies : list of the alive strategies\n"
             await ctx.channel.send(msg)
 
         @self.command(name="accounts")
@@ -101,9 +103,41 @@ class BotSimon(commands.Bot):
             account_id = args[0]
             broker_bitget_api.BrokerBitGetApi({"account": account_id, "reset_account": True})
 
-            embed=discord.Embed(title="reset".format(account_id), description="reset done on {}".format(account_id), color=0xFF5733)
+            embed = discord.Embed(title="reset".format(account_id), description="reset done on {}".format(account_id),
+                                  color=0xFF5733)
             await ctx.channel.send(embed=embed)
-            
+
+        @self.command(name="strategies")
+        async def custom_command(ctx, *args):
+            accounts_info = accounts.import_accounts()
+            account_ids = accounts_info.keys()
+            lst_accounts = []
+            lst_strategies = []
+            msg_error = ""
+            for account_id in account_ids:
+                strategy_id = ""
+                # rpc to the server
+                try:
+                    client = strategy_monitoring.StrategyMonitoringClient()
+                    strategy_id = client.GetStrategyOnAccount(account_id).decode()
+                except:
+                    print("[Simon] Problem encountered while sending a rpc request")
+
+                if strategy_id != "":
+                    lst_accounts.append(account_id)
+                    lst_strategies.append(strategy_id)
+
+            msg = ""
+            if msg_error != "":
+                msg = msg_error
+            else:
+                df = pd.DataFrame({"Accounts": lst_accounts, "Strategies": lst_strategies},
+                                  index=range(len(lst_accounts)))
+                msg = '```' + df.to_string(index=False) + '```'
+
+            embed=discord.Embed(title="strategies", description=msg, color=0xFF5733)
+            await ctx.channel.send(embed=embed)
+
         @self.command(name="crag")
         async def custom_command(ctx, *args):
             if len(args) != 1:
