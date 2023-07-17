@@ -39,6 +39,10 @@ class Crag:
         self.id = str(utils.get_random_id())
         self.high_volatility_sleep_duration = 0
         self.activate_volatility_sleep = False
+        self.drawdown = 0
+        self.actual_drawdown_percent = 0
+        self.total_SL_TP = 0
+        self.total_SL_TP_percent = 0
 
         if params:
             self.broker = params.get("broker", self.broker)
@@ -435,6 +439,10 @@ class Crag:
         if self.previous_usdt_equity == 0:
             self.previous_usdt_equity = usdt_equity
         variation_percent = utils.get_variation(self.original_portfolio_value, usdt_equity)
+        msg += "total SL TP: ${} / %{}\n".format(utils.KeepNDecimals(self.total_SL_TP, 2),
+                                                 utils.KeepNDecimals(self.total_SL_TP_percent, 2))
+        msg += "max drawdown: ${} / %{}\n".format(utils.KeepNDecimals(self.drawdown, 2),
+                                                  utils.KeepNDecimals(self.actual_drawdown_percent, 2))
         msg += "account equity : ${} / %{}\n".format(utils.KeepNDecimals(usdt_equity, 2),
                                                    utils.KeepNDecimals(variation_percent, 2))
         variation_percent = utils.get_variation(self.previous_usdt_equity, usdt_equity)
@@ -789,30 +797,37 @@ class Crag:
 
     def safety_step(self):
         usdt_equity = self.broker.get_usdt_equity()
-        total_PL = usdt_equity - self.original_portfolio_value
+        self.total_SL_TP = usdt_equity - self.original_portfolio_value
         if usdt_equity >= self.maximal_portfolio_value:
             self.maximal_portfolio_value = usdt_equity
-            drawdown_SL = 0
+            self.drawdown = 0
+            self.actual_drawdown_percent = 0
         else:
-            drawdown_SL = usdt_equity - self.maximal_portfolio_value
+            self.drawdown = usdt_equity - self.maximal_portfolio_value
+            self.actual_drawdown_percent = self.drawdown * 100 / self.maximal_portfolio_value
 
         if self.original_portfolio_value == 0:
-            total_PL_percent = 0
+            self.total_SL_TP_percent = 0
         else:
-            total_PL_percent = total_PL * 100 / self.original_portfolio_value
+            self.total_SL_TP_percent = self.total_SL_TP * 100 / self.original_portfolio_value
 
         if self.maximal_portfolio_value == 0:
             self.maximal_portfolio_value = max(usdt_equity, self.original_portfolio_value)
-            drawdown_SL_percent = 0
+            self.actual_drawdown_percent = 0
         else:
-            drawdown_SL_percent = drawdown_SL * 100 / self.maximal_portfolio_value
+            self.actual_drawdown_percent = self.drawdown * 100 / self.maximal_portfolio_value
 
-        if self.rtstr.condition_for_global_SLTP(total_PL_percent) \
-                or self.rtstr.condition_for_global_trailer_TP(total_PL_percent)\
-                or self.rtstr.condition_for_max_drawdown_SL(drawdown_SL_percent):
+        if self.rtstr.condition_for_global_SLTP(self.total_SL_TP_percent) \
+                or self.rtstr.condition_for_global_trailer_TP(self.total_SL_TP_percent)\
+                or self.rtstr.condition_for_max_drawdown_SL(self.actual_drawdown_percent):
             print('reset - global TP')
-            print('total PL: $', total_PL, " - ", total_PL_percent, "%")
+            print('total SL TP: $', self.total_SL_TP, "      ", self.total_SL_TP_percent, "%")
+            print('max drawdown: $', self.drawdown, " - ", self.actual_drawdown_percent, "%")
             msg = "reset - total SL TP"
+            msg += "total SL TP: ${} / %{}\n".format(utils.KeepNDecimals(self.total_SL_TP, 2),
+                                                     utils.KeepNDecimals(self.total_SL_TP_percent, 2))
+            msg += "max drawdown: ${} / %{}\n".format(utils.KeepNDecimals(self.drawdown, 2),
+                                                      utils.KeepNDecimals(self.actual_drawdown_percent, 2))
             self.log(msg, "total SL TP")
 
             self.broker.execute_reset_account()
@@ -840,9 +855,10 @@ class Crag:
             # ['datetime', 'timestamp', 'symbol', 'pice', 'pct_BTC', 'equity', 'pct_equity']
             lst_record_volatility = [current_datetime, current_timestamp, 'BTC', BTC_price, 0, equity, 0]
             self.rtstr.set_high_volatility_protection_data(lst_record_volatility)
-            if self.rtstr.high_volatility_protection_activation():
+            if self.rtstr.high_volatility_protection_activation(self.actual_drawdown_percent):
                 print("DUMP POSITIONS DUE TO HIGH VOLATILITY")
                 lst_symbol_for_closure = self.broker.get_lst_symbol_position()
+                self.maximal_portfolio_value
 
         if len(lst_symbol_for_closure) > 0:
             current_datetime = datetime.today().strftime("%Y/%m/%d %H:%M:%S")

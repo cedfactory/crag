@@ -43,6 +43,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
         self.strategy_interval = 0
         self.candle_stick = "released"  # last released from broker vs alive
         self.high_volatility_protection = False
+        self.BTC_volatility_protection = False
 
         if params:
             self.strategy_interval = params.get("strategy_interval", self.strategy_interval)
@@ -577,7 +578,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
                or ((self.global_safety_SL != 0) and (global_unrealizedPL <= self.global_safety_SL))
 
     def condition_for_max_drawdown_SL(self, drawdown_SL_percent):
-        return ((self.drawdown_SL != 0) and (drawdown_SL_percent <= self.drawdown_SL))
+        return ((not self.trigger_high_volatility_protection()) and (self.drawdown_SL != 0) and (drawdown_SL_percent <= self.drawdown_SL))
 
     def condition_for_global_trailer_TP(self, global_unrealizedPL):
         if not self.trigger_global_trailer:
@@ -632,7 +633,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
     def set_high_volatility_protection_data(self, lst_row):
         self.high_volatility.set_high_volatility_protection_data(lst_row)
 
-    def high_volatility_protection_activation(self):
+    def high_volatility_protection_activation(self, drawdown_SL_percent):
         if self.high_volatility.get_len_df_high_volatility() >= 2:
             max_equity = self.high_volatility.get_max_equity()
             min_equity = self.high_volatility.get_min_equity()
@@ -670,7 +671,11 @@ class RealTimeStrategy(metaclass=ABCMeta):
                 print("PAUSE STRATEGY DUE TO HIGH VOLATILITY")
                 return True
             """
-            if (equipty_high_vs_low_percent >= 3) | (equipty_high_vs_now_percent >= 3) | (BTC_high_vs_now_percent >= 1.2):
+            if (equipty_high_vs_low_percent >= 3) \
+                    | (equipty_high_vs_now_percent >= 2) \
+                    | ((self.BTC_volatility_protection)
+                       & (BTC_high_vs_now_percent >= 1.2)) \
+                    | self.condition_for_max_drawdown_SL(drawdown_SL_percent):
                 print("PAUSE STRATEGY DUE TO HIGH VOLATILITY")
                 self.high_volatility.trigger()
                 return True

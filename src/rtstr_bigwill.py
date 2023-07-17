@@ -20,10 +20,9 @@ class StrategyBigWill(rtstr.RealTimeStrategy):
         # self.stochOverSold = 0.3 # test 1
         self.stochOverSold = 0.4 # Changed by 0.4
         # self.willOverSold = -85 # Initial
-        self.willOverSold = -90  # Initial
-        # self.willOverSold = -80
-        self.willOverBought = -10 # Initial
-        # self.willOverBought = -20 # or -15
+        self.willOverSold = -80
+        # self.willOverBought = -10 # Initial
+        self.willOverBought = -20 # or -15
 
         """
         sl:  0  stochOverBought:  0.7  stochOverSold:  0.4  willOverSold:  -80  willOverBought:  -20
