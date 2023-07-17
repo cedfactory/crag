@@ -63,23 +63,15 @@ class StrategyEnvelopeStochRSI(rtstr.RealTimeStrategy):
         ds.fdp_features = {"close": {},
                            "ao": {"indicator": "ao", "ao_window_1": 6, "ao_window_2": 22, "window_size": 22},
                            "stoch_rsi": {"indicator": "stoch_rsi", "window_size": 30, "stoch_rsi_window_size":14},
-                           "predicted_stoch_rsi": {"indicator": "predicted_stoch_rsi", "window_size": 30,
-                                                   "pred_window_size": 5, "stoch_rsi_window_size": 14},
                            "envelope": {"indicator": "envelope", "window_size": 10,
                                         "ma": "sma", "ma_window_size": 5,
                                         # "ma_offset_1": "2", "ma_offset_2": "5", "ma_offset_3": "7",
                                         # "ma_offset_1": "3", "ma_offset_2": "5", "ma_offset_3": "7",
-                                        "ma_offset_1": "3", "ma_offset_2": "4", "ma_offset_3": "5",
+                                        "ma_offset_1": "2", "ma_offset_2": "3", "ma_offset_3": "5",
                                         "output": ["ma_base",
                                                    "envelope_long_1", "envelope_long_2", "envelope_long_3",
                                                    "envelope_short_1", "envelope_short_2", "envelope_short_3"]
-                                        },
-                           "postprocess1": {"indicator": "shift", "window_size": 1, "n": "1",
-                                            "input": ["stoch_rsi"]},
-                           "postprocess2": {"indicator": "shift", "window_size": 2, "n": "2",
-                                            "input": ["stoch_rsi"]},
-                           "postprocess3": {"indicator": "shift", "window_size": 3, "n": "3",
-                                            "input": ["stoch_rsi"]}
+                                        }
                            }
 
         ds.features = self.get_feature_from_fdp_features(ds.fdp_features)
@@ -89,6 +81,7 @@ class StrategyEnvelopeStochRSI(rtstr.RealTimeStrategy):
             print("strategy features: ", ds.features)
             self.strategy_info_printed = True
 
+        # ['close', 'envelope', 'ma_base', 'envelope_long_1', 'envelope_long_2', 'envelope_long_3', 'envelope_short_1', 'envelope_short_2', 'envelope_short_3']
         return ds
 
     def get_info(self):
@@ -101,25 +94,15 @@ class StrategyEnvelopeStochRSI(rtstr.RealTimeStrategy):
     def condition_for_opening_long_position(self, symbol):
         if self.df_current_data['close'][symbol] > self.df_current_data['envelope_long_1'][symbol]:
             return False
-        elif self.df_current_data['close'][symbol] < self.df_current_data['envelope_long_1'][symbol] \
-                and (self.df_current_data['stoch_rsi'][symbol] < self.stochOverSold
-                     or self.df_current_data['n1_stoch_rsi'][symbol] < self.stochOverSold
-                     or self.df_current_data['n2_stoch_rsi'][symbol] < self.stochOverSold)\
-                and self.df_current_data['predicted_stoch_rsi'][symbol] > self.df_current_data['n1_stoch_rsi'][symbol]\
-                and self.df_current_data['n1_stoch_rsi'][symbol] > self.df_current_data['n2_stoch_rsi'][symbol]\
-                and self.df_current_data['n2_stoch_rsi'][symbol] > self.df_current_data['n3_stoch_rsi'][symbol]:
+        elif self.df_current_data['close'][symbol] < self.df_current_data['envelope_long_1'][symbol]\
+                and self.df_current_data['stoch_rsi'][symbol] < self.stochOverSold:
             return True
 
     def condition_for_opening_short_position(self, symbol):
         if self.df_current_data['close'][symbol] < self.df_current_data['envelope_short_1'][symbol]:
             return False
         elif self.df_current_data['close'][symbol] > self.df_current_data['envelope_short_1'][symbol] \
-                and (self.df_current_data['stoch_rsi'][symbol] > self.stochOverBought
-                     or self.df_current_data['n1_stoch_rsi'][symbol] > self.stochOverBought
-                     or self.df_current_data['n2_stoch_rsi'][symbol] > self.stochOverBought)\
-                and self.df_current_data['predicted_stoch_rsi'][symbol] < self.df_current_data['n1_stoch_rsi'][symbol]\
-                and self.df_current_data['n1_stoch_rsi'][symbol] < self.df_current_data['n2_stoch_rsi'][symbol]\
-                and self.df_current_data['n2_stoch_rsi'][symbol] < self.df_current_data['n3_stoch_rsi'][symbol]:
+                and self.df_current_data['stoch_rsi'][symbol] > self.stochOverBought:
             return True
 
     def condition_for_closing_long_position(self, symbol):

@@ -35,7 +35,7 @@ class StrategyBollingerTrend(rtstr.RealTimeStrategy):
 
         ds.fdp_features = {"close": {},
                            # "bollinger_id1": {"indicator": "bollinger", "window_size": 100, "id": "1", "bol_std": 2.25, "output": ["lower_band", "higher_band", "ma_band"]},
-                           "bollinger_id1": {"indicator": "bollinger", "window_size": 20, "id": "1", "bol_std": 2, "output": ["lower_band", "higher_band", "ma_band"]},
+                           "bollinger_id1": {"indicator": "bollinger", "window_size": 20, "id": "1", "bol_std": 2.5, "output": ["lower_band", "higher_band", "ma_band"]},
                            "rsi": {"indicator": "rsi", "id": "1", "window_size": 14},
                            "atr": {"indicator": "atr", "id": "1", "window_size": 14},
                            "long_ma": {"indicator": "sma", "id": "long_ma", "window_size": 100},
@@ -54,16 +54,16 @@ class StrategyBollingerTrend(rtstr.RealTimeStrategy):
         return "StrategyBollingerTrend"
 
     def condition_for_opening_long_position(self, symbol):
-        return (self.df_current_data['n1_close'][symbol] < self.df_current_data['n1_higher_band_1'][symbol])\
-            & (self.df_current_data['close'][symbol] > self.df_current_data['higher_band_1'][symbol])
-               # & (self.df_current_data["close"][symbol] > self.df_current_data["sma_long_ma"][symbol])
+        return (self.df_current_data['n1_close'][symbol] < self.df_current_data['n1_higher_band_1'][symbol]) \
+               & (self.df_current_data['close'][symbol] > self.df_current_data['higher_band_1'][symbol]) \
+               & (self.df_current_data["close"][symbol] > self.df_current_data["sma_long_ma"][symbol])
                # & (abs(self.df_current_data['n1_higher_band_1'][symbol] - self.df_current_data['n1_lower_band_1'][symbol]) / self.df_current_data['n1_lower_band_1'][symbol] > self.min_bol_spread) \
                # & (self.df_current_data['rsi_1'][symbol] > 52)
 
     def condition_for_opening_short_position(self, symbol):
-        return (self.df_current_data['n1_close'][symbol] > self.df_current_data['n1_lower_band_1'][symbol])\
-               & (self.df_current_data['close'][symbol] < self.df_current_data['lower_band_1'][symbol])
-               # & (self.df_current_data["close"][symbol] < self.df_current_data["sma_long_ma"][symbol])
+        return (self.df_current_data['n1_close'][symbol] > self.df_current_data['n1_lower_band_1'][symbol]) \
+               & (self.df_current_data['close'][symbol] < self.df_current_data['lower_band_1'][symbol])\
+               & (self.df_current_data["close"][symbol] < self.df_current_data["sma_long_ma"][symbol])
                # & (abs(self.df_current_data['n1_higher_band_1'][symbol] - self.df_current_data['n1_lower_band_1'][symbol]) / self.df_current_data['n1_lower_band_1'][symbol] > self.min_bol_spread) \
                # & (self.df_current_data["rsi_1"][symbol] < 48)
 

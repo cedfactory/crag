@@ -72,6 +72,10 @@ class StrategyBigWill(rtstr.RealTimeStrategy):
     def get_info(self):
         return "StrategyBigWill"
 
+    #    row['AO'] >= 0
+    #    and previousRow['AO'] > row['AO']
+    #    and row['WillR'] < willOverSold
+    #    and row['EMA100'] > row['EMA200']
     def condition_for_opening_long_position(self, symbol):
         return self.df_current_data['ao'][symbol] > self.AO_Threshold and \
                self.df_current_data['n1_ao'][symbol] > self.df_current_data['ao'][symbol] and \
@@ -84,6 +88,9 @@ class StrategyBigWill(rtstr.RealTimeStrategy):
                self.df_current_data['willr'][symbol] > self.willOverBought and \
                self.df_current_data['ema_100'][symbol] < self.df_current_data['ema_200'][symbol]
 
+    #   (row['AO'] < 0
+    #       and row['STOCH_RSI'] > stochOverSold)
+    #   or row['WillR'] > willOverBought
     def condition_for_closing_long_position(self, symbol):
         return (self.df_current_data['ao'][symbol] < self.AO_Threshold
                 and self.df_current_data['stoch_rsi'][symbol] > self.stochOverSold) \
