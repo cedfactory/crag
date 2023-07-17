@@ -138,6 +138,33 @@ class BotSimon(commands.Bot):
             embed=discord.Embed(title="strategies", description=msg, color=0xFF5733)
             await ctx.channel.send(embed=embed)
 
+
+        @self.command(name="strategy")
+        async def custom_command(ctx, *args):
+            if len(args) < 2:
+                message = args[0]
+                self.send_message_to_crag(message)
+                embed=discord.Embed(title="command {}".format(message), description="missing parameters", color=0xFF5733)
+                await ctx.channel.send(embed=embed)
+                return
+            command = args[0]
+            strategy_id = args[1]
+            msg = ""
+            if command == "stop":
+                try:
+                    #client = strategy_monitoring.StrategyMonitoringClient()
+                    #client.StopStrategy(strategy_id)
+                    strategy_monitoring.publish_strategy_stop(strategy_id)
+                    msg = "[Simon] stop command sent to {}".format(strategy_id)
+                except:
+                    msg = "[Simon] Problem encountered while sending a notification (publish_strategy_stop)"
+            else:
+                msg = "{} unknown".format(command)
+
+            embed=discord.Embed(title="strategy", description=msg, color=0xFF5733)
+            await ctx.channel.send(embed=embed)
+
+
         @self.command(name="crag")
         async def custom_command(ctx, *args):
             if len(args) != 1:
