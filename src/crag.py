@@ -4,6 +4,7 @@ import time
 import pandas as pd
 from . import trade,rtstr,utils,strategy_monitoring
 import pika
+import json
 import ast
 import threading
 import pickle
@@ -123,15 +124,22 @@ class Crag:
 
         # rabbitmq connection
         self.send_alive_notification()
-        '''
+
         try:
-            connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+            connection = pika.BlockingConnection(pika.ConnectionParameters(host='127.0.0.1'))
             channel = connection.channel()
-            channel.queue_declare(queue='strategies')
+            channel.queue_declare(queue="StrategyMonitoring")
 
             def callback(ch, method, properties, bbody):
                 print(" [x] Received {}".format(bbody))
                 body = bbody.decode()
+                body = json.loads(body)
+                if body and body["id"] == "command" and body["strategy_id"] == self.rtstr.id:
+                    command = body["command"]
+                    if command == "stop":
+                        print("stopping ", self.rtstr.id)
+                        os._exit(0)
+
                 if body == "history" or body == "stop":
                     self.export_history(self.export_filename)
                     self.log(msg="> {}".format(self.export_filename), header="{}".format(body), attachments=[self.export_filename])
@@ -158,7 +166,7 @@ class Crag:
                 else:
                     self.log(msg="> {} : unknown message".format(body))
 
-            channel.basic_consume(queue='crag', on_message_callback=callback, auto_ack=True)
+            channel.basic_consume(queue="StrategyMonitoring", on_message_callback=callback, auto_ack=True)
             
             #channel.start_consuming()
             thread = threading.Thread(name='t', target=channel.start_consuming, args=())
@@ -166,7 +174,7 @@ class Crag:
             thread.start()
         except:
             print("Problem encountered while configuring the rabbitmq receiver")
-        '''
+
 
     def log(self, msg, header="", attachments=[]):
         if self.logger:

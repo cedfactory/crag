@@ -79,6 +79,23 @@ def publish_alive_strategy(account_id, strategy_id):
     channel.basic_publish(exchange='', routing_key='StrategyMonitoring', body=body)
     connection.close()
 
+def publish_strategy_stop(strategy_id):
+    current = datetime.now()
+    timestamp = datetime.timestamp(current)
+    data = {"timestamp": timestamp,
+            "id": "command",
+            "strategy_id": strategy_id,
+            "command": "stop"
+            }
+    body = json.dumps(data)
+    body = body.encode()
+
+    connection = pika.BlockingConnection(pika.ConnectionParameters('127.0.0.1'))
+    channel = connection.channel()
+    channel.queue_declare(queue='StrategyMonitoring')
+    channel.basic_publish(exchange='', routing_key='StrategyMonitoring', body=body)
+    connection.close()
+
 class StrategyMonitoringClient(object):
     def __init__(self):
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='127.0.0.1'))
