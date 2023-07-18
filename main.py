@@ -126,27 +126,31 @@ def crag_analyse_results():
 
 def crag_broker():
     #my_broker = broker_bitget_ccxt.BrokerBitGetCcxt({'account':'subaccount1'})
-    my_broker = broker_bitget_api.BrokerBitGetApi({'account':'subaccount1'})
+    my_broker = broker_bitget_api.BrokerBitGetApi({'account':'bitget_ayato', "leverage_short":"2", "leverage_long":"2"})
 
     #
     # orders
     #
     #print("### open_positions :\n", my_broker.get_open_position())
 
+    symbol = my_broker._get_symbol("BTC")
+    my_broker.set_margin_and_leverage(symbol)
     print(my_broker.get_balance())
     print("get_usdt_equity : ", my_broker.get_usdt_equity())
     print("cash : ", my_broker.get_cash())
     print("wallet : ", my_broker.get_wallet_equity())
-    return
+
     mytrade = trade.Trade()
     mytrade.symbol = "BTC"
-    mytrade.gross_size = 0.003
+    mytrade.gross_size = 0.002
     mytrade.type = "OPEN_LONG"
-    #my_broker.execute_trade(mytrade)
+    mytrade.minsize = 0
+    my_broker.execute_trade(mytrade)
 
     print("get_usdt_equity : ", my_broker.get_usdt_equity())
     print("cash : ", my_broker.get_cash())
 
+    return
     #info = my_broker.get_order_fill_detail(my_broker._get_symbol("BTC"), "1012785696986505217")
     #print("info : ", info)
     #info = my_broker.single_position(my_broker._get_symbol("BTC"))
