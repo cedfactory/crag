@@ -61,8 +61,28 @@ class StrategyEnvelopeStochRSI(rtstr.RealTimeStrategy):
         ds.candle_stick = self.candle_stick
 
         ds.fdp_features = {"close": {},
+                           "stoch_rsi": {"indicator": "stoch_rsi", "window_size": 30,
+                                         "stoch_rsi_window_size":14, "output": ["stoch_rsi", "stoch_rsi_k", "stoch_rsi_d"]},
+
+                           "postprocess1": {"indicator": "shift", "window_size": 1, "n": "1",
+                                            "input": ["stoch_rsi_k"]},
+                           "postprocess2": {"indicator": "shift", "window_size": 2, "n": "2",
+                                            "input": ["stoch_rsi_k"]},
+                           "postprocess3": {"indicator": "shift", "window_size": 3, "n": "3",
+                                            "input": ["stoch_rsi_k"]},
+                           "stoch_rsi_pred": {"indicator": "stoch_rsi_pred", "window_size": 30, "pred_window_size": 5,
+                                              "stoch_rsi_window_size": 14},
+
+                           "stoch_rsi_trend": {"indicator": "stoch_rsi_trend", "window_size": 30, "pred_window_size":5,
+                                               "stoch_rsi_window_size": 14,
+                                               "output": ["stoch_rsi_trend", "stoch_rsi_k_trend", "stoch_rsi_d_trend"]},
+
+                           "willr": {"indicator": "willr", "window_size": 14},
+                           "willr_trend": {"indicator": "willr_trend", "pred_window_size":5, "window_size": 14},
+
                            "ao": {"indicator": "ao", "ao_window_1": 6, "ao_window_2": 22, "window_size": 22},
-                           "stoch_rsi": {"indicator": "stoch_rsi", "window_size": 30, "stoch_rsi_window_size":14},
+                           "ao_trend": {"indicator": "ao_trend", "ao_window_1": 6, "ao_window_2": 22, "pred_window_size":5, "window_size": 22},
+
                            "envelope": {"indicator": "envelope", "window_size": 10,
                                         "ma": "sma", "ma_window_size": 5,
                                         # "ma_offset_1": "2", "ma_offset_2": "5", "ma_offset_3": "7",

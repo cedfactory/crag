@@ -161,7 +161,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
                         and "input" in lst_param:
                     for input in fdp_features[feature]["input"]:
                         lst_features.append(n + input + id)
-        return lst_features
+        return list(dict.fromkeys(lst_features))
 
     def condition_for_opening_long_position(self, symbol):
         return False
