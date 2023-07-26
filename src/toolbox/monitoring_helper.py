@@ -135,7 +135,7 @@ class RabbitMQMonitoring(IMonitoring):
         except:
             print("Problem encountered while sending a notification")
 
-    def publish_strategy_stop(strategy_id):
+    def send_strategy_stop(self, strategy_id):
         current = datetime.now()
         timestamp = datetime.timestamp(current)
         data = {"timestamp": timestamp,
@@ -189,9 +189,35 @@ class SQLMonitoring(IMonitoring):
     def send_alive_notification(self, timestamp, account_id, strategy_id):
         url = self.url_base
         url += "user={}&".format(self.user)
+        url += "command={}&".format("strategy_alive")
         url += "timestamp={}&".format(timestamp)
         url += "account_id={}&".format(account_id)
         url += "strategy_id={}".format(strategy_id)
         response_json = self._request_get(url)
         return response_json
 
+    def get_strategy_stop(self, strategy_id):
+        url = self.url_base
+        url += "user={}&".format(self.user)
+        url += "command={}&".format("get_strategy_stop")
+        url += "strategy_id={}".format(strategy_id)
+        response_json = self._request_get(url)
+        if "result" in response_json:
+            return response_json["result"]
+        return False
+
+    def send_strategy_stop(self, strategy_id):
+        url = self.url_base
+        url += "user={}&".format(self.user)
+        url += "command={}&".format("strategy_stop")
+        url += "strategy_id={}".format(strategy_id)
+        response_json = self._request_get(url)
+        return response_json
+
+    def send_strategy_stopped(self, strategy_id):
+        url = self.url_base
+        url += "user={}&".format(self.user)
+        url += "command={}&".format("strategy_stopped")
+        url += "strategy_id={}".format(strategy_id)
+        response_json = self._request_get(url)
+        return response_json

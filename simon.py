@@ -4,7 +4,8 @@ import os
 from dotenv import load_dotenv
 import pika
 import pandas as pd
-from src import accounts,broker_bitget_api,strategy_monitoring
+from src import accounts,broker_bitget_api
+from src.toolbox import monitoring_helper
 
 class BotSimon(commands.Bot):
     def __init__(self):
@@ -118,8 +119,8 @@ class BotSimon(commands.Bot):
                 strategy_id = ""
                 # rpc to the server
                 try:
-                    client = strategy_monitoring.StrategyMonitoringClient()
-                    strategy_id = client.GetStrategyOnAccount(account_id).decode()
+                    monitor = monitoring_helper.SQLMonitoring("ovh_mysql")
+                    #strategy_id = monitor.GetStrategyOnAccount(account_id).decode()
                 except:
                     print("[Simon] Problem encountered while sending a rpc request")
 
@@ -152,12 +153,11 @@ class BotSimon(commands.Bot):
             msg = ""
             if command == "stop":
                 try:
-                    #client = strategy_monitoring.StrategyMonitoringClient()
-                    #client.StopStrategy(strategy_id)
-                    strategy_monitoring.publish_strategy_stop(strategy_id)
+                    monitor = monitoring_helper.SQLMonitoring("ovh_mysql")
+                    monitor.send_strategy_stop(strategy_id)
                     msg = "[Simon] stop command sent to {}".format(strategy_id)
                 except:
-                    msg = "[Simon] Problem encountered while sending a notification (publish_strategy_stop)"
+                    msg = "[Simon] Problem encountered while sending a notification (send_strategy_stop)"
             else:
                 msg = "{} unknown".format(command)
 
