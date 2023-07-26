@@ -2,7 +2,7 @@ import os
 import shutil
 import time
 import pandas as pd
-from . import trade,rtstr,utils,strategy_monitoring
+from . import trade,rtstr,utils
 from .toolbox import monitoring_helper
 import pika
 import json
@@ -186,13 +186,6 @@ class Crag:
         current_datetime = datetime.now()
         current_timestamp = datetime.timestamp(current_datetime)
         self.monitoring.send_alive_notification(current_timestamp, self.broker.account.get("id"), self.rtstr.id)
-        return
-
-        try:
-            if self.broker.account.get("id") != "" and self.rtstr.id != "":
-                strategy_monitoring.publish_alive_strategy(self.broker.account.get("id"), self.rtstr.id)
-        except:
-            print("Problem encountered while sending a notification")
 
     def run(self):
         self.start_date = self.broker.get_current_datetime("%Y/%m/%d %H:%M:%S")
