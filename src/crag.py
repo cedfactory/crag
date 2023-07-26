@@ -3,6 +3,7 @@ import shutil
 import time
 import pandas as pd
 from . import trade,rtstr,utils,strategy_monitoring
+from .toolbox import monitoring_helper
 import pika
 import json
 import ast
@@ -44,6 +45,7 @@ class Crag:
         self.actual_drawdown_percent = 0
         self.total_SL_TP = 0
         self.total_SL_TP_percent = 0
+        self.monitoring = monitoring_helper.SQLMonitoring("ovh_mysql")
 
         if params:
             self.broker = params.get("broker", self.broker)
@@ -181,6 +183,11 @@ class Crag:
             self.logger.log(msg, header="["+self.id+"] "+header, author=type(self).__name__, attachments=attachments)
 
     def send_alive_notification(self):
+        current_datetime = datetime.now()
+        current_timestamp = datetime.timestamp(current_datetime)
+        self.monitoring.send_alive_notification(current_timestamp, self.broker.account.get("id"), self.rtstr.id)
+        return
+
         try:
             if self.broker.account.get("id") != "" and self.rtstr.id != "":
                 strategy_monitoring.publish_alive_strategy(self.broker.account.get("id"), self.rtstr.id)
