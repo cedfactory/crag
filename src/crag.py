@@ -268,6 +268,10 @@ class Crag:
 
     def step(self):
         self.send_alive_notification()
+        stop = self.monitoring.get_strategy_stop(self.rtstr.id)
+        if stop:
+            self.monitoring.send_strategy_stopped(self.rtstr.id)
+            os._exit(0)
         prices_symbols, ds = self.get_ds_and_price_symbols()
         current_datetime = self.broker.get_current_datetime()
         self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(), self.broker.get_cash_borrowed(), prices_symbols, False, self.final_datetime, self.broker.get_balance())
