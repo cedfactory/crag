@@ -10,6 +10,7 @@ class rtctrl():
         self.df_rtctrl = pd.DataFrame(columns=self.get_df_header())
         self.df_rtctrl_tracking = pd.DataFrame(columns=self.get_df_header_tracking())
         self.symbols = []
+        self.prices_symbols = {}
         self.time = current_datetime
         self.init_cash_value = 0
         self.actual_price = 0

@@ -20,10 +20,10 @@ class StrategyVMC(rtstr.RealTimeStrategy):
     def get_data_description(self):
         ds = rtdp.DataDescription()
         ds.symbols = self.lst_symbols
-        ds.features = { "low" : None,
-                        "high" : None,
+        ds.features = { "low": None,
+                        "high": None,
                         "close": None,
-                        "AO" : {"feature": "AO", "period": 22},
+                        "AO": {"feature": "AO", "period": 22},
                         "previous_AO": {"feature": "previous_AO", "period": 22},
                         "STOCH_RSI": {"feature": "STOCH_RSI", "period": 14},
                         "ema_short_vmc": {"feature": "ema_short_vmc", "period": 100},
@@ -34,7 +34,7 @@ class StrategyVMC(rtstr.RealTimeStrategy):
                         "n1_VMC_WAVE1": {"feature": "n1_VMC_WAVE1", "period": 100},
                         "n1_VMC_WAVE2": {"feature": "n1_VMC_WAVE2", "period": 100},
                         "CHOP": {"feature": "CHOP", "period": 100},
-                        "WILLR" : {"feature": "WILLR", "period": 14}
+                        "WILLR": {"feature": "WILLR", "period": 14}
                         }
         return ds
 

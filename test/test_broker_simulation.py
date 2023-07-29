@@ -32,7 +32,7 @@ class TestSimBroker:
     def generate_trade(self):
         fake_trade = trade.Trade()
         fake_trade.buying_time = ""
-        fake_trade.type = "BUY"
+        fake_trade.type = "OPEN_LONG"
         fake_trade.sell_id = ""
         fake_trade.stimulus= ""
         fake_trade.symbol = "ETH/USD"
@@ -88,8 +88,10 @@ class TestSimBroker:
 
         # expectations
 
-        lines=[ ["", "transaction_id", "time", "buying_time", "type", "sell_id", "stimulus", "symbol", "buying_price", "symbol_price", "net_size", "net_price", "buying_fees", "selling_fees", "gross_price", "transaction_roi%", "remaining_cash", "portfolio_value", "wallet_value", "wallet_roi%"],
-                ["BUY", "", "", "ETH/USD", "1", "1", "2", "2", "0.07", "0.07", "2.08", "0.05", "90", "110", "110", "1"] ]
+        lines = [
+            ["", "transaction_id", "time", "buying_time", "type", "sell_id", "stimulus", "symbol", "buying_price", "symbol_price", "net_size", "net_price", "buying_fees", "selling_fees", "gross_price", "transaction_roi%", "remaining_cash", "portfolio_value", "wallet_value", "wallet_roi%"],
+            ["OPEN_LONG", "", "", "ETH/USD", "1", "1", "2", "2", "0.07", "0.07", "2.08", "0.05", "90", "110", "110", "1"]
+        ]
         lines[0].append("gridzone") # TO RESTORE : trade shouldn not contains this last element (gridzone)
         lines[1].append("-1") # TO RESTORE : trade shouldn not contains this last element (gridzone)
         with open(history_file_generated) as csvfile:

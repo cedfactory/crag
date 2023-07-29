@@ -24,7 +24,7 @@ class TestCrag:
         </configuration>''')
 
         # action
-        bot = crag_helper.initialization_from_configuration_file(filename)
+        bot = crag_helper.initialization_from_configuration_file("../"+filename)
 
         # expectations
         assert(bot == None)
@@ -44,7 +44,7 @@ class TestCrag:
         </configuration>''')
 
         # action
-        bot = crag_helper.initialization_from_configuration_file(filename)
+        bot = crag_helper.initialization_from_configuration_file("../"+filename)
 
         # expectations
         assert(bot == None)
@@ -63,7 +63,7 @@ class TestCrag:
         </root>''')
 
         # action
-        bot = crag_helper.initialization_from_configuration_file(filename)
+        bot = crag_helper.initialization_from_configuration_file("../"+filename)
 
         # expectations
         assert(bot == None)
@@ -84,7 +84,7 @@ class TestCrag:
         </configuration>''')
 
         # action
-        bot = crag_helper.initialization_from_configuration_file(filename)
+        bot = crag_helper.initialization_from_configuration_file("../"+filename)
 
         # expectations
         assert(bot.broker != None)
@@ -115,7 +115,7 @@ class TestCrag:
         </configuration>''')
 
         # action
-        bot = crag_helper.initialization_from_configuration_file(filename)
+        bot = crag_helper.initialization_from_configuration_file("../"+filename)
 
         # expectations
         assert(bot.broker != None)
@@ -146,7 +146,7 @@ class TestCrag:
             </broker>
             <crag interval="20" />
         </configuration>''')
-        bot = crag_helper.initialization_from_configuration_file(filename)
+        bot = crag_helper.initialization_from_configuration_file("../"+filename)
         bot.backup()
 
         # action

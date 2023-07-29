@@ -9,8 +9,8 @@ class TestRTSTRCryptobot:
         strategy = rtstr_cryptobot.StrategyCryptobot()
 
         # expectations
-        assert(strategy.SL == -1000)
-        assert(strategy.TP == 1000)
+        assert(strategy.SL == 0)
+        assert(strategy.TP == 0)
         assert(strategy.MAX_POSITION == 5)
         assert(strategy.match_full_position == False)
 

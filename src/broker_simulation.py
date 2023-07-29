@@ -28,6 +28,12 @@ class SimBroker(broker.Broker):
     def ready(self):
         return True
 
+    def _get_symbol(self, coin):
+        return coin
+
+    def _get_coin(self, symbol):
+        return symbol
+
     def configure_for_data_description(self, data_description):
         if self.start_date != "":
             self.rtdp.record_for_data_scenario(data_description, self.start_date, self.end_date, self.intervals)

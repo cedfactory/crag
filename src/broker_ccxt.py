@@ -107,6 +107,12 @@ class BrokerCCXT(broker.Broker):
         info += "\nLeverage : {}".format(self.leverage)
         return info
 
+    def _get_symbol(self, coin):
+        return coin
+
+    def _get_coin(self, symbol):
+        return symbol
+
     @authentication_required
     def get_cash(self):
         result = {}
