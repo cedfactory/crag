@@ -221,3 +221,11 @@ class SQLMonitoring(IMonitoring):
         url += "strategy_id={}".format(strategy_id)
         response_json = self._request_get(url)
         return response_json
+
+    def get_strategy_on_account(self, account_id):
+        url = self.url_base
+        url += "user={}&".format(self.user)
+        url += "command={}&".format("get_strategy_on_account")
+        url += "account_id={}".format(account_id)
+        response_json = self._request_get(url)
+        return response_json

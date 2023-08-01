@@ -5,7 +5,7 @@ import time
 from datetime import datetime, timedelta
 
 from src import accounts,broker_bitget_api
-from src.toolbox import pdf_helper, mail_helper, ftp_helper, graph_helper
+from src.toolbox import pdf_helper, mail_helper, ftp_helper, graph_helper, monitoring_helper
 
 g_use_ftp = True
 
@@ -140,7 +140,15 @@ def export_all():
         usdt_equity_btcusd_normalized = account_export_info["usdt_equity_btcusd_normalized"]
         #df = account_export_info["df"]
         #report.add_page(account_id, [pngfilename_usdt_equity, usdt_equity_btcusd_normalized, pngfilename_btcusd])
-        report.add_page(account_id, [pngfilename_usdt_equity, usdt_equity_btcusd_normalized])
+
+        monitor = monitoring_helper.SQLMonitoring("ovh_mysql")
+        response_json = monitor.get_strategy_on_account(account_id)
+        strategy_id = "unknown"
+        if response_json["status"] == "ok":
+            strategy_id = response_json["result"]
+        text = "last strategy : {}".format(strategy_id)
+
+        report.add_page(account_id, [pngfilename_usdt_equity, usdt_equity_btcusd_normalized, text])
 
     # write the pdf file
     pdffilename = rootpath + "history_report.pdf"
