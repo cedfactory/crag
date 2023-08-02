@@ -2,7 +2,8 @@ import os
 import shutil
 import time
 import pandas as pd
-from . import trade,rtstr,utils,strategy_monitoring
+from . import trade,rtstr,utils
+from .toolbox import monitoring_helper
 import pika
 import json
 import ast
@@ -44,6 +45,7 @@ class Crag:
         self.actual_drawdown_percent = 0
         self.total_SL_TP = 0
         self.total_SL_TP_percent = 0
+        self.monitoring = monitoring_helper.SQLMonitoring("ovh_mysql")
 
         if params:
             self.broker = params.get("broker", self.broker)
@@ -181,11 +183,9 @@ class Crag:
             self.logger.log(msg, header="["+self.id+"] "+header, author=type(self).__name__, attachments=attachments)
 
     def send_alive_notification(self):
-        try:
-            if self.broker.account.get("id") != "" and self.rtstr.id != "":
-                strategy_monitoring.publish_alive_strategy(self.broker.account.get("id"), self.rtstr.id)
-        except:
-            print("Problem encountered while sending a notification")
+        current_datetime = datetime.now()
+        current_timestamp = datetime.timestamp(current_datetime)
+        self.monitoring.send_alive_notification(current_timestamp, self.broker.account.get("id"), self.rtstr.id)
 
     def run(self):
         self.start_date = self.broker.get_current_datetime("%Y/%m/%d %H:%M:%S")
@@ -268,6 +268,10 @@ class Crag:
 
     def step(self):
         self.send_alive_notification()
+        stop = self.monitoring.get_strategy_stop(self.rtstr.id)
+        if stop:
+            self.monitoring.send_strategy_stopped(self.rtstr.id)
+            os._exit(0)
         prices_symbols, ds = self.get_ds_and_price_symbols()
         current_datetime = self.broker.get_current_datetime()
         self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(), self.broker.get_cash_borrowed(), prices_symbols, False, self.final_datetime, self.broker.get_balance())

@@ -122,7 +122,8 @@ class PdfDocument():
                     img = get_image(content, 14 * cm)
                     self.elements.append(img)
                 else:
-                    self.elements.append(Paragraph(content, style_page_title))
+                    stylesheet=getSampleStyleSheet()
+                    self.elements.append(Paragraph(content, stylesheet["Normal"]))
 
         self.elements.append(PageBreak())
 

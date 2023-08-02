@@ -8,7 +8,7 @@ class TestGridLevelPosition:
     def test_constructor(self):
         # context
         symbol = "BTC/USD"
-        params = {"symbols": symbol, "grid_df_params": "./test/data/multigrid_df_params.csv"}
+        params = {"symbols": symbol, "grid_df_params": "../test/data/multigrid_df_params.csv"}
 
         # action
         gridLevel = rtstr_grid_trading_multi.GridLevelPosition(symbol, params)
@@ -17,8 +17,8 @@ class TestGridLevelPosition:
         assert(gridLevel.UpperPriceLimit == 21100)
         assert(gridLevel.LowerPriceLimit == 19900)
         expected_data = {
-            "zone_id":["zone_0", "zone_1", "zone_2", "zone_3", "zone_4", "zone_5", "zone_6", "zone_7", "zone_8", "zone_9", "zone_10", "zone_11"],
-            "start":[21116.880, 20996.784, 20876.688, 20756.592, 20636.496, 20516.400, 20396.304, 20276.208, 20156.112, 20036.016, 19915.920, 10008.000],
+            "zone_id": ["zone_0", "zone_1", "zone_2", "zone_3", "zone_4", "zone_5", "zone_6", "zone_7", "zone_8", "zone_9", "zone_10", "zone_11"],
+            "start": [21116.880, 20996.784, 20876.688, 20756.592, 20636.496, 20516.400, 20396.304, 20276.208, 20156.112, 20036.016, 19915.920, 10008.000],
             "end": [99920.000, 21083.120, 20963.216, 20843.312, 20723.408, 20603.504, 20483.600, 20363.696, 20243.792, 20123.888, 20003.984, 19884.080],
             "previous_position": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             "actual_position": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -33,7 +33,7 @@ class TestGridLevelPosition:
     def test_get_zone_position(self):
          # context
         symbol = "BTC/USD"
-        params = {"symbols": symbol, "grid_df_params": "./test/data/multigrid_df_params.csv"}
+        params = {"symbols": symbol, "grid_df_params": "../test/data/multigrid_df_params.csv"}
         gridLevel = rtstr_grid_trading_multi.GridLevelPosition(symbol, params)
 
         # action
@@ -45,7 +45,7 @@ class TestGridLevelPosition:
     def test_get_set_previous_zone_position(self):
          # context
         symbol = "BTC/USD"
-        params = {"symbols": symbol, "grid_df_params": "./test/data/multigrid_df_params.csv"}
+        params = {"symbols": symbol, "grid_df_params": "../test/data/multigrid_df_params.csv"}
         gridLevel = rtstr_grid_trading_multi.GridLevelPosition(symbol, params)
         previous_zone_position = gridLevel.get_previous_zone_position()
         assert(previous_zone_position == -1)
@@ -68,21 +68,21 @@ class TestRTSTRGridMultiTrading:
 
     def test_constructor(self):
         # context
-        params = {"symbols": "BTC/USD", "grid_df_params": "./test/data/multigrid_df_params.csv"}
+        params = {"symbols": "BTC/USD", "grid_df_params": "../test/data/multigrid_df_params.csv"}
 
         # action
         strategy = rtstr_grid_trading_multi.StrategyGridTradingMulti(params)
 
         # expectations
         assert(strategy.share_size == 10)
-        assert(strategy.SL == -1000)
-        assert(strategy.TP == 1000)
+        assert(strategy.SL == 0)
+        assert(strategy.TP == 0)
         assert(strategy.MAX_POSITION == 5)
         assert(strategy.match_full_position == False)
 
     def test_get_data_description(self):
         # context
-        params = {"symbols": "BTC/USD", "grid_df_params": "./test/data/multigrid_df_params.csv"}
+        params = {"symbols": "BTC/USD", "grid_df_params": "../test/data/multigrid_df_params.csv"}
         strategy = rtstr_grid_trading_multi.StrategyGridTradingMulti(params)
 
         # action
@@ -101,7 +101,7 @@ class TestRTSTRGridMultiTrading:
 
     def test_get_df_buying_symbols(self):
         # context
-        params = {"symbols": "BTC/USD", "grid_df_params": "./test/data/multigrid_df_params.csv"}
+        params = {"symbols": "BTC/USD", "grid_df_params": "../test/data/multigrid_df_params.csv"}
         strategy = rtstr_grid_trading_multi.StrategyGridTradingMulti(params)
         data = {"index":[0], "symbol":["BTC/USD"], "close":[19000.]}
         strategy = self._initialize_current_data(strategy, data)
@@ -122,7 +122,7 @@ class TestRTSTRGridMultiTrading:
 
     def test_get_df_selling_symbols(self):
         # context
-        params = {"symbols": "BTC/USD", "grid_df_params": "./test/data/multigrid_df_params.csv"}
+        params = {"symbols": "BTC/USD", "grid_df_params": "../test/data/multigrid_df_params.csv"}
         strategy = rtstr_grid_trading_multi.StrategyGridTradingMulti(params)
         data = {"index":[0], "symbol":["BTC/USD"], "close":[20000.]}
         strategy = self._initialize_current_data(strategy, data)
@@ -145,7 +145,7 @@ class TestRTSTRGridMultiTrading:
  
     def test_get_symbol_buying_size(self):
         # context
-        params = {"symbols": "BTC/USD", "grid_df_params": "./test/data/multigrid_df_params.csv"}
+        params = {"symbols": "BTC/USD", "grid_df_params": "../test/data/multigrid_df_params.csv"}
         strategy = rtstr_grid_trading_multi.StrategyGridTradingMulti(params)
         data = {"index":[0], "symbol":["BTC/USD"], "close":[20000.]}
         strategy = self._initialize_current_data(strategy, data)

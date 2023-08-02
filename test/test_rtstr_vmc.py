@@ -15,8 +15,8 @@ class TestRTSTRVMC:
         assert(strategy.stochOverSold == 0.2)
         assert(strategy.willOverBought == -10)
         
-        assert(strategy.SL == -1000)
-        assert(strategy.TP == 1000)
+        assert(strategy.SL == 0)
+        assert(strategy.TP == 0)
         assert(strategy.MAX_POSITION == 5)
         assert(strategy.match_full_position == False)
 

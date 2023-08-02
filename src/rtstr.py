@@ -161,7 +161,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
                         and "input" in lst_param:
                     for input in fdp_features[feature]["input"]:
                         lst_features.append(n + input + id)
-        return lst_features
+        return list(dict.fromkeys(lst_features))
 
     def condition_for_opening_long_position(self, symbol):
         return False
@@ -771,7 +771,10 @@ class ShortLongPosition():
         self.df_short_long_position['position'] = self.no_position
 
     def get_position(self, symbol):
-        return self.df_short_long_position.loc[self.df_short_long_position['symbol'] == symbol, 'position'].values[0]
+        filtered = self.df_short_long_position.loc[self.df_short_long_position['symbol'] == symbol, 'position']
+        if filtered.size >= 1:
+            return filtered.values[0]
+        return None
 
     def set_open_long(self, symbol):
         self.set_position(symbol, self.open_long)
