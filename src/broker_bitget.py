@@ -96,43 +96,41 @@ class BrokerBitGet(broker.Broker):
 
         self.set_margin_and_leverage(symbol)
         clientOid = self.clientOIdprovider.get_name(symbol, trade.type)
-        amount = trade.gross_size
-        minsize = trade.minsize
-
         print("TRADE GROSS SIZE: ", trade.gross_size)
+        trade.gross_size = self.normalize_size(symbol, trade.gross_size)
+        # trade.gross_price = self.normalize_price(symbol, trade.gross_price) # price not used yet
+        print("TRADE GROSS SIZE NORMALIZED: ", trade.gross_size)
+
+        if trade.gross_size == 0:
+            print('transaction failed ", trade.type, " : ', symbol, ' - gross_size: ', trade.gross_size)
+
         if trade.type == "OPEN_LONG":
-            if amount < minsize:
-                print("less than the minimum order quantity: ", amount, " min size: ", minsize)
-            else:
-                transaction = self._open_long_position(symbol, trade.gross_size, clientOid)
-                if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
-                    trade.success = True
-                    trade.orderId = transaction["data"]["orderId"]
-                    trade.clientOid = transaction["data"]["clientOid"]
-                    print('request OPEN_LONG: ', symbol, ' gross_size: ', trade.gross_size)
-                    trade.tradeId, trade.symbol_price, trade.gross_price, trade.gross_size, trade.buying_fee = self.get_order_fill_detail(symbol, trade.orderId)
-                    print('OPEN_LONG: ', symbol, ' gross_size: ', trade.gross_size, ' price: ', trade.gross_price, ' fee: ', trade.buying_fee)
-                    trade.net_size = trade.gross_size
-                    trade.net_price = trade.gross_price
-                    trade.bought_gross_price = trade.gross_price
-                    trade.buying_price = trade.symbol_price
+            transaction = self._open_long_position(symbol, trade.gross_size, clientOid)
+            if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
+                trade.success = True
+                trade.orderId = transaction["data"]["orderId"]
+                trade.clientOid = transaction["data"]["clientOid"]
+                print('request OPEN_LONG: ', symbol, ' gross_size: ', trade.gross_size)
+                trade.tradeId, trade.symbol_price, trade.gross_price, trade.gross_size, trade.buying_fee = self.get_order_fill_detail(symbol, trade.orderId)
+                print('OPEN_LONG: ', symbol, ' gross_size: ', trade.gross_size, ' price: ', trade.gross_price, ' fee: ', trade.buying_fee)
+                trade.net_size = trade.gross_size
+                trade.net_price = trade.gross_price
+                trade.bought_gross_price = trade.gross_price
+                trade.buying_price = trade.symbol_price
 
         elif trade.type == "OPEN_SHORT":
-            if amount < minsize:
-                print("less than the minimum order quantity: ", amount, " min size: ", minsize)
-            else:
-                transaction = self._open_short_position(symbol, trade.gross_size, clientOid)
-                if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
-                    trade.success = True
-                    trade.orderId = transaction["data"]["orderId"]
-                    trade.clientOid = transaction["data"]["clientOid"]
-                    print('request OPEN_SHORT: ', symbol, ' gross_size: ', trade.gross_size)
-                    trade.tradeId, trade.symbol_price, trade.gross_price, trade.gross_size, trade.buying_fee = self.get_order_fill_detail(symbol, trade.orderId)
-                    print('OPEN_SHORT: ', symbol, ' gross_size: ', trade.gross_size, ' price: ', trade.gross_price, ' fee: ', trade.buying_fee)
-                    trade.net_size = trade.gross_size
-                    trade.net_price = trade.gross_price
-                    trade.bought_gross_price = trade.gross_price
-                    trade.buying_price = trade.symbol_price
+            transaction = self._open_short_position(symbol, trade.gross_size, clientOid)
+            if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
+                trade.success = True
+                trade.orderId = transaction["data"]["orderId"]
+                trade.clientOid = transaction["data"]["clientOid"]
+                print('request OPEN_SHORT: ', symbol, ' gross_size: ', trade.gross_size)
+                trade.tradeId, trade.symbol_price, trade.gross_price, trade.gross_size, trade.buying_fee = self.get_order_fill_detail(symbol, trade.orderId)
+                print('OPEN_SHORT: ', symbol, ' gross_size: ', trade.gross_size, ' price: ', trade.gross_price, ' fee: ', trade.buying_fee)
+                trade.net_size = trade.gross_size
+                trade.net_price = trade.gross_price
+                trade.bought_gross_price = trade.gross_price
+                trade.buying_price = trade.symbol_price
 
         elif trade.type == "CLOSE_LONG":
             trade.gross_size = self.get_symbol_available(symbol)

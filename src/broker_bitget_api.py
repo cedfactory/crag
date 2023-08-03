@@ -1,3 +1,5 @@
+import math
+
 from .bitget.mix import market_api as market
 from .bitget.mix import account_api as account
 from .bitget.mix import position_api as position
@@ -87,11 +89,6 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         else:
             print("WARNING COIN NOT IN MARKET LIST")
             return symbol.split("USDT_UMCBL")[0]
-
-    def _get_symbol_min_trade_amount(self, coin, base = "USDT"):
-        # self.get_future_market()
-        minTradeNum = self.df_market.loc[(self.df_market['baseCoin'] == coin) & (self.df_market['quoteCoin'] == base), "minTradeNum"].values[0]
-        return float(minTradeNum)
 
     def single_position(self, symbol, marginCoin = "USDT"):
         single_position = self.positionApi.single_position(symbol, marginCoin='USDT')
@@ -203,15 +200,6 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 n_attempts = n_attempts - 1
         # order structure contains order['data']['orderId'], order['data']['clientOid'] & order['requestTime']
         return order
-        if order['msg'] == 'success':
-            orderId = order['data']['orderId']
-            result["transaction_id"], result["transaction_price"], result["transaction_size"], result["transaction_fee"] = self.get_order_fill_detail(symbol, orderId)
-            result["order_id"] = orderId
-            result["success"] = True
-        else:
-            result["success"] = False
-            result["msg"] = order["msg"]
-        return result
 
     @authentication_required
     def get_portfolio_value(self):
@@ -387,7 +375,8 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         return value
 
     def _market_results_to_df(self, markets):
-        lst_columns = ['symbol', 'quoteCoin', 'baseCoin', 'symbolType', 'makerFeeRate', 'takerFeeRate', 'minTradeNum']
+        lst_columns = ['symbol', 'quoteCoin', 'baseCoin', 'symbolType', 'makerFeeRate', 'takerFeeRate',
+                       'minTradeNum', 'priceEndStep', 'volumePlace', 'pricePlace', 'sizeMultiplier']
         df = pd.DataFrame(columns=lst_columns)
         for market in markets['data']:
             lst_info_symbol = [ market['symbol'],
@@ -396,7 +385,11 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                                 market['symbolType'],
                                 float(market['makerFeeRate']),
                                 float(market['takerFeeRate']),
-                                float(market['minTradeNum'])
+                                float(market['minTradeNum']),
+                                float(market['priceEndStep']),
+                                float(market['volumePlace']),
+                                float(market['pricePlace']),
+                                float(market['sizeMultiplier'])
                                 ]
             df.loc[len(df)] = lst_info_symbol
         return df
@@ -406,7 +399,8 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                        'equity', 'usdtEquity', 'locked', 'btcEquity',
                        'unrealizedPL',
                        "size", "actualPrice", 'quoteCoin', 'baseCoin', 'symbolType',
-                       'makerFeeRate', 'takerFeeRate', 'minTradeNum']
+                       'makerFeeRate', 'takerFeeRate',
+                       'minTradeNum', 'priceEndStep', 'volumePlace', 'pricePlace', 'sizeMultiplier']
         df = pd.DataFrame(columns=lst_columns)
         for market in markets['data']:
             if float(market['equity']) > 0 \
@@ -426,7 +420,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                                     float(market['locked']),
                                     float(market['btcEquity']),
                                     unrealizedPL,
-                                    0, 0, "", "", "", 0, 0, 0]
+                                    0, 0, "", "", "", 0, 0, 0, 0, 0, 0, 0]
                 df.loc[len(df)] = lst_info_symbol
         return df.copy()
 
@@ -482,6 +476,10 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 self.df_account_assets.at[idx, 'makerFeeRate'] = self.df_market.loc[(self.df_market['baseCoin'] == coin) & (self.df_market['quoteCoin'] == 'USDT'), "makerFeeRate"].values[0]
                 self.df_account_assets.at[idx, 'takerFeeRate'] = self.df_market.loc[(self.df_market['baseCoin'] == coin) & (self.df_market['quoteCoin'] == 'USDT'), "takerFeeRate"].values[0]
                 self.df_account_assets.at[idx, 'minTradeNum'] = self.df_market.loc[(self.df_market['baseCoin'] == coin) & (self.df_market['quoteCoin'] == 'USDT'), "minTradeNum"].values[0]
+                self.df_account_assets.at[idx, 'priceEndStep'] = self.df_market.loc[(self.df_market['baseCoin'] == coin) & (self.df_market['quoteCoin'] == 'USDT'), "priceEndStep"].values[0]
+                self.df_account_assets.at[idx, 'volumePlace'] = self.df_market.loc[(self.df_market['baseCoin'] == coin) & (self.df_market['quoteCoin'] == 'USDT'), "volumePlace"].values[0]
+                self.df_account_assets.at[idx, 'pricePlace'] = self.df_market.loc[(self.df_market['baseCoin'] == coin) & (self.df_market['quoteCoin'] == 'USDT'), "pricePlace"].values[0]
+                self.df_account_assets.at[idx, 'sizeMultiplier'] = self.df_market.loc[(self.df_market['baseCoin'] == coin) & (self.df_market['quoteCoin'] == 'USDT'), "sizeMultiplier"].values[0]
             else:
                 symbol_id = self.df_account_assets.at[idx, 'symbol']
                 if not symbol_id.startswith('USDT'):
@@ -698,6 +696,46 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         else:
             return 0
 
+    def get_priceEndStep(self, symbol):
+        if symbol in self.df_market['baseCoin'].tolist():
+            idx = self.df_market[  (self.df_market['baseCoin'] == symbol) & (self.df_market['quoteCoin'] == "USDT")  ].index
+            return self.df_market.at[idx[0], "priceEndStep"]
+        elif symbol in self.df_market['symbol'].tolist():
+            idx = self.df_market[  (self.df_market['symbol'] == symbol) & (self.df_market['quoteCoin'] == "USDT")  ].index
+            return self.df_market.at[idx[0], "priceEndStep"]
+        else:
+            return 0
+
+    def get_volumePlace(self, symbol):
+        if symbol in self.df_market['baseCoin'].tolist():
+            idx = self.df_market[  (self.df_market['baseCoin'] == symbol) & (self.df_market['quoteCoin'] == "USDT")  ].index
+            return int(self.df_market.at[idx[0], "volumePlace"])
+        elif symbol in self.df_market['symbol'].tolist():
+            idx = self.df_market[  (self.df_market['symbol'] == symbol) & (self.df_market['quoteCoin'] == "USDT")  ].index
+            return int(self.df_market.at[idx[0], "volumePlace"])
+        else:
+            return 0
+
+    def get_pricePlace(self, symbol):
+        if symbol in self.df_market['baseCoin'].tolist():
+            idx = self.df_market[  (self.df_market['baseCoin'] == symbol) & (self.df_market['quoteCoin'] == "USDT")  ].index
+            return self.df_market.at[idx[0], "pricePlace"]
+        elif symbol in self.df_market['symbol'].tolist():
+            idx = self.df_market[  (self.df_market['symbol'] == symbol) & (self.df_market['quoteCoin'] == "USDT")  ].index
+            return self.df_market.at[idx[0], "pricePlace"]
+        else:
+            return 0
+
+    def get_sizeMultiplier(self, symbol):
+        if symbol in self.df_market['baseCoin'].tolist():
+            idx = self.df_market[  (self.df_market['baseCoin'] == symbol) & (self.df_market['quoteCoin'] == "USDT")  ].index
+            return self.df_market.at[idx[0], "sizeMultiplier"]
+        elif symbol in self.df_market['symbol'].tolist():
+            idx = self.df_market[  (self.df_market['symbol'] == symbol) & (self.df_market['quoteCoin'] == "USDT")  ].index
+            return self.df_market.at[idx[0], "sizeMultiplier"]
+        else:
+            return 0
+
     def set_symbol_leverage(self, symbol, leverage, hold):
         n_attempts = 3
         while n_attempts > 0:
@@ -763,3 +801,33 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     def save_reboot_data(self, df):
         df.to_csv(self.broker_dir_path_filename)
+
+    def normalize_price(self, symbol, amount):
+        pricePlace = self.get_pricePlace(symbol)
+        priceEndStep = self.get_priceEndStep(symbol)
+
+        amount = amount * pow(10, pricePlace)
+        amount = math.floor(amount)
+        amount = amount * pow(10, -pricePlace)
+
+        amount = round(amount, pricePlace)
+        decimal = (amount % (priceEndStep * pow(10, -pricePlace)))
+        amount = amount - decimal
+        amount = round(amount, pricePlace)
+        return amount
+
+    def normalize_size(self, symbol, size):
+        volumePlace = self.get_volumePlace(symbol)
+        sizeMultiplier = self.get_sizeMultiplier(symbol)
+        minsize = self.get_minimum_size(symbol)
+
+        size = size * pow(10, volumePlace)
+        size = math.floor(size)
+        size = size * pow(10, -volumePlace)
+
+        decimal = (size % sizeMultiplier)
+        size = size - decimal
+        size = round(size, volumePlace)
+        if size < minsize:
+            return 0
+        return size

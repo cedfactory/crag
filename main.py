@@ -142,13 +142,14 @@ def crag_broker():
 
     mytrade = trade.Trade()
     mytrade.symbol = "BTC"
-    mytrade.gross_size = 0.002
+    mytrade.gross_size = 0.0068
     mytrade.type = "OPEN_LONG"
-    mytrade.minsize = 0
     my_broker.execute_trade(mytrade)
 
     print("get_usdt_equity : ", my_broker.get_usdt_equity())
     print("cash : ", my_broker.get_cash())
+
+    my_broker.execute_reset_account()
 
     return
     #info = my_broker.get_order_fill_detail(my_broker._get_symbol("BTC"), "1012785696986505217")
