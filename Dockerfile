@@ -7,11 +7,10 @@ RUN echo "Acquire::Check-Valid-Until \"false\";\nAcquire::Check-Date \"false\";"
 
 RUN apt-get update
 RUN apt-get install -y wget python3-pip graphviz rabbitmq-server
+RUN python -m pip install --upgrade pip
 #RUN pip install --upgrade pip
 
 COPY requirements.txt /
 RUN pip install -r requirements.txt
-RUN pip install discord==1.7.3
-RUN pip install discord.py==1.7.3
 
 WORKDIR "/mnt"

@@ -9,7 +9,9 @@ from src.toolbox import monitoring_helper
 
 class BotSimon(commands.Bot):
     def __init__(self):
-        super().__init__(command_prefix="/")
+        intents = discord.Intents.default()
+        intents.message_content = True
+        super().__init__(command_prefix="/", intents=intents)
         
         @self.command(name="hello")
         async def custom_command(ctx):
