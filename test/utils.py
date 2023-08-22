@@ -1,5 +1,11 @@
 import pandas as pd
 
+
+def write_file(filename, string):
+    with open(filename, 'w') as f:
+        f.write(string)
+    return filename
+
 def get_json_for_get_df_range():
     df = pd.read_csv("./test/data/AAVE_USD.csv", delimiter=',')
     df.drop(["Unnamed: 0"], axis=1, inplace=True)

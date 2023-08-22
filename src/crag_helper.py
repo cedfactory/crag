@@ -3,7 +3,7 @@ import pandas as pd
 from src import rtdp
 from src import broker_simulation,broker_ccxt
 from src import crag
-from src import rtstr
+from src import rtstr,rtstr_dummy_test,rtstr_envelope,rtstr_envelopestochrsi,rtstr_dummy_test_tp,rtstr_grid_trading_multi,rtstr_balance_trading,rtstr_bollinger_trend,rtstr_tv_recommendation_mid,rtstr_balance_trading_multi,rtstr_super_reversal,rtstr_volatility_test_live,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC
 from src import broker_bitget_api
 from src import logger
 from src import utils
@@ -172,6 +172,9 @@ def get_crag_params_from_configuration(configuration):
 
     return {"broker": my_broker, "rtstr": my_strategy, "id": crag_id, "interval": crag_interval, "logger": crag_discord_bot}
 
+#
+# deprecated => to remove
+#
 def initialization_from_configuration_file(configuration_file):
     config_path = './conf'
     configuration_file = os.path.join(config_path, configuration_file)
@@ -218,7 +221,7 @@ def initialization_from_configuration_file(configuration_file):
     my_broker = None
     if broker_name == "simulator" or broker_name == "simulation" or broker_name == "simu":
         my_broker = broker_simulation.SimBroker(params_broker)
-    else:
+    elif broker_name == "bitget":
         my_broker = broker_bitget_api.BrokerBitGetApi(params_broker)
         # my_broker = broker_ccxt.BrokerCCXT(params_broker)
     if my_broker == None or my_broker.ready() == False:

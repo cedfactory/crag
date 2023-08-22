@@ -2,10 +2,11 @@ import pytest
 import pandas as pd
 from src import rtstr_grid_trading_multi,crag,broker_simulation,trade
 from . import utils
+from src import crag_helper
+import os
 
-'''
 class TestCrag:
-
+    '''
     def test_step_no_current_data(self, mocker):
         # context
         json_df = utils.get_json_for_get_df_range()
@@ -65,4 +66,42 @@ class TestCrag:
         }
         for i in range(3):
             assert(bot.log[i]["lst_symbols_to_buy"] == expected_lst_symbols_to_buy[i])
-'''
+    '''
+
+    #
+    # Backup
+    #
+    def test_backup(self):
+        return # TODO : reactivate the test
+
+        # context : create the configruation file
+        filename = utils.write_file("./test/generated/crag.xml", '''<configuration>
+            <strategy name="StrategyGridTradingMulti">
+                <params symbols="BTC/USD" grid_df_params="../test/data/multigrid_df_params.csv"/>
+            </strategy>
+            <broker name="simulator">
+                <params exchange="simulator" account="test_bot" simulation="1" reset_account="False" />
+            </broker>
+            <crag interval="20" />
+        </configuration>''')
+
+        configuration = crag_helper.load_configuration_file("../"+filename)
+        params = crag_helper.get_crag_params_from_configuration(configuration)
+        bot = crag.Crag(params)
+
+        # action 1 : backup
+        bot.backup()
+
+        # action 2 : restore
+        backup_filename = bot.backup_filename
+        bot = crag_helper.initialization_from_pickle(backup_filename)
+
+        # expectations
+        assert (bot.broker != None)
+        assert (bot.broker.name == "simulator")
+        assert (bot.rtstr.get_name() == "StrategyGridTradingMulti")
+        assert (bot.interval == 20)
+
+        # cleaning
+        os.remove(filename)
+        os.remove(backup_filename)

@@ -11,12 +11,14 @@ class TestRealTimeDataProvider:
         dp = rtdp.RealTimeDataProvider()
         ds = rtdp.DataDescription()
         ds.symbols = ["ETH/EURS", "BTC/EURS"]
+        ds.fdp_features = ["open", "high", "low", "close"]
         ds.features = ["open", "high", "low", "close"]
         ds.interval = 20
         mocker.patch(self.src_utils_fdp_request_post, side_effect=[self.fdp_response])
 
         # action
-        df = dp.get_current_data(ds)
+        fdp_url_id = ""
+        df = dp.get_current_data(ds, fdp_url_id)
 
         # expectations
         assert(isinstance(df, pd.DataFrame))
@@ -38,12 +40,14 @@ class TestRealTimeDataProvider:
         dp = rtdp.RealTimeDataProvider()
         ds = rtdp.DataDescription()
         ds.symbols = ["ETH/EURS", "BTC/EURS"]
+        ds.fdp_features = ["open", "high", "low", "close"]
         ds.features = ["open", "high", "low", "close"]
         ds.interval = 20
         mocker.patch(self.src_utils_fdp_request_post, side_effect=[{"status":"ko"}])
 
         # action
-        df = dp.get_current_data(ds)
+        fdp_url_id = ""
+        df = dp.get_current_data(ds, fdp_url_id)
 
         # expectations
         assert(isinstance(df, pd.DataFrame))

@@ -26,6 +26,8 @@ class TestRTCTRL:
         # context
         current_trades = get_current_trades_sample()
         ctrl = rtctrl.rtctrl()
+        ctrl.set_list_open_position_type(["BUY"])
+        ctrl.set_list_close_position_type(["SELL"])
 
         # action
         lst_symbols = ctrl.get_list_of_traded_symbols(current_trades)
@@ -40,6 +42,8 @@ class TestRTCTRL:
         current_trades = get_current_trades_sample()
         ctrl = rtctrl.rtctrl()
         ctrl.symbols = ['symbol2', 'symbol3']
+        ctrl.set_list_open_position_type(["BUY"])
+        ctrl.set_list_close_position_type(["SELL"])
 
         # action
         lst_of_asset_size = ctrl.get_list_of_asset_size(current_trades)
@@ -53,6 +57,8 @@ class TestRTCTRL:
         current_trades = get_current_trades_sample()
         ctrl = rtctrl.rtctrl()
         ctrl.symbols = ['symbol2', 'symbol3']
+        ctrl.set_list_open_position_type(["BUY"])
+        ctrl.set_list_close_position_type(["SELL"])
 
         # action
         lst_of_asset_size = ctrl.get_list_of_asset_fees(current_trades)
@@ -66,6 +72,8 @@ class TestRTCTRL:
         current_trades = get_current_trades_sample()
         ctrl = rtctrl.rtctrl()
         ctrl.symbols = ['symbol2', 'symbol3']
+        ctrl.set_list_open_position_type(["BUY"])
+        ctrl.set_list_close_position_type(["SELL"])
 
         # action
         lst_of_asset_size = ctrl.get_list_of_asset_gross_price(current_trades)
@@ -78,11 +86,13 @@ class TestRTCTRL:
         # context
         current_trades = get_current_trades_sample()
         ctrl = rtctrl.rtctrl()
+        ctrl.set_list_open_position_type(["BUY"])
+        ctrl.set_list_close_position_type(["SELL"])
 
         # action
         prices_symbols = {'symbol1': 0.01, 'symbol2': 0.02, 'symbol3': 0.03, 'symbol4': 0.04}
         current_datetime = "2022-04-01"
-        ctrl.update_rtctrl(current_datetime, current_trades, 100, prices_symbols, None)
+        ctrl.update_rtctrl(current_datetime, current_trades, 100, 100, prices_symbols, None, None)
 
         # expectations
         df = ctrl.df_rtctrl
