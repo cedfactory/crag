@@ -1,0 +1,13 @@
+<settings>
+    <monitoring>
+        <monitor id="monitor_id" user="foobar" url_base="theurlbase" />
+    </monitoring>
+    <mailbots>
+        <mailbot
+            id="default"
+            smtpserver="smtpserver.foobar.com"
+            port="666"
+            sender="sender@foobar.com"
+            password = "password" />
+    </mailbots>
+</settings>

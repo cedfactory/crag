@@ -8,45 +8,10 @@ import mimetypes  # For guessing MIME type based on file name extension
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-import os
-import xml.etree.cElementTree as ET
-
-def import_mailbots(filename="mail_bots.xml"):
-    path = "./conf"
-    mailbots_filename = os.path.join(path, filename)
-    if not os.path.isfile(mailbots_filename):
-        print("!!! {} not found".format(mailbots_filename))
-        return {}
-
-    tree = ET.parse(mailbots_filename)
-    root = tree.getroot()
-    if root.tag != "bots":
-        print("!!! tag {} encountered. expecting bots".format(root.tag))
-        return {}
-
-    mailbots = {}
-    mailbots_nodes = list(root)
-    for mailbot_node in mailbots_nodes:
-        if mailbot_node.tag != "bot":
-            continue
-
-        mailbot = {}
-        for name, value in mailbot_node.attrib.items():
-            mailbot[name] = value
-        if "id" in mailbot:
-            mailbots[mailbot["id"]] = mailbot
-
-    return mailbots
-
-def get_mailbot_info(botId, filename="mail_bots.xml"):
-    mailbots = import_mailbots(filename)
-    if botId in mailbots:
-        return mailbots[botId]
-    return {}
-
+from . import settings_helper
 
 def send_mail(receiver, subject, message, attachments=None):
-    mailbot = get_mailbot_info("default")
+    mailbot = settings_helper.get_mailbot_info("default")
     smtp_server = mailbot.get("smtpserver", None)
     port = mailbot.get("port", 587)
     if isinstance(port, str):
