@@ -1,54 +1,14 @@
 import pytest
-from src import crag_helper
-from rich import print,inspect
+from src import crag_helper,crag
 import os
 from . import utils
 
 class TestCrag:
 
-    # unknown broker
-    def test_initialization_from_configuration_file_ko_unknown_broker(self):
-        # context : create the configuration file
-        filename = utils.write_file("./test/generated/crag.xml", '''<configuration>
-            <strategy name="StrategySuperReversal" />
-            <broker name="fake_broker">
-                <params account="test_bot" simulation="1" />
-            </broker>
-            <crag interval="20" />
-        </configuration>''')
-
-        # action
-        bot = crag_helper.initialization_from_configuration_file("../"+filename)
-
-        # expectations
-        assert(bot == None)
-
-        # cleaning
-        os.remove(filename)
-
-    # unknown strategy
-    def test_initialization_from_configuration_file_ko_unknown_strategy(self):
-        # context : create the configuration file
-        filename = utils.write_file("./test/generated/crag.xml", '''<configuration>
-            <strategy name="StrategyUnknown" />
-            <broker name="binance">
-                <params account="test_bot" simulation="1" />
-            </broker>
-            <crag interval="20" />
-        </configuration>''')
-
-        # action
-        bot = crag_helper.initialization_from_configuration_file("../"+filename)
-
-        # expectations
-        assert(bot == None)
-
-        # cleaning
-        os.remove(filename)
 
     def test_initialization_from_configuration_file_ko_no_root(self):
         # context : create the configuration file
-        filename = utils.write_file("./test/generated/crag.xml", '''<root>
+        configuration_file = utils.write_file("./test/generated/crag.xml", '''<root>
             <strategy name="StrategyUnknown" />
             <broker name="binance">
                 <params account="test_bot" simulation="1"/>
@@ -57,33 +17,76 @@ class TestCrag:
         </root>''')
 
         # action
-        bot = crag_helper.initialization_from_configuration_file("../"+filename)
+        configuration = crag_helper.load_configuration_file(configuration_file, config_path="./")
 
         # expectations
-        assert(bot == None)
+        assert(not configuration)
 
         # cleaning
-        os.remove(filename)
+        os.remove(configuration_file)
 
-    def test_initialization_from_configuration_file_ok(self):
-        return  # TODO : reactivate the test
-
+    def test_initialization_from_configuration_file_ko_unknown_broker(self):
         # context : create the configuration file
-        filename = utils.write_file("./test/generated/crag.xml", '''<configuration>
-            <strategy name="StrategyGridTradingMulti">
-                <params symbols="BTC/USD" grid_df_params="../test/data/multigrid_df_params.csv"/>
-            </strategy>
-            <broker name="simulator">
-                <params exchange="simulator" account="test_bot" leverage="3" simulation="1" reset_account="False"/>
+        configuration_file = utils.write_file("./test/generated/crag.xml", '''<configuration>
+            <strategy name="StrategySuperReversal" />
+            <broker name="fake_broker">
+                <params account="test_bot" simulation="1" />
             </broker>
             <crag interval="20" />
         </configuration>''')
 
         # action
-        bot = crag_helper.initialization_from_configuration_file("../"+filename)
+        configuration = crag_helper.load_configuration_file(configuration_file, config_path="./")
+        params = crag_helper.get_crag_params_from_configuration(configuration)
 
         # expectations
-        assert(bot.broker != None)
+        assert(not params)
+
+        # cleaning
+        os.remove(configuration_file)
+
+    # unknown strategy
+    def test_initialization_from_configuration_file_ko_unknown_strategy(self):
+        # context : create the configuration file
+        configuration_file = utils.write_file("./test/generated/crag.xml", '''<configuration>
+            <strategy name="StrategyUnknown" />
+            <broker name="binance">
+                <params account="test_bot" simulation="1" />
+            </broker>
+            <crag interval="20" />
+        </configuration>''')
+
+        # action
+        configuration = crag_helper.load_configuration_file(configuration_file, config_path="./")
+        params = crag_helper.get_crag_params_from_configuration(configuration)
+
+        # expectations
+        assert(not params)
+
+        # cleaning
+        os.remove(configuration_file)
+
+    def test_initialization_from_configuration_file_ok(self):
+        return  # TODO : reactivate the test
+
+        # context : create the configuration file
+        configuration_file = utils.write_file("./test/generated/crag.xml", '''<configuration>
+            <strategy name="StrategyGridTradingMulti">
+                <params symbols="BTC/USD" grid_df_params="../test/data/multigrid_df_params.csv"/>
+            </strategy>
+            <broker name="bitget">
+                <params exchange="bitget" account="test_bot" leverage="3" simulation="1" reset_account="False"/>
+            </broker>
+            <crag interval="20" />
+        </configuration>''')
+
+        # action
+        configuration = crag_helper.load_configuration_file(configuration_file, config_path="./")
+        params = crag_helper.get_crag_params_from_configuration(configuration)
+        bot = crag.Crag(params)
+
+        # expectations
+        assert(bot.broker)
         assert(bot.broker.name == "simulator")
         assert(bot.broker.leverage == 3)
         assert(bot.rtstr.get_name() == "StrategyGridTradingMulti")
@@ -92,7 +95,7 @@ class TestCrag:
         assert(bot.interval == 20)
 
         # cleaning
-        os.remove(filename)
+        os.remove(configuration_file)
 
     # unknown broker
     def test_initialization_from_configuration_file_ok_broker_simulation(self, mocker):

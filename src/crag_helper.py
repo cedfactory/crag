@@ -1,8 +1,6 @@
 import pandas as pd
 
-from src import rtdp
-from src import broker_simulation,broker_ccxt
-from src import crag
+from src import broker_simulation
 from src import rtstr,rtstr_dummy_test,rtstr_envelope,rtstr_envelopestochrsi,rtstr_dummy_test_tp,rtstr_grid_trading_multi,rtstr_balance_trading,rtstr_bollinger_trend,rtstr_tv_recommendation_mid,rtstr_balance_trading_multi,rtstr_super_reversal,rtstr_volatility_test_live,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC
 from src import broker_bitget_api
 from src import logger
@@ -104,8 +102,7 @@ def benchmark_results(configuration_file):
     for file in png_files:
         shutil.move(file, dest_dir)
 
-def load_configuration_file(configuration_file):
-    config_path = './conf'
+def load_configuration_file(configuration_file, config_path = './conf'):
     configuration_file = os.path.join(config_path, configuration_file)
     if not os.path.isfile(configuration_file):
         print("!!! {} not found".format(configuration_file))
@@ -171,63 +168,6 @@ def get_crag_params_from_configuration(configuration):
         return None
 
     return {"broker": my_broker, "rtstr": my_strategy, "id": crag_id, "interval": crag_interval, "logger": crag_discord_bot}
-
-#
-# deprecated => to remove
-#
-def initialization_from_configuration_file(configuration_file):
-    config_path = './conf'
-    configuration_file = os.path.join(config_path, configuration_file)
-    tree = ET.parse(configuration_file)
-    root = tree.getroot()
-    if root.tag != "configuration":
-        print("!!! tag {} encountered. expecting configuration".format(root.tag))
-        return
-
-    strategy_node = root.find("strategy")
-    strategy_id = strategy_node.get("id", "")
-    strategy_name = strategy_node.get("name", None)
-    params_node = list(strategy_node.iter('params'))
-    params_strategy = {}
-    params_strategy["id"] = strategy_id
-    if len(params_node) == 1:
-        for name, value in params_node[0].attrib.items():
-            params_strategy[name] = value
-
-    broker_node = root.find("broker")
-    broker_name = broker_node.get("name", None)
-    params_node = list(broker_node.iter('params'))
-    params_broker = {"name": broker_name}
-    if len(params_node) == 1:
-        for name, value in params_node[0].attrib.items():
-            params_broker[name] = value
-
-    crag_node = root.find("crag")
-    crag_interval = crag_node.get("interval", 10)
-    crag_interval = int(crag_interval)
-    crag_id = crag_node.get("id", "")
-    bot_id = crag_node.get("botId", "")
-
-    crag_discord_bot = _initialize_crag_discord_bot(bot_id)
-    params_strategy["logger"] = crag_discord_bot
-    available_strategies = rtstr.RealTimeStrategy.get_strategies_list()
-    if strategy_name in available_strategies:
-        my_strategy = rtstr.RealTimeStrategy.get_strategy_from_name(strategy_name, params_strategy)
-    else:
-        print("💥 unknown strategy ({})".format(strategy_name))
-        print("available strategies : ", available_strategies)
-        return None
-
-    my_broker = None
-    if broker_name == "simulator" or broker_name == "simulation" or broker_name == "simu":
-        my_broker = broker_simulation.SimBroker(params_broker)
-    elif broker_name == "bitget":
-        my_broker = broker_bitget_api.BrokerBitGetApi(params_broker)
-        # my_broker = broker_ccxt.BrokerCCXT(params_broker)
-    if my_broker == None or my_broker.ready() == False:
-        return None
-
-    return {'broker':my_broker, 'rtstr':my_strategy, "id": crag_id, 'interval':crag_interval, 'logger':crag_discord_bot}
 
 def initialization_from_pickle(picklefilename):
     with open(picklefilename, 'rb') as file:

@@ -30,6 +30,7 @@ class Crag:
         self.logger = None
         self.clear_unused_data = True
         self.start_date = ""
+        self.end_date = ""
         self.original_portfolio_value = 0
         self.minimal_portfolio_value = 0
         self.minimal_portfolio_date = ""
@@ -49,9 +50,10 @@ class Crag:
 
         if params:
             self.broker = params.get("broker", self.broker)
-            self.original_portfolio_value = self.broker.get_portfolio_value()
-            self.minimal_portfolio_value = self.original_portfolio_value
-            self.maximal_portfolio_value = self.original_portfolio_value
+            if self.broker:
+                self.original_portfolio_value = self.broker.get_portfolio_value()
+                self.minimal_portfolio_value = self.original_portfolio_value
+                self.maximal_portfolio_value = self.original_portfolio_value
             self.rtstr = params.get("rtstr", self.rtstr)
             self.interval = params.get("interval", self.interval)
             self.logger = params.get("logger", self.logger)
@@ -62,7 +64,7 @@ class Crag:
         self.traces_trade_total_opened = 0
         self.traces_trade_total_closed = 0
         self.traces_trade_total_remaining = 0
-        if self.broker.resume_strategy():
+        if self.broker and self.broker.resume_strategy():
             self.current_trades = self.get_current_trades_from_account()
         else:
             self.current_trades = []
@@ -77,20 +79,15 @@ class Crag:
         self.zero_print = True
         self.flush_current_trade = False
 
-        if self.rtstr != None:
+        if self.rtstr:
             self.strategy_name = self.rtstr.get_info()
-        if self.broker != None:
+        if self.broker:
             self.final_datetime = self.broker.get_final_datetime()
-            self.start_date, self.end_date,  self.inteval = self.broker.get_info()
-        self.export_filename = "sim_broker_history"\
-                               + "_" + self.strategy_name\
-                               + "_" + str(self.start_date)\
-                               + "_" + str(self.end_date)\
-                               + "_" + str(self.inteval)\
-                               + ".csv"
+            self.start_date, self.end_date, self.interval = self.broker.get_info()
+        self.export_filename = "sim_broker_history" + "_" + self.strategy_name + "_" + str(self.start_date) + "_" + str(self.end_date) + "_" + str(self.interval) + ".csv"
         self.backup_filename = self.id + "_crag_backup.pickle"
 
-        if self.working_directory == None:
+        if not self.working_directory:
             self.working_directory = './output/' # CEDE NOTE: output directory name to be added to .xml / output as default value
 
         if not os.path.exists(self.working_directory):
@@ -110,7 +107,7 @@ class Crag:
         self.start_date_from_resumed_data = ""
         self.start_date_for_log = ""
 
-        if self.broker.broker_resumed():
+        if self.broker and self.broker.broker_resumed():
             self.df_reboot_data = self.get_reboot_data()
             if self.df_reboot_data is not None:
                 self.traces_trade_positive = self.df_reboot_data["positive trades"][0]
@@ -183,9 +180,10 @@ class Crag:
             self.logger.log(msg, header="["+self.id+"] "+header, author=type(self).__name__, attachments=attachments)
 
     def send_alive_notification(self):
-        current_datetime = datetime.now()
-        current_timestamp = datetime.timestamp(current_datetime)
-        self.monitoring.send_alive_notification(current_timestamp, self.broker.account.get("id"), self.rtstr.id)
+        if self.broker and self.rtstr:
+            current_datetime = datetime.now()
+            current_timestamp = datetime.timestamp(current_datetime)
+            self.monitoring.send_alive_notification(current_timestamp, self.broker.account.get("id"), self.rtstr.id)
 
     def run(self):
         self.start_date = self.broker.get_current_datetime("%Y/%m/%d %H:%M:%S")
