@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import pika
 import pandas as pd
 from src import accounts,broker_bitget_api
-from src.toolbox import monitoring_helper
+from src.toolbox import monitoring_helper,settings_helper
 
 class BotSimon(commands.Bot):
     def __init__(self):
@@ -190,7 +190,8 @@ class BotSimon(commands.Bot):
 
 def launch_simon():
     load_dotenv()
-    token = os.getenv("SIMON_DISCORD_BOT_TOKEN")
+    info = settings_helper.get_discord_bot_info("simon")
+    token = info.get("token", "")
     bot = BotSimon()
     bot.run(token)
   

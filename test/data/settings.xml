@@ -10,4 +10,11 @@
             sender="sender@foobar.com"
             password = "password" />
     </mailbots>
+    <discordbots>
+        <discordbot
+            id="bot1"
+            token="tokenId"
+            channel="channelId"
+            webhook="webhook1" />
+    </discordbots>
 </settings>

@@ -15,7 +15,6 @@ def _get_settings_node(nodename, settings_path='./conf'):
         print("!!! tag {} encountered. \"settings\" expected".format(root.tag))
         return {}
 
-    info = {}
     node = root.find(nodename)
     return node
 
@@ -41,5 +40,19 @@ def get_mailbot_info(mailbotId, settings_path='./conf'):
 
         for name, value in mailbot.attrib.items():
             info[name] = value
+
+    return info
+
+def get_discord_bot_info(botId, settings_path="./conf"):
+    info = {}
+    discordbots_node = _get_settings_node("discordbots", settings_path)
+    discordbots = list(discordbots_node)
+    for discordbot in discordbots:
+        if discordbot.tag != "discordbot" or "id" not in discordbot.attrib or discordbot.attrib["id"] != botId:
+            continue
+
+        for name, value in discordbot.attrib.items():
+            info[name] = value
+        break
 
     return info

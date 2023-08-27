@@ -5,20 +5,30 @@ class TestSettingsHelper:
 
     def test_get_monitor_info(self):
         # action
-        monitor = settings_helper.get_monitor_info("monitor_id", "./test/data/")
+        info = settings_helper.get_monitor_info("monitor_id", "./test/data/")
 
         # expectations
-        assert(monitor.get("id") == "monitor_id")
-        assert(monitor.get("url_base") == "theurlbase")
-        assert(monitor.get("user") == "foobar")
+        assert(info.get("id") == "monitor_id")
+        assert(info.get("url_base") == "theurlbase")
+        assert(info.get("user") == "foobar")
 
     def test_get_mailbot_info(self):
         # action
-        mailbot = settings_helper.get_mailbot_info("default", "./test/data/")
+        info = settings_helper.get_mailbot_info("default", "./test/data/")
 
         # expectations
-        assert(mailbot.get("id") == "default")
-        assert(mailbot.get("smtpserver") == "smtpserver.foobar.com")
-        assert(mailbot.get("port") == "666")
-        assert(mailbot.get("sender") == "sender@foobar.com")
-        assert(mailbot.get("password") == "password")
+        assert(info.get("id") == "default")
+        assert(info.get("smtpserver") == "smtpserver.foobar.com")
+        assert(info.get("port") == "666")
+        assert(info.get("sender") == "sender@foobar.com")
+        assert(info.get("password") == "password")
+
+    def test_get_discord_bot_info(self):
+        # action
+        info = settings_helper.get_discord_bot_info("bot1", "./test/data/")
+
+        # expectations
+        assert (info.get("id") == "bot1")
+        assert (info.get("token") == "tokenId")
+        assert (info.get("channel") == "channelId")
+        assert (info.get("webhook") == "webhook1")

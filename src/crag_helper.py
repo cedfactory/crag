@@ -6,6 +6,7 @@ from src import broker_bitget_api
 from src import logger
 from src import utils
 from src import benchmark
+from src.toolbox import settings_helper
 
 import xml.etree.cElementTree as ET
 from dotenv import load_dotenv
@@ -19,7 +20,7 @@ def _initialize_crag_discord_bot(botId=""):
         return None
 
     if botId != None and botId != "":
-        bot_info = logger.get_discord_bot_info(botId)
+        bot_info = settings_helper.get_discord_bot_info(botId)
         token = bot_info.get("token", None)
         channel_id = bot_info.get("channel", None)
         webhook = bot_info.get("webhook", None)

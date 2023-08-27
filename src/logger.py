@@ -56,39 +56,6 @@ class LoggerFile(ILogger):
                 content = content + msg
                 f.write(content)
 
-
-def import_discord_bots(filename="discord_bots.xml"):
-    bots_path = "./conf"
-    bots_filename = os.path.join(bots_path, filename)
-    if not os.path.isfile(bots_filename):
-        print("!!! {} not found".format(bots_filename))
-        return {}
-    tree = ET.parse(bots_filename)
-    root = tree.getroot()
-    if root.tag != "bots":
-        print("!!! tag {} encountered. expecting bots".format(root.tag))
-        return {}
-
-    bots = {}
-    bots_nodes = list(root)
-    for bot_node in bots_nodes:
-        if bot_node.tag != "bot":
-            continue
-
-        bot = {}
-        for name, value in bot_node.attrib.items():
-            bot[name] = value
-        if "id" in bot:
-            bots[bot["id"]] = bot
-
-    return bots
-
-def get_discord_bot_info(botId, filename="discord_bots.xml"):
-    bots = import_discord_bots(filename)
-    if botId in bots:
-        return bots[botId]
-    return {}
-
 class LoggerDiscordBot(ILogger):
     def __init__(self, params=None):
         self.channel_id = None
