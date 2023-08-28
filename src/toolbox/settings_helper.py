@@ -70,3 +70,17 @@ def get_fdp_url_info(fdpId, settings_path="./conf"):
         break
 
     return info
+
+def get_ftp_account_info(accountId, settings_path="./conf"):
+    info = {}
+    ftp_accounts_node = _get_settings_node("ftp_accounts", settings_path)
+    ftp_accounts = list(ftp_accounts_node)
+    for ftp_account in ftp_accounts:
+        if ftp_account.tag != "ftp_account" or "id" not in ftp_account.attrib or ftp_account.attrib["id"] != accountId:
+            continue
+
+        for name, value in ftp_account.attrib.items():
+            info[name] = value
+        break
+
+    return info

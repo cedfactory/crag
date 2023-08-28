@@ -2,6 +2,14 @@
     <fdp_urls>
         <fdp_url id="fdp1" url="http://fdpurl.com"/>
     </fdp_urls>
+    <ftp_accounts>
+        <ftp_account
+            id="ftp1"
+            url="ftp.server.com"
+            port="21"
+            user="user1"
+            password="password1" />
+    </ftp_accounts>
     <monitoring>
         <monitor id="monitor_id" user="foobar" url_base="theurlbase" />
     </monitoring>

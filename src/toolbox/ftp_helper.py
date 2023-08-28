@@ -1,42 +1,8 @@
-import os
-import xml.etree.cElementTree as ET
 import ftplib
-
-def import_ftp_accounts(filename="accounts_ftp.xml"):
-    path = "./conf"
-    accounts_filename = os.path.join(path, filename)
-    if not os.path.isfile(accounts_filename):
-        print("!!! {} not found".format(accounts_filename))
-        return {}
-
-    tree = ET.parse(accounts_filename)
-    root = tree.getroot()
-    if root.tag != "accounts_ftp":
-        print("!!! tag {} encountered. expecting accounts_ftp".format(root.tag))
-        return {}
-
-    accounts = {}
-    accounts_nodes = list(root)
-    for account_node in accounts_nodes:
-        if account_node.tag != "account_ftp":
-            continue
-
-        account = {}
-        for name, value in account_node.attrib.items():
-            account[name] = value
-        if "id" in account:
-            accounts[account["id"]] = account
-
-    return accounts
-
-def get_ftp_info(accountId, filename="accounts_ftp.xml"):
-    accounts = import_ftp_accounts(filename)
-    if accountId in accounts:
-        return accounts[accountId]
-    return {}
+from . import settings_helper
 
 def get_ftp_session(accountId):
-    account = get_ftp_info(accountId)
+    account = settings_helper.get_ftp_account_info(accountId)
     url = account.get("url", None)
     port = account.get("port", 21)
     if isinstance(port, str):

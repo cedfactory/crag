@@ -40,3 +40,14 @@ class TestSettingsHelper:
         # expectations
         assert (info.get("id") == "fdp1")
         assert (info.get("url") == "http://fdpurl.com")
+
+    def test_get_fto_account_info(self):
+        # action
+        info = settings_helper.get_ftp_account_info("ftp1", "./test/data/")
+
+        # expectations
+        assert (info.get("id") == "ftp1")
+        assert (info.get("url") == "ftp.server.com")
+        assert (info.get("port") == "21")
+        assert (info.get("user") == "user1")
+        assert (info.get("password") == "password1")
