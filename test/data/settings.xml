@@ -1,4 +1,8 @@
 <settings>
+    <accounts>
+        <account id="account1" attrib="attrib1" />
+        <account id="account2" attrib="attrib2" />
+    </accounts>
     <fdp_urls>
         <fdp_url id="fdp1" url="http://fdpurl.com"/>
     </fdp_urls>

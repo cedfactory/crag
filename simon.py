@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 import pika
 import pandas as pd
-from src import accounts,broker_bitget_api
+from src import broker_bitget_api
 from src.toolbox import monitoring_helper,settings_helper
 
 class BotSimon(commands.Bot):
@@ -30,7 +30,7 @@ class BotSimon(commands.Bot):
 
         @self.command(name="accounts")
         async def custom_command(ctx, *args):
-            accounts_info = accounts.import_accounts()
+            accounts_info = settings_helper.get_accounts_info()
             lst_accounts = []
             lst_usdt_equities = []
             for key, value in accounts_info.items():
@@ -112,7 +112,7 @@ class BotSimon(commands.Bot):
 
         @self.command(name="strategies")
         async def custom_command(ctx, *args):
-            accounts_info = accounts.import_accounts()
+            accounts_info = settings_helper.get_accounts_info()
             account_ids = accounts_info.keys()
             lst_accounts = []
             lst_strategies = []

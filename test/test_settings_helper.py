@@ -41,7 +41,7 @@ class TestSettingsHelper:
         assert (info.get("id") == "fdp1")
         assert (info.get("url") == "http://fdpurl.com")
 
-    def test_get_fto_account_info(self):
+    def test_get_ftp_account_info(self):
         # action
         info = settings_helper.get_ftp_account_info("ftp1", "./test/data/")
 
@@ -51,3 +51,21 @@ class TestSettingsHelper:
         assert (info.get("port") == "21")
         assert (info.get("user") == "user1")
         assert (info.get("password") == "password1")
+
+    def test_get_account_info(self):
+        # action
+        info = settings_helper.get_account_info("account1", "./test/data/")
+
+        # expectations
+        assert (info.get("id") == "account1")
+        assert (info.get("attrib") == "attrib1")
+
+    def test_get_accounts_info(self):
+        # action
+        info = settings_helper.get_accounts_info("./test/data/")
+
+        # expectations
+        assert (info["account1"].get("id") == "account1")
+        assert (info["account1"].get("attrib") == "attrib1")
+        assert (info["account2"].get("id") == "account2")
+        assert (info["account2"].get("attrib") == "attrib2")

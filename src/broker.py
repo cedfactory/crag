@@ -1,6 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from . import accounts
-
+from src.toolbox import settings_helper
 class Broker(metaclass = ABCMeta):
     
     def __init__(self, params = None):
@@ -14,7 +13,7 @@ class Broker(metaclass = ABCMeta):
         self.account = None
         if params:
             account_id = params.get("account", "")
-            self.account = accounts.get_account_info(account_id)
+            self.account = settings_helper.get_account_info(account_id)
             if not self.account:
                 print("[Broker] : ⚠ account {} not found".format(account_id))
 

@@ -4,14 +4,14 @@ import os, sys
 import time
 from datetime import datetime, timedelta
 
-from src import accounts,broker_bitget_api
-from src.toolbox import pdf_helper, mail_helper, ftp_helper, graph_helper, monitoring_helper
+from src import broker_bitget_api
+from src.toolbox import pdf_helper, mail_helper, ftp_helper, graph_helper, monitoring_helper, settings_helper
 
 g_use_ftp = True
 
 def export_all():
     rootpath = "./conf/"
-    accounts_info = accounts.import_accounts()
+    accounts_info = settings_helper.get_accounts_info()
 
     report = pdf_helper.PdfDocument("report", "logo.png")
 
@@ -159,7 +159,7 @@ def export_all():
 def update_history():
     print("updating history...")
     rootpath = "./conf/"
-    accounts_info = accounts.import_accounts()
+    accounts_info = settings_helper.get_accounts_info()
     ct = datetime.now()
     ts = ct.timestamp()
 
