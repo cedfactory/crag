@@ -32,3 +32,11 @@ class TestSettingsHelper:
         assert (info.get("token") == "tokenId")
         assert (info.get("channel") == "channelId")
         assert (info.get("webhook") == "webhook1")
+
+    def test_get_fdp_url_info(self):
+        # action
+        info = settings_helper.get_fdp_url_info("fdp1", "./test/data/")
+
+        # expectations
+        assert (info.get("id") == "fdp1")
+        assert (info.get("url") == "http://fdpurl.com")

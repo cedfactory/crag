@@ -1,4 +1,7 @@
 <settings>
+    <fdp_urls>
+        <fdp_url id="fdp1" url="http://fdpurl.com"/>
+    </fdp_urls>
     <monitoring>
         <monitor id="monitor_id" user="foobar" url_base="theurlbase" />
     </monitoring>

@@ -1,5 +1,3 @@
-import os
-
 import pandas as pd
 from dotenv import load_dotenv
 import urllib
@@ -12,56 +10,7 @@ import requests
 import os
 import xml.etree.cElementTree as ET
 from datetime import datetime
-
-
-def import_fdp_urls(filename="fdp_urls.xml"):
-    path = "./conf"
-    fdp_urls_filename = os.path.join(path, filename)
-    if not os.path.isfile(fdp_urls_filename):
-        print("!!! {} not found".format(fdp_urls_filename))
-        return {}
-
-    tree = ET.parse(fdp_urls_filename)
-    root = tree.getroot()
-    if root.tag != "fdp_urls":
-        print("!!! tag {} encountered. expecting fdp_urls".format(root.tag))
-        return {}
-
-    fdp_urls = {}
-    fdp_urls_nodes = list(root)
-    for fdp_url_node in fdp_urls_nodes:
-        if fdp_url_node.tag != "fdp_url":
-            continue
-
-        fdp_url = {}
-        for name, value in fdp_url_node.attrib.items():
-            fdp_url[name] = value
-        if "id" in fdp_url:
-            fdp_urls[fdp_url["id"]] = fdp_url
-
-    return fdp_urls
-
-def get_fdp_info(fdpId, filename="fdp_urls.xml"):
-    fdp_urls = import_fdp_urls(filename)
-    if fdpId in fdp_urls:
-        return fdp_urls[fdpId]
-    return {}
-
-def get_fdp_url_info(fdpId):
-    fdp_url_info = get_fdp_info(fdpId)
-    fdp_url = fdp_url_info.get("url", None)
-    return fdp_url
-
-def get_fdp_url():
-    load_dotenv()
-    fdp_url = os.getenv("FDP_URL")
-    return fdp_url
-
-    with open(".env") as file:
-        for line in file:
-            if line.startswith("FDP_URL="):
-                fdp_url = line.split("FDP_URL=")[1].rstrip()
-    return fdp_url
+from src.toolbox import settings_helper
 
 def convert_ms_to_datetime(ms):
     if isinstance(ms, str):
@@ -85,6 +34,17 @@ def _atomic_fdp_request(url):
     return response_json
 
 '''
+def get_fdp_url():
+    load_dotenv()
+    fdp_url = os.getenv("FDP_URL")
+    return fdp_url
+
+    with open(".env") as file:
+        for line in file:
+            if line.startswith("FDP_URL="):
+                fdp_url = line.split("FDP_URL=")[1].rstrip()
+    return fdp_url
+
 def fdp_request(params, multithreading = True):
     fdp_url = get_fdp_url()
     if not fdp_url or fdp_url == "":
@@ -122,8 +82,8 @@ def fdp_request(params, multithreading = True):
 
     return final_result
 '''
-def fdp_request_post(url, params, fdp_url_id):
-    fdp_url = get_fdp_url_info(fdp_url_id)
+def fdp_request_post(url, params, fdp_id):
+    fdp_url = settings_helper.get_fdp_info(fdp_id)
     if not fdp_url or fdp_url == "":
         return {"status":"ko", "info":"fdp url not found"}
 

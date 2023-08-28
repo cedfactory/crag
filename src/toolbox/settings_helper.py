@@ -56,3 +56,17 @@ def get_discord_bot_info(botId, settings_path="./conf"):
         break
 
     return info
+
+def get_fdp_url_info(fdpId, settings_path="./conf"):
+    info = {}
+    fdps_node = _get_settings_node("fdp_urls", settings_path)
+    fdps = list(fdps_node)
+    for fdp in fdps:
+        if fdp.tag != "fdp_url" or "id" not in fdp.attrib or fdp.attrib["id"] != fdpId:
+            continue
+
+        for name, value in fdp.attrib.items():
+            info[name] = value
+        break
+
+    return info
