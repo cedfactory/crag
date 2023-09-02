@@ -36,7 +36,7 @@ class AccountApi(Client):
         if symbol and marginCoin:
             params["symbol"] = symbol
             params["marginCoin"] = marginCoin
-            params["leverage"] = leverage
+            params["leverage"] = str(leverage)
             params["holdSide"] = holdSide
             return self._request_with_params(POST, MIX_ACCOUNT_V1_URL + '/setLeverage', params)
         else:
