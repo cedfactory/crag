@@ -94,7 +94,7 @@ class BrokerBitGet(broker.Broker):
             print('transaction failed ", trade.type, " : ', symbol, ' - gross_size: ', trade.gross_size)
 
         if trade.type == "OPEN_LONG":
-            transaction = self._open_long_position(symbol, trade.gross_size, clientOid)
+            transaction = self._open_long_position(symbol, trade.gross_size * self.leverage_long, clientOid)
             if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
                 trade.success = True
                 trade.orderId = transaction["data"]["orderId"]
@@ -108,7 +108,7 @@ class BrokerBitGet(broker.Broker):
                 trade.buying_price = trade.symbol_price
 
         elif trade.type == "OPEN_SHORT":
-            transaction = self._open_short_position(symbol, trade.gross_size, clientOid)
+            transaction = self._open_short_position(symbol, trade.gross_size * self.leverage_short, clientOid)
             if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
                 trade.success = True
                 trade.orderId = transaction["data"]["orderId"]
