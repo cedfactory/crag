@@ -1,6 +1,5 @@
 from . import broker,trade,rtdp,utils
 import pandas as pd
-import ast
 
 class BrokerBitGet(broker.Broker):
     def __init__(self, params = None):
@@ -11,7 +10,6 @@ class BrokerBitGet(broker.Broker):
         self.name = ""
         self.exchange_name = "bitget"
         self.chase_limit = False
-        self.reset_account = True  # Reset account default behavior
         if params:
             self.simulation = params.get("simulation", self.simulation)
             if self.simulation == 0 or self.simulation == "0":
@@ -21,12 +19,6 @@ class BrokerBitGet(broker.Broker):
             self.leverage = params.get("leverage", self.leverage)
             if isinstance(self.leverage, str):
                 self.leverage = int(self.leverage)
-            self.reset_account = params.get("reset_account", self.reset_account)
-            if isinstance(self.reset_account, str):
-                try:
-                    self.reset_account = ast.literal_eval(self.reset_account)
-                except BaseException as err:
-                    self.reset_account = True
         if not self._authentification():
             print("[BrokerBitGet] : Problem encountered during authentification")
 
@@ -48,9 +40,6 @@ class BrokerBitGet(broker.Broker):
             else:
                 return fn(self, *args, **kwargs)
         return wrapped
-
-    def resume_strategy(self):
-        return not self.reset_account
 
     def ready(self):
         return self.marketApi != None and self.accountApi != None
@@ -289,6 +278,3 @@ class BrokerBitGet(broker.Broker):
 
     def get_coin_from_symbol(self, symbol):
         return self._get_coin(symbol)
-
-    def is_reset_account(self):
-        return self.reset_account
