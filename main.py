@@ -1,4 +1,4 @@
-from src import rtdp,rtdp_simulation,broker_simulation,broker_ccxt,broker_bitget,broker_bitget_api,broker_bitget_ccxt,analyser,benchmark,automatic_test_plan
+from src import rtdp,rtdp_simulation,broker_simulation,broker_ccxt,broker_bitget,broker_bitget_api,analyser,benchmark,automatic_test_plan
 from src import rtstr,rtstr_dummy_test,rtstr_envelope,rtstr_envelopestochrsi,rtstr_dummy_test_tp,rtstr_grid_trading_multi,rtstr_balance_trading,rtstr_bollinger_trend,rtstr_tv_recommendation_mid,rtstr_balance_trading_multi,rtstr_super_reversal,rtstr_volatility_test_live,rtstr_trix,rtstr_cryptobot,rtstr_bigwill,rtstr_VMC
 from src import crag,crag_helper,trade
 import pandas as pd
@@ -126,7 +126,6 @@ def crag_analyse_results():
     my_analyser.run_analyse()
 
 def crag_broker():
-    #my_broker = broker_bitget_ccxt.BrokerBitGetCcxt({'account':'subaccount1'})
     my_broker = broker_bitget_api.BrokerBitGetApi({'account':'bitget_ayato', "leverage_short":"2", "leverage_long":"2"})
 
     #
