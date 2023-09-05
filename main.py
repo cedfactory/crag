@@ -126,8 +126,14 @@ def crag_analyse_results():
     my_analyser.run_analyse()
 
 def crag_broker():
-    my_broker = broker_bitget_api.BrokerBitGetApi({'account':'bitget_ayato', "leverage_short":"2", "leverage_long":"2"})
-
+    my_broker = broker_bitget_api.BrokerBitGetApi({'account':'bitget_ayato', "leverage_short":"1", "leverage_long":"1"})
+    mytrade = trade.Trade()
+    mytrade.symbol = "BTC"
+    mytrade.gross_size = 0.002
+    mytrade.type = "OPEN_LONG_ORDER"
+    mytrade.price = 25727
+    my_broker.execute_trade(mytrade)
+    exit(0)
     #
     # orders
     #

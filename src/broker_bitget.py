@@ -93,33 +93,30 @@ class BrokerBitGet(broker.Broker):
         if trade.gross_size == 0:
             print('transaction failed ", trade.type, " : ', symbol, ' - gross_size: ', trade.gross_size)
 
-        if trade.type == "OPEN_LONG":
-            transaction = self._open_long_position(symbol, trade.gross_size * self.leverage_long, clientOid)
+        if trade.type in ["OPEN_LONG", "OPEN_SHORT", "OPEN_LONG_ORDER", "OPEN_SHORT_ORDER"]:
+            if trade.type == "OPEN_LONG":
+                transaction = self._open_long_position(symbol, trade.gross_size * self.leverage_long, clientOid)
+            elif trade.type == "OPEN_SHORT":
+                transaction = self._open_short_position(symbol, trade.gross_size * self.leverage_short, clientOid)
+            elif trade.type == "OPEN_LONG_ORDER":
+                transaction = self._open_long_order(symbol, trade.gross_size * self.leverage_long, clientOid, trade.price)
+            elif trade.type == "OPEN_SHORT_ORDER":
+                transaction = self._open_short_order(symbol, trade.gross_size * self.leverage_long, clientOid, trade.price)
+            else:
+                transaction = {"msg": "failure"}
+
             if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
                 trade.success = True
                 trade.orderId = transaction["data"]["orderId"]
                 trade.clientOid = transaction["data"]["clientOid"]
-                print('request OPEN_LONG: ', symbol, ' gross_size: ', trade.gross_size)
                 trade.tradeId, trade.symbol_price, trade.gross_price, trade.gross_size, trade.buying_fee = self.get_order_fill_detail(symbol, trade.orderId)
-                print('OPEN_LONG: ', symbol, ' gross_size: ', trade.gross_size, ' price: ', trade.gross_price, ' fee: ', trade.buying_fee)
                 trade.net_size = trade.gross_size
                 trade.net_price = trade.gross_price
                 trade.bought_gross_price = trade.gross_price
                 trade.buying_price = trade.symbol_price
 
-        elif trade.type == "OPEN_SHORT":
-            transaction = self._open_short_position(symbol, trade.gross_size * self.leverage_short, clientOid)
-            if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
-                trade.success = True
-                trade.orderId = transaction["data"]["orderId"]
-                trade.clientOid = transaction["data"]["clientOid"]
-                print('request OPEN_SHORT: ', symbol, ' gross_size: ', trade.gross_size)
-                trade.tradeId, trade.symbol_price, trade.gross_price, trade.gross_size, trade.buying_fee = self.get_order_fill_detail(symbol, trade.orderId)
-                print('OPEN_SHORT: ', symbol, ' gross_size: ', trade.gross_size, ' price: ', trade.gross_price, ' fee: ', trade.buying_fee)
-                trade.net_size = trade.gross_size
-                trade.net_price = trade.gross_price
-                trade.bought_gross_price = trade.gross_price
-                trade.buying_price = trade.symbol_price
+                print('request ',trade.type, ': ', symbol, ' gross_size: ', trade.gross_size)
+                print(trade.type, ': ', symbol, ' gross_size: ', trade.gross_size, ' price: ', trade.gross_price, ' fee: ', trade.buying_fee)
 
         elif trade.type == "CLOSE_LONG":
             trade.gross_size = self.get_symbol_available(symbol)

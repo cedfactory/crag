@@ -9,7 +9,6 @@ from .bitget.spot import public_api as public
 from . import broker_bitget
 from . import utils
 from datetime import datetime
-from dotenv import load_dotenv
 import time
 import os, shutil
 import pandas as pd
@@ -181,13 +180,13 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     - transaction_fee
     '''
     @authentication_required
-    def _place_order_api(self, symbol, marginCoin, size, side, orderType, clientOId):
+    def _place_order_api(self, symbol, marginCoin, size, side, orderType, clientOId, price=''):
         result = {}
         n_attempts = 3
         while n_attempts > 0:
             try:
-                order = self.orderApi.place_order(symbol, marginCoin, size, side, orderType,
-                                                 price='',
+                result = self.orderApi.place_order(symbol, marginCoin, size, side, orderType,
+                                                 price=price,
                                                  clientOrderId=clientOId, timeInForceValue='normal',
                                                  presetTakeProfitPrice='', presetStopLossPrice='')
                 self.success += 1
@@ -199,7 +198,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 time.sleep(2)
                 n_attempts = n_attempts - 1
         # order structure contains order['data']['orderId'], order['data']['clientOid'] & order['requestTime']
-        return order
+        return result
 
     @authentication_required
     def get_portfolio_value(self):
@@ -223,6 +222,22 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     @authentication_required
     def _close_short_position(self, symbol, amount, clientoid):
         return self._place_order_api(symbol, marginCoin="USDT", size=amount, side='close_short', orderType='market', clientOId=clientoid)
+
+    @authentication_required
+    def _open_long_order(self, symbol, amount, clientoid, price):
+        return self._place_order_api(symbol, marginCoin="USDT", size=amount, side='open_long', orderType='limit', price=price, clientOId=clientoid)
+
+    @authentication_required
+    def _close_long_order(self, symbol, amount, clientoid, price):
+        return self._place_order_api(symbol, marginCoin="USDT", size=amount, side='close_long', orderType='limit', price=price, clientOId=clientoid)
+
+    @authentication_required
+    def _open_short_order(self, symbol, amount, clientoid, price):
+        return self._place_order_api(symbol, marginCoin="USDT", size=amount, side='open_short', orderType='limit', price=price, clientOId=clientoid)
+
+    @authentication_required
+    def _close_short_order(self, symbol, amount, clientoid, price):
+        return self._place_order_api(symbol, marginCoin="USDT", size=amount, side='close_short', orderType='limit', price=price, clientOId=clientoid)
 
     @authentication_required
     def get_wallet_equity(self):
