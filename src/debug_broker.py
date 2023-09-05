@@ -7,131 +7,97 @@ import numpy as np
 import os
 from dotenv import load_dotenv
 
-from src import broker_ccxt
-
 import requests
 
 def debug_crag_broker():
-    test = True
-    if test:
-        pair = "BTC/USDT:USDT"
+    pair = "BTC/USDT:USDT"
 
-        load_dotenv()
-        exchange_api_key = os.getenv("BITGET_API_KEY")
-        exchange_api_secret = os.getenv("BITGET_API_SECRET")
-        exchange_api_password = "orangeelephant"
+    load_dotenv()
+    exchange_api_key = os.getenv("BITGET_API_KEY")
+    exchange_api_secret = os.getenv("BITGET_API_SECRET")
+    exchange_api_password = "orangeelephant"
 
 
-        api_url = "https://api.bitget.com/api/mix/v1/market/contracts?productType=umcbl"
+    api_url = "https://api.bitget.com/api/mix/v1/market/contracts?productType=umcbl"
 
-        response = requests.get(api_url)
-        response.json()
-
-
-        bitget = PerpBitget( apiKey= exchange_api_key,
-                             secret=exchange_api_secret,
-                             password=exchange_api_password
-                             )
-
-        usd_balance = float(bitget.get_usdt_equity())
-        print("USD balance :", round(usd_balance, 2), "$")
+    response = requests.get(api_url)
+    response.json()
 
 
-        df_all_symbols = bitget.get_list_all_symbols()
+    bitget = PerpBitget( apiKey= exchange_api_key,
+                         secret=exchange_api_secret,
+                         password=exchange_api_password
+                         )
 
-        """
-        FYI: 
-            product Type:
-                umcbl USDT perpetual contract
-                dmcbl Universal margin perpetual contract
-                cmcbl USDC perpetual contract
-                sumcbl USDT simulation perpetual contract
-                sdmcbl Universal margin simulation perpetual contract
-                scmcbl USDC simulation perpetual contract
-        """
-        spot = False
-        df_filtered_symbols = bitget.get_list_filtered_future_symbols(spot)
-        print(df_filtered_symbols)
+    usd_balance = float(bitget.get_usdt_equity())
+    print("USD balance :", round(usd_balance, 2), "$")
 
-        base = "BTC"
-        quote = "USDC"
-        # type = "swap" or "spot"
-        spot = True
-        df_info_symbols = bitget.get_info_symbols(base, quote, spot)
-        print(df_info_symbols)
+
+    df_all_symbols = bitget.get_list_all_symbols()
+
+    """
+    FYI: 
+        product Type:
+            umcbl USDT perpetual contract
+            dmcbl Universal margin perpetual contract
+            cmcbl USDC perpetual contract
+            sumcbl USDT simulation perpetual contract
+            sdmcbl Universal margin simulation perpetual contract
+            scmcbl USDC simulation perpetual contract
+    """
+    spot = False
+    df_filtered_symbols = bitget.get_list_filtered_future_symbols(spot)
+    print(df_filtered_symbols)
+
+    base = "BTC"
+    quote = "USDC"
+    # type = "swap" or "spot"
+    spot = True
+    df_info_symbols = bitget.get_info_symbols(base, quote, spot)
+    print(df_info_symbols)
 
 
 
 
-        balance_data = bitget.get_all_balance()
-        get_all_balance_total_usdt_free = balance_data['USDT']['free']
-        get_all_balance_total_usdt_used = balance_data['USDT']['used']
-        get_all_balance_total_usdt_total = balance_data['USDT']['total']
-        print('total_usdt_free: ', get_all_balance_total_usdt_free)
-        print('total_usdt_used: ', get_all_balance_total_usdt_used)
-        print('total_usdt_total: ', get_all_balance_total_usdt_total)
+    balance_data = bitget.get_all_balance()
+    get_all_balance_total_usdt_free = balance_data['USDT']['free']
+    get_all_balance_total_usdt_used = balance_data['USDT']['used']
+    get_all_balance_total_usdt_total = balance_data['USDT']['total']
+    print('total_usdt_free: ', get_all_balance_total_usdt_free)
+    print('total_usdt_used: ', get_all_balance_total_usdt_used)
+    print('total_usdt_total: ', get_all_balance_total_usdt_total)
 
-        dict_position = balance_data['info'][0]
-        df_balance = pd.DataFrame([dict_position], columns=dict_position.keys())
-        print(df_balance.columns)
-        equity = df_balance['equity'].values[0]
-        usdt_equity = df_balance['usdtEquity'].values[0]
-        btc_equity = df_balance['btcEquity'].values[0]
-        print('equity: ',equity)
-        print('usdt_equity: ',usdt_equity)
-        print('btc_equity: ',btc_equity)
+    dict_position = balance_data['info'][0]
+    df_balance = pd.DataFrame([dict_position], columns=dict_position.keys())
+    print(df_balance.columns)
+    equity = df_balance['equity'].values[0]
+    usdt_equity = df_balance['usdtEquity'].values[0]
+    btc_equity = df_balance['btcEquity'].values[0]
+    print('equity: ',equity)
+    print('usdt_equity: ',usdt_equity)
+    print('btc_equity: ',btc_equity)
 
-        lst_info_from_balance = ['marginCoin', 'locked', 'available', 'crossMaxAvailable',
-                                 'fixedMaxAvailable', 'maxTransferOut', 'equity', 'usdtEquity',
-                                 'btcEquity', 'unrealizedPL', 'bonus']
+    lst_info_from_balance = ['marginCoin', 'locked', 'available', 'crossMaxAvailable',
+                             'fixedMaxAvailable', 'maxTransferOut', 'equity', 'usdtEquity',
+                             'btcEquity', 'unrealizedPL', 'bonus']
 
-        positions_data = bitget.get_open_position()
-        print(positions_data)
-        print(positions_data.columns)
-        lst_position_data_columns = ['marginCoin', 'symbol', 'holdSide', 'openDelegateCount', 'margin',
-                                     'available', 'locked', 'total', 'leverage', 'achievedProfits',
-                                     'averageOpenPrice', 'marginMode', 'holdMode', 'unrealizedPL',
-                                     'liquidationPrice', 'keepMarginRate', 'marketPrice', 'cTime']
+    positions_data = bitget.get_open_position()
+    print(positions_data)
+    print(positions_data.columns)
+    lst_position_data_columns = ['marginCoin', 'symbol', 'holdSide', 'openDelegateCount', 'margin',
+                                 'available', 'locked', 'total', 'leverage', 'achievedProfits',
+                                 'averageOpenPrice', 'marginMode', 'holdMode', 'unrealizedPL',
+                                 'liquidationPrice', 'keepMarginRate', 'marketPrice', 'cTime']
 
-        coin = positions_data['symbol'].values[0]
+    coin = positions_data['symbol'].values[0]
 
-        orders = bitget.get_my_orders(coin)
+    orders = bitget.get_my_orders(coin)
 
-        # need coins bought to test....
-        # coin = positions_data['symbol'].values[0]
-        # balance_of_one_coin = bitget.get_balance_of_one_coin(coin)
+    # need coins bought to test....
+    # coin = positions_data['symbol'].values[0]
+    # balance_of_one_coin = bitget.get_balance_of_one_coin(coin)
 
-        print('toto')
-    else:
-        my_broker = broker_ccxt.BrokerCCXT({'exchange': 'bitget', 'account': 'room2', 'simulation': 0})
-
-        print("### balance ###")
-        balance = my_broker.get_balance()
-        print(balance)
-
-        print("### positions ###")
-        positions = my_broker.get_positions()
-        print(positions)
-
-        print("### orders ###")
-        orders = my_broker.get_orders("BTC/USDT")
-        print(orders)
-
-        print("### my trades ###")
-        my_broker.export_history()
-
-        print("### portfolio value ###")
-        print("{}".format(my_broker.get_portfolio_value()))
-
-        print("### BTC ###")
-        usdt_value = my_broker.get_value("BTC/USDT")
-        print("USDT value = ", usdt_value)
-
-        usdt_position_risk = my_broker.get_positions_risk(["BTC/USDT"])
-        print("USDT oposition risk = ", usdt_position_risk)
-
-        print("### sell everything ###")
-        # my_broker.sell_everything()
+    print('toto')
 
 
 class PerpBitget():
