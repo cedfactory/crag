@@ -53,8 +53,17 @@ class RealTimeStrategy(metaclass=ABCMeta):
             if isinstance(self.MAX_POSITION, str):
                 self.MAX_POSITION = int(self.MAX_POSITION)
             symbols = params.get("symbols", "")
+            self.multi_param = params.get("multi_param", "")
+            if isinstance(self.multi_param, str) \
+                    and len(self.multi_param) > 0:
+                self.multi_param = ast.literal_eval(self.multi_param)
             if symbols != "" and path.exists("./symbols/"+symbols):
                 self.lst_symbols = pd.read_csv("./symbols/"+symbols)['symbol'].tolist()
+                if self.multi_param:
+                    self.df_symbol_param = pd.read_csv("./symbols/"+symbols)
+                    self.df_symbol_param.set_index('symbol', drop=True, inplace=True)
+                else:
+                    self.df_symbol_param = pd.DataFrame()  # empty df could be None ....
             else:
                 self.lst_symbols = symbols.split(",")
 

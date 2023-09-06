@@ -12,43 +12,17 @@ class StrategyBigWill(rtstr.RealTimeStrategy):
 
         self.zero_print = True
 
-        self.AO_Threshold = 0
-        # stochOverBought:  0.7  stochOverSold:  0.4  willOverSold:  -85  willOverBought:  -10
-        # self.stochOverBought = 0.8 # Initial
-        self.stochOverBought = 0.7
-        # self.stochOverSold = 0.2 # Initial
-        # self.stochOverSold = 0.3 # test 1
-        self.stochOverSold = 0.4 # Changed by 0.4
-        # self.willOverSold = -85 # Initial
-        self.willOverSold = -80
-        # self.willOverBought = -10 # Initial
-        self.willOverBought = -20 # or -15
+        self.default_AO_Threshold = 0
+        self.default_stochOverBought = 0.8
+        self.default_stochOverSold = 0.2
+        self.default_willOverSold = -80
+        self.default_willOverBought = -10
 
-        """
-        sl:  0  stochOverBought:  0.7  stochOverSold:  0.4  willOverSold:  -80  willOverBought:  -20
-        nb pair:  38
-        final_wallet mean:  4129.783947368422
-        final_wallet max:  17301.44
-        vs_hold_pct mean:  2.42078947368421
-        vs_hold_pct max:  18.28
-        global_win_rate mean:  0.6805263157894736
-        global_win_rate max:  0.75
-        total_trades mean:  63.71052631578947
-        total_trades max:  74.0
-        list pairs:  ['DOGE', 'MATIC', 'XLM', 'ATOM', 'MANA', 'CRV', 'EGLD', 'PEOPLE', 'ENJ', 'ZIL', 'APE', 'ROSE', 'C98', 'STORJ', 'COMP', 'LUNA2', 'LUNC', 'ONE', 'MAGIC', 'ASTR', 'ANKR', 'FET', 'HOOK', 'HBAR', 'COTI', 'LIT', 'TLM', 'HOT', 'HFT', 'ZEC', 'UNFI', 'DAR', 'SFP', 'SKL', 'STMX', 'UMA', 'KEY', 'SLP']
-        
-        sl:  0  stochOverBought:  0.7  stochOverSold:  0.4  willOverSold:  -80  willOverBought:  -15
-        nb pair:  42
-        final_wallet mean:  4236.242380952381
-        final_wallet max:  15574.82
-        vs_hold_pct mean:  2.176190476190476
-        vs_hold_pct max:  12.79
-        global_win_rate mean:  0.6802380952380952
-        global_win_rate max:  0.75
-        total_trades mean:  57.61904761904762
-        total_trades max:  69.0
-        list pairs:  ['LINK', 'MATIC', 'ICP', 'XLM', 'AVAX', 'MANA', 'CRV', 'EGLD', 'PEOPLE', 'ENJ', 'ZIL', 'APE', 'XMR', 'ROSE', 'C98', 'STORJ', 'COMP', 'LUNA2', 'LUNC', 'ONE', 'BAT', 'MAGIC', 'ANKR', 'FET', 'RNDR', 'HOOK', 'HBAR', 'COTI', 'VET', 'LIT', 'TLM', 'HOT', 'HFT', 'ZEC', 'UNFI', 'DAR', 'SFP', 'SKL', 'UMA', 'DENT', 'KEY', 'SLP']
-        """
+        self.AO_Threshold = self.default_AO_Threshold
+        self.stochOverBought = self.default_stochOverBought
+        self.stochOverSold = self.default_stochOverSold
+        self.willOverSold = self.default_willOverSold
+        self.willOverBought = self.default_willOverBought
 
     def get_data_description(self):
         ds = rtdp.DataDescription()
@@ -77,12 +51,22 @@ class StrategyBigWill(rtstr.RealTimeStrategy):
     #    and row['WillR'] < willOverSold
     #    and row['EMA100'] > row['EMA200']
     def condition_for_opening_long_position(self, symbol):
+        try:
+            self.willOverSold = int(self.df_symbol_param.at[symbol, 'willOverSold'])
+        except:
+            self.willOverSold = self.default_willOverSold
+
         return self.df_current_data['ao'][symbol] > self.AO_Threshold and \
                self.df_current_data['n1_ao'][symbol] > self.df_current_data['ao'][symbol] and \
                self.df_current_data['willr'][symbol] < self.willOverSold and \
                self.df_current_data['ema_100'][symbol] > self.df_current_data['ema_200'][symbol]
 
     def condition_for_opening_short_position(self, symbol):
+        try:
+            self.willOverBought = int(self.df_symbol_param.at[symbol, 'willOverBought'])
+        except:
+            self.willOverBought = self.default_willOverBought
+
         return self.df_current_data['ao'][symbol] < self.AO_Threshold and \
                self.df_current_data['n1_ao'][symbol] < self.df_current_data['ao'][symbol] and \
                self.df_current_data['willr'][symbol] > self.willOverBought and \
@@ -92,11 +76,29 @@ class StrategyBigWill(rtstr.RealTimeStrategy):
     #       and row['STOCH_RSI'] > stochOverSold)
     #   or row['WillR'] > willOverBought
     def condition_for_closing_long_position(self, symbol):
+        try:
+            self.stochOverSold = int(self.df_symbol_param.at[symbol, 'stochOverSold'])
+        except:
+            self.stochOverSold = self.default_stochOverSold
+        try:
+            self.willOverBought = int(self.df_symbol_param.at[symbol, 'willOverBought'])
+        except:
+            self.willOverBought = self.default_willOverBought
+
         return (self.df_current_data['ao'][symbol] < self.AO_Threshold
                 and self.df_current_data['stoch_rsi'][symbol] > self.stochOverSold) \
                or self.df_current_data['willr'][symbol] > self.willOverBought
 
     def condition_for_closing_short_position(self, symbol):
+        try:
+            self.stochOverBought = int(self.df_symbol_param.at[symbol, 'stochOverBought'])
+        except:
+            self.stochOverBought = self.default_stochOverBought
+        try:
+            self.willOverSold = int(self.df_symbol_param.at[symbol, 'willOverSold'])
+        except:
+            self.willOverSold = self.default_willOverSold
+
         return (self.df_current_data['ao'][symbol] > self.AO_Threshold
                 and self.df_current_data['stoch_rsi'][symbol] < self.stochOverBought) \
                or self.df_current_data['willr'][symbol] < self.willOverSold
