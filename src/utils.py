@@ -83,7 +83,7 @@ def fdp_request(params, multithreading = True):
     return final_result
 '''
 def fdp_request_post(url, params, fdp_id):
-    fdp_url = settings_helper.get_fdp_info(fdp_id)
+    fdp_url = settings_helper.get_fdp_url_info(fdp_id)
     if not fdp_url or fdp_url == "":
         return {"status":"ko", "info":"fdp url not found"}
 
