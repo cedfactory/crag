@@ -1,6 +1,5 @@
 symbol,strategy,stochOverBought,stochOverSold,willOverSold,willOverBought
 ZIL,big_will,0.7,0.4,-90,-30
-ZEC,big_will,0.6,0.3,-80,-20
 WOO,big_will,0.9,0.4,-90,-10
 UNFI,big_will,0.9,0.4,-60,-10
 SXP,big_will,0.9,0.2,-70,-40
@@ -13,11 +12,8 @@ LINK,big_will,0.7,0.3,-90,-10
 KEY,big_will,0.6,0.2,-80,-20
 JASMY,big_will,0.8,0.2,-70,-30
 GAL,big_will,0.6,0.3,-80,-10
-FOOTBALL,big_will,0.6,0.4,-90,-30
 ENS,big_will,0.6,0.3,-70,-30
-DASH,big_will,0.9,0.2,-80,-20
 CRV,big_will,0.9,0.4,-60,-10
-CKB,big_will,0.9,0.4,-90,-30
 BNB,big_will,0.8,0.2,-90,-20
 BLUR,big_will,0.6,0.1,-70,-40
 ATOM,big_will,0.6,0.2,-80,-30
