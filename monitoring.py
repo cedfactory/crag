@@ -190,7 +190,7 @@ def update_history():
                 try:
                     df = pd.read_csv(local_filename, delimiter=',')
                     new_row = {"timestamp": ts, "usdt_equity": usdt_equity, "btcusd": btcusd}
-                    df = df.append(new_row, ignore_index=True)
+                    df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
                 except:
                     data = [[ts, usdt_equity, btcusd]]
                     df = pd.DataFrame(data, columns=["timestamp", "usdt_equity", "btcusd"])
