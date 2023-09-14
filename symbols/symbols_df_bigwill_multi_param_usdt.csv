@@ -1,4 +1,4 @@
-pair,strategy,stochOverBought,stochOverSold,willOverSold,willOverBought
+symbol,strategy,stochOverBought,stochOverSold,willOverSold,willOverBought
 ZIL,big_will,0.7,0.4,-90,-30
 ZEC,big_will,0.6,0.3,-80,-20
 WOO,big_will,0.9,0.4,-90,-10
