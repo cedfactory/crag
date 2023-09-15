@@ -207,7 +207,8 @@ class Crag:
         elif self.interval == 60:  # 1m
             start = start.replace(second=0, microsecond=0)
             start += timedelta(minutes=1)
-        elif self.interval == 1:  # 1s
+        elif self.interval == 1 \
+                or self.interval is None:  # 1s
             start = start.replace(second=0, microsecond=0)
             start += timedelta(seconds=1)
         print("start time: ", start)
@@ -229,7 +230,7 @@ class Crag:
                     while time.time() < start_minus_one_sec:
                         step_result = self.safety_step()
                         if not step_result:
-                            os._exit(0) # tbc
+                            os._exit(0)
                         if self.rtstr.high_volatility.high_volatility_pause_status():
                             msg = "duration: " + str(self.rtstr.high_volatility.high_volatility_get_duration()) + "seconds"
                             self.log(msg, "PAUSE DUE HIGH VOLATILITY")
@@ -239,8 +240,23 @@ class Crag:
                 else:
                     time.sleep(sleeping_time)
             else:
-                self.log(
-                    "warning : time elapsed for the step ({}) is greater than the interval ({})".format(sleeping_time, self.interval))
+                if self.safety_run:
+                    step_result = self.safety_step()
+                    if self.interval != 1:  # 1s
+                        self.log("safety run executed\n"
+                                 + "warning : time elapsed for the step ({}) is greater than the interval ({})".format(sleeping_time, self.interval))
+                    if not step_result:
+                        os._exit(0)
+                    if self.rtstr.high_volatility.high_volatility_pause_status():
+                        msg = "duration: " + str(self.rtstr.high_volatility.high_volatility_get_duration()) + "seconds"
+                        self.log(msg, "PAUSE DUE HIGH VOLATILITY")
+                        time.sleep(self.rtstr.high_volatility.high_volatility_get_duration())
+                else:
+                    if self.interval != 1:  # 1s
+                        self.log(
+                            "warning : time elapsed for the step ({}) is greater than the interval ({})".format(
+                                sleeping_time, self.interval))
+
             start = datetime.fromtimestamp(start)
             if self.interval == 24 * 60 * 60:  # 1d
                 start += timedelta(days=1)
