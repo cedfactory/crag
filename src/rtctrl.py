@@ -34,7 +34,7 @@ class rtctrl():
             if self.working_directory == "":
                 self.working_directory = './output/'  # CEDE NOTE: output dir as default value
             self.export_filename = os.path.join("./" + self.working_directory, "wallet_tracking_records" + self.suffix + ".csv")
-        self.record_tracking = True
+        self.record_tracking = False
 
     def get_df_header(self):
         return ["symbol", "time", "actual_price", "size", "fees", "buying_gross_price", "actual_net_price", "roi_$", "roi_%", "portfolio_value", "cash", 'cash_borrowed',"wallet_value", "wallet_%", "unrealizedPL", "wallet_unrealizedPL"]
@@ -203,6 +203,9 @@ class rtctrl():
         self.df_roi_sl_tp.rename(columns={'roi_%' : 'roi_sl_tp'}, inplace=True)
 
     def display_summary_info(self, record_info=None):
+        if not (self.record_tracking or self.verbose):
+            return
+
         wallet_cash = self.wallet_cash
         portfolio = self.df_rtctrl['actual_net_price'].sum()
         wallet_value = self.wallet_value
@@ -222,8 +225,7 @@ class rtctrl():
 
             self.df_rtctrl_tracking = pd.concat([self.df_rtctrl_tracking, df_new_line])
             self.df_rtctrl_tracking.reset_index(inplace=True, drop=True)
-            # DEBUG CEDE:
-            # self.df_rtctrl_tracking.to_csv('./output/DEBUG_wallet_tracking_records.csv')
+
             if record_info and self.export_filename != None and self.export_filename != "":
                 if self.df_rtctrl_tracking['time'][1] and self.df_rtctrl_tracking['time'][0]:
                     interval = self.df_rtctrl_tracking['time'][1] - self.df_rtctrl_tracking['time'][0]
@@ -236,8 +238,6 @@ class rtctrl():
                 else:
                     print("!!! [rtctrl] self.df_rtctrl_tracking expecting values in time column")
                     print(self.df_rtctrl_tracking)
-
-        return summary
 
     def set_list_open_position_type(self, lst_opening_type):
         self.lst_opening_type = lst_opening_type

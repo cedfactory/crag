@@ -99,8 +99,6 @@ class Crag:
         self.backup_filename = os.path.join(self.working_directory, self.backup_filename)
 
         self.temp_debug = True
-        if self.temp_debug:
-            self.df_debug_traces = pd.DataFrame(columns=['time', 'cash_dol', ' coin_size', 'coin_dol', 'cash_pct', 'coin_pct', 'total_cash', 'total_pct'])
 
         self.traces_trade_positive = 0
         self.traces_trade_negative = 0
@@ -732,7 +730,6 @@ class Crag:
             self.debug_trace_current_trades('merge    ', self.current_trades)
 
         if current_datetime == self.final_datetime or self.exit:
-            self.export_debug_traces()
             self.rtstr.rtctrl.display_summary_info(True)
             self.exit = True
 
@@ -743,10 +740,6 @@ class Crag:
         with open(self.backup_filename, 'wb') as file:
             # print("[crah::backup]", self.backup_filename)
             pickle.dump(self, file)
-
-    def export_debug_traces(self):
-        if self.temp_debug:
-            self.df_debug_traces.to_csv('debug_traces.csv')
 
     def merge_current_trades_from_symbol(self, current_trades, symbol, current_datetime, position_type):
         lst_trades = []
