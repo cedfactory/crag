@@ -17,8 +17,8 @@ class TradeTraces():
         self.last_execution_time = datetime.datetime.now() - datetime.timedelta(hours=2)
 
     def get_header(self):
-        return ["buying_time", "selling_time",
-                "symbol", "trade_id",
+        return ["symbol", "trade_id",
+                "buying_time", "selling_time",
                 "size",
                 'buying_symbol_price', 'selling_symbol_price',
                 "buying_value", "selling_value",
@@ -27,21 +27,19 @@ class TradeTraces():
 
     def add_new_entry(self, symbol, trade_id, size, symbol_price, buying_value, buying_fee):
         current_time = datetime.datetime.now()
+        str_current_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
         # Create a new row as a Series with values
-        new_row = pd.Series({'symbol': symbol,
-                             'trade_id': trade_id,
-                             'buying_time': current_time.strftime("%Y-%m-%d %H:%M:%S"),
-                             'size': size,
-                             'buying_symbol_price': symbol_price,
-                             'buying_value': buying_value,
-                             'fee': buying_fee
-                             })
 
-        # Use loc to add the new row with NaN values
-        self.df_traces = self.df_traces.append(new_row, ignore_index=True)
+        new_row = [symbol, trade_id,
+                   str_current_time, "",
+                   size,
+                   symbol_price, 0,
+                   buying_value, 0,
+                   buying_fee,
+                   0, 0
+                   ]
 
-        # Optionally, you can fill NaN values with a default value (e.g., -1)
-        self.df_traces.fillna(-1, inplace=True)
+        self.df_traces.loc[len(self.df_traces)] = new_row
 
     def set_sell(self, symbol, trade_id, symbol_price, selling_value, selling_fee):
         # Condition to filter rows
