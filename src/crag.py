@@ -663,7 +663,7 @@ class Crag:
 
                     self.traces_trade_total_opened += 1
 
-                    self.tradetraces.add_new_entry(current_trade.symbol, current_trade.orderId,
+                    self.tradetraces.add_new_entry(current_trade.symbol, current_trade.clientOid,
                                                    current_trade.gross_size, current_trade.buying_price,
                                                    current_trade.bought_gross_price, current_trade.buying_fee)
 
@@ -921,7 +921,7 @@ class Crag:
                         self.rtstr.set_lower_zone_unengaged_position(current_trade.symbol, current_trade.gridzone)
                         sell_trade.gridzone = current_trade.gridzone
 
-                        self.tradetraces.set_sell(sell_trade.symbol, sell_trade.orderId,
+                        self.tradetraces.set_sell(sell_trade.symbol, sell_trade.clientOid,
                                                   current_trade.symbol_price,
                                                   current_trade.gross_price,
                                                   current_trade.selling_fee)

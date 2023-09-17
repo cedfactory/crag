@@ -17,7 +17,7 @@ class TradeTraces():
         self.last_execution_time = datetime.datetime.now() - datetime.timedelta(hours=2)
 
     def get_header(self):
-        return ["symbol", "trade_id",
+        return ["symbol", "trade_id", "type",
                 "buying_time", "selling_time",
                 "size",
                 'buying_symbol_price', 'selling_symbol_price',
@@ -30,7 +30,14 @@ class TradeTraces():
         str_current_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
         # Create a new row as a Series with values
 
-        new_row = [symbol, trade_id,
+        if "OPEN_LONG" in trade_id:
+            str_type = "LONG"
+        elif "OPEN_SHORT" in trade_id:
+            str_type = "SHORT"
+        else:
+            str_type = "-"
+
+        new_row = [symbol, trade_id, str_type,
                    str_current_time, "",
                    size,
                    symbol_price, 0,
