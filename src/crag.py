@@ -503,7 +503,7 @@ class Crag:
         sell_trade.symbol = bought_trade.symbol
         sell_trade.symbol_price = self.broker.get_value(bought_trade.symbol)
         sell_trade.bought_gross_price = bought_trade.gross_price
-
+        sell_trade.trace_id = bought_trade.trace_id
         sell_trade.commission = self.broker.get_commission(sell_trade.symbol)
         sell_trade.minsize = self.broker.get_minimum_size(sell_trade.symbol)
 
@@ -663,9 +663,9 @@ class Crag:
 
                     self.traces_trade_total_opened += 1
 
-                    self.tradetraces.add_new_entry(current_trade.symbol, current_trade.clientOid,
-                                                   current_trade.gross_size, current_trade.buying_price,
-                                                   current_trade.bought_gross_price, current_trade.buying_fee)
+                    current_trade.trace_id = self.tradetraces.add_new_entry(current_trade.symbol, current_trade.clientOid,
+                                                                            current_trade.gross_size, current_trade.buying_price,
+                                                                            current_trade.bought_gross_price, current_trade.buying_fee)
 
                     # Update grid strategy
                     self.rtstr.set_zone_engaged(current_trade.symbol, current_trade.symbol_price)
@@ -921,7 +921,7 @@ class Crag:
                         self.rtstr.set_lower_zone_unengaged_position(current_trade.symbol, current_trade.gridzone)
                         sell_trade.gridzone = current_trade.gridzone
 
-                        self.tradetraces.set_sell(sell_trade.symbol, sell_trade.clientOid,
+                        self.tradetraces.set_sell(sell_trade.symbol, sell_trade.trace_id,
                                                   current_trade.symbol_price,
                                                   current_trade.gross_price,
                                                   current_trade.selling_fee)

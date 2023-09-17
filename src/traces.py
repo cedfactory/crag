@@ -16,6 +16,8 @@ class TradeTraces():
         self.df_traces = pd.DataFrame(columns=self.get_header())
         self.last_execution_time = datetime.datetime.now() - datetime.timedelta(hours=2)
 
+        self.counter = 0
+
     def get_header(self):
         return ["symbol", "trade_id", "type",
                 "buying_time", "selling_time",
@@ -37,7 +39,7 @@ class TradeTraces():
         else:
             str_type = "-"
 
-        new_row = [symbol, trade_id, str_type,
+        new_row = [symbol, self.counter, str_type,
                    str_current_time, "",
                    size,
                    symbol_price, 0,
@@ -47,10 +49,13 @@ class TradeTraces():
                    ]
 
         self.df_traces.loc[len(self.df_traces)] = new_row
+        self.counter += 1
 
-    def set_sell(self, symbol, trade_id, symbol_price, selling_value, selling_fee):
+        return self.counter - 1
+
+    def set_sell(self, symbol, trace_id, symbol_price, selling_value, selling_fee):
         # Condition to filter rows
-        condition = (self.df_traces['symbol'] == symbol) & (self.df_traces['trade_id'] == trade_id)
+        condition = (self.df_traces['symbol'] == symbol) & (self.df_traces['trade_id'] == trace_id)
 
         if len(self.df_traces) > 0 and len(self.df_traces[condition] > 0):
             current_time = datetime.datetime.now()
