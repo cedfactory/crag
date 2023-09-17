@@ -2,7 +2,7 @@ import os
 import shutil
 import time
 import pandas as pd
-from . import trade,rtstr,utils
+from . import trade,rtstr,utils,traces
 from .toolbox import monitoring_helper
 import pika
 import json
@@ -47,6 +47,7 @@ class Crag:
         self.total_SL_TP = 0
         self.total_SL_TP_percent = 0
         self.monitoring = monitoring_helper.SQLMonitoring("ovh_mysql")
+        self.tradetraces = traces.TradeTraces()
 
         if params:
             self.broker = params.get("broker", self.broker)
@@ -485,6 +486,8 @@ class Crag:
         self.previous_usdt_equity = usdt_equity
         self.log(msg, "end step")
 
+        self.tradetraces.export()
+
         return not self.exit
 
     def export_history(self, target=None):
@@ -659,6 +662,10 @@ class Crag:
                     current_trade.cash = self.cash
 
                     self.traces_trade_total_opened += 1
+
+                    self.tradetraces.add_new_entry(current_trade.symbol, current_trade.orderId,
+                                                   current_trade.gross_size, current_trade.buying_price,
+                                                   current_trade.bought_gross_price, current_trade.buying_fee)
 
                     # Update grid strategy
                     self.rtstr.set_zone_engaged(current_trade.symbol, current_trade.symbol_price)
@@ -913,6 +920,11 @@ class Crag:
                         # Update grid strategy
                         self.rtstr.set_lower_zone_unengaged_position(current_trade.symbol, current_trade.gridzone)
                         sell_trade.gridzone = current_trade.gridzone
+
+                        self.tradetraces.set_sell(sell_trade.symbol, sell_trade.orderId,
+                                                  current_trade.symbol_price,
+                                                  current_trade.gross_price,
+                                                  current_trade.selling_fee)
 
                         self.current_trades.append(sell_trade)
                     else:
