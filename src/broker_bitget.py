@@ -174,6 +174,13 @@ class BrokerBitGet(broker.Broker):
                                                   })
         return df_open_positions
 
+    def _build_df_open_orders(self, open_orders):
+        df_open_orders = pd.DataFrame(columns=["symbol", "price", "side", "leverage", "marginCoin"])
+        for i in range(len(open_orders)):
+            data = open_orders[i]
+            df_open_orders.loc[i] = pd.Series({"symbol": data["symbol"], "price": data["price"], "side": data["side"], "leverage": data["leverage"], "marginCoin": data["marginCoin"]})
+        return df_open_orders
+
     @authentication_required
     def execute_reset_account(self):
         df_positions = self.get_open_position()

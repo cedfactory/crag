@@ -50,6 +50,20 @@ class MainPanel(wx.Panel):
         self.positions.InsertColumn(3, 'Leverage', width=70)
         main_sizer.Add(self.positions, 0, wx.ALL | wx.EXPAND, 5)
 
+        # Orders
+        staticTextOrders = wx.StaticText(self, label="Orders", style=wx.ALIGN_LEFT)
+        main_sizer.Add(staticTextOrders, 0, wx.ALL | wx.EXPAND, 5)
+
+        self.orders = wx.ListCtrl(
+            self, size=(-1, 100),
+            style=wx.LC_REPORT | wx.BORDER_SUNKEN
+        )
+        self.orders.InsertColumn(0, 'Symbol', width=140)
+        self.orders.InsertColumn(1, 'Side', width=80)
+        self.orders.InsertColumn(2, 'Price', width=70)
+        self.orders.InsertColumn(3, 'Leverage', width=70)
+        main_sizer.Add(self.orders, 0, wx.ALL | wx.EXPAND, 5)
+
         # Order
         order_button = wx.Button(self, label='Order')
         order_button.Bind(wx.EVT_BUTTON, self.on_order)
@@ -81,11 +95,13 @@ class MainPanel(wx.Panel):
         broker_name = account_info.get("broker", "")
 
         positions = []
+        orders = []
         usdt_equity = 0
         if broker_name == "bitget":
             my_broker = broker_bitget_api.BrokerBitGetApi(
                 {"account": selected_account, "reset_account": "False"})
             positions = my_broker.get_open_position()
+            orders = my_broker.get_open_orders("XRP")
             usdt_equity = my_broker.get_usdt_equity()
 
         # update usdt equity
@@ -99,6 +115,13 @@ class MainPanel(wx.Panel):
             for index, row in positions.iterrows():
                 self.positions.Append([row["symbol"], utils.KeepNDecimals(row["usdtEquity"]), row["holdSide"], row["leverage"]])
 
+        # update orders
+        print("orders : ", orders)
+        self.orders.DeleteAllItems()
+        if isinstance(orders, pd.DataFrame):
+            for index, row in orders.iterrows():
+                self.orders.Append([row["symbol"], row["side"], row["price"], row["leverage"]])
+
     def on_order(self, event):
         print('in on_order')
 
@@ -106,7 +129,7 @@ class MainPanel(wx.Panel):
 class CragFrame(wx.Frame):
 
     def __init__(self):
-        wx.Frame.__init__(self, parent=None, title='Crag UI',pos=wx.DefaultPosition,size=(600, 450), style= wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX)
+        wx.Frame.__init__(self, parent=None, title='Crag UI',pos=wx.DefaultPosition,size=(600, 600), style= wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX)
         self.panel = MainPanel(self)
         self.create_menu()
         self.Show()
