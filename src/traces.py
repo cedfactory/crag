@@ -58,6 +58,7 @@ class TradeTraces():
         condition = (self.df_traces['symbol'] == symbol) & (self.df_traces['trade_id'] == trace_id)
 
         if len(self.df_traces) > 0 and len(self.df_traces[condition] > 0):
+            print("traces set sell start")
             current_time = datetime.datetime.now()
 
             self.df_traces.loc[condition, 'selling_time'] = current_time.strftime("%Y-%m-%d %H:%M:%S")
@@ -70,8 +71,14 @@ class TradeTraces():
 
             buying_value = self.df_traces.loc[condition, 'buying_value'].iloc[0]
 
-            self.df_traces.loc[condition, 'roi$'] = selling_value - buying_value
-            self.df_traces.loc[condition, 'roi%'] = (selling_value - buying_value) / selling_value
+            if self.df_traces.loc[condition, 'type'] == "SHORT":
+                multi = -1
+            else:
+                multi = 1
+            self.df_traces.loc[condition, 'roi$'] = multi * (selling_value - buying_value)
+            self.df_traces.loc[condition, 'roi%'] = multi * (selling_value - buying_value) / selling_value
+
+            print("traces set sell ok")
 
     def export(self):
         current_time = datetime.datetime.now()
