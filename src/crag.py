@@ -626,8 +626,8 @@ class Crag:
                 print("===========================================================================")
                 print('cash', self.cash)
                 print('gross_price', current_trade.gross_price)
-                current_trade.gross_price = self.cash
-                current_trade.gross_price = 0
+                current_trade.gross_price = self.cash - self.cash * 0.1
+                current_trade.gross_size = current_trade.gross_price / current_trade.buying_price
                 print("===========================================================================")
 
             while abs(round(current_trade.gross_price, 4)) > round(self.cash, 4):
