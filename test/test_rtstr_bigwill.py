@@ -11,10 +11,10 @@ class TestRTSTRBigWill:
 
         # expectations
         assert(strategy.willOverSold == -80)
-        assert(strategy.willOverBought == -20)
+        assert(strategy.willOverBought == -10)
         assert(strategy.AO_Threshold == 0)
-        assert(strategy.stochOverBought == 0.7)
-        assert(strategy.stochOverSold == 0.4)
+        assert(strategy.stochOverBought == 0.8)
+        assert(strategy.stochOverSold == 0.2)
         
         assert(strategy.SL == 0)
         assert(strategy.TP == 0)
