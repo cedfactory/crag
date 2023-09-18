@@ -1,14 +1,10 @@
-import pandas as pd
-from dotenv import load_dotenv
 import urllib
 import urllib.parse
 import urllib.request
 import json
-import concurrent.futures
 import secrets
 import requests
 import os
-import xml.etree.cElementTree as ET
 from datetime import datetime
 from src.toolbox import settings_helper
 
@@ -33,55 +29,6 @@ def _atomic_fdp_request(url):
             print('FDP ERROR : ', reason)
     return response_json
 
-'''
-def get_fdp_url():
-    load_dotenv()
-    fdp_url = os.getenv("FDP_URL")
-    return fdp_url
-
-    with open(".env") as file:
-        for line in file:
-            if line.startswith("FDP_URL="):
-                fdp_url = line.split("FDP_URL=")[1].rstrip()
-    return fdp_url
-
-def fdp_request(params, multithreading = True):
-    fdp_url = get_fdp_url()
-    if not fdp_url or fdp_url == "":
-        return {"status":"ko", "info":"fdp url not found"}
-
-    service = params.get("service")
-    if service == "history":
-        exchange = params.get("exchange", "")
-        symbol = params.get("symbol", "")
-        start = params.get("start", "")
-        interval = params.get("interval", "")
-        end = params.get("end", "")
-        url = "history?exchange=" + exchange + "&start=" + start
-        if interval != "":
-            url = url + "&interval=" + interval
-        if end != "":
-            url = url + "&end=" + end
-        url = url + "&symbol=" #  + symbol
-    else:
-        return {"status":"ko", "info":"unknown service"}
-
-    if not multithreading:
-        final_result = _atomic_fdp_request(fdp_url+url+symbol)
-    else:
-        final_result = {"status":"ok", "result":{}}
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = {executor.submit(_atomic_fdp_request, fdp_url+url+current_symbol): current_symbol for current_symbol in symbol.split(',')}
-            for future in concurrent.futures.as_completed(futures):
-                current_symbol = futures[future]
-                res = future.result()
-                if res["status"] == "ko":
-                    final_result["result"][current_symbol] = res
-                else:
-                    final_result["result"][current_symbol] = res["result"][current_symbol]
-
-    return final_result
-'''
 def fdp_request_post(url, params, fdp_id):
     final_result = {}
 
