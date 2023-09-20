@@ -24,4 +24,4 @@ discord.py==2.3.2
 svglib==1.5.1
 python-binance==1.0.17
 mplfinance==0.12.9b7
-wxpython==4.2.1
+#wxpython==4.2.1
