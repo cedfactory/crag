@@ -118,25 +118,26 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     # @authentication_required
     def get_open_orders(self, symbols):
         res = pd.DataFrame()
-        n_attempts = 3
-        while n_attempts > 0:
-            try:
-                symbol = symbols + "USDT_UMCBL"
-                all_orders = self.orderApi.current(symbol=symbol)
-                print("all_orders : ", all_orders)
-                lst_all_orders = [data for data in all_orders["data"]]
-                res = self._build_df_open_orders(lst_all_orders)
-                self.success += 1
-                break
-            except:
-                now = datetime.now()
-                current_time = now.strftime("%H:%M:%S")
-                print(" current time =", current_time, " - failure:  get_open_position  - attempt: ", n_attempts)
-                self.failure += 1
-                print("failure: ", self.failure, " - success: ", self.success, " - percentage failure: ",
-                      self.failure / (self.success + self.failure) * 100)
-                time.sleep(2)
-                n_attempts = n_attempts - 1
+        for symbol in symbols:
+            n_attempts = 3
+            while n_attempts > 0:
+                try:
+                    all_orders = self.orderApi.current(symbol=symbol + "USDT_UMCBL")
+                    print("all_orders : ", all_orders)
+                    lst_all_orders = [data for data in all_orders["data"]]
+                    current_res = self._build_df_open_orders(lst_all_orders)
+                    res = pd.concat([res, current_res])
+                    self.success += 1
+                    break
+                except:
+                    now = datetime.now()
+                    current_time = now.strftime("%H:%M:%S")
+                    print(" current time =", current_time, " - failure:  get_open_position  - attempt: ", n_attempts)
+                    self.failure += 1
+                    print("failure: ", self.failure, " - success: ", self.success, " - percentage failure: ",
+                          self.failure / (self.success + self.failure) * 100)
+                    time.sleep(2)
+                    n_attempts = n_attempts - 1
         return res
 
     #@authentication_required
@@ -583,6 +584,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     @authentication_required
     def cancel_order(self, symbol, marginCoin, orderId):
+        result = {}
         n_attempts = 3
         while n_attempts > 0:
             try:
@@ -595,7 +597,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 print("failure: ", self.failure, " - success: ", self.success, " - percentage failure: ", self.failure / (self.success + self.failure) * 100)
                 time.sleep(2)
                 n_attempts = n_attempts - 1
-        if result['msg'] == "success":
+        if result.get("msg", "") == "success":
             return True, result['data']['orderId']
         else:
             return False , False

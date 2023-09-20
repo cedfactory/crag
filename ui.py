@@ -36,6 +36,9 @@ class MainPanel(wx.Panel):
         self.staticTextUsdtEquity = wx.StaticText(self, label="USDT Equity : ", style=wx.ALIGN_LEFT)
         main_sizer.Add(self.staticTextUsdtEquity, 0, wx.ALL | wx.EXPAND, 5)
 
+        sl1 = wx.StaticLine(self, size=(200, 1))
+        main_sizer.Add(sl1, 0, wx.ALL | wx.EXPAND, 5)
+
         # Positions
         staticTextPositions = wx.StaticText(self,label = "Positions", style = wx.ALIGN_LEFT)
         main_sizer.Add(staticTextPositions,0, wx.ALL | wx.EXPAND, 5)
@@ -50,6 +53,9 @@ class MainPanel(wx.Panel):
         self.positions.InsertColumn(3, 'Leverage', width=70)
         main_sizer.Add(self.positions, 0, wx.ALL | wx.EXPAND, 5)
 
+        sl2 = wx.StaticLine(self, size=(200, 1))
+        main_sizer.Add(sl2, 0, wx.ALL | wx.EXPAND, 5)
+
         # Orders
         staticTextOrders = wx.StaticText(self, label="Orders", style=wx.ALIGN_LEFT)
         main_sizer.Add(staticTextOrders, 0, wx.ALL | wx.EXPAND, 5)
@@ -62,7 +68,17 @@ class MainPanel(wx.Panel):
         self.orders.InsertColumn(1, 'Side', width=80)
         self.orders.InsertColumn(2, 'Price', width=70)
         self.orders.InsertColumn(3, 'Leverage', width=70)
+        self.orders.InsertColumn(4, 'MarginCoin', width=70)
+        self.orders.InsertColumn(5, 'ClientOid', width=130)
+        self.orders.InsertColumn(6, 'OrderId', width=130)
         main_sizer.Add(self.orders, 0, wx.ALL | wx.EXPAND, 5)
+
+        cancel_order_button = wx.Button(self, label='Cancel open order')
+        cancel_order_button.Bind(wx.EVT_BUTTON, self.on_cancel_order)
+        main_sizer.Add(cancel_order_button, 0, wx.ALL | wx.CENTER, 5)
+
+        sl3 = wx.StaticLine(self, size=(200, 1))
+        main_sizer.Add(sl3, 0, wx.ALL | wx.EXPAND, 5)
 
         # Order
         order_button = wx.Button(self, label='Order')
@@ -74,7 +90,7 @@ class MainPanel(wx.Panel):
         staticTextConsole = wx.StaticText(self,label = "Console", style = wx.ALIGN_LEFT)
         main_sizer.Add(staticTextConsole,0, wx.ALL | wx.EXPAND, 5)
 
-        self.log = wx.TextCtrl(self, -1, size=(200, 100), style=wx.TE_MULTILINE|wx.TE_READONLY|wx.HSCROLL)
+        self.log = wx.TextCtrl(self, -1, size=(200, 150), style=wx.TE_MULTILINE|wx.TE_READONLY|wx.HSCROLL)
         main_sizer.Add(self.log,0, wx.ALL | wx.EXPAND, 5)
         redir = RedirectText(self.log)
         sys.stdout = redir
@@ -88,20 +104,27 @@ class MainPanel(wx.Panel):
         print("loading accounts : ", accounts)
         self.accounts.Clear()
         self.accounts.Append(accounts)
-        
-    def on_account(self, event):
+
+
+    def get_broker_from_selected_account(self):
         selected_account = self.accounts.GetString(self.accounts.GetSelection())
         account_info = settings_helper.get_account_info(selected_account)
         broker_name = account_info.get("broker", "")
-
-        positions = []
-        orders = []
-        usdt_equity = 0
+        my_broker = None
         if broker_name == "bitget":
             my_broker = broker_bitget_api.BrokerBitGetApi(
                 {"account": selected_account, "reset_account": "False"})
+        return my_broker
+
+    def on_account(self, event):
+        positions = []
+        orders = []
+        usdt_equity = 0
+
+        my_broker = self.get_broker_from_selected_account()
+        if my_broker:
             positions = my_broker.get_open_position()
-            orders = my_broker.get_open_orders("XRP")
+            orders = my_broker.get_open_orders(["XRP"])
             usdt_equity = my_broker.get_usdt_equity()
 
         # update usdt equity
@@ -120,7 +143,18 @@ class MainPanel(wx.Panel):
         self.orders.DeleteAllItems()
         if isinstance(orders, pd.DataFrame):
             for index, row in orders.iterrows():
-                self.orders.Append([row["symbol"], row["side"], row["price"], row["leverage"]])
+                self.orders.Append([row["symbol"], row["side"], row["price"], row["leverage"], row["marginCoin"], row["clientOid"], row["orderId"]])
+
+    def on_cancel_order(self, event):
+        index = self.orders.GetFirstSelected()
+        if index == -1:
+            return
+        symbol = self.orders.GetItem(index, col=0).GetText()
+        marginCoin = self.orders.GetItem(index, col=4).GetText()
+        orderId = self.orders.GetItem(index, col=6).GetText()
+        print("cancel open order : ", orderId)
+        my_broker = self.get_broker_from_selected_account()
+        my_broker.cancel_order(symbol, marginCoin, orderId)
 
     def on_order(self, event):
         print('in on_order')
@@ -129,7 +163,7 @@ class MainPanel(wx.Panel):
 class CragFrame(wx.Frame):
 
     def __init__(self):
-        wx.Frame.__init__(self, parent=None, title='Crag UI',pos=wx.DefaultPosition,size=(600, 600), style= wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX)
+        wx.Frame.__init__(self, parent=None, title='Crag UI',pos=wx.DefaultPosition,size=(600, 650), style= wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX)
         self.panel = MainPanel(self)
         self.create_menu()
         self.Show()
