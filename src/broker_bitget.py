@@ -154,6 +154,8 @@ class BrokerBitGet(broker.Broker):
 
         if not trade.success:
             print('transaction failed ", trade.type, " : ', symbol, ' - gross_size: ', trade.gross_size)
+        # MODIF CEDE
+        print("!!!!!!! EXECUTE THE TRADE COMPLETED !!!!!!!")
         return trade.success
 
     @authentication_required

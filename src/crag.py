@@ -217,6 +217,7 @@ class Crag:
 
         done = False
         while not done:
+            print("[RUN] [CRAG] while step 1")
             now = time.time()
             sleeping_time = start - now
             # sleeping_time = 0 # CEDE DEBUG TO SKIP THE SLEEPING TIME
@@ -227,7 +228,9 @@ class Crag:
                 if self.safety_run:
                     start_minus_one_sec = datetime.timestamp(datetime.fromtimestamp(start) - timedelta(seconds=1))
                     while time.time() < start_minus_one_sec:
+                        print("[RUN] [CRAG] while step 2")
                         step_result = self.safety_step()
+                        print("[RUN] [CRAG] while step 3")
                         if not step_result:
                             os._exit(0)
                         if self.rtstr.high_volatility.high_volatility_pause_status():
@@ -236,21 +239,29 @@ class Crag:
                             time.sleep(self.rtstr.high_volatility.high_volatility_get_duration())
                     while time.time() < start:
                         pass
+                    print("[RUN] [CRAG] while step 4")
                 else:
+                    print("[RUN] [CRAG] while step 6")
                     time.sleep(sleeping_time)
+                    print("[RUN] [CRAG] while step 7")
             else:
+                # COMMENT CEDE REDUNDANT CODE
                 if self.safety_run:
+                    print("[RUN] [CRAG] while step 8")
                     step_result = self.safety_step()
+                    print("[RUN] [CRAG] while step 9")
                     if self.interval != 1:  # 1s
                         self.log("safety run executed\n"
                                  + "warning : time elapsed for the step ({}) is greater than the interval ({})".format(sleeping_time, self.interval))
                     if not step_result:
                         os._exit(0)
+                    print("[RUN] [CRAG] while step 10")
                     if self.rtstr.high_volatility.high_volatility_pause_status():
                         msg = "duration: " + str(self.rtstr.high_volatility.high_volatility_get_duration()) + "seconds"
                         self.log(msg, "PAUSE DUE HIGH VOLATILITY")
                         time.sleep(self.rtstr.high_volatility.high_volatility_get_duration())
                 else:
+                    print("[RUN] [CRAG] while step 11")
                     if self.interval != 1:  # 1s
                         self.log(
                             "warning : time elapsed for the step ({}) is greater than the interval ({})".format(
@@ -266,9 +277,12 @@ class Crag:
             self.strategy_start_time = start
             start = datetime.timestamp(start)
 
+            print("[RUN] [CRAG] while step 12")
             done = not self.step()
             if done:
+                print("[RUN] [CRAG] while step 13")
                 break
+            print("[RUN] [CRAG] while step 14")
 
             self.broker.tick() # increment
             # self.backup() # backup for reboot
@@ -302,6 +316,9 @@ class Crag:
 
         nb_try = 0
         current_data_received = False
+
+        # CEDE DEBUG
+        print("request fdp [CRAG] [step]")
         while current_data_received != True:
             current_data = self.broker.get_current_data(ds)
             if current_data is None:
@@ -552,6 +569,7 @@ class Crag:
             # final step - force all the symbols to be sold
             df_selling_symbols = self.rtstr.get_df_forced_selling_symbols()
             self.exit = True
+            print("self.exit set to True !!!!!!! ", self.rtstr.condition_for_global_sl_tp_signal())
             self.flush_current_trade = True
             self.rtstr.force_selling_limits()
         else:
