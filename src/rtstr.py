@@ -43,6 +43,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
         self.candle_stick = "released"  # last released from broker vs alive
         self.high_volatility_protection = False
         self.BTC_volatility_protection = False
+        self.total_postion_requested = 0
 
         if params:
             self.strategy_interval = params.get("strategy_interval", self.strategy_interval)
@@ -241,6 +242,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
         data = {'symbol':[], 'stimulus':[], 'size':[], 'percent':[], 'gridzone':[], 'pos_type':[]}
         lst_symbols = self.df_current_data.index.to_list()
         lst_symbols = self.sort_list_symbols(lst_symbols)
+        self.total_postion_requested = 0
         for symbol in lst_symbols:
             if ((not self.is_open_type_short_or_long(symbol)) or self.authorize_multi_transaction_for_symbols()) \
                     and self.condition_for_buying(symbol):
@@ -384,21 +386,20 @@ class RealTimeStrategy(metaclass=ABCMeta):
             print("traces get_symbol_buying_size - wallet cash: ", round(self.rtctrl.wallet_cash, 2),
                   " cash available: ", round(self.rtctrl.cash_available, 2))
 
-        total_postion_engaged = self.get_nb_position_engaged()
+        total_postion_engaged = self.rtctrl.get_rtctrl_nb_symbols()
         print("DEBUG - nb  position engaged: ", total_postion_engaged, " max position: ", self.MAX_POSITION)
-        if total_postion_engaged > self.MAX_POSITION:
+        if total_postion_engaged + self.total_postion_requested >= self.MAX_POSITION:
             print("max position reached: ", self.MAX_POSITION)
             print("symbol: ", symbol, "size: 0")
             return 0, 0, 0
         else:
-            if self.MAX_POSITION == total_postion_engaged:
+            if (self.MAX_POSITION - 1) == total_postion_engaged + self.total_postion_requested:
                 self.buying_size = self.rtctrl.cash_available
             else:
                 self.buying_size = self.rtctrl.cash_available / (self.MAX_POSITION - total_postion_engaged)
 
-            self.set_nb_increase_symbol_position_engaged(1, symbol)
-            total_postion_engaged = self.get_nb_position_engaged()
-            print("DEBUG - nb  position engaged increased to: ", total_postion_engaged, " max position: ", self.MAX_POSITION)
+            self.total_postion_requested +=1
+            print("DEBUG - nb  position engaged increased to: ", total_postion_engaged + self.total_postion_requested, " max position: ", self.MAX_POSITION)
 
         available_cash = self.rtctrl.cash_available
         if available_cash == 0:

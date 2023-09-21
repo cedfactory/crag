@@ -56,8 +56,6 @@ class StrategyBigWill(rtstr.RealTimeStrategy):
         except:
             self.willOverSold = self.default_willOverSold
 
-        # print("symbol",symbol, " willOverSold: ", self.willOverSold)
-
         return self.df_current_data['ao'][symbol] > self.AO_Threshold and \
                self.df_current_data['n1_ao'][symbol] > self.df_current_data['ao'][symbol] and \
                self.df_current_data['willr'][symbol] < self.willOverSold and \

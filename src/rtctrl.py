@@ -254,7 +254,7 @@ class rtctrl():
         return self.portfolio_value
 
     def get_rtctrl_nb_symbols(self):
-        return len(self.df_rtctrl)
+        return len(self.df_rtctrl.index)
 
     def get_rtctrl_lst_symbols(self):
         return self.df_rtctrl['symbol'].to_list()

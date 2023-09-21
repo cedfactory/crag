@@ -648,21 +648,6 @@ class Crag:
                 current_trade.gross_size = current_trade.gross_price / current_trade.buying_price
                 print("===========================================================================")
 
-            while abs(round(current_trade.gross_price, 4)) > round(self.cash, 4):
-                print("=========== > gross price do not fit cash value:")
-                print('=========== > current_trade.gross_size: ', current_trade.gross_size)
-                print('=========== > current_trade.gross_price: ', current_trade.gross_price)
-                print('=========== > self.cash: ', self.cash)
-                current_trade.symbol_price = self.broker.get_value(symbol)
-                symbol_size = df_buying_symbols["size"][symbol]
-                df_buying_symbols["size"][symbol] = symbol_size - symbol_size * self.epsilon_size_reduce / 100
-                current_trade.gross_size = df_buying_symbols["size"][symbol]
-                current_trade.gross_price = current_trade.gross_size * current_trade.symbol_price
-                print("=========== > size and price reduced:")
-                print('=========== > reduced current_trade.gross_price: ', current_trade.gross_price)
-                print('=========== > reduced current_trade.gross_size: ', current_trade.gross_size)
-                print('=========== > self.cash: ', self.cash)
-
             current_trade.net_price = round(current_trade.gross_price * (1 - current_trade.commission), 4)
             current_trade.net_size = round(current_trade.net_price / current_trade.symbol_price, 6)
 
