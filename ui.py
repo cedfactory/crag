@@ -1,9 +1,10 @@
 import pandas as pd
 import wx
+import wx.lib.agw.floatspin as FS
 import sys
 
 from src.utils import settings_helper
-from src import broker_bitget_api,utils
+from src import broker_bitget_api,utils,trade
 
 # class to redirect the console into a widget
 class RedirectText(object):
@@ -73,18 +74,38 @@ class MainPanel(wx.Panel):
         self.orders.InsertColumn(6, 'OrderId', width=130)
         main_sizer.Add(self.orders, 0, wx.ALL | wx.EXPAND, 5)
 
-        cancel_order_button = wx.Button(self, label='Cancel open order')
-        cancel_order_button.Bind(wx.EVT_BUTTON, self.on_cancel_order)
-        main_sizer.Add(cancel_order_button, 0, wx.ALL | wx.CENTER, 5)
+        cancel_limit_order_button = wx.Button(self, label='Cancel open order')
+        cancel_limit_order_button.Bind(wx.EVT_BUTTON, self.on_cancel_limit_order)
+        main_sizer.Add(cancel_limit_order_button, 0, wx.ALL | wx.CENTER, 5)
+
+        # open limit order
+        hsizer = wx.BoxSizer(wx.HORIZONTAL)
+        staticOpenOrderLimit = wx.StaticText(self,label = "Open limit order :", style = wx.ALIGN_LEFT)
+        hsizer.Add(staticOpenOrderLimit,0, wx.ALL | wx.EXPAND, 5)
+        self.symbols = wx.ComboBox(self,choices = ["BTC", "ETH", "XRP"])
+        hsizer.Add(self.symbols,0, wx.ALL | wx.EXPAND, 5)
+        staticAmount = wx.StaticText(self,label = "Amount", style = wx.ALIGN_LEFT)
+        hsizer.Add(staticAmount,0, wx.ALL | wx.EXPAND, 5)
+        self.amount = FS.FloatSpin(self, -1, size=wx.Size(80, -1), min_val=0, increment=0.1, value=0., digits=3, agwStyle=FS.FS_LEFT)
+        hsizer.Add(self.amount, 0, wx.ALL | wx.CENTER, 5)
+        staticPrice = wx.StaticText(self,label = "Price", style = wx.ALIGN_LEFT)
+        hsizer.Add(staticPrice,0, wx.ALL | wx.EXPAND, 5)
+        self.price = FS.FloatSpin(self, -1, size=wx.Size(80, -1), min_val=0, increment=0.1, value=0., digits=3, agwStyle=FS.FS_LEFT)
+        hsizer.Add(self.price,0, wx.ALL | wx.EXPAND, 5)
+        open_order_button = wx.Button(self, label="Open limit order")
+        open_order_button.Bind(wx.EVT_BUTTON, self.on_open_limit_order)
+        hsizer.Add(open_order_button, 0, wx.ALL | wx.CENTER, 5)
+        main_sizer.Add(hsizer, 0, wx.ALL | wx.LEFT, 5)
+
+        # close limit order
+        #order_button = wx.Button(self, label='Order')
+        #order_button.Bind(wx.EVT_BUTTON, self.on_order)
+        #main_sizer.Add(order_button, 0, wx.ALL | wx.ALIGN_LEFT, 5)
+
+        self.SetSizer(main_sizer)
 
         sl3 = wx.StaticLine(self, size=(200, 1))
         main_sizer.Add(sl3, 0, wx.ALL | wx.EXPAND, 5)
-
-        # Order
-        order_button = wx.Button(self, label='Order')
-        order_button.Bind(wx.EVT_BUTTON, self.on_order)
-        main_sizer.Add(order_button, 0, wx.ALL | wx.CENTER, 5)
-        self.SetSizer(main_sizer)
 
         # Console
         staticTextConsole = wx.StaticText(self,label = "Console", style = wx.ALIGN_LEFT)
@@ -92,8 +113,7 @@ class MainPanel(wx.Panel):
 
         self.log = wx.TextCtrl(self, -1, size=(200, 150), style=wx.TE_MULTILINE|wx.TE_READONLY|wx.HSCROLL)
         main_sizer.Add(self.log,0, wx.ALL | wx.EXPAND, 5)
-        redir = RedirectText(self.log)
-        sys.stdout = redir
+        sys.stdout = RedirectText(self.log)
 
     #
     # Events
@@ -107,6 +127,8 @@ class MainPanel(wx.Panel):
 
 
     def get_broker_from_selected_account(self):
+        if self.accounts.GetSelection() < 0:
+            return None
         selected_account = self.accounts.GetString(self.accounts.GetSelection())
         account_info = settings_helper.get_account_info(selected_account)
         broker_name = account_info.get("broker", "")
@@ -116,20 +138,19 @@ class MainPanel(wx.Panel):
                 {"account": selected_account, "reset_account": "False"})
         return my_broker
 
-    def on_account(self, event):
-        positions = []
-        orders = []
-        usdt_equity = 0
-
-        my_broker = self.get_broker_from_selected_account()
+    def update_usdt_equity(self, my_broker):
+        usdt_equity = "-"
         if my_broker:
-            positions = my_broker.get_open_position()
-            orders = my_broker.get_open_orders(["XRP"])
             usdt_equity = my_broker.get_usdt_equity()
 
         # update usdt equity
         print("usdt equity : ", usdt_equity)
         self.staticTextUsdtEquity.SetLabel("USDT Equity : "+utils.KeepNDecimals(usdt_equity))
+
+    def update_positions(self, my_broker):
+        positions = []
+        if my_broker:
+            positions = my_broker.get_open_position()
 
         # update positions
         print("positions : ", positions)
@@ -138,6 +159,11 @@ class MainPanel(wx.Panel):
             for index, row in positions.iterrows():
                 self.positions.Append([row["symbol"], utils.KeepNDecimals(row["usdtEquity"]), row["holdSide"], row["leverage"]])
 
+    def update_orders(self, my_broker):
+        orders = []
+        if my_broker:
+            orders = my_broker.get_open_orders(["XRP"])
+
         # update orders
         print("orders : ", orders)
         self.orders.DeleteAllItems()
@@ -145,7 +171,14 @@ class MainPanel(wx.Panel):
             for index, row in orders.iterrows():
                 self.orders.Append([row["symbol"], row["side"], row["price"], row["leverage"], row["marginCoin"], row["clientOid"], row["orderId"]])
 
-    def on_cancel_order(self, event):
+    def on_account(self, event):
+        my_broker = self.get_broker_from_selected_account()
+        if my_broker:
+            self.update_usdt_equity(my_broker)
+            self.update_positions(my_broker)
+            self.update_orders(my_broker)
+
+    def on_cancel_limit_order(self, event):
         index = self.orders.GetFirstSelected()
         if index == -1:
             return
@@ -155,6 +188,19 @@ class MainPanel(wx.Panel):
         print("cancel open order : ", orderId)
         my_broker = self.get_broker_from_selected_account()
         my_broker.cancel_order(symbol, marginCoin, orderId)
+        self.update_orders(my_broker)
+
+    def on_open_limit_order(self, event):
+        my_broker = self.get_broker_from_selected_account()
+        if my_broker and self.symbols.GetSelection() >= 0:
+            mytrade = trade.Trade()
+            mytrade.symbol = self.symbols.GetString(self.symbols.GetSelection())
+            mytrade.gross_size = self.amount.GetValue()
+            mytrade.type = "OPEN_LONG_ORDER"
+            mytrade.price = self.price.GetValue()
+            print("open limit order : ", mytrade.symbol, " / ", mytrade.gross_size, " / ", mytrade.price)
+            my_broker.execute_trade(mytrade)
+            self.update_orders(my_broker)
 
     def on_order(self, event):
         print('in on_order')
@@ -163,7 +209,7 @@ class MainPanel(wx.Panel):
 class CragFrame(wx.Frame):
 
     def __init__(self):
-        wx.Frame.__init__(self, parent=None, title='Crag UI',pos=wx.DefaultPosition,size=(600, 650), style= wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX)
+        wx.Frame.__init__(self, parent=None, title='Crag UI',pos=wx.DefaultPosition,size=(600, 750), style= wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX)
         self.panel = MainPanel(self)
         self.create_menu()
         self.Show()
