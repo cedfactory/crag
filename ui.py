@@ -49,9 +49,10 @@ class MainPanel(wx.Panel):
             style=wx.LC_REPORT | wx.BORDER_SUNKEN
         )
         self.positions.InsertColumn(0, 'Symbol', width=140)
-        self.positions.InsertColumn(1, 'USDT Equity', width=140)
+        self.positions.InsertColumn(1, 'USDT Equity', width=100)
         self.positions.InsertColumn(2, 'Side', width=50)
         self.positions.InsertColumn(3, 'Leverage', width=70)
+        self.positions.InsertColumn(4, 'unrealizedPL', width=90)
         main_sizer.Add(self.positions, 0, wx.ALL | wx.EXPAND, 5)
 
         sl2 = wx.StaticLine(self, size=(200, 1))
@@ -149,15 +150,21 @@ class MainPanel(wx.Panel):
 
     def update_positions(self, my_broker):
         positions = []
+        available = 0
+        fixedMaxAvailable = 0
         if my_broker:
             positions = my_broker.get_open_position()
+
+            available, crossMaxAvailable, fixedMaxAvailable = my_broker.get_available_cash()
 
         # update positions
         print("positions : ", positions)
         self.positions.DeleteAllItems()
+        self.positions.Append(["USDT", utils.KeepNDecimals(fixedMaxAvailable), "-", "-", "-"])
         if isinstance(positions, pd.DataFrame):
             for index, row in positions.iterrows():
-                self.positions.Append([row["symbol"], utils.KeepNDecimals(row["usdtEquity"]), row["holdSide"], row["leverage"]])
+                uPL = my_broker.get_symbol_unrealizedPL(row["symbol"])
+                self.positions.Append([row["symbol"], utils.KeepNDecimals(row["usdtEquity"]), row["holdSide"], row["leverage"], utils.KeepNDecimals(uPL)])
 
     def update_orders(self, my_broker):
         orders = []
