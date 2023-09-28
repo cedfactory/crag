@@ -302,6 +302,11 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     @authentication_required
     def get_cash(self, baseCoin="USDT"):
+        available, crossMaxAvailable, fixedMaxAvailable = self.get_available_cash(baseCoin)
+        return min(available, crossMaxAvailable, fixedMaxAvailable)
+
+    @authentication_required
+    def get_available_cash(self, baseCoin="USDT"):
         n_attempts = 3
         while n_attempts > 0:
             try:
@@ -321,7 +326,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             available = self.df_account_assets.loc[self.df_account_assets["symbol"] == baseCoin, "available"].values[0]
             crossMaxAvailable = self.df_account_assets.loc[self.df_account_assets["symbol"] == baseCoin, "crossMaxAvailable"].values[0]
             fixedMaxAvailable = self.df_account_assets.loc[self.df_account_assets["symbol"] == baseCoin, "fixedMaxAvailable"].values[0]
-            return min(available, crossMaxAvailable, fixedMaxAvailable)
+            return available, crossMaxAvailable, fixedMaxAvailable
 
     # available = size
     # available = ammount of cash available without any calculation (amount of USDT owned)
