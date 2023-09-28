@@ -113,6 +113,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 print("failure: ", self.failure, " - success: ", self.success, " - percentage failure: ", self.failure / (self.success + self.failure) * 100)
                 time.sleep(2)
                 n_attempts = n_attempts - 1
+
         return res
 
     # @authentication_required
@@ -313,8 +314,14 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 print("failure: ", self.failure, " - success: ", self.success, " - percentage failure: ", self.failure / (self.success + self.failure) * 100)
                 time.sleep(2)
                 n_attempts = n_attempts - 1
-        return self.df_account_assets.loc[self.df_account_assets["symbol"] == baseCoin, "available"].values[0]
-        # return self.df_account_assets.loc[self.df_account_assets["symbol"] == baseCoin, "crossMaxAvailable"].values[0]
+
+        if len(self.df_account_assets) == 0:
+            return 0
+        else:
+            available = self.df_account_assets.loc[self.df_account_assets["symbol"] == baseCoin, "available"].values[0]
+            crossMaxAvailable = self.df_account_assets.loc[self.df_account_assets["symbol"] == baseCoin, "crossMaxAvailable"].values[0]
+            fixedMaxAvailable = self.df_account_assets.loc[self.df_account_assets["symbol"] == baseCoin, "fixedMaxAvailable"].values[0]
+            return min(available, crossMaxAvailable, fixedMaxAvailable)
 
     # available = size
     # available = ammount of cash available without any calculation (amount of USDT owned)
