@@ -3,7 +3,6 @@ SLP,big_will,0.9,0.3,-70,-40
 HFT,big_will,0.6,0.4,-70,-10
 COTI,big_will,0.6,0.4,-60,-40
 ACH,big_will,0.6,0.4,-60,-10
-LUNA2,big_will,0.6,0.3,-60,-40
 SHIB,big_will,0.6,0.2,-60,-20
 UNFI,big_will,0.9,0.4,-60,-30
 KEY,big_will,0.7,0.4,-80,-10
@@ -13,7 +12,6 @@ LEVER,big_will,0.6,0.2,-60,-30
 BLUR,big_will,0.6,0.1,-60,-40
 TLM,big_will,0.8,0.3,-70,-30
 EGLD,big_will,0.9,0.4,-70,-40
-XMR,big_will,0.6,0.2,-70,-40
 SOL,big_will,0.8,0.1,-60,-10
 HOT,big_will,0.7,0.2,-60,-40
 ENJ,big_will,0.9,0.3,-80,-40
@@ -22,12 +20,9 @@ MANA,big_will,0.8,0.4,-60,-10
 JOE,big_will,0.6,0.2,-90,-10
 AVAX,big_will,0.6,0.2,-80,-10
 ZRX,big_will,0.7,0.3,-90,-10
-CKB,big_will,0.6,0.2,-90,-10
 ONE,big_will,0.9,0.4,-70,-40
 ROSE,big_will,0.6,0.1,-80,-10
-ZEC,big_will,0.6,0.3,-60,-20
 JASMY,big_will,0.8,0.3,-70,-30
-XTZ,big_will,0.7,0.4,-90,-40
 AXS,big_will,0.8,0.3,-70,-10
 LUNC,big_will,0.6,0.2,-60,-20
 LRC,big_will,0.6,0.4,-90,-10
@@ -37,13 +32,10 @@ ARB,big_will,0.8,0.3,-60,-10
 1INCH,big_will,0.6,0.3,-70,-30
 LINK,big_will,0.9,0.3,-90,-10
 ADA,big_will,0.9,0.1,-90,-30
-FLOW,big_will,0.7,0.2,-90,-10
 COMBO,big_will,0.9,0.3,-60,-40
 UNI,big_will,0.7,0.3,-60,-20
 BAND,big_will,0.6,0.1,-70,-10
 WOO,big_will,0.9,0.3,-90,-10
-ALGO,big_will,0.6,0.1,-80,-10
-RVN,big_will,0.7,0.1,-90,-40
 BNB,big_will,0.6,0.3,-90,-20
 CTSI,big_will,0.6,0.1,-90,-10
 TRX,big_will,0.9,0.2,-60,-20
