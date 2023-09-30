@@ -19,7 +19,7 @@ class TradeTraces():
         self.counter = 0
 
     def get_header(self):
-        return ["symbol", "trade_id", "type",
+        return ["symbol", 'selling_symbol', "trade_id", "type",
                 "buying_time", "selling_time",
                 "size",
                 'buying_symbol_price', 'selling_symbol_price',
@@ -39,7 +39,7 @@ class TradeTraces():
         else:
             str_type = "-"
 
-        new_row = [symbol, self.counter, str_type,
+        new_row = [symbol, "", self.counter, str_type,
                    str_current_time, "",
                    size,
                    symbol_price, 0,
@@ -55,12 +55,14 @@ class TradeTraces():
 
     def set_sell(self, symbol, trace_id, symbol_price, selling_value, selling_fee):
         # Condition to filter rows
-        condition = (self.df_traces['symbol'] == symbol) & (self.df_traces['trade_id'] == trace_id)
+        # condition = (self.df_traces['symbol'] == symbol) & (self.df_traces['trade_id'] == trace_id)
+        condition = (self.df_traces['trade_id'] == trace_id)
 
         if len(self.df_traces) > 0 and len(self.df_traces[condition] > 0):
             print("traces set sell start")
             current_time = datetime.datetime.now()
 
+            self.df_traces.loc[condition, 'selling_symbol'] = symbol
             self.df_traces.loc[condition, 'selling_time'] = current_time.strftime("%Y-%m-%d %H:%M:%S")
             self.df_traces.loc[condition, 'selling_symbol_price'] = symbol_price
             self.df_traces.loc[condition, 'selling_value'] = selling_value
