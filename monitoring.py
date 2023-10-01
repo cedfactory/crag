@@ -174,6 +174,10 @@ def update_history():
             usdt_equity = my_broker.get_usdt_equity()
             btcusd = my_broker.get_value("BTC")
 
+            # update database
+            sql_monitoring = monitoring_helper.SQLMonitoring("ovh_mysql")
+            sql_monitoring.send_account_usdt_equity(account_id, ts, usdt_equity)
+
             local_filename = rootpath + "history_" + account_id + ".csv"
             if g_use_ftp:
                 remote_path = "./customers/history/"
