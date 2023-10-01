@@ -5,13 +5,19 @@ import shutil
 
 class TradeTraces():
     def __init__(self):
-        self.output_dir = "./traces/"
-        self.output_filename = self.output_dir + "trade_traces_export.csv"
+        self.output_dir = "./traces"
+        self.output_backup_dir = "./traces_backup"
+
+        self.output_filename = os.path.join(self.output_dir, "trade_traces_export.csv")
+        self.output_backup_filename = os.path.join(self.output_backup_dir, "trade_traces_export.csv")
+
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
         else:
             shutil.rmtree(self.output_dir)
             os.makedirs(self.output_dir)
+        if not os.path.exists(self.output_backup_dir):
+            os.makedirs(self.output_backup_dir)
 
         self.df_traces = pd.DataFrame(columns=self.get_header())
         self.last_execution_time = datetime.datetime.now() - datetime.timedelta(hours=2)
@@ -25,35 +31,32 @@ class TradeTraces():
                 'buying_symbol_price', 'selling_symbol_price',
                 "buying_value", "selling_value",
                 "fee",
-                "roi$", "roi%"]
+                "roi$", "roi%", "signal"]
 
-    def add_new_entry(self, symbol, trade_id, size, symbol_price, buying_value, buying_fee):
+    def add_new_entry(self, symbol, trace_id, clientOid, size, symbol_price, buying_value, buying_fee):
         current_time = datetime.datetime.now()
-        str_current_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
-        # Create a new row as a Series with values
+        # str_current_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
+        str_current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
-        if "OPEN_LONG" in trade_id:
+        if "OPEN_LONG" in clientOid:
             str_type = "LONG"
-        elif "OPEN_SHORT" in trade_id:
+        elif "OPEN_SHORT" in clientOid:
             str_type = "SHORT"
         else:
             str_type = "-"
 
-        new_row = [symbol, "", self.counter, str_type,
+        new_row = [symbol, "", trace_id, str_type,
                    str_current_time, "",
                    size,
                    symbol_price, 0,
                    buying_value, 0,
                    buying_fee,
-                   0, 0
+                   0, 0, ""
                    ]
 
         self.df_traces.loc[len(self.df_traces)] = new_row
-        self.counter += 1
 
-        return self.counter - 1
-
-    def set_sell(self, symbol, trace_id, symbol_price, selling_value, selling_fee):
+    def set_sell(self, symbol, trace_id, symbol_price, selling_value, selling_fee, str_signal):
         # Condition to filter rows
         # condition = (self.df_traces['symbol'] == symbol) & (self.df_traces['trade_id'] == trace_id)
         condition = (self.df_traces['trade_id'] == trace_id)
@@ -66,6 +69,7 @@ class TradeTraces():
             self.df_traces.loc[condition, 'selling_time'] = current_time.strftime("%Y-%m-%d %H:%M:%S")
             self.df_traces.loc[condition, 'selling_symbol_price'] = symbol_price
             self.df_traces.loc[condition, 'selling_value'] = selling_value
+            self.df_traces.loc[condition, 'signal'] = str_signal
 
             buying_fee = self.df_traces.loc[condition, 'fee'].iloc[0]
             fee = buying_fee + selling_fee
@@ -80,7 +84,9 @@ class TradeTraces():
             self.df_traces.loc[condition, 'roi$'] = multi * (selling_value - buying_value)
             self.df_traces.loc[condition, 'roi%'] = multi * (selling_value - buying_value) / selling_value
 
-            print("traces set sell ok")
+            print("DEBUG - traces set sell ok")
+        else:
+            print("TRACES ERROR - trade.id NOT FOUND ", len(self.df_traces), " - ", len(self.df_traces[condition] > 0))
 
     def export(self):
         current_time = datetime.datetime.now()
@@ -89,9 +95,22 @@ class TradeTraces():
         if (len(self.df_traces) > 0) \
                 and ((current_time - self.last_execution_time).total_seconds() >= 3600):  # 3600 seconds in an hour
             try:
-                self.df_traces.to_csv(self.output_filename)
+                self.df_traces.to_csv(self.output_filename, sep=";")
                 self.last_execution_time = current_time
             except:
                 print("************** traces export failed **************")
+
+            # Check if the source file exists
+            if os.path.exists(self.output_filename):
+                # Get the current date and time
+                current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+                # Create a new file name with the date and time appended
+                destination_file_path = os.path.splitext(self.output_backup_filename)[0] \
+                                        + '_' + current_datetime \
+                                        + os.path.splitext(self.output_backup_filename)[1]
+
+                # Use shutil.copy() to copy the file
+                shutil.copy(self.output_filename, destination_file_path)
 
 

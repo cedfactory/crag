@@ -520,7 +520,11 @@ class Crag:
         sell_trade.symbol = bought_trade.symbol
         sell_trade.symbol_price = self.broker.get_value(bought_trade.symbol)
         sell_trade.bought_gross_price = bought_trade.gross_price
-        sell_trade.trace_id = bought_trade.trace_id
+        try:
+            sell_trade.trace_id = bought_trade.id
+        except:
+            print("DEBUG TRACES ERROR - NO bought_trade.id")
+            sell_trade.trace_id = 0
         sell_trade.commission = self.broker.get_commission(sell_trade.symbol)
         sell_trade.minsize = self.broker.get_minimum_size(sell_trade.symbol)
 
@@ -600,9 +604,15 @@ class Crag:
                     self.rtstr.set_lower_zone_unengaged_position(current_trade.symbol, current_trade.gridzone)
                     sell_trade.gridzone = current_trade.gridzone
 
+                    self.tradetraces.set_sell(sell_trade.symbol, sell_trade.trace_id,
+                                              current_trade.symbol_price,
+                                              current_trade.gross_price,
+                                              current_trade.selling_fee,
+                                              "CLOSURE")
+
                     self.current_trades.append(sell_trade)
                     df_sell_performed.loc[len(df_sell_performed.index)] = [sell_trade.symbol, round(sell_trade.gross_price, 2), round(sell_trade.roi, 2), sell_trade.type]
-                    # msg = "{} : {} price: ${:.2f} roi: ${:.2f}".format(sell_trade.symbol, sell_trade.type, sell_trade.gross_price, sell_trade.roi)
+
                     if sell_trade.roi < 0:
                         self.traces_trade_negative += 1
                     else:
@@ -666,9 +676,9 @@ class Crag:
 
                     self.traces_trade_total_opened += 1
 
-                    current_trade.trace_id = self.tradetraces.add_new_entry(current_trade.symbol, current_trade.clientOid,
-                                                                            current_trade.gross_size, current_trade.buying_price,
-                                                                            current_trade.bought_gross_price, current_trade.buying_fee)
+                    self.tradetraces.add_new_entry(current_trade.symbol, current_trade.id, current_trade.clientOid,
+                                                   current_trade.gross_size, current_trade.buying_price,
+                                                   current_trade.bought_gross_price, current_trade.buying_fee)
 
                     # Update grid strategy
                     self.rtstr.set_zone_engaged(current_trade.symbol, current_trade.symbol_price)
@@ -927,7 +937,13 @@ class Crag:
                         self.tradetraces.set_sell(sell_trade.symbol, sell_trade.trace_id,
                                                   current_trade.symbol_price,
                                                   current_trade.gross_price,
-                                                  current_trade.selling_fee)
+                                                  current_trade.selling_fee,
+                                                  "SL-TP")
+
+                        if sell_trade.roi < 0:
+                            self.traces_trade_negative += 1
+                        else:
+                            self.traces_trade_positive += 1
 
                         self.current_trades.append(sell_trade)
                     else:
