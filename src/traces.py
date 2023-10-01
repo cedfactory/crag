@@ -31,12 +31,13 @@ class TradeTraces():
                 'buying_symbol_price', 'selling_symbol_price',
                 "buying_value", "selling_value",
                 "fee",
-                "roi$", "roi%", "signal"]
+                "roi$", "roi%",
+                "signal"]
 
     def add_new_entry(self, symbol, trace_id, clientOid, size, symbol_price, buying_value, buying_fee):
         current_time = datetime.datetime.now()
         # str_current_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
-        str_current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        str_current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
         if "OPEN_LONG" in clientOid:
             str_type = "LONG"
@@ -61,7 +62,8 @@ class TradeTraces():
         # condition = (self.df_traces['symbol'] == symbol) & (self.df_traces['trade_id'] == trace_id)
         condition = (self.df_traces['trade_id'] == trace_id)
 
-        if len(self.df_traces) > 0 and len(self.df_traces[condition] > 0):
+        if ((len(self.df_traces) > 0)
+                and (len(self.df_traces[condition]) > 0)):
             print("traces set sell start")
             current_time = datetime.datetime.now()
 
@@ -111,7 +113,7 @@ class TradeTraces():
             # Check if the source file exists
             if os.path.exists(self.output_filename):
                 # Get the current date and time
-                current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                current_datetime = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
                 # Create a new file name with the date and time appended
                 destination_file_path = os.path.splitext(self.output_backup_filename)[0] \
