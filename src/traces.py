@@ -68,10 +68,18 @@ class TradeTraces():
             self.df_traces.loc[condition, 'selling_value'] = selling_value
 
             buying_fee = self.df_traces.loc[condition, 'fee'].iloc[0]
+            if not isinstance(buying_fee, float):
+                if isinstance(buying_fee, str):
+                    print("DEBUG FEE IS NOT FLOAT")
+                    buying_fee = float(buying_fee)
             fee = buying_fee + selling_fee
             self.df_traces.loc[condition, 'fee'] = fee
 
             buying_value = self.df_traces.loc[condition, 'buying_value'].iloc[0]
+            if not isinstance(buying_value, float):
+                if isinstance(buying_value, str):
+                    print("DEBUG buying_value IS NOT FLOAT")
+                    buying_value = float(buying_value)
 
             if self.df_traces.loc[condition, 'type'] == "SHORT":
                 multi = -1
