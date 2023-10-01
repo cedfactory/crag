@@ -229,3 +229,13 @@ class SQLMonitoring(IMonitoring):
         url += "account_id={}".format(account_id)
         response_json = self._request_get(url)
         return response_json
+
+    def send_account_usdt_equity(self, account_id, timestamp, usdt_equity):
+        url = self.url_base
+        url += "user={}".format(self.user)
+        url += "&command={}".format("send_account_timestamp_usdt_equity")
+        url += "&account_id={}".format(account_id)
+        url += "&timestamp={}".format(timestamp)
+        url += "&usdt_equity={}".format(usdt_equity)
+        response_json = self._request_get(url)
+        return response_json
