@@ -73,19 +73,49 @@ class TradeTraces():
             self.df_traces.loc[condition, 'selling_value'] = selling_value
             self.df_traces.loc[condition, 'signal'] = str_signal
 
+
             buying_fee = self.df_traces.loc[condition, 'fee'].iloc[0]
+
+            print("buying_fee: ", buying_fee, " - ", type(buying_fee))
+            print("selling_fee: ", selling_fee, " - ", type(selling_fee))
+
             if not isinstance(buying_fee, float):
                 if isinstance(buying_fee, str):
-                    print("DEBUG FEE IS NOT FLOAT")
+                    print("DEBUG FEE  buying_fee IS NOT FLOAT")
                     buying_fee = float(buying_fee)
+            if not isinstance(selling_fee, float):
+                if isinstance(selling_fee, str):
+                    print("DEBUG FEE selling_fee IS NOT FLOAT - could not convert string to float: ''")
+                    try:
+                        selling_fee = float(selling_fee)
+                    except:
+                        selling_fee = 0
+
+            print("DEBUG - buying_fee: ", buying_fee, " - ", type(buying_fee))
+            print("DEBUG - selling_fee: ", selling_fee, " - ", type(selling_fee))
+
             fee = buying_fee + selling_fee
+
+            print("DEBUG - fee: ", fee, " - ", type(fee))
+
             self.df_traces.loc[condition, 'fee'] = fee
 
             buying_value = self.df_traces.loc[condition, 'buying_value'].iloc[0]
+
+            print("DEBUG - buying_value: ", buying_value, " - ", type(buying_value))
+            print("DEBUG - selling_value: ", selling_value, " - ", type(selling_value))
+
             if not isinstance(buying_value, float):
                 if isinstance(buying_value, str):
                     print("DEBUG buying_value IS NOT FLOAT")
                     buying_value = float(buying_value)
+            if not isinstance(selling_value, float):
+                if isinstance(selling_value, str):
+                    print("DEBUG selling_value IS NOT FLOAT")
+                    selling_value = float(selling_value)
+
+            print("DEBUG - buying_value: ", buying_value, " - ", type(buying_value))
+            print("DEBUG - selling_value: ", selling_value, " - ", type(selling_value))
 
             if self.df_traces.loc[condition, 'type'] == "SHORT":
                 multi = -1
@@ -96,7 +126,20 @@ class TradeTraces():
 
             print("DEBUG - traces set sell ok")
         else:
-            print("TRACES ERROR - trade.id NOT FOUND ", len(self.df_traces), " - ", len(self.df_traces[condition] > 0))
+            print("TRACES ERROR                                                                                                                     TF  ²   "
+                  ""
+                  ""
+                  ""
+                  ""
+                  ""
+                  ""
+                  ""
+                  ""
+                  ""
+                  ""
+                  ""
+                  ""
+                  " - trade.id NOT FOUND ", len(self.df_traces), " - ", len(self.df_traces[condition] > 0))
 
     def export(self):
         current_time = datetime.datetime.now()
