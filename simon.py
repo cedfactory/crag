@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 import pika
 import pandas as pd
-from src import broker_bitget_api
+from src import broker_bitget_api,utils
 from src.toolbox import monitoring_helper,settings_helper
 
 class BotSimon(commands.Bot):
@@ -48,6 +48,7 @@ class BotSimon(commands.Bot):
             df = pd.DataFrame({"Accounts": lst_accounts, "USDT_Equity": lst_usdt_equities},
                               index=range(len(lst_accounts)))
             msg = '```' + df.to_string(index=False) + '```'
+            msg += '```Total : $ ' + str(utils.KeepNDecimals(sum(lst_usdt_equities))) + '```'
 
             embed=discord.Embed(title="accounts", description=msg, color=0xFF5733)
             await ctx.channel.send(embed=embed)
