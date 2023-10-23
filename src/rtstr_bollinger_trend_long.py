@@ -35,7 +35,7 @@ class StrategyBollingerTrendLong(rtstr.RealTimeStrategy):
 
         ds.fdp_features = {"close": {},
                            # "bollinger_id1": {"indicator": "bollinger", "window_size": 100, "id": "1", "bol_std": 2.25, "output": ["lower_band", "higher_band", "ma_band"]},
-                           "bollinger_id1": {"indicator": "bollinger", "window_size": 20, "id": "1", "bol_std": 2.5, "output": ["lower_band", "higher_band", "ma_band"]},
+                           "bollinger_id1": {"indicator": "bollinger", "window_size": 20, "id": "1", "bol_std": 2, "output": ["lower_band", "higher_band", "ma_band"]},
                            "rsi": {"indicator": "rsi", "id": "1", "window_size": 14},
                            "long_ma": {"indicator": "sma", "id": "long_ma", "window_size": 100},
                            "postprocess1": {"indicator": "shift", "window_size": 1, "id": "1", "n": "1", "input": ['lower_band', "higher_band", "ma_band"]},
