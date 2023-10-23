@@ -3,8 +3,8 @@ import pandas as pd
 import os, sys
 import time
 from datetime import datetime, timedelta
-
-from src import broker_bitget_api
+import requests
+from src import broker_bitget_api,utils
 from src.toolbox import pdf_helper, mail_helper, ftp_helper, graph_helper, monitoring_helper, settings_helper
 
 g_use_ftp = True
@@ -220,6 +220,19 @@ def loop(freq):
         if sleeping_time > 0:
             time.sleep(sleeping_time)
 
+def update_btc_values():
+    fdp_url = settings_helper.get_fdp_url_info("gc1").get("url", None)
+    if not fdp_url or fdp_url == "":
+        return None
+
+    url = fdp_url+"/history?exchange=bitget&symbol=BTC&start=2023-01-01&interval=1d"
+    response = requests.get(url)
+    response_json = response.json()
+    if response_json["result"]["BTC"]["status"] == "ok":
+        df = pd.read_json(response_json["result"]["BTC"]["info"])
+        df.to_csv("./btc.csv")
+
+        ftp_helper.push_file("default", "./btc.csv", "./www/users/btc.csv")
 
 if __name__ == '__main__':
     if len(sys.argv) >= 2:
@@ -238,5 +251,6 @@ if __name__ == '__main__':
             loop(freq)
     else:
         update_history()
+        update_btc_values()
 
 
