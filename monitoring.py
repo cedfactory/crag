@@ -115,6 +115,10 @@ def export_all():
     df_sum["usdt_equity_normalized"] = 1000 * df_sum["usdt_equity"] / df_sum.at[0, "usdt_equity"]
     pngfilename_sum_normalized = rootpath + "history_sum_normalized.png"
 
+    # store precomputed sum dataframe for reporting
+    df_sum.to_csv("./sum.csv")
+    ftp_helper.push_file("default", "./sum.csv", "./www/users/sum.csv")
+
     # sum : btcusd
     date_start = df_sum.iloc[0]["timestamp"]
     date_end = df_sum.iloc[-1]["timestamp"]
