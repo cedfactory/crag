@@ -32,6 +32,7 @@ class StrategyBollingerTrend(rtstr.RealTimeStrategy):
     def get_data_description(self):
         ds = rtdp.DataDescription()
         ds.symbols = self.lst_symbols
+        ds.candle_stick = self.candle_stick
 
         ds.fdp_features = {"close": {},
                            # "bollinger_id1": {"indicator": "bollinger", "window_size": 100, "id": "1", "bol_std": 2.25, "output": ["lower_band", "higher_band", "ma_band"]},
