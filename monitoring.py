@@ -118,6 +118,8 @@ def export_all():
     # store precomputed sum dataframe for reporting
     df_sum.to_csv("./sum.csv")
     ftp_helper.push_file("default", "./sum.csv", "./www/users/sum.csv")
+    df_transferts.to_csv("./transferts.csv")
+    ftp_helper.push_file("default", "./transferts.csv", "./www/users/transferts.csv")
 
     # sum : btcusd
     date_start = df_sum.iloc[0]["timestamp"]
