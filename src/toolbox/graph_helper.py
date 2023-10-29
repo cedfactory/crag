@@ -20,8 +20,8 @@ def get_historical_ohlc_data(symbol, past_days=None, interval=None):
     start_str = str((pd.to_datetime('today') - pd.Timedelta(str(past_days) + ' days')).date())
 
     client = Client()
-    client.get_historical_klines(symbol=symbol, start_str=start_str, interval=interval)
-    D = pd.DataFrame(client.get_historical_klines(symbol=symbol, start_str=start_str, interval=interval))
+    data = client.get_historical_klines(symbol=symbol, start_str=start_str, interval=interval)
+    D = pd.DataFrame(data)
     D.columns = ['open_time', 'open', 'high', 'low', 'close', 'volume', 'close_time', 'qav', 'num_trades',
                  'taker_base_vol', 'taker_quote_vol', 'is_best_match']
     D['open_date_time'] = [datetime.fromtimestamp(x / 1000) for x in D.open_time]

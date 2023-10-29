@@ -81,7 +81,8 @@ def export_all():
 
         #df = df.drop(["btcusd"], axis=1)
         df.set_index("timestamp", inplace=True)
-        df1 = df.resample("6H").interpolate()
+        resampled = df.resample("6H").bfill(limit=1)
+        df1 = resampled.interpolate("linear")
         df_sum = df_sum.groupby('timestamp').sum().add(df1.groupby('timestamp').sum(), fill_value=0)
 
     # sum : usdt_equity
