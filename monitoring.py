@@ -81,7 +81,8 @@ def export_all():
 
         #df = df.drop(["btcusd"], axis=1)
         df.set_index("timestamp", inplace=True)
-        df1 = df.resample("6H").interpolate()
+        resampled = df.resample("6H").bfill(limit=1)
+        df1 = resampled.interpolate("linear")
         df_sum = df_sum.groupby('timestamp').sum().add(df1.groupby('timestamp').sum(), fill_value=0)
 
     # sum : usdt_equity
@@ -115,10 +116,6 @@ def export_all():
     df_sum["usdt_equity_normalized"] = 1000 * df_sum["usdt_equity"] / df_sum.at[0, "usdt_equity"]
     pngfilename_sum_normalized = rootpath + "history_sum_normalized.png"
 
-    # store precomputed sum dataframe for reporting
-    df_sum.to_csv("./sum.csv")
-    ftp_helper.push_file("default", "./sum.csv", "./www/users/sum.csv")
-
     # sum : btcusd
     date_start = df_sum.iloc[0]["timestamp"]
     date_end = df_sum.iloc[-1]["timestamp"]
@@ -131,6 +128,15 @@ def export_all():
     pngfilename_sum_normalized = graph_helper.export_graph(pngfilename_sum_normalized, "Normalized Investment",
                               [{"dataframe": df_sum, "plots": [{"column": "usdt_equity_normalized"}]},
                                {"dataframe": df_btcusd, "plots": [{"column": "close_normalized"}]}])
+
+    # store precomputed sum dataframe for reporting
+    df_sum.to_csv("./sum.csv")
+    ftp_helper.push_file("default", "./sum.csv", "./www/users/sum.csv")
+    df_transferts.to_csv("./transferts.csv")
+    ftp_helper.push_file("default", "./transferts.csv", "./www/users/transferts.csv")
+    df_btcusd.to_csv("./sum_btcusd.csv")
+    ftp_helper.push_file("default", "./sum_btcusd.csv", "./www/users/sum_btcusd.csv")
+
     now = datetime.now()
     current_time = now.strftime("%d/%m/%Y %H:%M:%S")
 

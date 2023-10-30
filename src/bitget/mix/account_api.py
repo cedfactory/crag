@@ -155,7 +155,6 @@ class AccountApi(Client):
         params = {}
         if productType:
             params["productType"] = productType
-            # CEDE COMMENT : FAILED ALWAYS RETURN FAILED....
-            return self._request_with_params(POST, BROKER_ACCOUNT_V1_URL + '/sub-account-contract-assets', params)
+            return self._request_with_params(POST, MIX_ACCOUNT_V1_URL + '/sub-account-contract-assets', params)
         else:
             return "pls check args "
