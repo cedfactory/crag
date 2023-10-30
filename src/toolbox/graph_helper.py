@@ -102,8 +102,12 @@ def export_graph(filename, title, dataframe_infos):
             ymin.append(min(y))
             ymax.append(max(y))
             column_label = column_info.get("label", column_name)
-            ax.plot(datenums, y, label=column_label)
-            plt.fill_between(datenums, y, alpha=0.3)
+            style = column_info.get("style", None)
+            if style == "stairs":
+                ax.step(datenums, y, where="post", label=column_label)
+            else:
+                ax.plot(datenums, y, label=column_label)
+                plt.fill_between(datenums, y, alpha=0.3)
 
     y_min = min(ymin)
     y_max = max(ymax)

@@ -111,7 +111,7 @@ def export_all():
 
     pngfilename_sum = graph_helper.export_graph(pngfilename_sum, "Absolute Investment",
                               [{"dataframe": df_sum, "plots": [{"column": "usdt_equity", "label": "USDT equity"}]},
-                               {"dataframe": df_transferts, "plots": [{"column": "placed_cumsum"}]}])
+                               {"dataframe": df_transferts, "plots": [{"column": "placed_cumsum", "style": "stairs"}]}])
 
     df_sum["usdt_equity_normalized"] = 1000 * df_sum["usdt_equity"] / df_sum.at[0, "usdt_equity"]
     pngfilename_sum_normalized = rootpath + "history_sum_normalized.png"
