@@ -21,6 +21,7 @@ class BotSimon(commands.Bot):
         @self.command(name="commands")
         async def custom_command(ctx):
             msg = "Available commands for accounts:\n"
+            msg += "- bot : specify the amount for the bot account (ex : /bot 121.22)\n"
             msg += "- accounts : list of the registered accounts\n"
             msg += "- open_positions <account_id> : open positions for a specified account\n"
             msg += "- reset <account_id> : reset a specified account\n"
@@ -167,6 +168,25 @@ class BotSimon(commands.Bot):
             embed=discord.Embed(title="strategy", description=msg, color=0xFF5733)
             await ctx.channel.send(embed=embed)
 
+        @self.command(name="bot")
+        async def custom_command(ctx, *args):
+            if len(args) != 1:
+                embed=discord.Embed(title="bot", description="missing argument", color=0xFF5733)
+                await ctx.channel.send(embed=embed)
+            else:
+                try:
+                    value = float(args[0])
+                except ValueError:  # using the except block
+                    message = "can't convert the argument into a float"
+                else:
+                    with open("bot.txt", "w") as f:
+                        f.write(str(value))
+                        message = "value {} has been stored".format(value)
+
+                if message == "":
+                    message = "an error occurred"
+                embed = discord.Embed(title="bot", description=message, color=0xFF5733)
+                await ctx.channel.send(embed=embed)
 
         @self.command(name="crag")
         async def custom_command(ctx, *args):
