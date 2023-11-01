@@ -111,7 +111,7 @@ def export_all():
 
     pngfilename_sum = graph_helper.export_graph(pngfilename_sum, "Absolute Investment",
                               [{"dataframe": df_sum, "plots": [{"column": "usdt_equity", "label": "USDT equity"}]},
-                               {"dataframe": df_transferts, "plots": [{"column": "placed_cumsum"}]}])
+                               {"dataframe": df_transferts, "plots": [{"column": "placed_cumsum", "style": "stairs"}]}])
 
     df_sum["usdt_equity_normalized"] = 1000 * df_sum["usdt_equity"] / df_sum.at[0, "usdt_equity"]
     pngfilename_sum_normalized = rootpath + "history_sum_normalized.png"
@@ -182,6 +182,18 @@ def update_history():
 
         if my_broker:
             usdt_equity = my_broker.get_usdt_equity()
+
+            # hack : amount on a bot account can't be fetched, so we previously store it in a file and we read it here
+            if account_id == "maingridtrading" and os.path.isfile("bot.txt") :
+                with open("bot.txt", "r") as f:
+                    amount = f.read()
+                    try:
+                        bot_amount = float(amount)
+                    except ValueError:  # using the except block
+                        print("can't convert the string {} into a float".format(amount))
+                    else:
+                        usdt_equity += bot_amount
+
             btcusd = my_broker.get_value("BTC")
 
             # update database
