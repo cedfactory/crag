@@ -89,7 +89,7 @@ class TradeTraces():
                     try:
                         selling_fee = float(selling_fee)
                     except:
-                        selling_fee = 0
+                        selling_fee = 0.0
 
             print("DEBUG - buying_fee: ", buying_fee, " - ", type(buying_fee))
             print("DEBUG - selling_fee: ", selling_fee, " - ", type(selling_fee))
@@ -117,29 +117,20 @@ class TradeTraces():
             print("DEBUG - buying_value: ", buying_value, " - ", type(buying_value))
             print("DEBUG - selling_value: ", selling_value, " - ", type(selling_value))
 
-            if self.df_traces.loc[condition, 'type'] == "SHORT":
+            if self.df_traces.loc[condition, 'type'].values[0] == "SHORT":
                 multi = -1
             else:
                 multi = 1
-            self.df_traces.loc[condition, 'roi$'] = multi * (selling_value - buying_value)
-            self.df_traces.loc[condition, 'roi%'] = multi * (selling_value - buying_value) / selling_value
+            if selling_value == buying_value:
+                self.df_traces.loc[condition, 'roi$'] = 0
+                self.df_traces.loc[condition, 'roi%'] = 0
+            else:
+                self.df_traces.loc[condition, 'roi$'] = multi * (selling_value - buying_value)
+                self.df_traces.loc[condition, 'roi%'] = multi * (selling_value - buying_value) / selling_value
 
             print("DEBUG - traces set sell ok")
         else:
-            print("TRACES ERROR                                                                                                                     TF  ²   "
-                  ""
-                  ""
-                  ""
-                  ""
-                  ""
-                  ""
-                  ""
-                  ""
-                  ""
-                  ""
-                  ""
-                  ""
-                  " - trade.id NOT FOUND ", len(self.df_traces), " - ", len(self.df_traces[condition] > 0))
+            print("TRACES ERROR - trade.id NOT FOUND ", len(self.df_traces), " - ", len(self.df_traces[condition] > 0))
 
     def export(self):
         current_time = datetime.datetime.now()

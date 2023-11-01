@@ -605,9 +605,9 @@ class Crag:
                     sell_trade.gridzone = current_trade.gridzone
 
                     self.tradetraces.set_sell(sell_trade.symbol, sell_trade.trace_id,
-                                              current_trade.symbol_price,
-                                              current_trade.gross_price,
-                                              current_trade.selling_fee,
+                                              sell_trade.symbol_price,
+                                              sell_trade.gross_price,
+                                              sell_trade.selling_fee,
                                               "CLOSURE")
 
                     self.current_trades.append(sell_trade)
