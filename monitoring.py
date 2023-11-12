@@ -132,6 +132,11 @@ def export_all():
     # store precomputed sum dataframe for reporting
     df_sum.to_csv("./sum.csv")
     ftp_helper.push_file("default", "./sum.csv", "./www/users/sum.csv")
+
+    df_sum["timestamp"] = df_sum.timestamp.values.astype(np.int64) // 10 ** 9
+    df_transferts["timestamp"] = df_transferts.timestamp.values.astype(np.int64)
+    df_transferts = pd.merge_asof(df_sum, df_transferts, on="timestamp")
+    df_transferts = df_transferts.drop(["btcusd","index","usdt_equity","usdt_equity_normalized"], axis=1)
     df_transferts.to_csv("./transferts.csv")
     ftp_helper.push_file("default", "./transferts.csv", "./www/users/transferts.csv")
     df_btcusd.to_csv("./sum_btcusd.csv")
