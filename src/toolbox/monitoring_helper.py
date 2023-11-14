@@ -2,6 +2,7 @@ from abc import ABCMeta, abstractmethod
 import urllib
 import urllib.parse
 import urllib.request
+import requests
 import json
 from datetime import datetime
 from . import settings_helper
@@ -250,4 +251,19 @@ class SQLMonitoring(IMonitoring):
         url += "&amount={}".format(amount)
         url += "&client_id={}".format(client_id)
         response_json = self._request_get(url)
+        return response_json
+
+    def send_comment(self, timestamp, comment):
+        response_json = {}
+        params = {
+            "user": self.user,
+            "command": "send_comment",
+            "timestamp": str(timestamp),
+            "comment": comment
+        }
+
+        response = requests.post(self.url_base, data=params)
+        if response.status_code == 200:
+            response_json = json.loads(response.text)
+
         return response_json

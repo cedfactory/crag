@@ -243,6 +243,31 @@ class BotSimon(commands.Bot):
                 embed=discord.Embed(title="transfert", description="{}".format(msg), color=0xFF5733)
                 await ctx.channel.send(embed=embed)
 
+        @self.command(name="comment")
+        async def custom_command(ctx, *args):
+            if len(args) < 1:
+                embed=discord.Embed(title="comment", description="missing argument. type /commands", color=0xFF5733)
+                await ctx.channel.send(embed=embed)
+            else:
+                msg = ""
+                try:
+                    comment = " ".join(args[0:])
+                    ct = datetime.now()
+                    timestamp = ct.timestamp()
+
+                    monitor = monitoring_helper.SQLMonitoring("ovh_mysql")
+                    response_json = monitor.send_comment(timestamp, comment)
+
+                    if response_json["status"] == "ok":
+                        msg = "[Simon] send comment \"{}\"".format(comment)
+                        msg += " {} => id = {}".format(response_json["status"], response_json["result"])
+
+                except:
+                    msg = "[Simon] Problem encountered while sending a comment (send_comment)"
+
+                embed=discord.Embed(title="comment", description="{}".format(msg), color=0xFF5733)
+                await ctx.channel.send(embed=embed)
+
     async def on_ready(self):
         print("Simon is ready")
 
