@@ -239,3 +239,15 @@ class SQLMonitoring(IMonitoring):
         url += "&usdt_equity={}".format(usdt_equity)
         response_json = self._request_get(url)
         return response_json
+
+    def send_transfert(self, timestamp, account_src, account_dst, amount, client_id):
+        url = self.url_base
+        url += "user={}".format(self.user)
+        url += "&command={}".format("send_transfert")
+        url += "&account_src={}".format(account_src)
+        url += "&account_dst={}".format(account_dst)
+        url += "&timestamp={}".format(timestamp)
+        url += "&amount={}".format(amount)
+        url += "&client_id={}".format(client_id)
+        response_json = self._request_get(url)
+        return response_json

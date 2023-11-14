@@ -1,8 +1,9 @@
 import discord
 from discord.ext import commands
-import os
+from datetime import datetime
 from dotenv import load_dotenv
 import pika
+import json
 import pandas as pd
 from src import broker_bitget_api,utils
 from src.toolbox import monitoring_helper,settings_helper
@@ -27,6 +28,11 @@ class BotSimon(commands.Bot):
             msg += "- reset <account_id> : reset a specified account\n"
             msg += "Available commands for strategies:\n"
             msg += "- strategies : list of the alive strategies\n"
+            msg += "Available commands for transferts:\n"
+            msg += "- transfert <2023/07/23 18:56> <account_src> <account_dst> <amount> <comment>\n"
+            msg += "Available commands for comments:\n"
+            msg += "- comment <comment>\n"
+            msg += "- comment transfert id <comment>\n"
             await ctx.channel.send(msg)
 
         @self.command(name="accounts")
@@ -197,6 +203,44 @@ class BotSimon(commands.Bot):
                 message = args[0]
                 self.send_message_to_crag(message)
                 embed=discord.Embed(title="crag {}".format(message), description="crag {}".format(message), color=0xFF5733)
+                await ctx.channel.send(embed=embed)
+
+        @self.command(name="transfert")
+        async def custom_command(ctx, *args):
+            if len(args) < 5:
+                embed=discord.Embed(title="transfert", description="missing argument. type /commands", color=0xFF5733)
+                await ctx.channel.send(embed=embed)
+            else:
+                msg = ""
+                try:
+                    date_str = " ".join(args[0:2])
+                    date_obj = datetime.strptime(date_str, '%Y/%m/%d %H:%M')
+                    timestamp = date_obj.timestamp()
+                    account_src = args[2]
+                    account_dst = args[3]
+                    amount = args[4]
+                    client_id = 1
+                    comment = ""
+                    if len(args) >= 5:
+                        comment = " ".join(args[5:])
+
+                    msg = "[Simon] send transfert from {} to {} : $ {} ( {} )".format(account_src, account_dst, amount, timestamp)
+                    print(msg)
+
+                    if account_src == "ext":
+                        account_src = ""
+                    if account_dst == "ext":
+                        account_dst = ""
+
+                    monitor = monitoring_helper.SQLMonitoring("ovh_mysql")
+                    response_json = monitor.send_transfert(timestamp, account_src, account_dst, amount, client_id)
+                    if response_json["status"] == "ok":
+                        msg += " {} => id = {}".format(response_json["status"], response_json["result"])
+
+                except:
+                    msg = "[Simon] Problem encountered while sending a transfert (send_transfert)"
+
+                embed=discord.Embed(title="transfert", description="{}".format(msg), color=0xFF5733)
                 await ctx.channel.send(embed=embed)
 
     async def on_ready(self):
