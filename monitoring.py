@@ -92,6 +92,8 @@ def export_all():
     df_sum["usdt_equity"] = pd.to_numeric(df_sum["usdt_equity"])
 
     if g_use_ftp:
+        monitor = monitoring_helper.SQLMonitoring("ovh_mysql")
+        monitor.create_transferts_csv()
         remote_path = "./customers/history/"
         remote_filename = "transferts.csv"
         ftp_helper.pull_file("default", remote_path, remote_filename, "./conf/transferts.csv")

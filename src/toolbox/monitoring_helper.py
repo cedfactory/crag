@@ -253,6 +253,13 @@ class SQLMonitoring(IMonitoring):
         response_json = self._request_get(url)
         return response_json
 
+    def create_transferts_csv(self):
+        url = self.url_base
+        url += "user={}".format(self.user)
+        url += "&command={}".format("create_transferts_csv")
+        response_json = self._request_get(url)
+        return response_json
+
     def send_comment(self, timestamp, comment):
         response_json = {}
         params = {
