@@ -93,7 +93,7 @@ def export_all():
 
     if g_use_ftp:
         monitor = monitoring_helper.SQLMonitoring("ovh_mysql")
-        monitor.create_transferts_csv()
+        monitor.create_history_csv()
         remote_path = "./customers/history/"
         remote_filename = "transferts.csv"
         ftp_helper.pull_file("default", remote_path, remote_filename, "./conf/transferts.csv")
