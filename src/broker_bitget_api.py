@@ -301,6 +301,24 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         return 0
 
     @authentication_required
+    def get_spot_usdt_equity(self, lst_symbols):
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                df_spot_usdt_equity = self._get_df_spot_account(lst_symbols)
+                self.success += 1
+                break
+            except:
+                print("failure:  get_spot_usdt_equity  - attempt: ", n_attempts)
+                self.failure += 1
+                print("failure: ", self.failure, " - success: ", self.success, " - percentage failure: ", self.failure / (self.success + self.failure) * 100)
+                time.sleep(2)
+                n_attempts = n_attempts - 1
+        if len(df_spot_usdt_equity) > 0:
+            return df_spot_usdt_equity["equity"].sum()
+        return 0
+
+    @authentication_required
     def get_cash(self, baseCoin="USDT"):
         available, crossMaxAvailable, fixedMaxAvailable = self.get_available_cash(baseCoin)
         return min(available, crossMaxAvailable, fixedMaxAvailable)
@@ -516,6 +534,20 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         self.df_account_open_position['equity'] = self.df_account_open_position['usdtEquity']
         self.df_account_assets = pd.concat([self.df_account_assets, self.df_account_open_position])
         self.df_account_assets.reset_index(inplace=True, drop=True)
+
+    def _get_df_spot_account(self, lst_symbols):
+        df_spot_asset = pd.DataFrame(columns=["symbol", "size", "price", "equity"])
+        for symbol in lst_symbols:
+            spot_asset = self.accountApi.assets_spot(symbol)
+            spot_asset_size = float(spot_asset["data"][0]["available"])
+            if spot_asset_size != 0:
+                if symbol == "USDT":
+                    spot_asset_equity = spot_asset_size
+                else:
+                    spot_asset_price = float(self.get_value(symbol))
+                    spot_asset_equity = spot_asset_price * spot_asset_size
+                df_spot_asset.loc[len(df_spot_asset)] = [symbol, spot_asset_size, spot_asset_price, spot_asset_equity]
+        return df_spot_asset
 
     def _fill_df_account_from_market(self):
         for idx in self.df_account_assets.index.tolist():

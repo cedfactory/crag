@@ -23,6 +23,17 @@ class AccountApi(Client):
         else:
             return "pls check args"
 
+
+    '''
+    Obtain all asset currency information of the user
+    :return:
+    '''
+    def assets_spot(self, coin=''):
+        params = {}
+        if coin:
+            params["coin"] = coin
+        return self._request_with_params(GET, SPOT_ACCOUNT_V1_URL + '/assets-lite', params)
+
     '''
     Adjusting lever
     symbol: Contract transaction pair

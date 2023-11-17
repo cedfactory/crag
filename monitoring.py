@@ -203,6 +203,10 @@ def update_history():
                     else:
                         usdt_equity += bot_amount
 
+            if account_id == "maingridtrading":
+                lst_symbols_spot = pd.read_csv("./symbols/" + "symbols_df_spot.csv")['symbol'].tolist()
+                usdt_equity += my_broker.get_spot_usdt_equity(lst_symbols_spot)
+
             btcusd = my_broker.get_value("BTC")
 
             # update database
