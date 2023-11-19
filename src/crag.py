@@ -866,7 +866,8 @@ class Crag:
             self.actual_drawdown_percent = self.drawdown * 100 / self.maximal_portfolio_value
 
         if self.rtstr.condition_for_global_SLTP(self.total_SL_TP_percent) \
-                or self.rtstr.condition_for_global_trailer_TP(self.total_SL_TP_percent)\
+                or self.rtstr.condition_for_global_trailer_TP(self.total_SL_TP_percent) \
+                or self.rtstr.condition_for_global_trailer_SL(self.total_SL_TP_percent) \
                 or self.rtstr.condition_for_max_drawdown_SL(self.actual_drawdown_percent):
             print('reset - global TP')
             print('total SL TP: $', self.total_SL_TP, "      ", self.total_SL_TP_percent, "%")
@@ -892,7 +893,8 @@ class Crag:
                 symbol_unrealizedPL_percent = symbol_unrealizedPL * 100 / (symbol_equity - symbol_unrealizedPL)
             # print("symbol", symbol, "symbol_unrealizedPL: $", symbol_unrealizedPL, " - ", symbol_unrealizedPL_percent, "%") # DEBUG CEDE
             if self.rtstr.condition_for_SLTP(symbol_unrealizedPL_percent) \
-                    or self.rtstr.condition_trailer_TP(self.broker._get_coin(symbol), symbol_unrealizedPL_percent):
+                    or self.rtstr.condition_trailer_TP(self.broker._get_coin(symbol), symbol_unrealizedPL_percent)\
+                    or self.rtstr.condition_trailer_SL(self.broker._get_coin(symbol), symbol_unrealizedPL_percent):
                 lst_symbol_for_closure.append(symbol)
 
         if self.rtstr.trigger_high_volatility_protection():

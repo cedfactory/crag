@@ -181,6 +181,20 @@ def update_history():
     print("updating history...")
     rootpath = "./conf/"
     accounts_info = settings_helper.get_accounts_info()
+
+    # DEBUG CEDE TO BE REMOVED...
+    DEBUG_MAINGRIDTRADING_ACCOUNT = False
+    if DEBUG_MAINGRIDTRADING_ACCOUNT:
+        value_to_keep = 'maingridtrading'
+
+        keys_to_remove = []
+        for key, value in accounts_info.items():
+            if value["id"] != value_to_keep:
+                keys_to_remove.append(key)
+
+        for key in keys_to_remove:
+            del accounts_info[key]
+
     ct = datetime.now()
     ts = ct.timestamp()
 
