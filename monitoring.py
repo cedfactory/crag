@@ -20,9 +20,6 @@ def export_all():
 
     accounts_export_info = []
 
-    monitor = monitoring_helper.SQLMonitoring("ovh_mysql")
-    monitor.create_history_csv()
-
     accounts_info["transfert"] = {"id": "transfert"} # add transfert account (can't be reached here but history is available)
     for key, value in accounts_info.items():
         account_id = value.get("id", "")
@@ -96,6 +93,8 @@ def export_all():
     df_sum["usdt_equity"] = pd.to_numeric(df_sum["usdt_equity"])
 
     if g_use_ftp:
+        monitor = monitoring_helper.SQLMonitoring("ovh_mysql")
+        monitor.create_history_csv()
         remote_path = "./customers/history/"
         remote_filename = "transferts.csv"
         ftp_helper.pull_file("default", remote_path, remote_filename, "./conf/transferts.csv")
