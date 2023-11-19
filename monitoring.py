@@ -139,7 +139,10 @@ def export_all():
     df_sum["timestamp"] = df_sum.timestamp.values.astype(np.int64) // 10 ** 9
     df_transferts["timestamp"] = df_transferts.timestamp.values.astype(np.int64)
     df_transferts = pd.merge_asof(df_sum, df_transferts, on="timestamp")
-    df_transferts = df_transferts.drop(["btcusd","index","usdt_equity","usdt_equity_normalized"], axis=1)
+    df_transferts = df_transferts.drop(["index"], axis=1)
+    df_transferts["usdt_equity_normalized"] = df_transferts["usdt_equity"] - df_transferts["placed_cumsum"]
+    df_transferts["usdt_equity_normalized"] = 1000 + 1000 * (df_transferts["usdt_equity_normalized"].diff() / df_transferts["placed_cumsum"]).cumsum()
+    df_transferts["usdt_equity_normalized"].iloc[0]=1000
     df_transferts.to_csv("./transferts.csv")
     ftp_helper.push_file("default", "./transferts.csv", "./www/users/transferts.csv")
     df_btcusd.to_csv("./sum_btcusd.csv")
