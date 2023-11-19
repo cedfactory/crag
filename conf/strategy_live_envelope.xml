@@ -1,6 +1,6 @@
 <configuration>
     <strategy id="strategyenvelope" name="StrategyEnvelope">
-        <params symbols="./symbols_df_envelope_usdt.csv" strategy_interval="3600" candle_stick="alive" max_position="4" sl="-5" tp="10" global_sl="-5" global_tp="10" trailer_tp="0" trailer_delta="0" trailer_global_tp="0" trailer_global_delta="0" drawdown_SL="-5" high_volatility="True"/>
+        <params symbols="./symbols_df_envelope_usdt.csv" strategy_interval="3600" candle_stick="alive" max_position="4" sl="-5" tp="10" global_sl="-5" global_tp="10" trailer_tp="0" trailer_delta_tp="0" trailer_global_tp="0" trailer_global_delta_tp="0" trailer_sl="0" drawdown_SL="-5" high_volatility="True"/>
     </strategy>
     <broker name="bitget">
         <params exchange="bitget" fdp_url_id="local" account="bitget_ayato_sub2" leverage_short="2" leverage_long="2" simulation="1" intervals="1h" orders="market" reset_account="True"/>
