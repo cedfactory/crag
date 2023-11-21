@@ -13,6 +13,9 @@ def export_all():
     rootpath = "./conf/"
     accounts_info = settings_helper.get_accounts_info()
 
+    monitor = monitoring_helper.SQLMonitoring("ovh_mysql")
+    monitor.create_history_csv()
+
     report = pdf_helper.PdfDocument("report", "logo.png")
 
     df_sum = pd.DataFrame([], columns=["timestamp", "usdt_equity"])
@@ -37,8 +40,8 @@ def export_all():
         df = df_orig
 
         # remove the repeated values in the first rows
-        while len(df) > 2 and df.iloc[0]["usdt_equity"] == df.iloc[1]["usdt_equity"]:
-            df = df.iloc[1:, :]
+        #while len(df) > 2 and df.iloc[0]["usdt_equity"] == df.iloc[1]["usdt_equity"]:
+        #    df = df.iloc[1:, :]
         df.reset_index(inplace=True)
 
 
@@ -93,8 +96,6 @@ def export_all():
     df_sum["usdt_equity"] = pd.to_numeric(df_sum["usdt_equity"])
 
     if g_use_ftp:
-        monitor = monitoring_helper.SQLMonitoring("ovh_mysql")
-        monitor.create_history_csv()
         remote_path = "./customers/history/"
         remote_filename = "transferts.csv"
         ftp_helper.pull_file("default", remote_path, remote_filename, "./conf/transferts.csv")
