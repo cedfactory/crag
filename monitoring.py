@@ -134,8 +134,6 @@ def export_all():
                                {"dataframe": df_btcusd, "plots": [{"column": "close_normalized"}]}])
 
     # store precomputed sum dataframe for reporting
-    if "btcsud" in list(df_sum.columns.values): # shit fix (temporary ???)
-        df_sum = df_sum.drop(["btcsud"], axis=1)
     df_sum.to_csv("./sum.csv")
     ftp_helper.push_file("default", "./sum.csv", "./www/users/sum.csv")
 
@@ -146,8 +144,6 @@ def export_all():
     df_transferts["usdt_equity_normalized"] = df_transferts["usdt_equity"] - df_transferts["placed_cumsum"]
     df_transferts["usdt_equity_normalized"] = 1000 + 1000 * (df_transferts["usdt_equity_normalized"].diff() / df_transferts["placed_cumsum"]).cumsum()
     df_transferts["usdt_equity_normalized"].iloc[0]=1000
-    if "btcsud" in list(df_transferts.columns.values): # shit fix (temporary ???)
-        df_transferts = df_transferts.drop(["btcsud"], axis=1)
     df_transferts.to_csv("./transferts.csv")
     ftp_helper.push_file("default", "./transferts.csv", "./www/users/transferts.csv")
     df_btcusd.to_csv("./sum_btcusd.csv")
