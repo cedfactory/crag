@@ -1,11 +1,10 @@
 import pandas as pd
 
 from src import broker_simulation
-from src import rtstr,rtstr_dummy_test,rtstr_envelope,rtstr_envelopestochrsi,rtstr_dummy_test_tp,rtstr_grid_trading_multi,rtstr_balance_trading,rtstr_bollinger_trend,rtstr_bollinger_trend_long,rtstr_tv_recommendation_mid,rtstr_balance_trading_multi,rtstr_super_reversal,rtstr_volatility_test_live,rtstr_trix,rtstr_cryptobot,rtstr_sltp_only,rtstr_bigwill,rtstr_VMC
+from src import rtstr,rtstr_dummy_test,rtstr_envelope,rtstr_envelopestochrsi,rtstr_dummy_test_tp,rtstr_bollinger_trend,rtstr_bollinger_trend_long,rtstr_tv_recommendation_mid,rtstr_super_reversal,rtstr_volatility_test_live,rtstr_trix,rtstr_cryptobot,rtstr_sltp_only,rtstr_bigwill,rtstr_VMC
 from src import broker_bitget_api
 from src import logger
 from src import utils
-from src import benchmark
 from src.toolbox import settings_helper
 
 import xml.etree.cElementTree as ET
@@ -31,24 +30,6 @@ def _initialize_crag_discord_bot(botId=""):
     channel_id = os.getenv("CRAG_DISCORD_BOT_CHANNEL")
     webhook = os.getenv("CRAG_DISCORD_BOT_WEBHOOK")
     return logger.LoggerDiscordBot(params={"token":token, "channel_id":channel_id, "webhook":webhook})
-
-def export_benchmark_df_report():
-    validation_path = './validation'
-    benchmark_path = os.path.join(validation_path, 'benchmark')
-    if not os.path.exists(benchmark_path):
-        return
-    lst_strategy = utils.get_lst_directories(benchmark_path)
-    df_report = benchmark.get_df_benchmark_empty()
-    for strategy in lst_strategy:
-        strategy_path = os.path.join(benchmark_path, strategy)
-        lst_run = utils.get_lst_directories(strategy_path)
-        for run in lst_run:
-            split_run_name = run.split('_')
-            run_path = os.path.join(strategy_path, run)
-            df = benchmark.proceed_analyse(run_path, strategy, split_run_name[0], split_run_name[1], split_run_name[2])
-            df_report = pd.concat([df_report, df], axis=0)
-    report_filname = os.path.join(benchmark_path, 'strategy_benchmark_report.csv')
-    df_report.to_csv(report_filname)
 
 def get_configuration_files_list(config_files_df_lst):
     config_path = './conf'

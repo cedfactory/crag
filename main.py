@@ -1,5 +1,5 @@
-from src import rtdp,rtdp_simulation,broker_simulation,broker_bitget,broker_bitget_api,analyser,benchmark,automatic_test_plan
-from src import rtstr,rtstr_dummy_test,rtstr_envelope,rtstr_envelopestochrsi,rtstr_dummy_test_tp,rtstr_grid_trading_multi,rtstr_balance_trading,rtstr_bollinger_trend,rtstr_bollinger_trend_long,rtstr_tv_recommendation_mid,rtstr_balance_trading_multi,rtstr_super_reversal,rtstr_volatility_test_live,rtstr_trix,rtstr_cryptobot,rtstr_sltp_only,rtstr_bigwill,rtstr_VMC
+from src import rtdp,rtdp_simulation,broker_simulation,broker_bitget,broker_bitget_api
+from src import rtstr,rtstr_dummy_test,rtstr_envelope,rtstr_envelopestochrsi,rtstr_dummy_test_tp,rtstr_bollinger_trend,rtstr_bollinger_trend_long,rtstr_tv_recommendation_mid,rtstr_super_reversal,rtstr_volatility_test_live,rtstr_trix,rtstr_cryptobot,rtstr_sltp_only,rtstr_bigwill,rtstr_VMC
 from src import crag,crag_helper,trade
 import pandas as pd
 import os, sys
@@ -73,16 +73,6 @@ def crag_simulation(strategy_name):
     bot.export_history("sim_broker_history.csv")
     bot.export_status()
 
-def crag_benchmark(scenarios_df_lst):
-    lst_configuration_file = crag_helper.get_configuration_files_list(scenarios_df_lst)
-    for configuration_file in lst_configuration_file:
-        crag_live(configuration_file)
-    crag_report()
-
-def crag_report():
-    crag_helper.export_benchmark_df_report()
-
-
 def crag_live(configuration_file, ForceDoNotResetAccount = False):
     # previous code
     #crag_params = crag_helper.initialization_from_configuration_file(configuration_file)
@@ -118,12 +108,6 @@ def crag_reboot(picklefilename):
     bot.run()
     # bot.export_history("broker_history.csv")
     bot.export_status() # DEBUG CEDE
-
-def crag_analyse_results():
-    params = {}
-
-    my_analyser = analyser.Analyser(params)
-    my_analyser.run_analyse()
 
 def crag_broker():
     my_broker = broker_bitget_api.BrokerBitGetApi({'account':'bitget_ayato', "leverage_short":"1", "leverage_long":"1"})
@@ -369,14 +353,8 @@ if __name__ == '__main__':
                         pass
             else:
                 crag_live(sys.argv[2])
-        elif len(sys.argv) > 2 and (sys.argv[1] == "--benchmark"):
-            crag_benchmark(sys.argv[2])
-        elif len(sys.argv) >= 2 and (sys.argv[1] == "--report"):
-            crag_report()
         elif len(sys.argv) >= 2 and (sys.argv[1] == "--broker"):
             crag_broker()
-        elif len(sys.argv) >= 2 and (sys.argv[1] == "--analyse"):
-            crag_analyse_results()
         elif len(sys.argv) > 2 and (sys.argv[1] == "--profiler"):
             strategy_name = sys.argv[2]
 

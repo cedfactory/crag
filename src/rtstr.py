@@ -243,10 +243,6 @@ class RealTimeStrategy(metaclass=ABCMeta):
                and (df_sl_tp['roi_sl_tp'][symbol] < self.safety_SL
                     or df_sl_tp['roi_sl_tp'][symbol] > self.safety_TP)
 
-    def condition_for_grid_out_of_range_sl_tp_signal(self, symbol, df_sl_tp):
-        # SIGNAL SPECIFIC TO GRID STRATEGY
-        return False
-
     def authorize_multi_transaction_for_symbols(self):
         # Multi buy have to be specified in the strategy
         return False
@@ -259,9 +255,6 @@ class RealTimeStrategy(metaclass=ABCMeta):
         elif self.is_open_type_long(symbol) and self.condition_for_closing_long_position(symbol):
             result = True
             print('============= CLOSE_LONG =============')
-        elif self.condition_for_grid_out_of_range_sl_tp_signal(symbol, df_sl_tp):
-            result = True
-            print('============= CLOSE_GRID_SL_TP =============')
         if result:
             self.set_symbol_trailers_turned_off(symbol)
         return result
@@ -352,21 +345,6 @@ class RealTimeStrategy(metaclass=ABCMeta):
             self.logger.log(df_traces, header="get_df_selling_symbols", author=self.get_name())
          
         return df_result
-
-    def set_lower_zone_unengaged_position(self, symbol, zone_position):
-        return True
-
-    def set_zone_engaged(self, symbol, price):
-        return True
-
-    def get_lower_zone_buy_engaged(self, zone):
-        return -10
-
-    def get_grid_sell_condition(self, symbol, zone):
-        return True
-
-    def grid_exit_range_trend_down(self, symbol):
-        return False
 
     # @staticmethod
     def get_df_forced_selling_symbols(self):
@@ -479,21 +457,6 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
     # get_df_selling_symbols and get_df_forced_exit_selling_symbols
     # could be merged in one...
-
-    def reset_selling_limits(self):
-        return True
-
-    def force_selling_limits(self):
-        return True
-
-    def get_selling_limit(self, symbol):
-        return True
-
-    def count_selling_limits(self, symbol):
-        return True
-
-    def set_selling_limits(self, symbol):
-        return True
 
     def authorize_clear_current_trades(self):
         return True

@@ -567,7 +567,6 @@ class Crag:
         # sell symbols
         lst_symbols = [current_trade.symbol for current_trade in self.current_trades if self.rtstr.is_open_type(current_trade.type)]
         lst_symbols = list(set(lst_symbols))
-        self.rtstr.reset_selling_limits()
         if (self.final_datetime and current_datetime >= self.final_datetime)\
                 or self.rtstr.condition_for_global_sl_tp_signal():
             # final step - force all the symbols to be sold
@@ -575,34 +574,26 @@ class Crag:
             self.exit = True
             print("self.exit set to True !!!!!!! ", self.rtstr.condition_for_global_sl_tp_signal())
             self.flush_current_trade = True
-            self.rtstr.force_selling_limits()
         else:
             # identify symbols to sell
             df_selling_symbols = self.rtstr.get_df_selling_symbols(lst_symbols, self.rtstr.rtctrl.get_rtctrl_df_roi_sl_tp())
-            self.rtstr.set_selling_limits(df_selling_symbols)
 
         list_symbols_to_sell = df_selling_symbols.symbol.to_list()
         df_selling_symbols.set_index("symbol", inplace=True)
         df_sell_performed = pd.DataFrame(columns=["symbol", "price", "roi%", "pos_type"])
         for current_trade in self.current_trades:
-            if self.rtstr.is_open_type(current_trade.type) and current_trade.symbol in list_symbols_to_sell \
-                    and (self.flush_current_trade
-                         or ((self.rtstr.get_selling_limit(current_trade.symbol))
-                             and (self.rtstr.get_grid_sell_condition(current_trade.symbol, current_trade.gridzone))
-                             or self.rtstr.grid_exit_range_trend_down(current_trade.symbol))):
+            if self.rtstr.is_open_type(current_trade.type) \
+                    and current_trade.symbol in list_symbols_to_sell \
+                    and self.flush_current_trade:
                 sell_trade = self._prepare_sell_trade_from_bought_trade(current_trade, current_datetime)
                 done = self.broker.execute_trade(sell_trade)
                 if done:
                     self.sell_performed = True
-                    self.rtstr.count_selling_limits(current_trade.symbol)
                     current_trade.type = self.rtstr.get_close_type_and_close(current_trade.symbol)
                     self.cash = self.broker.get_cash()
                     sell_trade.cash = self.cash
 
                     self.traces_trade_total_closed += 1
-                    # Update grid strategy
-                    self.rtstr.set_lower_zone_unengaged_position(current_trade.symbol, current_trade.gridzone)
-                    sell_trade.gridzone = current_trade.gridzone
 
                     self.tradetraces.set_sell(sell_trade.symbol, sell_trade.trace_id,
                                               sell_trade.symbol_price,
@@ -630,7 +621,7 @@ class Crag:
         df_buying_symbols.drop(df_buying_symbols[df_buying_symbols['size'] == 0].index, inplace=True)
         if current_datetime == self.final_datetime:
             df_buying_symbols.drop(df_buying_symbols.index, inplace=True)
-        symbols_bought = {"symbol":[], "size":[], "percent":[], "gross_price":[], "gridzone":[], "pos_type": []}
+        symbols_bought = {"symbol":[], "size":[], "percent":[], "gross_price":[], "pos_type": []}
         for symbol in df_buying_symbols.index.to_list():
             print("buying symbol: ", symbol)
             current_trade = trade.Trade(current_datetime)
@@ -640,7 +631,6 @@ class Crag:
 
             current_trade.symbol_price = self.broker.get_value(symbol)
             current_trade.buying_price = current_trade.symbol_price
-            current_trade.gridzone = df_buying_symbols["gridzone"][symbol]
 
             current_trade.commission = self.broker.get_commission(current_trade.symbol)
             current_trade.minsize = self.broker.get_minimum_size(current_trade.symbol)
@@ -680,16 +670,12 @@ class Crag:
                                                    current_trade.gross_size, current_trade.buying_price,
                                                    current_trade.bought_gross_price, current_trade.buying_fee)
 
-                    # Update grid strategy
-                    self.rtstr.set_zone_engaged(current_trade.symbol, current_trade.symbol_price)
-
                     self.current_trades.append(current_trade)
 
                     symbols_bought["symbol"].append(current_trade.symbol)
                     symbols_bought["size"].append(utils.KeepNDecimals(current_trade.gross_size))
                     symbols_bought["percent"].append(utils.KeepNDecimals(df_buying_symbols["percent"][current_trade.symbol]))
                     symbols_bought["gross_price"].append(utils.KeepNDecimals(current_trade.gross_price))
-                    symbols_bought["gridzone"].append(df_buying_symbols["gridzone"][current_trade.symbol])
                     symbols_bought["pos_type"].append(df_buying_symbols["pos_type"][current_trade.symbol])
                 else:
                     self.rtstr.open_position_failed(symbol)
@@ -705,7 +691,6 @@ class Crag:
 
         if not df_symbols_bought.empty:
             df_traces = df_symbols_bought.copy()
-            df_traces.drop(columns=['gridzone'], axis=1, inplace=True)
             self.log(df_traces, "symbols bought")
 
         if self.temp_debug:
@@ -766,7 +751,6 @@ class Crag:
 
         lst_current_trade_symbol_price = []
         lst_current_trade_buying_price = []
-        lst_current_trade_gridzone = []
         lst_current_trade_commission = []
         lst_current_trade_gross_size = []
         lst_current_trade_gross_price = []
@@ -781,8 +765,6 @@ class Crag:
 
                 lst_current_trade_symbol_price.append(current_trade.symbol_price)
                 lst_current_trade_buying_price.append(current_trade.buying_price)
-
-                lst_current_trade_gridzone.append(current_trade.gridzone)
 
                 lst_current_trade_commission.append(current_trade.commission)
 
@@ -809,8 +791,6 @@ class Crag:
 
         merged_trade.symbol_price = max(lst_current_trade_symbol_price)
         merged_trade.buying_price = max(lst_current_trade_buying_price)
-
-        merged_trade.gridzone = max(lst_current_trade_gridzone)
 
         merged_trade.commission = sum(lst_current_trade_commission) / len(lst_current_trade_commission)
 
@@ -927,14 +907,9 @@ class Crag:
                         self.log(msg, "SL TP PERFORMED")
 
                         self.sell_performed = True
-                        self.rtstr.count_selling_limits(current_trade.symbol)
                         current_trade.type = self.rtstr.get_close_type_and_close(current_trade.symbol)
                         self.cash = self.broker.get_cash()
                         sell_trade.cash = self.cash
-
-                        # Update grid strategy
-                        self.rtstr.set_lower_zone_unengaged_position(current_trade.symbol, current_trade.gridzone)
-                        sell_trade.gridzone = current_trade.gridzone
 
                         self.tradetraces.set_sell(sell_trade.symbol, sell_trade.trace_id,
                                                   current_trade.symbol_price,
@@ -975,8 +950,6 @@ class Crag:
             # current_trade.symbol_price = self.broker.get_value(symbol)
             current_trade.symbol_price = self.broker.get_symbol_marketPrice(symbol)
             current_trade.buying_price = self.broker.get_symbol_averageOpenPrice(symbol)
-
-            current_trade.gridzone = -1
 
             current_trade.commission = self.broker.get_commission(current_trade.symbol)
             current_trade.minsize = self.broker.get_minimum_size(current_trade.symbol)
