@@ -867,8 +867,8 @@ class StrOpenClosePosition():
         return False
 
     # Specific for Grid
-    def set_broker_current_state(self, current_state):
-        pass
+    def set_broker_current_state(self, current_state, df_price):
+        return []
 
     def get_bitget_str_position(self, bitget_position):
         # ref: https://bitgetlimited.github.io/apidoc/en/mix/#holdmode
