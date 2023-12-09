@@ -50,6 +50,11 @@ class RealTimeStrategy(metaclass=ABCMeta):
         self.total_postion_requested = 0
         self.upon_stop_exit_close = False
         self.upon_stop_exit_reverse = False
+        self.grid_high = 0
+        self.grid_low = 0
+        self.nb_grid = 0
+        self.grid_buying_size = 0
+
 
         if params:
             self.strategy_interval = params.get("strategy_interval", self.strategy_interval)
@@ -73,6 +78,25 @@ class RealTimeStrategy(metaclass=ABCMeta):
                     self.df_symbol_param = pd.DataFrame()  # empty df could be None ....
             else:
                 self.lst_symbols = symbols.split(",")
+            self.grid_high = params.get("grid_high", self.grid_high)
+            if isinstance(self.grid_high, str):
+                if len(self.grid_high) > 0:
+                    self.grid_high = int(self.grid_high)
+                elif len(self.grid_high) == 0:
+                    self.grid_high = 0
+            self.grid_low = params.get("grid_low", self.grid_low)
+            if isinstance(self.grid_low, str):
+                if len(self.grid_low) > 0:
+                    self.grid_low = int(self.grid_low)
+                elif len(self.grid_low) == 0:
+                    self.grid_low = 0
+            self.nb_grid = params.get("nb_grid", self.nb_grid)
+            if isinstance(self.nb_grid, str):
+                if len(self.nb_grid) > 0:
+                    self.nb_grid = int(self.nb_grid)
+                elif len(self.nb_grid) == 0:
+                    self.nb_grid = 0
+            self.grid_buying_size = 0
 
             self.SL = float(params.get("sl", self.SL))
             self.TP = float(params.get("tp", self.TP))
@@ -379,6 +403,9 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
     def reset_position_recorder_for_symbol(self, symbol):
         self.position_recorder.reset_position_record(symbol)
+
+    def get_grid_buying_size(self, symbol):
+        return self.grid_buying_size
 
     def get_symbol_buying_size(self, symbol):
         if not symbol in self.rtctrl.prices_symbols or self.rtctrl.prices_symbols[symbol] < 0:  # first init at -1
@@ -834,6 +861,14 @@ class StrOpenClosePosition():
 
     def get_no_position(self):
         return self.string["noposition"]
+
+    # Specific for Grid
+    def need_broker_current_state(self):
+        return False
+
+    # Specific for Grid
+    def set_broker_current_state(self, current_state):
+        pass
 
     def get_bitget_str_position(self, bitget_position):
         # ref: https://bitgetlimited.github.io/apidoc/en/mix/#holdmode

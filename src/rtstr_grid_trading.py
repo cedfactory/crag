@@ -1,0 +1,181 @@
+from . import rtdp, rtstr, rtctrl
+import pandas as pd
+import numpy as np
+
+class StrategyGridTrading(rtstr.RealTimeStrategy):
+
+    def __init__(self, params=None):
+        super().__init__(params)
+
+        self.rtctrl = rtctrl.rtctrl(params=params)
+        self.rtctrl.set_list_open_position_type(self.get_lst_opening_type())
+        self.rtctrl.set_list_close_position_type(self.get_lst_closing_type())
+
+        self.grid = GridPosition(self.lst_symbol, self.grid_high, self.grid_low, self.nb_grid)
+
+        self.zero_print = True
+
+    def get_data_description(self):
+        ds = rtdp.DataDescription()
+        ds.symbols = self.lst_symbols
+
+        ds.fdp_features = {
+            "ema10" : {"indicator": "ema", "id": "10", "window_size": 10}
+        }
+
+        ds.features = self.get_feature_from_fdp_features(ds.fdp_features)
+        ds.interval = self.strategy_interval
+        print("startegy: ", self.get_info())
+        print("strategy features: ", ds.features)
+
+        return ds
+
+    def get_info(self):
+        return "StrategyGridTrading"
+
+    def condition_for_opening_long_position(self, symbol):
+        return False
+
+    def condition_for_opening_short_position(self, symbol):
+        return False
+
+    def condition_for_closing_long_position(self, symbol):
+        return False
+
+    def condition_for_closing_short_position(self, symbol):
+        return False
+
+    def sort_list_symbols(self, lst_symbols):
+        print("symbol list: ", lst_symbols)
+        return lst_symbols
+
+    def need_broker_current_state(self):
+        return True
+
+    def set_broker_current_state(self, df_current_state, df_price):
+        list_symbol = list(set(df_current_state["symbol"].tolist()))
+        lst_order_to_execute = []
+        for symbol in list_symbol:
+            self.grid.update_pending_status_from_current_state(symbol, df_current_state)
+
+            price_for_symbol = df_price.loc[df_price['symbol'] == symbol, 'price'].values[0]
+            self.grid.update_grid_side(symbol, price_for_symbol)
+
+            df_filtered_current_state = df_current_state[df_current_state['symbol'] == symbol]
+            self.grid.cross_check_with_current_state(symbol, df_filtered_current_state)
+
+            lst_order_to_execute = self.grid.get_order_list(symbol, self.get_grid_buying_size(symbol))
+            self.grid.set_to_pending_execute_order(lst_order_to_execute)
+
+        return lst_order_to_execute
+
+    def update_broker_order_status(self, df_order_status):
+        self.grid.update_order_status(df_order_status)
+
+class GridPosition():
+    def __init__(self, lst_symbol, grid_high, grid_low, nb_grid):
+        self.grid_high = grid_high
+        self.grid_low = grid_low
+        self.nb_grid = nb_grid
+
+        # Create a list with nb_grid split between high and low
+        self.lst_grid_values = np.linspace(self.grid_high, self.grid_low, self.nb_grid, endpoint=False).tolist()
+
+        self.columns = ["Id", "position", "orderId", "previous_side", "side", "changes", "status"]
+        self.grid = {key: pd.DataFrame(columns=self.columns) for key in lst_symbol}
+        for symbol in lst_symbol:
+            self.grid[symbol]["position"] = self.lst_grid_values
+            self.grid[symbol]["grid_id"] = np.arange(len(self.grid[symbol]))
+            self.grid[symbol]["orderId"] = ""
+            self.grid[symbol]["previous_side"] = ""
+            self.grid[symbol]["side"] = ""
+            self.grid[symbol]["changes"] = True
+            self.grid[symbol]["status"] = "empty"
+            self.grid[symbol]["cross_checked"] = False
+
+    def update_pending_status_from_current_state(self, symbol, df_current_state):
+        # Update grid status from 'pending' status to 'engaged'
+        # from previous cycle request to open limit order
+        df = self.grid[symbol]
+        # Define a condition
+        condition_pending = df['status'] == 'pending'
+        # Use boolean indexing to filter the DataFrame
+        df_filtered = df[condition_pending]
+        lst_grid_id = df_filtered['status'].tolist()
+        for grid_id in lst_grid_id:
+            side = df.loc[df['grid_id'] == grid_id, "side"].values[0]
+            if grid_id in df_current_state["grid_id"].tolist():
+                if side == df_current_state.loc[df_current_state["grid_id"] == grid_id, 'side'].values[0]:
+                    df.at[df['grid_id'] == grid_id, 'status'] = 'engaged'
+                    df.at[df['grid_id'] == grid_id, 'orderId'] = df_current_state.loc[df_current_state["grid_id"] == grid_id, 'orderId'].values[0]
+                else:
+                    print("GRID ERROR - open_long vs open_short")
+            else:
+                print("GRID ERROR - limit order failed")
+
+    def update_grid_side(self, symbol, position):
+        df = self.grid[symbol]
+        df['previous_side'] = df['side']
+        # Set the 'side' column based on conditions
+        df.loc[df['positions'] > position, 'side'] = 'close_long'
+        df.loc[df['positions'] < position, 'side'] = 'open_long'
+
+        # Compare if column1 and column2 are the same
+        df['changes'] = df['previous_side'] == df['side']
+
+
+    def cross_check_with_current_state(self, symbol, df_current_state):
+        df_grid = self.grid[symbol]
+        df_grid['cross_checked'] = False
+        # Iterate over every row using iterrows()
+        # Compare values from both DataFrames using iterrows
+        for index_grid, row_grid in df_grid.iterrows():
+            for index_c_state, row_c_state in df_current_state.iterrows():
+                if row_grid['grid_id'] == row_c_state['grid_id']:
+                    if row_grid['side'] == row_c_state['side'] \
+                            and row_grid['orderId'] == row_c_state['orderId']:
+                        df_grid.at[index_grid, 'checked'] = True
+
+    def get_order_list(self, symbol, size):
+        df_grid = self.grid[symbol]
+        df_filtered_changes = df_grid[~df_grid['changes']]
+        df_filtered_checked = df_grid[~df_grid['checked']]
+        df_filtered_pending = df_grid[df_grid['status'] == "pending"]
+
+        lst_order_grid_id = df_filtered_changes['grid_id'] + df_filtered_checked['grid_id'] + df_filtered_pending['grid_id']
+        lst_order_grid_id = list(set(lst_order_grid_id))
+
+        lst_order = []
+        for grid_id in lst_order_grid_id:
+            order_to_execute = {}
+            order_to_execute["symbol"] = symbol
+            order_to_execute["gross_size"] = size
+            order_to_execute["type"] = df_grid.loc[df_grid["grid_id"] == grid_id, 'side'].values[0]
+            order_to_execute["price"] = df_grid.loc[df_grid["grid_id"] == grid_id, 'position'].values[0]
+            order_to_execute["grid_id"] = grid_id
+            lst_order.append(order_to_execute)
+        return lst_order
+
+    def set_to_pending_execute_order(self, symbol, lst_order_to_execute):
+        df = self.grid[symbol]
+        for placed_order in lst_order_to_execute:
+            df.loc[df['grid_id'] == placed_order["grid_id"], 'status'] = 'pending'
+
+        """
+        order_to_execute = {
+            "symbol": order.symbol,
+            "gross_size": order.gross_size,
+            "type": order.type,
+            "price": order.price
+        }
+        """
+
+
+
+
+    def update_order_status(self, order_executed):
+        for order in order_executed:
+            df = self.grid[order["symbol"]]
+            df.loc[df['id'] == order["grid_id"], 'status'] = order["order_status"]
+            df.loc[df['id'] == order["grid_id"], 'orderId'] = order["orderId"]
+

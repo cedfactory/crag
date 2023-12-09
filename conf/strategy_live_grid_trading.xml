@@ -1,0 +1,9 @@
+<configuration>
+    <strategy id="strategygridtrading" name="StrategyGridTrading">
+        <params symbols="./symbols_df_sltp_BTC_usdt.csv" strategy_interval="3600" multi_param="False" candle_stick="released" max_position="1" sl="-5" tp="20" global_sl="-5" global_tp="20" trailer_tp="5" trailer_delta_tp="2" trailer_global_tp="0" trailer_global_delta_tp="0" trailer_sl="0" high_volatility="False" grid_high="44000" grid_low="40000" nb_grid="10"/>
+    </strategy>
+    <broker name="bitget">
+        <params exchange="bitget" fdp_url_id="gc1" account="XXXXXXXX" leverage_short="2" leverage_long="2" simulation="1" intervals="1h" orders="market" reset_account="False"/>
+    </broker>
+    <crag id="sltp1" interval="1" botId="ayato"/>
+</configuration>
