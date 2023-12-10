@@ -13,6 +13,8 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
 
         self.grid = GridPosition(self.lst_symbols, self.grid_high, self.grid_low, self.nb_grid)
 
+        self.CEDE_DEBUG = True # CEDE to be removed
+
         self.zero_print = True
 
     def get_data_description(self):
@@ -27,6 +29,18 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
         ds.interval = self.strategy_interval
         print("startegy: ", self.get_info())
         print("strategy features: ", ds.features)
+
+        if self.CEDE_DEBUG:
+            lst_current_state = ["symbol", "price", "side", "orderId", "grid_id"]
+            df_current_state = pd.DataFrame(columns=lst_current_state)
+            new_row = {'symbol': 'BTC', 'price': 44000, "side": "close_long", "orderId": 1234456, "grid_id": 0}
+            df_current_state = df_current_state.append(new_row, ignore_index=True)
+
+            df_price = pd.DataFrame(columns=["symbol", "price"])
+            df_price["symbol"] = ["BTC"]
+            df_price.loc[df_price["symbol"] == "BTC", "price"] = 42000
+
+        self.set_broker_current_state(df_current_state, df_price)
 
         return ds
 
@@ -55,6 +69,10 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
     def set_broker_current_state(self, df_current_state, df_price):
         lst_order_to_execute = []
         for symbol in self.lst_symbols:
+            if self.CEDE_DEBUG:
+                self.grid.grid["BTC"]["status"][0] = "pending"
+                self.grid.grid["BTC"]["side"][0] = "close_long"
+
             self.grid.update_pending_status_from_current_state(symbol, df_current_state)
 
             price_for_symbol = df_price.loc[df_price['symbol'] == symbol, 'price'].values[0]
@@ -64,7 +82,7 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
             self.grid.cross_check_with_current_state(symbol, df_filtered_current_state)
 
             lst_order_to_execute = self.grid.get_order_list(symbol, self.get_grid_buying_size(symbol))
-            self.grid.set_to_pending_execute_order(lst_order_to_execute)
+            self.grid.set_to_pending_execute_order(symbol, lst_order_to_execute)
 
         return lst_order_to_execute
 
@@ -103,13 +121,13 @@ class GridPosition():
         condition_pending = df['status'] == 'pending'
         # Use boolean indexing to filter the DataFrame
         df_filtered = df[condition_pending]
-        lst_grid_id = df_filtered['status'].tolist()
+        lst_grid_id = df_filtered['grid_id'].tolist()
         for grid_id in lst_grid_id:
             side = df.loc[df['grid_id'] == grid_id, "side"].values[0]
             if grid_id in df_current_state["grid_id"].tolist():
                 if side == df_current_state.loc[df_current_state["grid_id"] == grid_id, 'side'].values[0]:
-                    df.at[df['grid_id'] == grid_id, 'status'] = 'engaged'
-                    df.at[df['grid_id'] == grid_id, 'orderId'] = df_current_state.loc[df_current_state["grid_id"] == grid_id, 'orderId'].values[0]
+                    df.loc[df['grid_id'] == grid_id, 'status'] = 'engaged'
+                    df.loc[df['grid_id'] == grid_id, 'orderId'] = df_current_state.loc[df_current_state["grid_id"] == grid_id, 'orderId'].values[0]
                 else:
                     print("GRID ERROR - open_long vs open_short")
             else:
@@ -119,11 +137,11 @@ class GridPosition():
         df = self.grid[symbol]
         df['previous_side'] = df['side']
         # Set the 'side' column based on conditions
-        df.loc[df['positions'] > position, 'side'] = 'close_long'
-        df.loc[df['positions'] < position, 'side'] = 'open_long'
+        df.loc[df['position'] >= position, 'side'] = 'close_long'
+        df.loc[df['position'] < position, 'side'] = 'open_long'
 
         # Compare if column1 and column2 are the same
-        df['changes'] = df['previous_side'] == df['side']
+        df['changes'] = df['previous_side'] != df['side']
 
 
     def cross_check_with_current_state(self, symbol, df_current_state):
@@ -136,15 +154,17 @@ class GridPosition():
                 if row_grid['grid_id'] == row_c_state['grid_id']:
                     if row_grid['side'] == row_c_state['side'] \
                             and row_grid['orderId'] == row_c_state['orderId']:
-                        df_grid.at[index_grid, 'checked'] = True
+                        df_grid.loc[index_grid, 'cross_checked'] = True
 
     def get_order_list(self, symbol, size):
         df_grid = self.grid[symbol]
-        df_filtered_changes = df_grid[~df_grid['changes']]
-        df_filtered_checked = df_grid[~df_grid['checked']]
-        df_filtered_pending = df_grid[df_grid['status'] == "pending"]
+        df_filtered_changes = df_grid[df_grid['changes']]
+        df_filtered_checked = df_grid[~df_grid['cross_checked']]
+        df_filtered_pending = df_grid[df_grid['status'].isin(["pending", "empty"])]
 
-        lst_order_grid_id = df_filtered_changes['grid_id'] + df_filtered_checked['grid_id'] + df_filtered_pending['grid_id']
+        lst_order_grid_id = df_filtered_changes['grid_id'].tolist() \
+                            + df_filtered_checked['grid_id'].tolist() \
+                            + df_filtered_pending['grid_id'].tolist()
         lst_order_grid_id = list(set(lst_order_grid_id))
 
         lst_order = []
