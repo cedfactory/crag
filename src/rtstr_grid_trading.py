@@ -11,7 +11,7 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
         self.rtctrl.set_list_open_position_type(self.get_lst_opening_type())
         self.rtctrl.set_list_close_position_type(self.get_lst_closing_type())
 
-        self.grid = GridPosition(self.lst_symbol, self.grid_high, self.grid_low, self.nb_grid)
+        self.grid = GridPosition(self.lst_symbols, self.grid_high, self.grid_low, self.nb_grid)
 
         self.zero_print = True
 
@@ -53,9 +53,8 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
         return True
 
     def set_broker_current_state(self, df_current_state, df_price):
-        list_symbol = list(set(df_current_state["symbol"].tolist()))
         lst_order_to_execute = []
-        for symbol in list_symbol:
+        for symbol in self.lst_symbols:
             self.grid.update_pending_status_from_current_state(symbol, df_current_state)
 
             price_for_symbol = df_price.loc[df_price['symbol'] == symbol, 'price'].values[0]
@@ -73,17 +72,20 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
         self.grid.update_order_status(df_order_status)
 
 class GridPosition():
-    def __init__(self, lst_symbol, grid_high, grid_low, nb_grid):
+    def __init__(self, lst_symbols, grid_high, grid_low, nb_grid):
         self.grid_high = grid_high
         self.grid_low = grid_low
         self.nb_grid = nb_grid
+        self.lst_symbols = lst_symbols
 
         # Create a list with nb_grid split between high and low
-        self.lst_grid_values = np.linspace(self.grid_high, self.grid_low, self.nb_grid, endpoint=False).tolist()
+        # self.lst_grid_values = np.linspace(self.grid_high, self.grid_low, self.nb_grid, endpoint=False).tolist()
+        self.lst_grid_values = np.linspace(self.grid_high, self.grid_low, self.nb_grid + 1, endpoint=True).tolist()
+        print(self.lst_grid_values)
 
-        self.columns = ["Id", "position", "orderId", "previous_side", "side", "changes", "status"]
-        self.grid = {key: pd.DataFrame(columns=self.columns) for key in lst_symbol}
-        for symbol in lst_symbol:
+        self.columns = ["grid_id", "position", "orderId", "previous_side", "side", "changes", "status"]
+        self.grid = {key: pd.DataFrame(columns=self.columns) for key in self.lst_symbols}
+        for symbol in lst_symbols:
             self.grid[symbol]["position"] = self.lst_grid_values
             self.grid[symbol]["grid_id"] = np.arange(len(self.grid[symbol]))
             self.grid[symbol]["orderId"] = ""
