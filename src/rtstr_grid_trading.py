@@ -40,7 +40,7 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
             df_price["symbol"] = ["BTC"]
             df_price.loc[df_price["symbol"] == "BTC", "price"] = 42000
 
-        self.set_broker_current_state(df_current_state, df_price)
+            self.set_broker_current_state(df_current_state, df_price)
 
         return ds
 
