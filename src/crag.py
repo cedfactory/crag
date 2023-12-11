@@ -823,6 +823,13 @@ class Crag:
             msg = msg + ' size: ' + str(round(current_trade.net_size, 4))
         print(msg)
 
+    def udpate_strategy_with_broker_current_state(self):
+        symbols = self.rtstr.lst_symbols
+        broker_current_state = self.broker.get_current_state(symbols)
+        lst_orders_to_execute = self.rtstr.set_broker_current_state(broker_current_state)
+        lst_orders_status = self.broker.execute_orders(lst_orders_to_execute)
+        self.rtstr.notify_orders_status(lst_orders_status)
+
     def safety_step(self):
         usdt_equity = self.broker.get_usdt_equity()
         self.total_SL_TP = usdt_equity - self.original_portfolio_value
@@ -844,6 +851,9 @@ class Crag:
             self.actual_drawdown_percent = 0
         else:
             self.actual_drawdown_percent = self.drawdown * 100 / self.maximal_portfolio_value
+
+        if self.rtstr.need_broker_current_state():
+            self.udpate_strategy_with_broker_current_state()
 
         if self.rtstr.condition_for_global_SLTP(self.total_SL_TP_percent) \
                 or self.rtstr.condition_for_global_trailer_TP(self.total_SL_TP_percent) \

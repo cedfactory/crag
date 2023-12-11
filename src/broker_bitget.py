@@ -159,6 +159,11 @@ class BrokerBitGet(broker.Broker):
         return trade.success
 
     @authentication_required
+    def execute_orders(self, lst_orders):
+        for order in lst_orders:
+            self.execute_trade(order)
+
+
     def export_history(self, target):
         pass
 

@@ -141,6 +141,19 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                     n_attempts = n_attempts - 1
         return res
 
+    @authentication_required
+    def get_current_state(self, lst_symbols):
+        df_open_orders = self.get_open_orders(lst_symbols)
+        df_open_orders['symbol'] = df_open_orders['symbol'].apply(lambda x: self._get_coin(x))
+        df_open_orders.drop(['marginCoin', 'clientOid'], axis=1, inplace=True)
+        df_open_orders.rename(columns={"orderId": "id"}, inplace=True)
+        df_prices = self.get_values(lst_symbols)
+        current_state = {
+            "open_orders": df_open_orders,
+            "prices": df_prices
+        }
+        return current_state
+
     #@authentication_required
     def get_account_equity(self):
         n_attempts = 3
@@ -407,6 +420,17 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 time.sleep(2)
                 n_attempts = n_attempts - 1
         return value
+
+    @authentication_required
+    def get_values(self, symbols):
+        values = []
+        for symbol in symbols:
+            values.append(self.get_value(symbol))
+        df_prices = pd.DataFrame({
+            "symbols": symbols,
+            "values": values
+        })
+        return df_prices
 
     @authentication_required
     def get_asset_available(self, symbol):
