@@ -92,11 +92,11 @@ class TestSimBroker:
             ["", "transaction_id", "time", "buying_time", "type", "sell_id", "stimulus", "symbol", "buying_price", "symbol_price", "net_size", "net_price", "buying_fees", "selling_fees", "gross_price", "transaction_roi%", "remaining_cash", "portfolio_value", "wallet_value", "wallet_roi%"],
             ["OPEN_LONG", "", "", "ETH/USD", "1", "1", "2", "2", "0.07", "0.07", "2.08", "0.05", "90", "110", "110", "1"]
         ]
-        lines[0].append("gridzone") # TO RESTORE : trade shouldn not contains this last element (gridzone)
-        lines[1].append("-1") # TO RESTORE : trade shouldn not contains this last element (gridzone)
         with open(history_file_generated) as csvfile:
             csvreader = csv.reader(csvfile, delimiter=',')
             header = next(csvreader)
+            print(header)
+            print(lines[0])
             assert(header == lines[0])
             
             line = next(csvreader)

@@ -1,6 +1,6 @@
 import pytest
 import pandas as pd
-from src import rtstr_grid_trading_multi,crag,broker_simulation,trade
+from src import crag,broker_simulation,trade
 from . import utils
 from src import crag_helper
 import os
