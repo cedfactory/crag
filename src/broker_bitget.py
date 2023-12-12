@@ -30,6 +30,7 @@ class BrokerBitGet(broker.Broker):
         if params:
             self.leverage_short = int(params.get("leverage_short", self.leverage_short))
             self.leverage_long = int(params.get("leverage_long", self.leverage_long))
+        self.df_grid_id_match = pd.DataFrame(columns=["orderId", "gridId"])
 
     def authentication_required(fn):
         """decoration for methods that require authentification"""
@@ -102,6 +103,10 @@ class BrokerBitGet(broker.Broker):
                 transaction = self._open_long_order(symbol, trade.gross_size * self.leverage_long, clientOid, trade.price)
             elif trade.type == "OPEN_SHORT_ORDER":
                 transaction = self._open_short_order(symbol, trade.gross_size * self.leverage_long, clientOid, trade.price)
+            elif trade.type == "CLOSE_LONG_ORDER":
+                transaction = self._close_long_order(symbol, trade.gross_size * self.leverage_long, clientOid, trade.price)
+            elif trade.type == "CLOSE_SHORT_ORDER":
+                transaction = self._close_short_order(symbol, trade.gross_size * self.leverage_short, clientOid, trade.price)
             else:
                 transaction = {"msg": "failure"}
 
@@ -159,10 +164,46 @@ class BrokerBitGet(broker.Broker):
         return trade.success
 
     @authentication_required
+    def check_validity_order(self, order):
+        # CEDE avoid empty dict field: from order -> trade
+        lst_key = ["time", "success", "orderId", "clientOid", "tradeId", "symbol_price", "gross_price",
+                   "buying_fee", "net_size", "net_price", "bought_gross_price", "buying_price"]
+        for key in lst_key:
+            if key not in order:
+                order[key] = None
+        return order
+
+    def store_gridId_orderId(self, order):
+        orderId = order["orderId"]
+        gridId = order["gridId"]
+        success = order["success"]
+
+        if success and orderId != None:
+            if gridId in self.df_grid_id_match["gridId"].tolist():
+                # drop the previous gridId used
+                self.df_grid_id_match = self.df_grid_id_match.drop(self.df_grid_id_match[self.df_grid_id_match['gridId'] == gridId].index)
+            self.df_grid_id_match.loc[len(self.df_grid_id_match)] = [orderId, gridId]
+
+    @authentication_required
     def execute_orders(self, lst_orders):
         for order in lst_orders:
+            order = self.check_validity_order(order)
             self.execute_trade(order)
+            self.store_gridId_orderId(order)
 
+    def set_open_orders_gridId(self, df_open_orders):
+        df_open_orders["gridId"] = None
+        for orderId in df_open_orders["orderId"].tolist():
+            # Define a condition
+            condition = df_open_orders['orderId'] == orderId
+            # Set a value in the 'City' column where the condition is true
+            df_open_orders.loc[condition, 'gridId'] = self.get_gridId_from_orderId(orderId)
+        return df_open_orders
+
+    def get_gridId_from_orderId(self, orderId):
+        condition = self.df_grid_id_match['orderId'] == orderId
+        gridId = self.df_grid_id_match.loc[condition, 'gridId'].values[0] if not self.df_grid_id_match.loc[condition].empty else None
+        return gridId
 
     def export_history(self, target):
         pass

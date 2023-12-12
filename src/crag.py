@@ -827,8 +827,7 @@ class Crag:
         symbols = self.rtstr.lst_symbols
         broker_current_state = self.broker.get_current_state(symbols)
         lst_orders_to_execute = self.rtstr.set_broker_current_state(broker_current_state)
-        lst_orders_status = self.broker.execute_orders(lst_orders_to_execute)
-        self.rtstr.notify_orders_status(lst_orders_status)
+        self.broker.execute_orders(lst_orders_to_execute)
 
     def safety_step(self):
         usdt_equity = self.broker.get_usdt_equity()

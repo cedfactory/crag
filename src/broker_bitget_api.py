@@ -146,7 +146,8 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         df_open_orders = self.get_open_orders(lst_symbols)
         df_open_orders['symbol'] = df_open_orders['symbol'].apply(lambda x: self._get_coin(x))
         df_open_orders.drop(['marginCoin', 'clientOid'], axis=1, inplace=True)
-        df_open_orders.rename(columns={"orderId": "id"}, inplace=True)
+        df_open_orders = self.set_open_orders_gridId(df_open_orders)
+
         df_prices = self.get_values(lst_symbols)
         current_state = {
             "open_orders": df_open_orders,

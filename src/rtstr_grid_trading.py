@@ -215,8 +215,16 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
     def need_broker_current_state(self):
         return True
 
-    def set_broker_current_state(self, df_current_state, df_price):
-        lst_order_to_execute = []
+    def set_broker_current_state(self, current_state):
+        """
+        current_state = {
+            "open_orders": df_open_orders,
+            "prices": df_prices
+        }
+        """
+        df_current_state = current_state["open_orders"]
+        df_price = current_state["prices"]
+
         for symbol in self.lst_symbols:
             self.grid.update_pending_status_from_current_state(symbol, df_current_state)
 
@@ -299,6 +307,16 @@ class GridPosition():
                         df_grid.loc[index_grid, 'cross_checked'] = True
 
     def get_order_list(self, symbol, size):
+        """
+        order_to_execute = {
+            "symbol": order.symbol,
+            "gross_size": order.gross_size,
+            "type": order.type,
+            "price": order.price
+            "grid_id": grid_id
+        }
+        """
+
         df_grid = self.grid[symbol]
         df_filtered_changes = df_grid[df_grid['changes']]
         df_filtered_checked = df_grid[~df_grid['cross_checked']]
@@ -315,8 +333,14 @@ class GridPosition():
             order_to_execute = {}
             order_to_execute["symbol"] = symbol
             order_to_execute["gross_size"] = size
-            order_to_execute["type"] = df_grid.loc[df_grid["grid_id"] == grid_id, 'side'].values[0]
-            order_to_execute["price"] = df_grid.loc[df_grid["grid_id"] == grid_id, 'position'].values[0]
+            if df_grid.loc[df_grid["grid_id"] == grid_id, 'side'].values[0] == "open_long":
+                order_to_execute["type"] = "OPEN_LONG_ORDER"
+            elif df_grid.loc[df_grid["grid_id"] == grid_id, 'side'].values[0] == "close_long":
+                order_to_execute["price"] = "CLOSE_LONG_ORDER"
+            elif df_grid.loc[df_grid["grid_id"] == grid_id, 'side'].values[0] == "open_short":
+                order_to_execute["type"] = "OPEN_SHORT_ORDER"
+            elif df_grid.loc[df_grid["grid_id"] == grid_id, 'side'].values[0] == "close_short":
+                order_to_execute["price"] = "CLOSE_SHORT_ORDER"
             order_to_execute["grid_id"] = grid_id
             lst_order.append(order_to_execute)
         return lst_order
@@ -325,15 +349,6 @@ class GridPosition():
         df = self.grid[symbol]
         for placed_order in lst_order_to_execute:
             df.loc[df['grid_id'] == placed_order["grid_id"], 'status'] = 'pending'
-
-        """
-        order_to_execute = {
-            "symbol": order.symbol,
-            "gross_size": order.gross_size,
-            "type": order.type,
-            "price": order.price
-        }
-        """
 
     def clear_orderId(self, symbol, grid_id):
         df = self.grid[symbol]
