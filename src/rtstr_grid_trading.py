@@ -13,7 +13,7 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
 
         self.grid = GridPosition(self.lst_symbols, self.grid_high, self.grid_low, self.nb_grid)
 
-        self.CEDE_DEBUG = True # CEDE to be removed
+        self.CEDE_DEBUG = False # CEDE to be removed
 
         self.zero_print = True
 
@@ -228,7 +228,7 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
         for symbol in self.lst_symbols:
             self.grid.update_pending_status_from_current_state(symbol, df_current_state)
 
-            price_for_symbol = df_price.loc[df_price['symbol'] == symbol, 'price'].values[0]
+            price_for_symbol = df_price.loc[df_price['symbols'] == symbol, 'values'].values[0]
             self.grid.update_grid_side(symbol, price_for_symbol)
 
             df_filtered_current_state = df_current_state[df_current_state['symbol'] == symbol]
@@ -336,11 +336,12 @@ class GridPosition():
             if df_grid.loc[df_grid["grid_id"] == grid_id, 'side'].values[0] == "open_long":
                 order_to_execute["type"] = "OPEN_LONG_ORDER"
             elif df_grid.loc[df_grid["grid_id"] == grid_id, 'side'].values[0] == "close_long":
-                order_to_execute["price"] = "CLOSE_LONG_ORDER"
+                order_to_execute["type"] = "CLOSE_LONG_ORDER"
             elif df_grid.loc[df_grid["grid_id"] == grid_id, 'side'].values[0] == "open_short":
                 order_to_execute["type"] = "OPEN_SHORT_ORDER"
             elif df_grid.loc[df_grid["grid_id"] == grid_id, 'side'].values[0] == "close_short":
-                order_to_execute["price"] = "CLOSE_SHORT_ORDER"
+                order_to_execute["type"] = "CLOSE_SHORT_ORDER"
+            order_to_execute["price"] = df_grid.loc[df_grid["grid_id"] == grid_id, 'position'].values[0]
             order_to_execute["grid_id"] = grid_id
             lst_order.append(order_to_execute)
         return lst_order

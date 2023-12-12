@@ -30,7 +30,7 @@ class BrokerBitGet(broker.Broker):
         if params:
             self.leverage_short = int(params.get("leverage_short", self.leverage_short))
             self.leverage_long = int(params.get("leverage_long", self.leverage_long))
-        self.df_grid_id_match = pd.DataFrame(columns=["orderId", "gridId"])
+        self.df_grid_id_match = pd.DataFrame(columns=["orderId", "grid_id"])
 
     def authentication_required(fn):
         """decoration for methods that require authentification"""
@@ -94,7 +94,7 @@ class BrokerBitGet(broker.Broker):
         if trade.gross_size == 0:
             print('transaction failed ", trade.type, " : ', symbol, ' - gross_size: ', trade.gross_size)
 
-        if trade.type in ["OPEN_LONG", "OPEN_SHORT", "OPEN_LONG_ORDER", "OPEN_SHORT_ORDER"]:
+        if trade.type in ["OPEN_LONG", "OPEN_SHORT", "OPEN_LONG_ORDER", "OPEN_SHORT_ORDER", "CLOSE_LONG_ORDER", "CLOSE_SHORT_ORDER"]:
             if trade.type == "OPEN_LONG":
                 transaction = self._open_long_position(symbol, trade.gross_size * self.leverage_long, clientOid)
             elif trade.type == "OPEN_SHORT":
@@ -173,23 +173,29 @@ class BrokerBitGet(broker.Broker):
                 order[key] = None
         return order
 
-    def store_gridId_orderId(self, order):
-        orderId = order["orderId"]
-        gridId = order["gridId"]
-        success = order["success"]
+    def store_gridId_orderId(self, trade):
+        orderId = trade.orderId
+        gridId = trade.grid_id
+        success = trade.success
 
         if success and orderId != None:
-            if gridId in self.df_grid_id_match["gridId"].tolist():
-                # drop the previous gridId used
-                self.df_grid_id_match = self.df_grid_id_match.drop(self.df_grid_id_match[self.df_grid_id_match['gridId'] == gridId].index)
+            if gridId in self.df_grid_id_match["grid_id"].tolist():
+                # drop the previous grid_id used
+                self.df_grid_id_match = self.df_grid_id_match.drop(self.df_grid_id_match[self.df_grid_id_match['grid_id'] == gridId].index)
             self.df_grid_id_match.loc[len(self.df_grid_id_match)] = [orderId, gridId]
+
+    class OrderToTradeConverter:
+        def __init__(self, **kwargs):
+            for key, value in kwargs.items():
+                setattr(self, key, value)
 
     @authentication_required
     def execute_orders(self, lst_orders):
         for order in lst_orders:
             order = self.check_validity_order(order)
-            self.execute_trade(order)
-            self.store_gridId_orderId(order)
+            trade = self.OrderToTradeConverter(**order)
+            self.execute_trade(trade)
+            self.store_gridId_orderId(trade)
 
     def set_open_orders_gridId(self, df_open_orders):
         df_open_orders["gridId"] = None
