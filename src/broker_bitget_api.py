@@ -671,6 +671,12 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         else:
             return False , False
 
+    # example : cancel_all_orders(["BTC", "ETH", "XRP"])
+    def cancel_all_orders(self, lst_symbols):
+        df_open_orders = self.get_open_orders(lst_symbols)
+        for index, row in df_open_orders.iterrows():
+            self.cancel_order(row["symbol"], row["marginCoin"], row["orderId"])
+
     def get_order_fill_detail(self, symbol, order_id):
         trade_id = price = fillAmount = sizeQty = fee = None
         n_attempts = 3

@@ -75,9 +75,15 @@ class MainPanel(wx.Panel):
         self.orders.InsertColumn(6, 'OrderId', width=130)
         main_sizer.Add(self.orders, 0, wx.ALL | wx.EXPAND, 5)
 
-        cancel_limit_order_button = wx.Button(self, label='Cancel open order')
+        hsizer = wx.BoxSizer(wx.HORIZONTAL)
+        cancel_limit_order_button = wx.Button(self, label='Cancel selected open order')
         cancel_limit_order_button.Bind(wx.EVT_BUTTON, self.on_cancel_limit_order)
-        main_sizer.Add(cancel_limit_order_button, 0, wx.ALL | wx.CENTER, 5)
+        hsizer.Add(cancel_limit_order_button, 0, wx.ALL | wx.EXPAND, 5)
+
+        cancel_all_limit_orders_button = wx.Button(self, label='Cancel all open orders')
+        cancel_all_limit_orders_button.Bind(wx.EVT_BUTTON, self.on_cancel_all_limit_orders)
+        hsizer.Add(cancel_all_limit_orders_button, 0, wx.ALL | wx.EXPAND, 5)
+        main_sizer.Add(hsizer, 0, wx.ALL | wx.CENTER, 5)
 
         # open limit order
         hsizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -195,6 +201,11 @@ class MainPanel(wx.Panel):
         print("cancel open order : ", orderId)
         my_broker = self.get_broker_from_selected_account()
         my_broker.cancel_order(symbol, marginCoin, orderId)
+        self.update_orders(my_broker)
+
+    def on_cancel_all_limit_orders(self, event):
+        my_broker = self.get_broker_from_selected_account()
+        my_broker.cancel_all_orders(["XRP", "BTC", "ETH"])
         self.update_orders(my_broker)
 
     def on_open_limit_order(self, event):
