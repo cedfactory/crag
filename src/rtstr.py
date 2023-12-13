@@ -81,13 +81,13 @@ class RealTimeStrategy(metaclass=ABCMeta):
             self.grid_high = params.get("grid_high", self.grid_high)
             if isinstance(self.grid_high, str):
                 if len(self.grid_high) > 0:
-                    self.grid_high = int(self.grid_high)
+                    self.grid_high = float(self.grid_high)
                 elif len(self.grid_high) == 0:
                     self.grid_high = 0
             self.grid_low = params.get("grid_low", self.grid_low)
             if isinstance(self.grid_low, str):
                 if len(self.grid_low) > 0:
-                    self.grid_low = int(self.grid_low)
+                    self.grid_low = float(self.grid_low)
                 elif len(self.grid_low) == 0:
                     self.grid_low = 0
             self.nb_grid = params.get("nb_grid", self.nb_grid)
@@ -96,7 +96,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
                     self.nb_grid = int(self.nb_grid)
                 elif len(self.nb_grid) == 0:
                     self.nb_grid = 0
-            self.grid_buying_size = 0
+            self.grid_buying_size = 5 # CEDE tbd
 
             self.SL = float(params.get("sl", self.SL))
             self.TP = float(params.get("tp", self.TP))
