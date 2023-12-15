@@ -48,6 +48,7 @@ class Crag:
         self.total_SL_TP_percent = 0
         self.monitoring = monitoring_helper.SQLMonitoring("ovh_mysql")
         self.tradetraces = traces.TradeTraces()
+        self.init_grid_position = 0
 
         if params:
             self.broker = params.get("broker", self.broker)
@@ -826,6 +827,10 @@ class Crag:
     def udpate_strategy_with_broker_current_state(self):
         symbols = self.rtstr.lst_symbols
         broker_current_state = self.broker.get_current_state(symbols)
+        if self.init_grid_position:
+            self.init_grid_position = False
+            self.broker.reset_current_postion(broker_current_state)
+            broker_current_state = self.broker.get_current_state(symbols)
         lst_orders_to_execute = self.rtstr.set_broker_current_state(broker_current_state)
         self.broker.execute_orders(lst_orders_to_execute)
 

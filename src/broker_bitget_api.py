@@ -155,6 +155,21 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         }
         return current_state
 
+    @authentication_required
+    def reset_current_postion(self, current_state):
+        if self.get_nb_order_current_state(current_state) > 0:
+            print("init - reset current order")
+            self.cancel_all_orders(self.get_lst_symbol_current_state(current_state))
+
+    def get_lst_symbol_current_state(self, current_state):
+        return current_state["open_orders"]["symbol"].tolist()
+
+    def get_lst_orderId_current_state(self, current_state):
+        return current_state["open_orders"]["orderId"].tolist()
+
+    def get_nb_order_current_state(self, current_state):
+        return len(current_state["open_orders"])
+
     #@authentication_required
     def get_account_equity(self):
         n_attempts = 3
@@ -653,6 +668,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     @authentication_required
     def cancel_order(self, symbol, marginCoin, orderId):
+        symbol = self._get_symbol(symbol)
         result = {}
         n_attempts = 3
         while n_attempts > 0:

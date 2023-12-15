@@ -317,7 +317,8 @@ class GridPosition():
         }
         """
 
-        df_grid = self.grid[symbol]
+        df_grid = self.grid[symbol].copy()
+
         df_filtered_changes = df_grid[df_grid['changes']]
         df_filtered_checked = df_grid[~df_grid['cross_checked']]
         df_filtered_pending = df_grid[df_grid['status'].isin(["pending", "empty"])]
@@ -344,7 +345,11 @@ class GridPosition():
             order_to_execute["price"] = df_grid.loc[df_grid["grid_id"] == grid_id, 'position'].values[0]
             order_to_execute["grid_id"] = grid_id
             lst_order.append(order_to_execute)
-        return lst_order
+
+        sorting_order = ['OPEN_LONG_ORDER', 'OPEN_SHORT_ORDER', 'CLOSE_LONG_ORDER', 'CLOSE_SHORT_ORDER']
+        sorted_list = sorted(lst_order, key=lambda x: sorting_order.index(x['type']))
+        return sorted_list
+
 
     def set_to_pending_execute_order(self, symbol, lst_order_to_execute):
         df = self.grid[symbol]
