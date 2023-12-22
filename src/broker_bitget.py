@@ -88,24 +88,33 @@ class BrokerBitGet(broker.Broker):
         clientOid = self.clientOIdprovider.get_name(symbol, trade.type)
         print("TRADE GROSS SIZE: ", trade.gross_size)
         trade.gross_size = self.normalize_size(symbol, trade.gross_size)
-        # trade.gross_price = self.normalize_price(symbol, trade.gross_price) # price not used yet
         print("TRADE GROSS SIZE NORMALIZED: ", trade.gross_size)
+        if hasattr(trade, 'price'):
+            print("TRADE GROSS PRICE: ", trade.price)
+            trade.price = self.normalize_price(symbol, trade.price) # price not used yet
+            print("TRADE GROSS PRICE NORMALIZED: ", trade.price)
 
         if trade.gross_size == 0:
             print('transaction failed ", trade.type, " : ', symbol, ' - gross_size: ', trade.gross_size)
 
         if trade.type in ["OPEN_LONG", "OPEN_SHORT", "OPEN_LONG_ORDER", "OPEN_SHORT_ORDER", "CLOSE_LONG_ORDER", "CLOSE_SHORT_ORDER"]:
             if trade.type == "OPEN_LONG":
+                print(trade.type, " size: ", trade.gross_size * self.leverage_short, " price: ", trade.price)
                 transaction = self._open_long_position(symbol, trade.gross_size * self.leverage_long, clientOid)
             elif trade.type == "OPEN_SHORT":
+                print(trade.type, " size: ", trade.gross_size * self.leverage_short, " price: ", trade.price)
                 transaction = self._open_short_position(symbol, trade.gross_size * self.leverage_short, clientOid)
             elif trade.type == "OPEN_LONG_ORDER":
+                print(trade.type, " size: ", trade.gross_size * self.leverage_short, " price: ", trade.price)
                 transaction = self._open_long_order(symbol, trade.gross_size * self.leverage_long, clientOid, trade.price)
             elif trade.type == "OPEN_SHORT_ORDER":
+                print(trade.type, " size: ", trade.gross_size * self.leverage_short, " price: ", trade.price)
                 transaction = self._open_short_order(symbol, trade.gross_size * self.leverage_long, clientOid, trade.price)
             elif trade.type == "CLOSE_LONG_ORDER":
+                print(trade.type, " size: ", trade.gross_size * self.leverage_short, " price: ", trade.price)
                 transaction = self._close_long_order(symbol, trade.gross_size * self.leverage_long, clientOid, trade.price)
             elif trade.type == "CLOSE_SHORT_ORDER":
+                print(trade.type, " size: ", trade.gross_size * self.leverage_short, " price: ", trade.price)
                 transaction = self._close_short_order(symbol, trade.gross_size * self.leverage_short, clientOid, trade.price)
             else:
                 transaction = {"msg": "failure"}

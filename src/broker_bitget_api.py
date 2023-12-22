@@ -148,9 +148,13 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         df_open_orders.drop(['marginCoin', 'clientOid'], axis=1, inplace=True)
         df_open_orders = self.set_open_orders_gridId(df_open_orders)
 
+        df_open_positions = self.get_open_position()
+        df_open_positions_filtered = df_open_positions[df_open_positions['symbol'].apply(lambda x: any(symbol in lst_symbols for symbol in x))]
+
         df_prices = self.get_values(lst_symbols)
         current_state = {
             "open_orders": df_open_orders,
+            "open_positions": df_open_positions_filtered,
             "prices": df_prices
         }
         return current_state
@@ -935,7 +939,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         df.to_csv(self.broker_dir_path_filename)
 
     def normalize_price(self, symbol, amount):
-        pricePlace = self.get_pricePlace(symbol)
+        pricePlace = int(self.get_pricePlace(symbol))
         priceEndStep = self.get_priceEndStep(symbol)
 
         amount = amount * pow(10, pricePlace)
@@ -943,9 +947,14 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         amount = amount * pow(10, -pricePlace)
 
         amount = round(amount, pricePlace)
-        decimal = (amount % (priceEndStep * pow(10, -pricePlace)))
+
+        # Calculate the decimal without using %
+        decimal_multiplier = priceEndStep * pow(10, -pricePlace)
+        decimal = amount - math.floor(round(amount / decimal_multiplier)) * decimal_multiplier
+
         amount = amount - decimal
         amount = round(amount, pricePlace)
+
         return amount
 
     def normalize_size(self, symbol, size):
