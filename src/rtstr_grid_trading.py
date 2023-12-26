@@ -2,6 +2,8 @@ from . import rtdp, rtstr, rtctrl
 import pandas as pd
 import numpy as np
 
+import math
+
 class StrategyGridTrading(rtstr.RealTimeStrategy):
 
     def __init__(self, params=None):
@@ -29,168 +31,6 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
         ds.interval = self.strategy_interval
         print("startegy: ", self.get_info())
         print("strategy features: ", ds.features)
-
-        if self.CEDE_DEBUG:
-            print("******************** Init: ********************")
-            self.grid.print_grid()
-            lst_current_state = ["symbol", "price", "side", "orderId", "grid_id"]
-            df_current_state = pd.DataFrame(columns=lst_current_state)
-
-            print("******************** Step 1 - Send price = 42000 ********************")
-            print('current state sent from Crag:')
-            print(df_current_state.to_string())
-
-            df_price = pd.DataFrame(columns=["symbol", "price"])
-            df_price["symbol"] = ["BTC"]
-            df_price.loc[df_price["symbol"] == "BTC", "price"] = 42000
-
-            print('current price sent from Crag:')
-            print(df_price.to_string())
-
-            lst_order_to_execute = self.set_broker_current_state(df_current_state, df_price)
-            print("list order to be performed by Crag -> Broker: [")
-            if len(lst_order_to_execute) > 0:
-                for order in lst_order_to_execute:
-                    print(order)
-            print("]")
-            self.grid.print_grid()
-
-            print("******************** Step 2 - Cross Check opened positions ********************")
-
-            lst_current_state = ["symbol", "price", "side", "orderId", "grid_id"]
-            df_current_state = pd.DataFrame(columns=lst_current_state)
-
-            new_row = {'symbol': 'BTC', 'price': 44000, "side": "close_long", "orderId": 1234456, "grid_id": 0}
-            df_current_state = df_current_state.append(new_row, ignore_index=True)
-            new_row = {'symbol': 'BTC', 'price': 43600, "side": "close_long", "orderId": 1234456, "grid_id": 1}
-            df_current_state = df_current_state.append(new_row, ignore_index=True)
-            new_row = {'symbol': 'BTC', 'price': 43200, "side": "close_long", "orderId": 1234456, "grid_id": 2}
-            df_current_state = df_current_state.append(new_row, ignore_index=True)
-            new_row = {'symbol': 'BTC', 'price': 42800, "side": "close_long", "orderId": 1234456, "grid_id": 3}
-            df_current_state = df_current_state.append(new_row, ignore_index=True)
-            new_row = {'symbol': 'BTC', 'price': 42400, "side": "close_long", "orderId": 1234456, "grid_id": 4}
-            df_current_state = df_current_state.append(new_row, ignore_index=True)
-            new_row = {'symbol': 'BTC', 'price': 42000, "side": "close_long", "orderId": 1234456, "grid_id": 5}
-            df_current_state = df_current_state.append(new_row, ignore_index=True)
-            new_row = {'symbol': 'BTC', 'price': 41600, "side": "open_long", "orderId": 1234456, "grid_id": 6}
-            df_current_state = df_current_state.append(new_row, ignore_index=True)
-            new_row = {'symbol': 'BTC', 'price': 41200, "side": "open_long", "orderId": 1234456, "grid_id": 7}
-            df_current_state = df_current_state.append(new_row, ignore_index=True)
-            new_row = {'symbol': 'BTC', 'price': 40800, "side": "open_long", "orderId": 1234456, "grid_id": 8}
-            df_current_state = df_current_state.append(new_row, ignore_index=True)
-            new_row = {'symbol': 'BTC', 'price': 40400, "side": "open_long", "orderId": 1234456, "grid_id": 9}
-            df_current_state = df_current_state.append(new_row, ignore_index=True)
-            new_row = {'symbol': 'BTC', 'price': 40000, "side": "open_long", "orderId": 1234456, "grid_id": 10}
-            df_current_state = df_current_state.append(new_row, ignore_index=True)
-
-            print('current price sent from Crag:')
-            print(df_price.to_string())
-
-            df_price = pd.DataFrame(columns=["symbol", "price"])
-            df_price["symbol"] = ["BTC"]
-            df_price.loc[df_price["symbol"] == "BTC", "price"] = 42000
-
-            print('current price sent from Crag:')
-            print(df_price.to_string())
-
-            lst_order_to_execute = self.set_broker_current_state(df_current_state, df_price)
-            print("list order to be performed by Crag -> Broker: [")
-            if len(lst_order_to_execute) > 0:
-                for order in lst_order_to_execute:
-                    print(order)
-            print("]")
-            self.grid.print_grid()
-
-            print("******************** Step 3 - Send changed price = 42600            ********************")
-            print("******************** Step 3 - request for new position to be opened ********************")
-
-            df_price = pd.DataFrame(columns=["symbol", "price"])
-            df_price["symbol"] = ["BTC"]
-            df_price.loc[df_price["symbol"] == "BTC", "price"] = 42600
-
-            lst_current_state = ["symbol", "price", "side", "orderId", "grid_id"]
-            df_current_state = pd.DataFrame(columns=lst_current_state)
-
-            new_row = {'symbol': 'BTC', 'price': 44000, "side": "close_long", "orderId": 1234456, "grid_id": 0}
-            df_current_state = df_current_state.append(new_row, ignore_index=True)
-            new_row = {'symbol': 'BTC', 'price': 43600, "side": "close_long", "orderId": 1234456, "grid_id": 1}
-            df_current_state = df_current_state.append(new_row, ignore_index=True)
-            new_row = {'symbol': 'BTC', 'price': 43200, "side": "close_long", "orderId": 1234456, "grid_id": 2}
-            df_current_state = df_current_state.append(new_row, ignore_index=True)
-            new_row = {'symbol': 'BTC', 'price': 42800, "side": "close_long", "orderId": 1234456, "grid_id": 3}
-            df_current_state = df_current_state.append(new_row, ignore_index=True)
-            # new_row = {'symbol': 'BTC', 'price': 42400, "side": "close_long", "orderId": 1234456, "grid_id": 4}
-            # df_current_state = df_current_state.append(new_row, ignore_index=True)
-            # new_row = {'symbol': 'BTC', 'price': 42000, "side": "close_long", "orderId": 1234456, "grid_id": 5}
-            # df_current_state = df_current_state.append(new_row, ignore_index=True)
-            new_row = {'symbol': 'BTC', 'price': 41600, "side": "open_long", "orderId": 1234456, "grid_id": 6}
-            df_current_state = df_current_state.append(new_row, ignore_index=True)
-            new_row = {'symbol': 'BTC', 'price': 41200, "side": "open_long", "orderId": 1234456, "grid_id": 7}
-            df_current_state = df_current_state.append(new_row, ignore_index=True)
-            new_row = {'symbol': 'BTC', 'price': 40800, "side": "open_long", "orderId": 1234456, "grid_id": 8}
-            df_current_state = df_current_state.append(new_row, ignore_index=True)
-            new_row = {'symbol': 'BTC', 'price': 40400, "side": "open_long", "orderId": 1234456, "grid_id": 9}
-            df_current_state = df_current_state.append(new_row, ignore_index=True)
-            new_row = {'symbol': 'BTC', 'price': 40000, "side": "open_long", "orderId": 1234456, "grid_id": 10}
-            df_current_state = df_current_state.append(new_row, ignore_index=True)
-
-            print('current price sent from Crag:')
-            print(df_price.to_string())
-
-            lst_order_to_execute = self.set_broker_current_state(df_current_state, df_price)
-            print("list order to be performed by Crag -> Broker: [")
-            if len(lst_order_to_execute) > 0:
-                for order in lst_order_to_execute:
-                    print(order)
-            print("]")
-            self.grid.print_grid()
-
-            print("******************** Step 4 - Cross check if new position have been opened ********************")
-
-            df_price = pd.DataFrame(columns=["symbol", "price"])
-            df_price["symbol"] = ["BTC"]
-            df_price.loc[df_price["symbol"] == "BTC", "price"] = 42600
-
-            lst_current_state = ["symbol", "price", "side", "orderId", "grid_id"]
-            df_current_state = pd.DataFrame(columns=lst_current_state)
-
-            new_row = {'symbol': 'BTC', 'price': 44000, "side": "close_long", "orderId": 1234456, "grid_id": 0}
-            df_current_state = df_current_state.append(new_row, ignore_index=True)
-            new_row = {'symbol': 'BTC', 'price': 43600, "side": "close_long", "orderId": 1234456, "grid_id": 1}
-            df_current_state = df_current_state.append(new_row, ignore_index=True)
-            new_row = {'symbol': 'BTC', 'price': 43200, "side": "close_long", "orderId": 1234456, "grid_id": 2}
-            df_current_state = df_current_state.append(new_row, ignore_index=True)
-            new_row = {'symbol': 'BTC', 'price': 42800, "side": "close_long", "orderId": 1234456, "grid_id": 3}
-            df_current_state = df_current_state.append(new_row, ignore_index=True)
-            new_row = {'symbol': 'BTC', 'price': 42400, "side": "open_long", "orderId": 654987, "grid_id": 4}
-            df_current_state = df_current_state.append(new_row, ignore_index=True)
-            new_row = {'symbol': 'BTC', 'price': 42000, "side": "open_long", "orderId": 789456, "grid_id": 5}
-            df_current_state = df_current_state.append(new_row, ignore_index=True)
-            new_row = {'symbol': 'BTC', 'price': 41600, "side": "open_long", "orderId": 1234456, "grid_id": 6}
-            df_current_state = df_current_state.append(new_row, ignore_index=True)
-            new_row = {'symbol': 'BTC', 'price': 41200, "side": "open_long", "orderId": 1234456, "grid_id": 7}
-            df_current_state = df_current_state.append(new_row, ignore_index=True)
-            new_row = {'symbol': 'BTC', 'price': 40800, "side": "open_long", "orderId": 1234456, "grid_id": 8}
-            df_current_state = df_current_state.append(new_row, ignore_index=True)
-            new_row = {'symbol': 'BTC', 'price': 40400, "side": "open_long", "orderId": 1234456, "grid_id": 9}
-            df_current_state = df_current_state.append(new_row, ignore_index=True)
-            new_row = {'symbol': 'BTC', 'price': 40000, "side": "open_long", "orderId": 1234456, "grid_id": 10}
-            df_current_state = df_current_state.append(new_row, ignore_index=True)
-
-            print('current price sent from Crag:')
-            print(df_price.to_string())
-
-            lst_order_to_execute = self.set_broker_current_state(df_current_state, df_price)
-            print("list order to be performed by Crag -> Broker: [")
-            if len(lst_order_to_execute) > 0:
-                for order in lst_order_to_execute:
-                    print(order)
-            print("]")
-            self.grid.print_grid()
-
-            print("******************** Step 5 - End ********************")
-
-
         return ds
 
     def get_info(self):
@@ -219,13 +59,19 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
         """
         current_state = {
             "open_orders": df_open_orders,
+            "open_positions": df_open_positions,
             "prices": df_prices
         }
         """
         df_current_state = current_state["open_orders"]
+        df_open_positions = current_state["open_positions"]
         df_price = current_state["prices"]
 
+        lst_order_to_execute = []
+
         for symbol in self.lst_symbols:
+            buying_size = self.get_grid_buying_size(symbol)
+            self.grid.update_nb_open_positions(symbol, df_open_positions, buying_size)
             self.grid.update_pending_status_from_current_state(symbol, df_current_state)
 
             price_for_symbol = df_price.loc[df_price['symbols'] == symbol, 'values'].values[0]
@@ -234,10 +80,34 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
             df_filtered_current_state = df_current_state[df_current_state['symbol'] == symbol]
             self.grid.cross_check_with_current_state(symbol, df_filtered_current_state)
 
-            lst_order_to_execute = self.grid.get_order_list(symbol, self.get_grid_buying_size(symbol))
+            lst_order_to_execute = self.grid.get_order_list(symbol, buying_size)
             self.grid.set_to_pending_execute_order(symbol, lst_order_to_execute)
+            lst_order_to_execute = self.grid.filter_lst_close_execute_order(symbol, lst_order_to_execute)
+
+        # CEDE DEBUG
+        if self.CEDE_DEBUG:
+            print("price: ", df_price)
+            self.grid.print_grid()
 
         return lst_order_to_execute
+
+    def set_normalized_grid_price(self, lst_symbol_plc_endstp):
+        for price_plc in lst_symbol_plc_endstp:
+            symbol = price_plc['symbol']
+            pricePlace = price_plc['pricePlace']
+            priceEndStep = price_plc['priceEndStep']
+            self.grid.normalize_grid_price(symbol, pricePlace, priceEndStep)
+
+    def activate_grid(self, current_state):
+        df_prices = current_state["prices"]
+        lst_buying_market_order = []
+        for symbol in self.lst_symbols:
+            lst_buying_market_order = []
+            buying_size = self.get_grid_buying_size(symbol)
+            price = df_prices.loc[df_prices['symbols'] == symbol, 'values'].values[0]
+            order = self.grid.get_buying_market_order(symbol, buying_size, price)
+            lst_buying_market_order.append(order)
+        return lst_buying_market_order
 
 class GridPosition():
     def __init__(self, lst_symbols, grid_high, grid_low, nb_grid):
@@ -246,10 +116,17 @@ class GridPosition():
         self.nb_grid = nb_grid
         self.lst_symbols = lst_symbols
 
+        self.trend = "FLAT"
+
+        self.df_nb_open_positions = pd.DataFrame(columns=['symbol', 'size', 'positions_size', 'nb_open_positions'])
+        self.df_nb_open_positions['symbol'] = self.lst_symbols
+        self.df_nb_open_positions['size'] = 0
+        self.df_nb_open_positions['positions_size'] = 0
+        self.df_nb_open_positions['nb_open_positions'] = 0
+
         # Create a list with nb_grid split between high and low
-        # self.lst_grid_values = np.linspace(self.grid_high, self.grid_low, self.nb_grid, endpoint=False).tolist()
         self.lst_grid_values = np.linspace(self.grid_high, self.grid_low, self.nb_grid + 1, endpoint=True).tolist()
-        print(self.lst_grid_values)
+        print("grid values: ", self.lst_grid_values)
 
         self.columns = ["grid_id", "position", "orderId", "previous_side", "side", "changes", "status"]
         self.grid = {key: pd.DataFrame(columns=self.columns) for key in self.lst_symbols}
@@ -257,7 +134,7 @@ class GridPosition():
             self.grid[symbol]["position"] = self.lst_grid_values
             self.grid[symbol]["grid_id"] = np.arange(len(self.grid[symbol]))
             self.grid[symbol]["orderId"] = ""
-            self.grid[symbol]["previous_side"] = ""
+            self.grid[symbol]["previous_side"] = False
             self.grid[symbol]["side"] = ""
             self.grid[symbol]["changes"] = True
             self.grid[symbol]["status"] = "empty"
@@ -274,10 +151,10 @@ class GridPosition():
         lst_grid_id = df_filtered['grid_id'].tolist()
         for grid_id in lst_grid_id:
             side = df.loc[df['grid_id'] == grid_id, "side"].values[0]
-            if grid_id in df_current_state["grid_id"].tolist():
-                if side == df_current_state.loc[df_current_state["grid_id"] == grid_id, 'side'].values[0]:
+            if grid_id in df_current_state["gridId"].tolist():
+                if side == df_current_state.loc[df_current_state["gridId"] == grid_id, 'side'].values[0]:
                     df.loc[df['grid_id'] == grid_id, 'status'] = 'engaged'
-                    df.loc[df['grid_id'] == grid_id, 'orderId'] = df_current_state.loc[df_current_state["grid_id"] == grid_id, 'orderId'].values[0]
+                    df.loc[df['grid_id'] == grid_id, 'orderId'] = df_current_state.loc[df_current_state["gridId"] == grid_id, 'orderId'].values[0]
                 else:
                     print("GRID ERROR - open_long vs open_short")
             else:
@@ -285,14 +162,34 @@ class GridPosition():
 
     def update_grid_side(self, symbol, position):
         df = self.grid[symbol]
+        if df['previous_side'].all() == False:
+            b_init = True
+        else:
+            b_init = False
+            action_counts = df['previous_side'].value_counts()
+            previous_open_long_count = action_counts.get('open_long', 0)
+            previous_close_long_count = action_counts.get('close_long', 0)
+
         df['previous_side'] = df['side']
         # Set the 'side' column based on conditions
         df.loc[df['position'] >= position, 'side'] = 'close_long'
         df.loc[df['position'] < position, 'side'] = 'open_long'
 
+        action_counts = df['side'].value_counts()
+        open_long_count = action_counts.get('open_long', 0)
+        close_long_count = action_counts.get('close_long', 0)
+
+        if not b_init:
+            if (open_long_count > previous_open_long_count):
+                self.trend = "UP"
+            elif (close_long_count > previous_close_long_count):
+                self.trend = "DOWN"
+            elif (open_long_count == previous_open_long_count) \
+                    and (close_long_count == previous_close_long_count):
+                self.trend = "FLAT"
+
         # Compare if column1 and column2 are the same
         df['changes'] = df['previous_side'] != df['side']
-
 
     def cross_check_with_current_state(self, symbol, df_current_state):
         df_grid = self.grid[symbol]
@@ -301,7 +198,7 @@ class GridPosition():
         # Compare values from both DataFrames using iterrows
         for index_grid, row_grid in df_grid.iterrows():
             for index_c_state, row_c_state in df_current_state.iterrows():
-                if row_grid['grid_id'] == row_c_state['grid_id']:
+                if row_grid['grid_id'] == row_c_state['gridId']:
                     if row_grid['side'] == row_c_state['side'] \
                             and row_grid['orderId'] == row_c_state['orderId']:
                         df_grid.loc[index_grid, 'cross_checked'] = True
@@ -316,7 +213,6 @@ class GridPosition():
             "grid_id": grid_id
         }
         """
-
         df_grid = self.grid[symbol].copy()
 
         df_filtered_changes = df_grid[df_grid['changes']]
@@ -350,7 +246,6 @@ class GridPosition():
         sorted_list = sorted(lst_order, key=lambda x: sorting_order.index(x['type']))
         return sorted_list
 
-
     def set_to_pending_execute_order(self, symbol, lst_order_to_execute):
         df = self.grid[symbol]
         for placed_order in lst_order_to_execute:
@@ -365,3 +260,85 @@ class GridPosition():
             df_grid = self.grid[symbol]
             print(df_grid.to_string())
 
+    def update_nb_open_positions(self, symbol, df_open_positions, buying_size):
+        # ['symbol', 'size', 'positions_size', 'nb_open_positions']
+        self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'size'] = buying_size
+        if len(df_open_positions) > 0:
+            filtered_df = df_open_positions[df_open_positions['symbol'] == symbol]
+            if len(filtered_df):
+                # sum_available_position = filtered_df['available'].sum() if not filtered_df.empty else 0
+                sum_available_position = filtered_df['total'].sum() if not filtered_df.empty else 0
+                sum_available_position = sum_available_position / filtered_df['leverage'].iloc[0]
+                self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'positions_size'] = sum_available_position
+                nb_open_positions = int(sum_available_position / buying_size)
+                self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_open_positions'] = nb_open_positions
+
+    def get_nb_open_positions(self, symbol):
+        row = self.df_nb_open_positions[self.df_nb_open_positions['symbol'] == symbol]
+        if not row.empty:
+            return row['nb_open_positions'].iloc[0]
+        else:
+            return None
+
+    def filter_lst_close_execute_order(self, symbol, lst_order_to_execute):
+        nb_open_positions = self.get_nb_open_positions(symbol)
+        df = self.grid[symbol]
+        df_filtered = df[(df['status'] == 'engaged') & (df['side'] == 'close_long')]
+        nb_close_position_already_open = len(df_filtered)
+        nb_selected_to_be_open = nb_open_positions - nb_close_position_already_open
+
+        filtered_orders = []
+        # Filter OPEN orders
+        for order in lst_order_to_execute:
+            if order["type"] in ["OPEN_LONG_ORDER", "OPEN_SHORT_ORDER"]:
+                filtered_orders.append(order)
+        # Filter CLOSE orders and sort them by price
+        close_orders = sorted(
+            (order for order in lst_order_to_execute if order["type"] in ["CLOSE_LONG_ORDER", "CLOSE_SHORT_ORDER"]),
+            key=lambda x: x["price"]
+        )
+        # Append a subset of CLOSE orders based on the number of open positions
+        if self.trend == "DOWN":
+            filtered_orders.extend(close_orders[1:(nb_selected_to_be_open+1)])
+        else:
+            filtered_orders.extend(close_orders[:nb_selected_to_be_open])
+
+        self.set_grid_positions_to_on_hold(lst_order_to_execute, filtered_orders)
+
+        return filtered_orders
+
+    def set_on_hold_from_grid_id(self, symbol, grid_id):
+        df = self.grid[symbol]
+        df.loc[df['grid_id'] == grid_id, 'status'] = 'on_hold'
+
+    def set_grid_positions_to_on_hold(self, lst_pending, lst_filtered):
+        resulted_lst = [element for element in lst_pending if element not in lst_filtered]
+        for order in resulted_lst:
+            self.set_on_hold_from_grid_id(order["symbol"], order["grid_id"])
+
+    def normalize_grid_price(self, symbol, pricePlace, priceEndStep):
+        df = self.grid[symbol]
+        df['position'] = df['position'].apply(lambda x: self.normalize_price(x, pricePlace, priceEndStep))
+        print("grid price normalized: ", df['position'].tolist())
+
+    def normalize_price(self, amount, pricePlace, priceEndStep):
+        amount = amount * pow(10, pricePlace)
+        amount = math.floor(amount)
+        amount = amount * pow(10, -pricePlace)
+        amount = round(amount, pricePlace)
+        # Calculate the decimal without using %
+        decimal_multiplier = priceEndStep * pow(10, -pricePlace)
+        decimal = amount - math.floor(round(amount / decimal_multiplier)) * decimal_multiplier
+        amount = amount - decimal
+        amount = round(amount, pricePlace)
+        return amount
+
+    def get_buying_market_order(self, symbol, size, price):
+        order_to_execute = {}
+        order_to_execute["symbol"] = symbol
+        order_to_execute["gross_size"] = size
+        order_to_execute["type"] = "OPEN_LONG"   # OPEN_SHORT for short_grid
+        order_to_execute["price"] = price
+        order_to_execute["gross_size"] = size
+        order_to_execute["grid_id"] = -1
+        return order_to_execute

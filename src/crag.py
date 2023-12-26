@@ -48,7 +48,7 @@ class Crag:
         self.total_SL_TP_percent = 0
         self.monitoring = monitoring_helper.SQLMonitoring("ovh_mysql")
         self.tradetraces = traces.TradeTraces()
-        self.init_grid_position = 0
+        self.init_grid_position = True
 
         if params:
             self.broker = params.get("broker", self.broker)
@@ -233,6 +233,7 @@ class Crag:
                         step_result = self.safety_step()
                         print("[RUN] [CRAG] while step 3")
                         if not step_result:
+                            print("safety_step result exit")
                             os._exit(0)
                         if self.rtstr.high_volatility.high_volatility_pause_status():
                             msg = "duration: " + str(self.rtstr.high_volatility.high_volatility_get_duration()) + "seconds"
@@ -568,12 +569,10 @@ class Crag:
         # sell symbols
         lst_symbols = [current_trade.symbol for current_trade in self.current_trades if self.rtstr.is_open_type(current_trade.type)]
         lst_symbols = list(set(lst_symbols))
-        if (self.final_datetime and current_datetime >= self.final_datetime)\
-                or self.rtstr.condition_for_global_sl_tp_signal():
+        if (self.final_datetime and current_datetime >= self.final_datetime):
             # final step - force all the symbols to be sold
             df_selling_symbols = self.rtstr.get_df_forced_selling_symbols()
             self.exit = True
-            print("self.exit set to True !!!!!!! ", self.rtstr.condition_for_global_sl_tp_signal())
             self.flush_current_trade = True
         else:
             # identify symbols to sell
@@ -829,6 +828,9 @@ class Crag:
         broker_current_state = self.broker.get_current_state(symbols)
         if self.init_grid_position:
             self.init_grid_position = False
+            self.rtstr.set_normalized_grid_price(self.broker.get_price_place_endstep(symbols))
+            lst_orders_to_execute = self.rtstr.activate_grid(broker_current_state)
+            self.broker.execute_orders(lst_orders_to_execute)
             self.broker.reset_current_postion(broker_current_state)
             broker_current_state = self.broker.get_current_state(symbols)
         lst_orders_to_execute = self.rtstr.set_broker_current_state(broker_current_state)
@@ -857,6 +859,7 @@ class Crag:
             self.actual_drawdown_percent = self.drawdown * 100 / self.maximal_portfolio_value
 
         if self.rtstr.need_broker_current_state():
+            # GRID TRADING STRATEGY
             self.udpate_strategy_with_broker_current_state()
 
         if self.rtstr.condition_for_global_SLTP(self.total_SL_TP_percent) \

@@ -149,12 +149,16 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         df_open_orders = self.set_open_orders_gridId(df_open_orders)
 
         df_open_positions = self.get_open_position()
-        df_open_positions_filtered = df_open_positions[df_open_positions['symbol'].apply(lambda x: any(symbol in lst_symbols for symbol in x))]
+        df_open_positions['symbol'] = df_open_positions['symbol'].apply(self._get_coin)
+        df_open_positions_filtered = df_open_positions[df_open_positions['symbol'].isin(lst_symbols)]
+
+        if any(df_open_positions_filtered):
+            df_open_positions = df_open_positions_filtered
 
         df_prices = self.get_values(lst_symbols)
         current_state = {
             "open_orders": df_open_orders,
-            "open_positions": df_open_positions_filtered,
+            "open_positions": df_open_positions,
             "prices": df_prices
         }
         return current_state
@@ -972,3 +976,13 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         if size < minsize:
             return 0
         return size
+
+    def get_price_place_endstep(self, lst_symbol):
+        lst = []
+        for symbol in lst_symbol:
+            dct = {}
+            dct['symbol'] = symbol
+            dct['pricePlace'] = int(self.get_pricePlace(symbol))
+            dct['priceEndStep'] = self.get_priceEndStep(symbol)
+            lst.append(dct)
+        return lst
