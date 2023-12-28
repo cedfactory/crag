@@ -35,6 +35,8 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         self.boot_status = ""
         self.broker_dir_path = "./broker_data"
         self.broker_dir_path_filename = self.broker_dir_path + "./broker_init_data.csv"
+        if self.reset_account_orders:
+            self.cancel_all_orders(["XRP", "BTC", "ETH"])
         if self.reset_account:
             print('reset account requested')
             self.execute_reset_account()

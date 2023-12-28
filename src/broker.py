@@ -8,6 +8,7 @@ class Broker(metaclass = ABCMeta):
         self.cash = 0
         self.fdp_url_id = "localhost:5000"
         self.reset_account = True  # Reset account default behavior
+        self.reset_account_orders = True  # Reset account orders default behavior
         if params:
             self.cash = params.get("cash", self.cash)
             self.fdp_url_id = params.get("fdp_url_id", self.fdp_url_id)
@@ -17,6 +18,12 @@ class Broker(metaclass = ABCMeta):
                     self.reset_account = ast.literal_eval(self.reset_account)
                 except BaseException as err:
                     self.reset_account = True
+            self.reset_account_orders = params.get("reset_account_orders", self.reset_account)
+            if isinstance(self.reset_account_orders, str):
+                try:
+                    self.reset_account_orders = ast.literal_eval(self.reset_account_orders)
+                except BaseException as err:
+                    self.reset_account_orders = True
         self.cash_borrowed = 0
         self.rtdp = None
         self.account = None
