@@ -28,10 +28,17 @@ class MainPanel(wx.Panel):
         staticTextAccounts = wx.StaticText(self,label = "Accounts", style = wx.ALIGN_LEFT)
         main_sizer.Add(staticTextAccounts,0, wx.ALL | wx.EXPAND, 5)
 
-        self.accounts = wx.ComboBox(self,choices = [])
-        main_sizer.Add(self.accounts, 0, wx.ALL | wx.EXPAND, 5)
+        hsizer_accounts = wx.BoxSizer(wx.HORIZONTAL)
 
+        self.accounts = wx.ComboBox(self, choices=[])
         self.accounts.Bind(wx.EVT_COMBOBOX, self.on_account)
+        hsizer_accounts.Add(self.accounts, 0, wx.ALL | wx.EXPAND, 5)
+
+        button_account_update = wx.Button(self, label="Update")
+        button_account_update.Bind(wx.EVT_BUTTON, self.on_account)
+        hsizer_accounts.Add(button_account_update, 0, wx.ALL | wx.CENTER, 5)
+
+        main_sizer.Add(hsizer_accounts, 0, wx.ALL | wx.LEFT, 5)
 
         # usdt equity
         self.staticTextUsdtEquity = wx.StaticText(self, label="USDT Equity : ", style=wx.ALIGN_LEFT)
