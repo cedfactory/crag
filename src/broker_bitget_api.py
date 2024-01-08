@@ -378,7 +378,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 n_attempts = n_attempts - 1
 
         if len(self.df_account_assets) == 0:
-            return 0
+            return 0, 0, 0
         else:
             available = self.df_account_assets.loc[self.df_account_assets["symbol"] == baseCoin, "available"].values[0]
             crossMaxAvailable = self.df_account_assets.loc[self.df_account_assets["symbol"] == baseCoin, "crossMaxAvailable"].values[0]
