@@ -126,7 +126,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             while n_attempts > 0:
                 try:
                     all_orders = self.orderApi.current(symbol=symbol + "USDT_UMCBL")
-                    print("all_orders : ", all_orders)
+                    # print("all_orders : ", all_orders)
                     lst_all_orders = [data for data in all_orders["data"]]
                     current_res = self._build_df_open_orders(lst_all_orders)
                     res = pd.concat([res, current_res])

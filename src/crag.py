@@ -85,7 +85,8 @@ class Crag:
             self.strategy_name = self.rtstr.get_info()
         if self.broker:
             self.final_datetime = self.broker.get_final_datetime()
-            self.start_date, self.end_date, self.interval = self.broker.get_info()
+            # self.start_date, self.end_date, self.interval = self.broker.get_info()
+            self.start_date, self.end_date, _ = self.broker.get_info() # CEDE To be confirmed
         self.export_filename = "sim_broker_history" + "_" + self.strategy_name + "_" + str(self.start_date) + "_" + str(self.end_date) + "_" + str(self.interval) + ".csv"
         self.backup_filename = self.id + "_crag_backup.pickle"
 
@@ -222,9 +223,6 @@ class Crag:
             now = time.time()
             sleeping_time = start - now
             # sleeping_time = 0 # CEDE DEBUG TO SKIP THE SLEEPING TIME
-            if self.start_date and self.end_date:
-                # SIM MODE
-                sleeping_time = 0
             if sleeping_time > 0:
                 if self.safety_run:
                     start_minus_one_sec = datetime.timestamp(datetime.fromtimestamp(start) - timedelta(seconds=1))
@@ -823,17 +821,94 @@ class Crag:
             msg = msg + ' size: ' + str(round(current_trade.net_size, 4))
         print(msg)
 
+    def create_directory(self, directory_path):
+        if not os.path.exists(directory_path):
+            os.makedirs(directory_path)
+            print(f"Directory '{directory_path}' created successfully.")
+        else:
+            print(f"Directory '{directory_path}' already exists.")
+
+    def save_df_csv_broker_current_state(self, output_dir, current_state):
+        self.create_directory(output_dir)
+        # Get the current date and time
+        current_date = datetime.now()
+
+        # Format the date as a string
+        formatted_date = current_date.strftime("%Y%m%d_%H%M%S")
+
+        df_current_states = current_state["open_orders"]
+        df_open_positions = current_state["open_positions"]
+        df_price = current_state["prices"]
+
+        filename_df_current_states = f"data_{formatted_date}_df_current_states.csv"
+        full_path = os.path.join(output_dir, filename_df_current_states)
+        df_current_states.to_csv(full_path)
+
+        filename_df_open_positions = f"data_{formatted_date}_df_open_positions.csv"
+        full_path = os.path.join(output_dir, filename_df_open_positions)
+        df_open_positions.to_csv(full_path)
+
+        filename_df_price = f"data_{formatted_date}_df_price.csv"
+        full_path = os.path.join(output_dir, filename_df_price)
+        df_price.to_csv(full_path)
+
+
+    def get_current_state_from_csv(self, input_dir, cpt):
+        str_cpt = str(cpt)
+        full_path = os.path.join(input_dir, "data_" + str_cpt + "_df_current_states.csv")
+        df_open_orders = pd.read_csv(full_path)
+
+        full_path = os.path.join(input_dir, "data_" + str_cpt + "_df_open_positions.csv")
+        df_open_positions = pd.read_csv(full_path)
+
+        full_path = os.path.join(input_dir, "data_" + str_cpt + "_df_price.csv")
+        df_prices = pd.read_csv(full_path)
+
+        broker_current_state = {
+            "open_orders": df_open_orders,
+            "open_positions": df_open_positions,
+            "prices": df_prices
+        }
+        return broker_current_state
+
+
+    def udpate_strategy_with_broker_current_state_scenario(self, scenario_id):
+        cpt = 0
+        while True:
+            if cpt == 5:
+                print("cpt: ", cpt)
+            broker_current_state = self.get_current_state_from_csv("./grid_test/" + str(scenario_id) + "_scenario_test", cpt)
+            lst_orders_to_execute = self.rtstr.set_broker_current_state(broker_current_state)
+            print("output lst_orders_to_execute: ", lst_orders_to_execute)
+            cpt += 1
+
     def udpate_strategy_with_broker_current_state(self):
+        # GRID_SCENARIO_ON = False
+        GRID_SCENARIO_ON = True
+        SCENARIO_ID = 4
+        if GRID_SCENARIO_ON:
+            self.udpate_strategy_with_broker_current_state_scenario(SCENARIO_ID)
+        else:
+            self.udpate_strategy_with_broker_current_state_live()
+
+    def udpate_strategy_with_broker_current_state_live(self):
         symbols = self.rtstr.lst_symbols
         broker_current_state = self.broker.get_current_state(symbols)
         if self.init_grid_position:
             self.init_grid_position = False
             self.rtstr.set_normalized_grid_price(self.broker.get_price_place_endstep(symbols))
             lst_orders_to_execute = self.rtstr.activate_grid(broker_current_state)
+            lst_orders_to_execute = []
             self.broker.execute_orders(lst_orders_to_execute)
             self.broker.reset_current_postion(broker_current_state)
             broker_current_state = self.broker.get_current_state(symbols)
+
+        # self.save_df_csv_broker_current_state("./grid_test", broker_current_state)
         lst_orders_to_execute = self.rtstr.set_broker_current_state(broker_current_state)
+
+        if not self.zero_print:
+            print("output lst_orders_to_execute: ", lst_orders_to_execute)
+
         self.broker.execute_orders(lst_orders_to_execute)
 
     def safety_step(self):
@@ -879,78 +954,80 @@ class Crag:
             self.broker.execute_reset_account()
             return False
 
-        lst_symbol_position = self.broker.get_lst_symbol_position()
-        lst_symbol_for_closure = []
-        for symbol in lst_symbol_position:
-            symbol_equity = self.broker.get_symbol_usdtEquity(symbol)
-            symbol_unrealizedPL = self.broker.get_symbol_unrealizedPL(symbol)
-            if (symbol_equity - symbol_unrealizedPL) == 0:
-                symbol_unrealizedPL_percent = 0
-            else:
-                symbol_unrealizedPL_percent = symbol_unrealizedPL * 100 / (symbol_equity - symbol_unrealizedPL)
-            # print("symbol", symbol, "symbol_unrealizedPL: $", symbol_unrealizedPL, " - ", symbol_unrealizedPL_percent, "%") # DEBUG CEDE
-            if self.rtstr.condition_for_SLTP(symbol_unrealizedPL_percent) \
-                    or self.rtstr.condition_trailer_TP(self.broker._get_coin(symbol), symbol_unrealizedPL_percent)\
-                    or self.rtstr.condition_trailer_SL(self.broker._get_coin(symbol), symbol_unrealizedPL_percent):
-                lst_symbol_for_closure.append(symbol)
+        if not self.rtstr.need_broker_current_state():
+            # NOT AVAILABLE IN GRID TRADING STRATEGY
+            lst_symbol_position = self.broker.get_lst_symbol_position()
+            lst_symbol_for_closure = []
+            for symbol in lst_symbol_position:
+                symbol_equity = self.broker.get_symbol_usdtEquity(symbol)
+                symbol_unrealizedPL = self.broker.get_symbol_unrealizedPL(symbol)
+                if (symbol_equity - symbol_unrealizedPL) == 0:
+                    symbol_unrealizedPL_percent = 0
+                else:
+                    symbol_unrealizedPL_percent = symbol_unrealizedPL * 100 / (symbol_equity - symbol_unrealizedPL)
+                # print("symbol", symbol, "symbol_unrealizedPL: $", symbol_unrealizedPL, " - ", symbol_unrealizedPL_percent, "%") # DEBUG CEDE
+                if self.rtstr.condition_for_SLTP(symbol_unrealizedPL_percent) \
+                        or self.rtstr.condition_trailer_TP(self.broker._get_coin(symbol), symbol_unrealizedPL_percent)\
+                        or self.rtstr.condition_trailer_SL(self.broker._get_coin(symbol), symbol_unrealizedPL_percent):
+                    lst_symbol_for_closure.append(symbol)
 
-        if self.rtstr.trigger_high_volatility_protection():
-            BTC_price = self.broker.get_value('BTC')
-            current_datetime = datetime.now()
-            current_timestamp = datetime.timestamp(current_datetime)
-            equity = self.broker.get_usdt_equity()
-            # ['datetime', 'timestamp', 'symbol', 'pice', 'pct_BTC', 'equity', 'pct_equity']
-            lst_record_volatility = [current_datetime, current_timestamp, 'BTC', BTC_price, 0, equity, 0]
-            self.rtstr.set_high_volatility_protection_data(lst_record_volatility)
-            if self.rtstr.high_volatility_protection_activation(self.actual_drawdown_percent):
-                print("DUMP POSITIONS DUE TO HIGH VOLATILITY")
-                lst_symbol_for_closure = self.broker.get_lst_symbol_position()
-                self.maximal_portfolio_value
+            if self.rtstr.trigger_high_volatility_protection():
+                BTC_price = self.broker.get_value('BTC')
+                current_datetime = datetime.now()
+                current_timestamp = datetime.timestamp(current_datetime)
+                equity = self.broker.get_usdt_equity()
+                # ['datetime', 'timestamp', 'symbol', 'pice', 'pct_BTC', 'equity', 'pct_equity']
+                lst_record_volatility = [current_datetime, current_timestamp, 'BTC', BTC_price, 0, equity, 0]
+                self.rtstr.set_high_volatility_protection_data(lst_record_volatility)
+                if self.rtstr.high_volatility_protection_activation(self.actual_drawdown_percent):
+                    print("DUMP POSITIONS DUE TO HIGH VOLATILITY")
+                    lst_symbol_for_closure = self.broker.get_lst_symbol_position()
+                    self.maximal_portfolio_value
 
-        if len(lst_symbol_for_closure) > 0:
-            current_datetime = datetime.today().strftime("%Y/%m/%d %H:%M:%S")
-            for current_trade in self.current_trades:
-                symbol = self.broker._get_symbol(current_trade.symbol)
-                coin = current_trade.symbol
-                if self.rtstr.is_open_type(current_trade.type) and symbol in lst_symbol_for_closure:
-                    print("SELL TRIGGERED SL TP: ", current_trade.symbol, " at: ", current_datetime) # DEBUG CEDE
-                    msg = "SELL TRIGGERED SL TP: {} at: {}\n".format(current_trade.symbol, current_datetime)
-                    sell_trade = self._prepare_sell_trade_from_bought_trade(current_trade,
-                                                                            current_datetime)
-                    done = self.broker.execute_trade(sell_trade)
-                    if done:
-                        print("SELL PERFORMED SL TP: ", current_trade.symbol, " at: ", current_datetime) # DEBUG CEDE
-                        msg += "SELL PERFORMED SL TP"
-                        self.log(msg, "SL TP PERFORMED")
+            if len(lst_symbol_for_closure) > 0:
+                current_datetime = datetime.today().strftime("%Y/%m/%d %H:%M:%S")
+                for current_trade in self.current_trades:
+                    symbol = self.broker._get_symbol(current_trade.symbol)
+                    coin = current_trade.symbol
+                    if self.rtstr.is_open_type(current_trade.type) and symbol in lst_symbol_for_closure:
+                        print("SELL TRIGGERED SL TP: ", current_trade.symbol, " at: ", current_datetime) # DEBUG CEDE
+                        msg = "SELL TRIGGERED SL TP: {} at: {}\n".format(current_trade.symbol, current_datetime)
+                        sell_trade = self._prepare_sell_trade_from_bought_trade(current_trade,
+                                                                                current_datetime)
+                        done = self.broker.execute_trade(sell_trade)
+                        if done:
+                            print("SELL PERFORMED SL TP: ", current_trade.symbol, " at: ", current_datetime) # DEBUG CEDE
+                            msg += "SELL PERFORMED SL TP"
+                            self.log(msg, "SL TP PERFORMED")
 
-                        self.sell_performed = True
-                        current_trade.type = self.rtstr.get_close_type_and_close(current_trade.symbol)
-                        self.cash = self.broker.get_cash()
-                        sell_trade.cash = self.cash
+                            self.sell_performed = True
+                            current_trade.type = self.rtstr.get_close_type_and_close(current_trade.symbol)
+                            self.cash = self.broker.get_cash()
+                            sell_trade.cash = self.cash
 
-                        self.tradetraces.set_sell(sell_trade.symbol, sell_trade.trace_id,
-                                                  current_trade.symbol_price,
-                                                  current_trade.gross_price,
-                                                  current_trade.selling_fee,
-                                                  "SL-TP")
+                            self.tradetraces.set_sell(sell_trade.symbol, sell_trade.trace_id,
+                                                      current_trade.symbol_price,
+                                                      current_trade.gross_price,
+                                                      current_trade.selling_fee,
+                                                      "SL-TP")
 
-                        if sell_trade.roi < 0:
-                            self.traces_trade_negative += 1
+                            if sell_trade.roi < 0:
+                                self.traces_trade_negative += 1
+                            else:
+                                self.traces_trade_positive += 1
+
+                            self.current_trades.append(sell_trade)
                         else:
-                            self.traces_trade_positive += 1
+                            print("SELL TRANSACTION FAILED SL TP: ", current_trade.symbol, " at: ", current_datetime)  # DEBUG CEDE
+                            msg += "SELL TRANSACTION FAILED SL TP"
+                            self.log(msg, "SL TP FAILED")
 
-                        self.current_trades.append(sell_trade)
-                    else:
-                        print("SELL TRANSACTION FAILED SL TP: ", current_trade.symbol, " at: ", current_datetime)  # DEBUG CEDE
-                        msg += "SELL TRANSACTION FAILED SL TP"
-                        self.log(msg, "SL TP FAILED")
-
-                    if self.sell_performed:
-                        self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(),
-                                          self.broker.get_cash_borrowed(), self.rtstr.rtctrl.prices_symbols, False,
-                                          self.final_datetime, self.broker.get_balance())
-                        self.rtstr.set_symbol_trailer_tp_turned_off(coin)
-                        self.sell_performed = False
+                        if self.sell_performed:
+                            self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(),
+                                              self.broker.get_cash_borrowed(), self.rtstr.rtctrl.prices_symbols, False,
+                                              self.final_datetime, self.broker.get_balance())
+                            self.rtstr.set_symbol_trailer_tp_turned_off(coin)
+                            self.sell_performed = False
         return True
 
 

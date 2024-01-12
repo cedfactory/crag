@@ -187,11 +187,12 @@ class BrokerBitGet(broker.Broker):
         gridId = trade.grid_id
         success = trade.success
 
-        if success and orderId != None:
-            if gridId in self.df_grid_id_match["grid_id"].tolist():
+        if success and orderId != None and gridId != -1:
+            # if gridId in self.df_grid_id_match["grid_id"].tolist():
                 # drop the previous grid_id used
-                self.df_grid_id_match = self.df_grid_id_match.drop(self.df_grid_id_match[self.df_grid_id_match['grid_id'] == gridId].index)
+            #    self.df_grid_id_match = self.df_grid_id_match.drop(self.df_grid_id_match[self.df_grid_id_match['grid_id'] == gridId].index)
             self.df_grid_id_match.loc[len(self.df_grid_id_match)] = [orderId, gridId]
+            self.df_grid_id_match = self.df_grid_id_match.drop_duplicates()
 
     class OrderToTradeConverter:
         def __init__(self, **kwargs):
@@ -286,13 +287,21 @@ class BrokerBitGet(broker.Broker):
     @authentication_required
     def get_symbol_unrealizedPL(self, symbol):
         df_positions = self.get_open_position()
-        unrealizedPL = df_positions.loc[(df_positions['symbol'] == symbol), "unrealizedPL"].values[0]
+        try:
+            unrealizedPL = df_positions.loc[(df_positions['symbol'] == symbol), "unrealizedPL"].values[0]
+        except:
+            print("error: get_symbol_unrealizedPL ", len(df_positions))
+            unrealizedPL = 0
         return unrealizedPL
 
     @authentication_required
     def get_symbol_holdSide(self, symbol):
         df_positions = self.get_open_position()
-        holdSide = df_positions.loc[(df_positions['symbol'] == symbol), "holdSide"].values[0]
+        try:
+            holdSide = df_positions.loc[(df_positions['symbol'] == symbol), "holdSide"].values[0]
+        except:
+            print("error: get_symbol_holdSide ", len(df_positions))
+            holdSide = ""
         return holdSide
 
     @authentication_required

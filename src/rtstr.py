@@ -90,6 +90,10 @@ class RealTimeStrategy(metaclass=ABCMeta):
                     self.grid_low = float(self.grid_low)
                 elif len(self.grid_low) == 0:
                     self.grid_low = 0
+            if self.grid_high < self.grid_low:
+                tmp = self.grid_low
+                self.grid_low = self.grid_high
+                self.grid_high = tmp
             self.nb_grid = params.get("nb_grid", self.nb_grid)
             if isinstance(self.nb_grid, str):
                 if len(self.nb_grid) > 0:
