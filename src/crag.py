@@ -938,7 +938,7 @@ class Crag:
 
         end_time = time.time()
         self.iteration_times_grid_strategy.append(end_time - self.start_time_grid_strategy)
-        self.iteration_times_grid_strategy = self.iteration_times_grid_strategy[-1000:]
+        self.iteration_times_grid_strategy = self.iteration_times_grid_strategy[-100:]
         self.average_time_grid_strategy = round(sum(self.iteration_times_grid_strategy) / len(self.iteration_times_grid_strategy), 2)
 
         if not self.zero_print:
