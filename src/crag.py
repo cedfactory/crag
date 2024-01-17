@@ -49,6 +49,9 @@ class Crag:
         self.monitoring = monitoring_helper.SQLMonitoring("ovh_mysql")
         self.tradetraces = traces.TradeTraces()
         self.init_grid_position = True
+        self.start_time_grid_strategy = None
+        self.iteration_times_grid_strategy = []
+        self.average_time_grid_strategy = 0
 
         if params:
             self.broker = params.get("broker", self.broker)
@@ -875,23 +878,36 @@ class Crag:
     def udpate_strategy_with_broker_current_state_scenario(self, scenario_id):
         cpt = 0
         while True:
-            if cpt == 5:
-                print("cpt: ", cpt)
+            self.start_time_grid_strategy = time.time()
             broker_current_state = self.get_current_state_from_csv("./grid_test/" + str(scenario_id) + "_scenario_test", cpt)
             lst_orders_to_execute = self.rtstr.set_broker_current_state(broker_current_state)
             print("output lst_orders_to_execute: ", lst_orders_to_execute)
+            msg = self.rtstr.get_info_msg_status()
+            if msg != None:
+                current_datetime = datetime.today().strftime("%Y/%m/%d - %H:%M:%S")
+                msg = current_datetime + "\n" + msg
+                msg += "CPT: " + str(cpt) + "\n"
+                usdt_equity = self.broker.get_usdt_equity()
+                msg += "- USDT EQUITY: " + str(round(usdt_equity, 2)) + " - PNL: " + str(round(self.broker.get_global_unrealizedPL(), 2)) + "\n"
+                msg += "AVERAGE RUN TIME: " + str(self.average_time_grid_strategy) + "s\n"
+                self.log(msg, "GRID STATUS")
+            end_time = time.time()
+            self.iteration_times_grid_strategy.append(end_time - self.start_time_grid_strategy)
+            self.average_time_grid_strategy = round(sum(self.iteration_times_grid_strategy) / len(self.iteration_times_grid_strategy), 2)
+            print("GRID ITERATION AVERAGE TIME: " + str(self.average_time_grid_strategy) + " seconds")
+
             cpt += 1
 
     def udpate_strategy_with_broker_current_state(self):
-        # GRID_SCENARIO_ON = False
-        GRID_SCENARIO_ON = True
-        SCENARIO_ID = 4
+        GRID_SCENARIO_ON = False
+        SCENARIO_ID = 6
         if GRID_SCENARIO_ON:
             self.udpate_strategy_with_broker_current_state_scenario(SCENARIO_ID)
         else:
             self.udpate_strategy_with_broker_current_state_live()
 
     def udpate_strategy_with_broker_current_state_live(self):
+        self.start_time_grid_strategy = time.time()
         symbols = self.rtstr.lst_symbols
         broker_current_state = self.broker.get_current_state(symbols)
         if self.init_grid_position:
@@ -903,13 +919,30 @@ class Crag:
             self.broker.reset_current_postion(broker_current_state)
             broker_current_state = self.broker.get_current_state(symbols)
 
-        # self.save_df_csv_broker_current_state("./grid_test", broker_current_state)
         lst_orders_to_execute = self.rtstr.set_broker_current_state(broker_current_state)
+
+        msg = self.rtstr.get_info_msg_status()
+        if msg != None:
+            current_datetime = datetime.today().strftime("%Y/%m/%d - %H:%M:%S")
+            msg = current_datetime + "\n" + msg
+            usdt_equity = self.broker.get_usdt_equity()
+            msg += "- USDT EQUITY: " + str(round(usdt_equity, 2)) \
+                   + " - PNL: " + str(round(self.broker.get_global_unrealizedPL(), 2)) + "\n"
+            msg += "AVERAGE RUN TIME: " + str(self.average_time_grid_strategy) + "s\n"
+            self.log(msg, "GRID STATUS")
 
         if not self.zero_print:
             print("output lst_orders_to_execute: ", lst_orders_to_execute)
 
         self.broker.execute_orders(lst_orders_to_execute)
+
+        end_time = time.time()
+        self.iteration_times_grid_strategy.append(end_time - self.start_time_grid_strategy)
+        self.iteration_times_grid_strategy = self.iteration_times_grid_strategy[-1000:]
+        self.average_time_grid_strategy = round(sum(self.iteration_times_grid_strategy) / len(self.iteration_times_grid_strategy), 2)
+
+        if not self.zero_print:
+            print("GRID ITERATION AVERAGE TIME: " + str(self.average_time_grid_strategy) + " seconds")
 
     def safety_step(self):
         usdt_equity = self.broker.get_usdt_equity()
