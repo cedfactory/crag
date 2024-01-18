@@ -1,5 +1,5 @@
 <configuration>
-    <strategy id="strategygridtrading" name="StrategyGridTrading">
+    <strategy id="strategygridtradingshort" name="StrategyGridTradingShort">
         <params symbols="./symbols_df_sltp_XRP_usdt.csv" strategy_interval="3600" multi_param="False" candle_stick="released" max_position="1" sl="-5" tp="20" global_sl="-5" global_tp="20" trailer_tp="5" trailer_delta_tp="2" trailer_global_tp="0" trailer_global_delta_tp="0" trailer_sl="0" high_volatility="False" grid_high="0.7" grid_low="0.5" nb_grid="40"/>
     </strategy>
     <broker name="bitget">

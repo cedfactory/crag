@@ -4,7 +4,7 @@ import numpy as np
 
 import math
 
-class StrategyGridTrading(rtstr.RealTimeStrategy):
+class StrategyGridTradingShort(rtstr.RealTimeStrategy):
 
     def __init__(self, params=None):
         super().__init__(params)
@@ -31,7 +31,7 @@ class StrategyGridTrading(rtstr.RealTimeStrategy):
         return ds
 
     def get_info(self):
-        return "StrategyGridTrading"
+        return "StrategyGridTradingShort"
 
     def condition_for_opening_long_position(self, symbol):
         return False
