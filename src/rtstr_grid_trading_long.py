@@ -336,7 +336,6 @@ class GridPosition():
             print(df_grid.to_string(index=False))
 
     def update_nb_open_positions(self, symbol, df_open_positions, buying_size):
-        # ['symbol', 'size', 'positions_size', 'nb_open_positions']
         self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'size'] = buying_size
         if len(df_open_positions) > 0:
             filtered_df = df_open_positions[df_open_positions['symbol'] == symbol]
@@ -396,7 +395,12 @@ class GridPosition():
             grid_trend_msg = "UP / DOWN HIGH VOLATILITY "
             self.trend = "VOLATILITY"
             nb_selected_to_be_open = abs(self.diff_open_position)
-            filtered_orders.extend(close_orders[:nb_selected_to_be_open])
+            list_of_dicts = close_orders[:nb_selected_to_be_open]
+            lst_close_order = [d['grid_id'] for d in list_of_dicts]
+            if sorted(lst_close_order) != sorted(self.control_multi_position['lst_open_long']):
+                filtered_orders.extend(close_orders[:nb_selected_to_be_open])
+            else:
+                filtered_orders.extend(close_orders[1:(nb_selected_to_be_open+1)])
         # Append a subset of CLOSE orders based on the number of open positions
         elif self.trend == "DOWN":
             grid_trend_msg = "DOWN -> " + " nb_selected_to_be_open : " + str(nb_selected_to_be_open)

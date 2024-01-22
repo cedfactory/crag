@@ -192,7 +192,7 @@ class GridPosition():
                     df.loc[df['grid_id'] == grid_id, 'orderId'] = df_current_state.loc[df_current_state["gridId"] == grid_id, 'orderId'].values[0]
                 else:
                     # CEDE: This should not be triggered
-                    print("GRID ERROR - open_long vs open_short - grid id: ", grid_id)
+                    print("GRID ERROR - open_short vs open_short - grid id: ", grid_id)
             else:
                 # CEDE: Executed when high volatility is triggering an limit order just after being raised
                 #       and before being recorded by the strategy in the grid process structure
@@ -209,8 +209,8 @@ class GridPosition():
         df['on_edge'] = False
         df['previous_side'] = df['side']
         # Set the 'side' column based on conditions
-        df.loc[df['position'] > position, 'side'] = 'close_long'
-        df.loc[df['position'] < position, 'side'] = 'open_long'
+        df.loc[df['position'] < position, 'side'] = 'close_short'
+        df.loc[df['position'] > position, 'side'] = 'open_short'
 
         if (df['position'] == position).any():
             print('PRICE ON GRID EDGE - CROSSING OR NOT CROSSING')
@@ -303,10 +303,10 @@ class GridPosition():
             order_to_execute = {}
             order_to_execute["symbol"] = symbol
             order_to_execute["gross_size"] = size
-            if df_grid.loc[df_grid["grid_id"] == grid_id, 'side'].values[0] == "open_long":
-                order_to_execute["type"] = "OPEN_LONG_ORDER"
-            elif df_grid.loc[df_grid["grid_id"] == grid_id, 'side'].values[0] == "close_long":
-                order_to_execute["type"] = "CLOSE_LONG_ORDER"
+            if df_grid.loc[df_grid["grid_id"] == grid_id, 'side'].values[0] == "open_short":
+                order_to_execute["type"] = "OPEN_SHORT_ORDER"
+            elif df_grid.loc[df_grid["grid_id"] == grid_id, 'side'].values[0] == "close_short":
+                order_to_execute["type"] = "CLOSE_SHORT_ORDER"
             elif df_grid.loc[df_grid["grid_id"] == grid_id, 'side'].values[0] == "open_short":
                 order_to_execute["type"] = "OPEN_SHORT_ORDER"
             elif df_grid.loc[df_grid["grid_id"] == grid_id, 'side'].values[0] == "close_short":
@@ -315,7 +315,7 @@ class GridPosition():
             order_to_execute["grid_id"] = grid_id
             lst_order.append(order_to_execute)
 
-        sorting_order = ['OPEN_LONG_ORDER', 'OPEN_SHORT_ORDER', 'CLOSE_LONG_ORDER', 'CLOSE_SHORT_ORDER']
+        sorting_order = ['OPEN_SHORT_ORDER', 'OPEN_SHORT_ORDER', 'CLOSE_SHORT_ORDER', 'CLOSE_SHORT_ORDER']
         sorted_list = sorted(lst_order, key=lambda x: sorting_order.index(x['type']))
 
         return sorted_list
@@ -371,7 +371,7 @@ class GridPosition():
     def filter_lst_close_execute_order(self, symbol, lst_order_to_execute):
         nb_open_positions = self.get_nb_open_positions(symbol)
         df = self.grid[symbol]
-        df_filtered = df[(df['status'] == 'engaged') & (df['side'] == 'close_long')]
+        df_filtered = df[(df['status'] == 'engaged') & (df['side'] == 'close_short')]
         nb_close_position_already_open = len(df_filtered)
         nb_selected_to_be_open = nb_open_positions - nb_close_position_already_open
 
@@ -383,20 +383,26 @@ class GridPosition():
         filtered_orders = []
         # Filter OPEN orders
         for order in lst_order_to_execute:
-            if order["type"] in ["OPEN_LONG_ORDER", "OPEN_SHORT_ORDER"]\
+            if order["type"] in ["OPEN_SHORT_ORDER", "OPEN_SHORT_ORDER"]\
                     and self.filter_open_control_multi_position(order["grid_id"]):
                 filtered_orders.append(order)
         # Filter CLOSE orders and sort them by price
         close_orders = sorted(
-            (order for order in lst_order_to_execute if order["type"] in ["CLOSE_LONG_ORDER", "CLOSE_SHORT_ORDER"] and self.filter_close_limit_order(order["grid_id"])),
-            key=lambda x: x["price"]
+            (order for order in lst_order_to_execute if order["type"] in ["CLOSE_SHORT_ORDER", "CLOSE_SHORT_ORDER"] and self.filter_close_limit_order(order["grid_id"])),
+            key=lambda x: x["price"],
+            reverse=True
         )
 
         if self.diff_close_position < 0 and self.diff_open_position < 0:
             grid_trend_msg = "UP / DOWN HIGH VOLATILITY "
             self.trend = "VOLATILITY"
             nb_selected_to_be_open = abs(self.diff_open_position)
-            filtered_orders.extend(close_orders[:nb_selected_to_be_open])
+            list_of_dicts = close_orders[:nb_selected_to_be_open]
+            lst_close_order = [d['grid_id'] for d in list_of_dicts]
+            if sorted(lst_close_order) != sorted(self.control_multi_position['lst_open_short']):
+                filtered_orders.extend(close_orders[:nb_selected_to_be_open])
+            else:
+                filtered_orders.extend(close_orders[1:(nb_selected_to_be_open+1)])
         # Append a subset of CLOSE orders based on the number of open positions
         elif self.trend == "DOWN":
             grid_trend_msg = "DOWN -> " + " nb_selected_to_be_open : " + str(nb_selected_to_be_open)
@@ -446,7 +452,7 @@ class GridPosition():
         order_to_execute = {}
         order_to_execute["symbol"] = symbol
         order_to_execute["gross_size"] = size
-        order_to_execute["type"] = "OPEN_LONG"   # OPEN_SHORT for short_grid
+        order_to_execute["type"] = "OPEN_SHORT"   # OPEN_SHORT for short_grid
         order_to_execute["price"] = price
         order_to_execute["gross_size"] = size
         order_to_execute["grid_id"] = -1
@@ -454,84 +460,84 @@ class GridPosition():
 
     def init_control_multi_position(self):
         multi_position = {}
-        multi_position['previous_close_long'] = []
-        multi_position['new_close_long'] = []
-        multi_position['previous_open_long'] = []
-        multi_position['new_open_long'] = []
-        df_multi_position_status = pd.DataFrame(columns=['open_long', 'close_long'])
-        df_multi_position_status['open_long'] = []
-        df_multi_position_status['close_long'] = []
+        multi_position['previous_close_short'] = []
+        multi_position['new_close_short'] = []
+        multi_position['previous_open_short'] = []
+        multi_position['new_open_short'] = []
+        df_multi_position_status = pd.DataFrame(columns=['open_short', 'close_short'])
+        df_multi_position_status['open_short'] = []
+        df_multi_position_status['close_short'] = []
         multi_position['df_multi_position_status'] = df_multi_position_status
-        multi_position['lst_open_long'] = []
-        multi_position['lst_close_long'] = []
+        multi_position['lst_open_short'] = []
+        multi_position['lst_close_short'] = []
 
         return multi_position
 
     def update_control_multi_position(self, df_current_state):
-        self.control_multi_position['previous_close_long'] = self.control_multi_position['new_close_long']
-        self.control_multi_position['previous_open_long'] = self.control_multi_position['new_open_long']
+        self.control_multi_position['previous_close_short'] = self.control_multi_position['new_close_short']
+        self.control_multi_position['previous_open_short'] = self.control_multi_position['new_open_short']
 
-        self.control_multi_position['new_close_long'] = df_current_state[df_current_state['side'] == 'close_long']['gridId'].tolist()
-        self.control_multi_position['new_open_long'] = df_current_state[df_current_state['side'] == 'open_long']['gridId'].tolist()
+        self.control_multi_position['new_close_short'] = df_current_state[df_current_state['side'] == 'close_short']['gridId'].tolist()
+        self.control_multi_position['new_open_short'] = df_current_state[df_current_state['side'] == 'open_short']['gridId'].tolist()
 
-        lst_open_long_triggered = [element for element in self.control_multi_position['previous_open_long'] if element not in self.control_multi_position['new_open_long']]
-        self.control_multi_position['lst_open_long'] = self.control_multi_position['lst_open_long'] + lst_open_long_triggered
-        self.control_multi_position['lst_open_long'] = list(set(self.control_multi_position['lst_open_long']))
+        lst_open_short_triggered = [element for element in self.control_multi_position['previous_open_short'] if element not in self.control_multi_position['new_open_short']]
+        self.control_multi_position['lst_open_short'] = self.control_multi_position['lst_open_short'] + lst_open_short_triggered
+        self.control_multi_position['lst_open_short'] = list(set(self.control_multi_position['lst_open_short']))
 
-        lst_new_close_long_order = [element for element in self.control_multi_position['new_close_long'] if element not in self.control_multi_position['previous_close_long']]
-        self.control_multi_position['lst_close_long'] = self.control_multi_position['lst_close_long'] + lst_new_close_long_order
-        self.control_multi_position['lst_close_long'] = list(set(self.control_multi_position['lst_close_long']))
+        lst_new_close_short_order = [element for element in self.control_multi_position['new_close_short'] if element not in self.control_multi_position['previous_close_short']]
+        self.control_multi_position['lst_close_short'] = self.control_multi_position['lst_close_short'] + lst_new_close_short_order
+        self.control_multi_position['lst_close_short'] = list(set(self.control_multi_position['lst_close_short']))
 
-        lst_close_long_triggered = [element for element in self.control_multi_position['previous_close_long'] if element not in self.control_multi_position['new_close_long']]
-        if len(lst_close_long_triggered) > 0:
+        lst_close_short_triggered = [element for element in self.control_multi_position['previous_close_short'] if element not in self.control_multi_position['new_close_short']]
+        if len(lst_close_short_triggered) > 0:
             # Filter rows based on the values to drop and negate the condition with ~
-            self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'][~self.control_multi_position['df_multi_position_status']['close_long'].isin(lst_close_long_triggered)]
+            self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'][~self.control_multi_position['df_multi_position_status']['close_short'].isin(lst_close_short_triggered)]
 
         if self.lst_limit_order_missing:
-            self.control_multi_position['lst_open_long'].extend(
-                [missing['grid_id'] for missing in self.lst_limit_order_missing if missing['side'] == 'open_long']
+            self.control_multi_position['lst_open_short'].extend(
+                [missing['grid_id'] for missing in self.lst_limit_order_missing if missing['side'] == 'open_short']
             )
-            self.control_multi_position['lst_close_long'].extend(
-                [missing['grid_id'] for missing in self.lst_limit_order_missing if missing['side'] == 'close_long']
+            self.control_multi_position['lst_close_short'].extend(
+                [missing['grid_id'] for missing in self.lst_limit_order_missing if missing['side'] == 'close_short']
             )
 
         if not self.zero_print:
-            print('lst_close_long_triggered: ', lst_close_long_triggered)
-            print('global lst_close_long: ', self.control_multi_position['lst_close_long'])
-            print('global lst_open_long: ', self.control_multi_position['lst_open_long'])
+            print('lst_close_short_triggered: ', lst_close_short_triggered)
+            print('global lst_close_short: ', self.control_multi_position['lst_close_short'])
+            print('global lst_open_short: ', self.control_multi_position['lst_open_short'])
 
-        if len(self.control_multi_position['lst_close_long']) == len(self.control_multi_position['lst_open_long']):
+        if len(self.control_multi_position['lst_close_short']) == len(self.control_multi_position['lst_open_short']):
             # Loop to extend the DataFrame in each iteration
-            lst_open_long_tmp = self.control_multi_position['lst_open_long'].copy()
-            lst_close_long_tmp = self.control_multi_position['lst_close_long'].copy()
-            for open_val, close_val in zip(lst_open_long_tmp, lst_close_long_tmp):
-                if not ((self.control_multi_position['df_multi_position_status']['open_long'] == open_val)
-                        & (self.control_multi_position['df_multi_position_status']['close_long'] == close_val)).any():
+            lst_open_short_tmp = self.control_multi_position['lst_open_short'].copy()
+            lst_close_short_tmp = self.control_multi_position['lst_close_short'].copy()
+            for open_val, close_val in zip(lst_open_short_tmp, lst_close_short_tmp):
+                if not ((self.control_multi_position['df_multi_position_status']['open_short'] == open_val)
+                        & (self.control_multi_position['df_multi_position_status']['close_short'] == close_val)).any():
                     # Append a new row self.control_multi_position['df_multi_position_status'] values from the lists
-                    self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
-                                                                                                                                              'close_long': close_val},
+                    self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_short': open_val,
+                                                                                                                                              'close_short': close_val},
                                                                                                                                              ignore_index=True)
                     # Remove the elements from the lists
-                    self.control_multi_position['lst_open_long'].remove(open_val)
-                    self.control_multi_position['lst_close_long'].remove(close_val)
+                    self.control_multi_position['lst_open_short'].remove(open_val)
+                    self.control_multi_position['lst_close_short'].remove(close_val)
                     if not self.zero_print:
                         print(open_val, " and ", close_val, " dropped from list")
 
         # reorder df_multi_position_status
         if len(self.control_multi_position['df_multi_position_status']) > 0:
-            self.control_multi_position['df_multi_position_status']['open_long'] = sorted(self.control_multi_position['df_multi_position_status']['open_long'].tolist())
-            self.control_multi_position['df_multi_position_status']['close_long'] = sorted(self.control_multi_position['df_multi_position_status']['close_long'].tolist())
+            self.control_multi_position['df_multi_position_status']['open_short'] = sorted(self.control_multi_position['df_multi_position_status']['open_short'].tolist())
+            self.control_multi_position['df_multi_position_status']['close_short'] = sorted(self.control_multi_position['df_multi_position_status']['close_short'].tolist())
 
-        self.diff_close_position = len(self.control_multi_position['new_close_long']) - len(self.control_multi_position['previous_close_long'])
-        self.diff_open_position = len(self.control_multi_position['new_open_long']) - len(self.control_multi_position['previous_open_long'])
+        self.diff_close_position = len(self.control_multi_position['new_close_short']) - len(self.control_multi_position['previous_close_short'])
+        self.diff_open_position = len(self.control_multi_position['new_open_short']) - len(self.control_multi_position['previous_open_short'])
 
         if not self.zero_print:
             print('df_multi_position_status: ')
             print(self.control_multi_position['df_multi_position_status'].to_string(index=False))
 
     def filter_open_control_multi_position(self, open_grid_id):
-        if open_grid_id in self.control_multi_position['lst_open_long'] \
-                or open_grid_id in self.control_multi_position['df_multi_position_status']['open_long'].tolist():
+        if open_grid_id in self.control_multi_position['lst_open_short'] \
+                or open_grid_id in self.control_multi_position['df_multi_position_status']['open_short'].tolist():
             if not self.zero_print:
                 print("filter_open_control_multi_position - grid id: ", open_grid_id)
             return False
@@ -553,11 +559,11 @@ class GridPosition():
         price = 
         grid_position =
         """
-        # Count of rows with side == 'close_long' and status == 'engaged'
-        dct_status_info['nb_limit_close'] = len(df[(df['side'] == 'close_long') & (df['status'] == 'engaged')])
+        # Count of rows with side == 'close_short' and status == 'engaged'
+        dct_status_info['nb_limit_close'] = len(df[(df['side'] == 'close_short') & (df['status'] == 'engaged')])
 
-        # Count of rows with side == 'open_long' and status == 'engaged'
-        dct_status_info['nb_limit_open'] = len(df[(df['side'] == 'open_long') & (df['status'] == 'engaged')])
+        # Count of rows with side == 'open_short' and status == 'engaged'
+        dct_status_info['nb_limit_open'] = len(df[(df['side'] == 'open_short') & (df['status'] == 'engaged')])
 
         dct_status_info['nb_position'] = self.get_nb_open_positions(symbol)
         dct_status_info['price'] = self.current_price

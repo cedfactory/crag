@@ -880,9 +880,13 @@ class Crag:
 
     def udpate_strategy_with_broker_current_state_scenario(self, scenario_id):
         cpt = 0
+        input_dir = "./grid_test/" + str(scenario_id) + "_scenario_test"
         while True:
+            break_pt = 35
+            if cpt == break_pt:
+                print("cpt: ", cpt)
             self.start_time_grid_strategy = time.time()
-            broker_current_state = self.get_current_state_from_csv("./grid_test/" + str(scenario_id) + "_scenario_test", cpt)
+            broker_current_state = self.get_current_state_from_csv(input_dir, cpt)
             lst_orders_to_execute = self.rtstr.set_broker_current_state(broker_current_state)
             print("output lst_orders_to_execute: ", lst_orders_to_execute)
             msg = self.rtstr.get_info_msg_status()
@@ -899,11 +903,14 @@ class Crag:
             self.average_time_grid_strategy = round(sum(self.iteration_times_grid_strategy) / len(self.iteration_times_grid_strategy), 2)
             print("GRID ITERATION AVERAGE TIME: " + str(self.average_time_grid_strategy) + " seconds")
 
+            if cpt == break_pt:
+                print("cpt: ", cpt)
+
             cpt += 1
 
     def udpate_strategy_with_broker_current_state(self):
         GRID_SCENARIO_ON = False
-        SCENARIO_ID = 6
+        SCENARIO_ID = 7
         if GRID_SCENARIO_ON:
             self.udpate_strategy_with_broker_current_state_scenario(SCENARIO_ID)
         else:
