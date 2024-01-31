@@ -99,10 +99,10 @@ class BrokerBitGet(broker.Broker):
 
         if trade.type in ["OPEN_LONG", "OPEN_SHORT", "OPEN_LONG_ORDER", "OPEN_SHORT_ORDER", "CLOSE_LONG_ORDER", "CLOSE_SHORT_ORDER"]:
             if trade.type == "OPEN_LONG":
-                print(trade.type, " size: ", trade.gross_size * self.leverage_short, " price: ", trade.price)
+                print(trade.type, " size: ", trade.gross_size * self.leverage_short)
                 transaction = self._open_long_position(symbol, trade.gross_size * self.leverage_long, clientOid)
             elif trade.type == "OPEN_SHORT":
-                print(trade.type, " size: ", trade.gross_size * self.leverage_short, " price: ", trade.price)
+                print(trade.type, " size: ", trade.gross_size * self.leverage_short)
                 transaction = self._open_short_position(symbol, trade.gross_size * self.leverage_short, clientOid)
             elif trade.type == "OPEN_LONG_ORDER":
                 print(trade.type, " size: ", trade.gross_size * self.leverage_short, " price: ", trade.price)
