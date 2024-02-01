@@ -51,7 +51,7 @@ class PanelPositions(wx.Panel):
         hsizer.Add(staticOpenPosition,0, wx.ALL | wx.EXPAND, 5)
         self.symbols = wx.ComboBox(self,choices = ["BTC", "ETH", "XRP"])
         hsizer.Add(self.symbols,0, wx.ALL | wx.EXPAND, 5)
-        staticAmount = wx.StaticText(self,label = "Amount", style = wx.ALIGN_LEFT)
+        staticAmount = wx.StaticText(self,label = "Amount ($)", style = wx.ALIGN_LEFT)
         hsizer.Add(staticAmount,0, wx.ALL | wx.EXPAND, 5)
         self.amount = FS.FloatSpin(self, -1, size=wx.Size(80, -1), min_val=0, increment=0.1, value=0., digits=3, agwStyle=FS.FS_LEFT)
         hsizer.Add(self.amount, 0, wx.ALL | wx.CENTER, 5)
@@ -98,7 +98,7 @@ class PanelOrders(wx.Panel):
         hsizer.Add(staticOpenOrderLimit,0, wx.ALL | wx.EXPAND, 5)
         self.symbols = wx.ComboBox(self,choices = ["BTC", "ETH", "XRP"])
         hsizer.Add(self.symbols,0, wx.ALL | wx.EXPAND, 5)
-        staticAmount = wx.StaticText(self,label = "Amount", style = wx.ALIGN_LEFT)
+        staticAmount = wx.StaticText(self,label = "Amount ($)", style = wx.ALIGN_LEFT)
         hsizer.Add(staticAmount,0, wx.ALL | wx.EXPAND, 5)
         self.amount = FS.FloatSpin(self, -1, size=wx.Size(80, -1), min_val=0, increment=0.1, value=0., digits=3, agwStyle=FS.FS_LEFT)
         hsizer.Add(self.amount, 0, wx.ALL | wx.CENTER, 5)
@@ -234,7 +234,7 @@ class MainPanel(wx.Panel):
         if index == -1:
             return
         symbol = self.panel_positions.positions.GetItem(index, col=0).GetText()
-        gross_size = self.panel_positions.positions.GetItem(index, col=1).GetText()
+        gross_size = float(self.panel_positions.positions.GetItem(index, col=1).GetText())
 
         my_broker = self.get_broker_from_selected_account()
         if my_broker:
@@ -254,7 +254,7 @@ class MainPanel(wx.Panel):
         if my_broker and self.panel_positions.symbols.GetSelection() >= 0:
             mytrade = trade.Trade()
             mytrade.symbol = self.panel_positions.symbols.GetString(self.panel_positions.symbols.GetSelection())
-            mytrade.gross_size = self.panel_positions.amount.GetValue()
+            mytrade.gross_size = self.panel_positions.amount.GetValue() / my_broker.get_value(mytrade.symbol)
             mytrade.type = "OPEN_LONG"
             print("open position : ", mytrade.symbol, " / ", mytrade.gross_size)
             my_broker.execute_trade(mytrade)
