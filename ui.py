@@ -196,7 +196,6 @@ class MainPanel(wx.Panel):
     def update_positions(self, my_broker):
         positions = []
         available = 0
-        fixedMaxAvailable = 0
         if my_broker:
             positions = my_broker.get_open_position()
 
@@ -205,11 +204,11 @@ class MainPanel(wx.Panel):
         # update positions
         print("positions : ", positions)
         self.panel_positions.positions.DeleteAllItems()
-        self.panel_positions.positions.Append(["USDT", utils.KeepNDecimals(fixedMaxAvailable), "-", "-", "-"])
+        self.panel_positions.positions.Append(["USDT", utils.KeepNDecimals(available), "-", "-", "-"])
         if isinstance(positions, pd.DataFrame):
             for index, row in positions.iterrows():
                 uPL = my_broker.get_symbol_unrealizedPL(row["symbol"])
-                self.panel_positions.positions.Append([row["symbol"], utils.KeepNDecimals(row["usdtEquity"]), row["holdSide"], row["leverage"], utils.KeepNDecimals(uPL)])
+                self.panel_positions.positions.Append([row["symbol"], utils.KeepNDecimals(row["available"]*row["marketPrice"]), row["holdSide"], row["leverage"], utils.KeepNDecimals(uPL)])
 
     def update_orders(self, my_broker):
         orders = []

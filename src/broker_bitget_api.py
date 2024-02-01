@@ -383,7 +383,10 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             available = self.df_account_assets.loc[self.df_account_assets["symbol"] == baseCoin, "available"].values[0]
             crossMaxAvailable = self.df_account_assets.loc[self.df_account_assets["symbol"] == baseCoin, "crossMaxAvailable"].values[0]
             fixedMaxAvailable = self.df_account_assets.loc[self.df_account_assets["symbol"] == baseCoin, "fixedMaxAvailable"].values[0]
-            return available, crossMaxAvailable, fixedMaxAvailable
+
+            actualPrice = self.df_account_assets.loc[self.df_account_assets["symbol"] == baseCoin, "actualPrice"].values[0]
+
+            return available * actualPrice, crossMaxAvailable, fixedMaxAvailable
 
     # available = size
     # available = ammount of cash available without any calculation (amount of USDT owned)
