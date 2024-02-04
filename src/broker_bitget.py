@@ -48,7 +48,8 @@ class BrokerBitGet(broker.Broker):
     def log_info(self):
         info = ""
         info += "{}".format(type(self).__name__)
-        info += "\nCash : $ {}".format(utils.KeepNDecimals(self.get_cash(), 2))
+        cash, _, _ = self.get_available_cash()
+        info += "\nCash : $ {}".format(utils.KeepNDecimals(cash, 2))
         # info += "\nLeverage : {}".format(self.leverage)
         return info
 
@@ -328,6 +329,22 @@ class BrokerBitGet(broker.Broker):
         if symbol in df_positions['symbol'].tolist():
             available = df_positions.loc[(df_positions['symbol'] == symbol), "available"].values[0]
             return available
+        else:
+            return 0
+
+    @authentication_required
+    def get_symbol_data(self, symbol):
+        df_positions = self.get_open_position()
+        if symbol in df_positions['symbol'].tolist():
+            available = df_positions.loc[(df_positions['symbol'] == symbol), "available"].values[0]
+            total = df_positions.loc[(df_positions['symbol'] == symbol), "total"].values[0]
+            leverage = df_positions.loc[(df_positions['symbol'] == symbol), "leverage"].values[0]
+            marketPrice = df_positions.loc[(df_positions['symbol'] == symbol), "marketPrice"].values[0]
+            averageOpenPrice = df_positions.loc[(df_positions['symbol'] == symbol), "averageOpenPrice"].values[0]
+            unrealizedPL = df_positions.loc[(df_positions['symbol'] == symbol), "unrealizedPL"].values[0]
+            liquidation = df_positions.loc[(df_positions['symbol'] == symbol), "liquidationPrice"].values[0]
+            side = df_positions.loc[(df_positions['symbol'] == symbol), "holdSide"].values[0]
+            return total, available, leverage, averageOpenPrice, marketPrice, unrealizedPL, liquidation, side
         else:
             return 0
 

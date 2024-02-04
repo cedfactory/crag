@@ -504,30 +504,76 @@ class GridPosition():
             print('global lst_close_long: ', self.control_multi_position['lst_close_long'])
             print('global lst_open_long: ', self.control_multi_position['lst_open_long'])
 
+        try:
+            test_debug_1 = len(self.control_multi_position['lst_close_long'])
+            test_debug_2 = len(self.control_multi_position['lst_open_long'])
+        except:
+            print("DEBUG CEDE 1")
+            print(len(self.control_multi_position['lst_close_long']))
+            print(len(self.control_multi_position['lst_open_long']))
+
         if len(self.control_multi_position['lst_close_long']) == len(self.control_multi_position['lst_open_long']):
             # Loop to extend the DataFrame in each iteration
             lst_open_long_tmp = self.control_multi_position['lst_open_long'].copy()
             lst_close_long_tmp = self.control_multi_position['lst_close_long'].copy()
             for open_val, close_val in zip(lst_open_long_tmp, lst_close_long_tmp):
+                try:
+                    test = ((self.control_multi_position['df_multi_position_status']['open_long'] == open_val) & (self.control_multi_position['df_multi_position_status']['close_long'] == close_val)).any()
+                except:
+                    print("DEBUG CEDE 2")
+                    print((self.control_multi_position['df_multi_position_status']['open_long'] == open_val))
+                    print((self.control_multi_position['df_multi_position_status']['close_long'] == close_val))
+                    print(((self.control_multi_position['df_multi_position_status']['open_long'] == open_val)
+                        & (self.control_multi_position['df_multi_position_status']['close_long'] == close_val)).any())
+
                 if not ((self.control_multi_position['df_multi_position_status']['open_long'] == open_val)
                         & (self.control_multi_position['df_multi_position_status']['close_long'] == close_val)).any():
-                    # Append a new row self.control_multi_position['df_multi_position_status'] values from the lists
-                    self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
-                                                                                                                                              'close_long': close_val},
-                                                                                                                                             ignore_index=True)
-                    # Remove the elements from the lists
-                    self.control_multi_position['lst_open_long'].remove(open_val)
-                    self.control_multi_position['lst_close_long'].remove(close_val)
+                    try:
+                        # Append a new row self.control_multi_position['df_multi_position_status'] values from the lists
+                        self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+                                                                                                                                                  'close_long': close_val},
+                                                                                                                                                 ignore_index=True)
+                    except:
+                        print("DEBUG CEDE 2")
+                        print(open_val, " - ", close_val)
+                        print({'open_long': open_val, 'close_long': close_val})
+                        print(self.control_multi_position['df_multi_position_status'])
+
+                    try:
+                        # Remove the elements from the lists
+                        self.control_multi_position['lst_open_long'].remove(open_val)
+                        self.control_multi_position['lst_close_long'].remove(close_val)
+                    except:
+                        print("DEBUG CEDE 3")
+                        print(open_val, " - ", close_val)
+                        print(self.control_multi_position['lst_open_long'])
+                        print(self.control_multi_position['lst_close_long'])
+                        print(self.control_multi_position['lst_open_long'].remove(open_val))
+                        print(self.control_multi_position['lst_close_long'].remove(close_val))
+
                     if not self.zero_print:
                         print(open_val, " and ", close_val, " dropped from list")
 
         # reorder df_multi_position_status
         if len(self.control_multi_position['df_multi_position_status']) > 0:
-            self.control_multi_position['df_multi_position_status']['open_long'] = sorted(self.control_multi_position['df_multi_position_status']['open_long'].tolist())
-            self.control_multi_position['df_multi_position_status']['close_long'] = sorted(self.control_multi_position['df_multi_position_status']['close_long'].tolist())
-
-        self.diff_close_position = len(self.control_multi_position['new_close_long']) - len(self.control_multi_position['previous_close_long'])
-        self.diff_open_position = len(self.control_multi_position['new_open_long']) - len(self.control_multi_position['previous_open_long'])
+            try:
+                self.control_multi_position['df_multi_position_status']['open_long'] = sorted(self.control_multi_position['df_multi_position_status']['open_long'].tolist())
+                self.control_multi_position['df_multi_position_status']['close_long'] = sorted(self.control_multi_position['df_multi_position_status']['close_long'].tolist())
+            except:
+                print("DEBUG CEDE 4")
+                print(self.control_multi_position['df_multi_position_status']['open_short'].tolist())
+                print(self.control_multi_position['df_multi_position_status']['close_short'].tolist())
+                print(sorted(self.control_multi_position['df_multi_position_status']['open_short'].tolist()))
+                print(sorted(self.control_multi_position['df_multi_position_status']['close_short'].tolist()))
+        try:
+            self.diff_close_position = len(self.control_multi_position['new_close_long']) - len(self.control_multi_position['previous_close_long'])
+            self.diff_open_position = len(self.control_multi_position['new_open_long']) - len(self.control_multi_position['previous_open_long'])
+        except:
+            print("debug 5")
+            print(len(self.control_multi_position['new_close_long']))
+            print(len(self.control_multi_position['previous_close_long']))
+            print(len(self.control_multi_position['new_open_long']))
+            print(len(self.control_multi_position['previous_open_long']))
 
         if not self.zero_print:
             print('df_multi_position_status: ')
@@ -581,52 +627,53 @@ class GridPosition():
             return False
 
     def dct_status_info_to_txt(self, dct_info, symbol):
-        msg = "SYMBOL: " + self.str_lst_symbol + "\n"
-        msg += "symbol price: " + str(dct_info['price']) + "\n"
-        msg += "GRID INFO: " + "\n"
-        msg += "- GRID RANGE: " + str(self.grid_high) + " and " + str(self.grid_low) + "\n"
-        msg += "- NB_GRID: " + str(self.nb_grid) + "\n"
-        msg += "GRID POSITION: " + "\n"
-        msg += "- grid_position: " + str(dct_info['grid_position'][0]) + " / " + str(dct_info['grid_position'][1]) + "\n"
-        msg += "- nb_limit_close: " + str(dct_info['nb_limit_close']) + "\n"
-        msg += "- nb_limit_open: " + str(dct_info['nb_limit_open']) + "\n"
-        msg += "- nb_open_position: " + str(dct_info['nb_position']) + "\n"
-        msg += "- nb_total_opened_positions: " + str(self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_total_opened_positions'].values[0]) + "\n"
-        msg += "- nb_total_closed_positions: " + str(self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_total_closed_positions'].values[0]) + "\n"
-
+        # msg = "# SYMBOL: " + self.str_lst_symbol + "\n"
+        # msg += "- symbol price: " + str(dct_info['price']) + "\n"
+        msg = "# GRID LONG: " + "\n"
+        msg += "RANGE FROM: " + str(self.grid_high) + " TO " + str(self.grid_low) + "\n"
+        msg += "NB_GRID: " + str(self.nb_grid) + "\n"
+        msg += "# GRID POSITION: " + "\n"
+        msg += "grid_position: " + str(dct_info['grid_position'][0]) + " / " + str(dct_info['grid_position'][1]) + "\n"
+        msg += "nb_limit_close: " + str(dct_info['nb_limit_close']) + "\n"
+        msg += "nb_limit_open: " + str(dct_info['nb_limit_open']) + "\n"
+        msg += "nb_open_position: " + str(dct_info['nb_position']) + "\n"
+        msg += "nb_total_opened_positions: " + str(self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_total_opened_positions'].values[0]) + "\n"
+        msg += "nb_total_closed_positions: " + str(self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_total_closed_positions'].values[0]) + "\n"
 
         if len(self.previous_grid_position) == 2:
-            msg += "TREND:" + "\n"
+            msg += "# TREND:" + "\n"
             if self.previous_grid_position[0] > dct_info['grid_position'][0] and self.previous_grid_position[1] > dct_info['grid_position'][1]:
-                msg += "- DOWN" + "\n"
+                msg += "DOWN" + "\n"
             elif self.previous_grid_position[0] < dct_info['grid_position'][0] and self.previous_grid_position[1] < dct_info['grid_position'][1]:
-                msg += "- UP" + "\n"
+                msg += "UP" + "\n"
             elif self.previous_grid_position[0] == dct_info['grid_position'][0] and self.previous_grid_position[1] == dct_info['grid_position'][1]:
-                msg += "- FLAT / NO DIRECTION" + "\n"
+                msg += "FLAT / NO DIRECTION" + "\n"
             else:
-                msg += "- ERROR DIRECTION - PRICE ON GRID EDGE" + "\n"
+                msg += "ERROR DIRECTION" + "\n"
+                msg += "PRICE ON GRID EDGE" + "\n"
                 df = self.grid[symbol]
                 lst_filtered_on_edge = df[df['on_edge']]['grid_id'].tolist()
-                msg += "- lst_filtered_on_edge: " + ' '.join(map(str, lst_filtered_on_edge)) + "\n"
+                msg += "lst_filtered_on_edge: " + ' '.join(map(str, lst_filtered_on_edge)) + "\n"
                 if len(lst_filtered_on_edge) > 0:
-                    msg += "- PRICE ON GRID EDGE - VERIFIED"
+                    msg += "**PRICE ON GRID EDGE - VERIFIED" + "**\n"
                 else:
-                    msg += "- WARNING - PRICE ON GRID EDGE - NOT VERIFIED"
+                    msg += "**WARNING - PRICE ON GRID EDGE - NOT VERIFIED" + "**\n"
 
         if self.diff_position != 0:
-            msg += "DIFF:" + "\n"
+            # msg += "# DIFF:" + "\n"
             if self.diff_position > 0:
-                msg += "- DIFF OPENED POSITION: " + str(self.diff_position) + "\n"
+                msg += "DIFF OPENED POSITION: " + str(self.diff_position) + "\n"
             elif self.diff_position < 0:
-                msg += "- DIFF CLOSED POSITION: " + str(self.diff_position) + "\n"
+                msg += "DIFF CLOSED POSITION: " + str(self.diff_position) + "\n"
+            elif self.diff_position == 0:
+                msg += "DIFF POSITION: " + str(self.diff_position) + "\n"
 
         if self.diff_close_position != 0 and self.diff_open_position != 0:
-            msg += "WARNING HIGH VOLATILITY:" + "\n"
-            msg += "- TREND: UP/DOW" + "\n"
-            msg += "- DIFF OPENED POSITION: " + str(self.diff_open_position) + "\n"
-            msg += "- DIFF CLOSED POSITION: " + str(self.diff_close_position) + "\n"
+            msg += "# WARNING HIGH VOLATILITY:" + "\n"
+            msg += "TREND: UP/DOW" + "\n"
+            msg += "DIFF OPENED POSITION: " + str(self.diff_open_position) + "\n"
+            msg += "DIFF CLOSED POSITION: " + str(self.diff_close_position) + "\n"
 
-        msg += "STATUS:" + "\n"
         self.previous_grid_position = dct_info['grid_position']
 
         return msg.upper()

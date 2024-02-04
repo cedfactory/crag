@@ -198,9 +198,7 @@ class Crag:
         self.minimal_portfolio_date = self.start_date
         self.maximal_portfolio_date = self.start_date
         msg_broker_info = self.broker.log_info()
-        msg_strategy_info = "Running with {}".format(type(self.rtstr).__name__)
-        msg = msg_broker_info + "\n" + msg_strategy_info
-        self.log(msg, "run")
+        self.log(msg_broker_info, "run")
         self.rtstr.log_info()
 
         start = datetime.now()
@@ -910,7 +908,7 @@ class Crag:
 
     def udpate_strategy_with_broker_current_state(self):
         GRID_SCENARIO_ON = False
-        SCENARIO_ID = 7
+        SCENARIO_ID = 8
         if GRID_SCENARIO_ON:
             self.udpate_strategy_with_broker_current_state_scenario(SCENARIO_ID)
         else:
@@ -942,9 +940,28 @@ class Crag:
             current_datetime = datetime.today().strftime("%Y/%m/%d - %H:%M:%S")
             msg = current_datetime + "\n" + msg
             usdt_equity = self.broker.get_usdt_equity()
-            msg += "- USDT EQUITY: " + str(round(usdt_equity, 2)) \
-                   + " - PNL: " + str(round(self.broker.get_global_unrealizedPL(), 2)) + "\n"
+            # wallet_equity = self.broker.get_wallet_equity()
+            msg += "# STATUS EQUITY:" + "\n"
+            # msg += "WALLET EQUITY: " + str(round(wallet_equity, 2)) + " - PNL: " + str(round(self.broker.get_global_unrealizedPL(), 2)) + "\n"
+            msg += "**USDT: " + str(round(usdt_equity, 2)) + " - PNL: " + str(round(self.broker.get_global_unrealizedPL(), 2)) + "**\n"
+            msg += "**INITIAL: " + str(round(self.original_portfolio_value, 2)) + " (" + str(round(self.total_SL_TP, 2)) + ")" + "**\n"
+            msg += "MAX: " + str(round(self.maximal_portfolio_value, 2)) + " (" + str(round(self.maximal_portfolio_variation, 2)) + ")" + "\n"
+            msg += "MIN: " + str(round(self.minimal_portfolio_value, 2)) + " (" + str(round(self.minimal_portfolio_variation, 2)) + ")" + "\n"
+            lst_usdt_symbols = self.broker.get_lst_symbol_position()
+            if len(symbols) == len(lst_usdt_symbols):
+                for symbol, usdt_symbol in zip(symbols, lst_usdt_symbols):
+                    total, available, leverage, averageOpenPrice, marketPrice, unrealizedPL, liquidation, side= self.broker.get_symbol_data(usdt_symbol)
+                    msg += "# SYMBOL " + symbol + " :\n"
+                    msg += "**market price: " + str(round(marketPrice, 4)) + "**\n"
+                    msg += "**price average: " + str(round(averageOpenPrice, 4)) + "**\n"
+                    msg += "**EQUITY: " + str(round(total * averageOpenPrice * leverage, 2)) + " PNL: " + str(round(unrealizedPL, 2)) + "**\n"
+                    msg += "SIZE: " + str(round(total, 2)) + " leverage: " + str(round(leverage, 2)) + ":\n"
+                    msg += "side: " + side + " liquidation: " + str(round(liquidation, 2)) + "\n"
+            else:
+                print("ERROR LST SYMBOLS NOT MATCHING")
+                msg += "**ERROR LST SYMBOLS NOT MATCHING" + ":\n"
             msg += "AVERAGE RUN TIME: " + str(self.average_time_grid_strategy) + "s\n"
+            msg = msg.upper()
             self.log(msg, "GRID STATUS")
 
         if not self.zero_print:
