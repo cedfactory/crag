@@ -4,7 +4,9 @@ import wx.lib.agw.floatspin as FS
 import sys
 
 from src.utils import settings_helper
-from src import broker_bitget_api,utils,trade
+from src import broker_helper,broker_bitget_api,utils,trade
+
+
 
 # class to redirect the console into a widget
 class RedirectText(object):
@@ -144,6 +146,11 @@ class MainPanel(wx.Panel):
 
         main_sizer.Add(hsizer_accounts, 0, wx.ALL | wx.LEFT, 5)
 
+        button_account_all_accounts = wx.Button(self, label="All accounts")
+        button_account_all_accounts.Bind(wx.EVT_BUTTON, self.on_all_accounts)
+
+        main_sizer.Add(button_account_all_accounts, 0, wx.ALL | wx.LEFT, 5)
+
         # usdt equity
         self.staticTextUsdtEquity = wx.StaticText(self, label="USDT Equity : ", style=wx.ALIGN_LEFT)
         main_sizer.Add(self.staticTextUsdtEquity, 0, wx.ALL | wx.EXPAND, 5)
@@ -236,6 +243,11 @@ class MainPanel(wx.Panel):
             self.update_usdt_equity(my_broker)
             self.update_positions(my_broker)
             self.update_orders(my_broker)
+
+    def on_all_accounts(self, event):
+        df = broker_helper.get_usdt_equity_all_accounts()
+        print(df)
+        print(utils.KeepNDecimals(df["USDT_Equity"].sum()))
 
     def on_close_position(self, event):
         index = self.panel_positions.positions.GetFirstSelected()
