@@ -4,7 +4,9 @@ import wx.lib.agw.floatspin as FS
 import sys
 
 from src.utils import settings_helper
-from src import broker_bitget_api,utils,trade
+from src import broker_helper,broker_bitget_api,utils,trade
+
+
 
 # class to redirect the console into a widget
 class RedirectText(object):
@@ -53,8 +55,12 @@ class PanelPositions(wx.Panel):
         hsizer.Add(self.symbols,0, wx.ALL | wx.EXPAND, 5)
         staticAmount = wx.StaticText(self,label = "Amount ($)", style = wx.ALIGN_LEFT)
         hsizer.Add(staticAmount,0, wx.ALL | wx.EXPAND, 5)
-        self.amount = FS.FloatSpin(self, -1, size=wx.Size(80, -1), min_val=0, increment=0.1, value=0., digits=3, agwStyle=FS.FS_LEFT)
+        self.amount = FS.FloatSpin(self, -1, size=wx.Size(70, -1), min_val=0, increment=0.1, value=0., digits=3, agwStyle=FS.FS_LEFT)
         hsizer.Add(self.amount, 0, wx.ALL | wx.CENTER, 5)
+        staticLeverage = wx.StaticText(self, label="Leverage", style=wx.ALIGN_LEFT)
+        hsizer.Add(staticLeverage, 0, wx.ALL | wx.EXPAND, 5)
+        self.leverage = FS.FloatSpin(self, -1, size=wx.Size(40, -1), min_val=1, increment=1, value=2, digits=0, agwStyle=FS.FS_LEFT)
+        hsizer.Add(self.leverage, 0, wx.ALL | wx.CENTER, 5)
         open_position_button = wx.Button(self, label="Open position")
         open_position_button.Bind(wx.EVT_BUTTON, self.main.on_open_position)
         hsizer.Add(open_position_button, 0, wx.ALL | wx.CENTER, 5)
@@ -94,19 +100,23 @@ class PanelOrders(wx.Panel):
 
         # open limit order
         hsizer = wx.BoxSizer(wx.HORIZONTAL)
-        staticOpenOrderLimit = wx.StaticText(self,label = "Open limit order :", style = wx.ALIGN_LEFT)
+        staticOpenOrderLimit = wx.StaticText(self,label = "Open order :", style = wx.ALIGN_LEFT)
         hsizer.Add(staticOpenOrderLimit,0, wx.ALL | wx.EXPAND, 5)
         self.symbols = wx.ComboBox(self,choices = ["BTC", "ETH", "XRP"])
         hsizer.Add(self.symbols,0, wx.ALL | wx.EXPAND, 5)
         staticAmount = wx.StaticText(self,label = "Amount ($)", style = wx.ALIGN_LEFT)
         hsizer.Add(staticAmount,0, wx.ALL | wx.EXPAND, 5)
-        self.amount = FS.FloatSpin(self, -1, size=wx.Size(80, -1), min_val=0, increment=0.1, value=0., digits=3, agwStyle=FS.FS_LEFT)
+        self.amount = FS.FloatSpin(self, -1, size=wx.Size(70, -1), min_val=0, increment=0.1, value=0., digits=2, agwStyle=FS.FS_LEFT)
         hsizer.Add(self.amount, 0, wx.ALL | wx.CENTER, 5)
+        staticLeverage = wx.StaticText(self, label="Leverage", style=wx.ALIGN_LEFT)
+        hsizer.Add(staticLeverage, 0, wx.ALL | wx.EXPAND, 5)
+        self.leverage = FS.FloatSpin(self, -1, size=wx.Size(40, -1), min_val=1, increment=1, value=2, digits=0, agwStyle=FS.FS_LEFT)
+        hsizer.Add(self.leverage, 0, wx.ALL | wx.CENTER, 5)
         staticPrice = wx.StaticText(self,label = "Price", style = wx.ALIGN_LEFT)
         hsizer.Add(staticPrice,0, wx.ALL | wx.EXPAND, 5)
-        self.price = FS.FloatSpin(self, -1, size=wx.Size(80, -1), min_val=0, increment=0.1, value=0., digits=3, agwStyle=FS.FS_LEFT)
+        self.price = FS.FloatSpin(self, -1, size=wx.Size(70, -1), min_val=0, increment=0.1, value=0., digits=3, agwStyle=FS.FS_LEFT)
         hsizer.Add(self.price,0, wx.ALL | wx.EXPAND, 5)
-        open_order_button = wx.Button(self, label="Open limit order")
+        open_order_button = wx.Button(self, label="Open order")
         open_order_button.Bind(wx.EVT_BUTTON, self.main.on_open_limit_order)
         hsizer.Add(open_order_button, 0, wx.ALL | wx.CENTER, 5)
         main_sizer.Add(hsizer, 0, wx.ALL | wx.LEFT, 5)
@@ -135,6 +145,11 @@ class MainPanel(wx.Panel):
         hsizer_accounts.Add(button_account_update, 0, wx.ALL | wx.CENTER, 5)
 
         main_sizer.Add(hsizer_accounts, 0, wx.ALL | wx.LEFT, 5)
+
+        button_account_all_accounts = wx.Button(self, label="All accounts")
+        button_account_all_accounts.Bind(wx.EVT_BUTTON, self.on_all_accounts)
+
+        main_sizer.Add(button_account_all_accounts, 0, wx.ALL | wx.LEFT, 5)
 
         # usdt equity
         self.staticTextUsdtEquity = wx.StaticText(self, label="USDT Equity : ", style=wx.ALIGN_LEFT)
@@ -229,6 +244,11 @@ class MainPanel(wx.Panel):
             self.update_positions(my_broker)
             self.update_orders(my_broker)
 
+    def on_all_accounts(self, event):
+        df = broker_helper.get_usdt_equity_all_accounts()
+        print(df)
+        print(utils.KeepNDecimals(df["USDT_Equity"].sum()))
+
     def on_close_position(self, event):
         index = self.panel_positions.positions.GetFirstSelected()
         if index == -1:
@@ -293,7 +313,7 @@ class MainPanel(wx.Panel):
 class CragFrame(wx.Frame):
 
     def __init__(self):
-        wx.Frame.__init__(self, parent=None, title='Crag UI',pos=wx.DefaultPosition,size=(600, 700), style= wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX)
+        wx.Frame.__init__(self, parent=None, title='Crag UI',pos=wx.DefaultPosition,size=(700, 700), style= wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX)
         self.panel = MainPanel(self)
         self.create_menu()
         self.Show()

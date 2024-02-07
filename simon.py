@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import pika
 import json
 import pandas as pd
-from src import broker_bitget_api,utils
+from src import broker_helper,broker_bitget_api,utils
 from src.toolbox import monitoring_helper,settings_helper
 
 class BotSimon(commands.Bot):
@@ -37,25 +37,9 @@ class BotSimon(commands.Bot):
 
         @self.command(name="accounts")
         async def custom_command(ctx, *args):
-            accounts_info = settings_helper.get_accounts_info()
-            lst_accounts = []
-            lst_usdt_equities = []
-            for key, value in accounts_info.items():
-                account_id = value.get("id", "")
-                my_broker = None
-                broker_name = value.get("broker", "")
-                if broker_name == "bitget":
-                    my_broker = broker_bitget_api.BrokerBitGetApi({"account": account_id, "reset_account": False})
-                    if my_broker:
-                        usdt_equity = my_broker.get_usdt_equity()
-
-                        lst_accounts.append(account_id)
-                        lst_usdt_equities.append(usdt_equity)
-
-            df = pd.DataFrame({"Accounts": lst_accounts, "USDT_Equity": lst_usdt_equities},
-                              index=range(len(lst_accounts)))
+            df = broker_helper.get_usdt_equity_all_accounts()
             msg = '```' + df.to_string(index=False) + '```'
-            msg += '```Total : $ ' + str(utils.KeepNDecimals(sum(lst_usdt_equities))) + '```'
+            msg += '```Total : $ ' + str(utils.KeepNDecimals(df["USDT_Equity"].sum())) + '```'
 
             embed=discord.Embed(title="accounts", description=msg, color=0xFF5733)
             await ctx.channel.send(embed=embed)
