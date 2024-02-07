@@ -1,0 +1,2435 @@
+automatic restart is on
+grid values:  [0.52, 0.5195000000000001, 0.519, 0.5185, 0.518, 0.5175000000000001, 0.517, 0.5165, 0.516, 0.5155000000000001, 0.515, 0.5145, 0.514, 0.5135000000000001, 0.513, 0.5125, 0.512, 0.5115000000000001, 0.511, 0.5105, 0.51, 0.5095000000000001, 0.509, 0.5085, 0.508, 0.5075000000000001, 0.507, 0.5065, 0.506, 0.5055000000000001, 0.505, 0.5045, 0.504, 0.5035000000000001, 0.503, 0.5025, 0.502, 0.5015000000000001, 0.501, 0.5005, 0.5]
+list symbols perpetual/USDT:  ['BTC', 'ETH', 'XRP', 'EOS', 'BCH', 'LTC', 'ADA', 'ETC', 'LINK', 'TRX', 'DOT', 'DOGE', 'SOL', 'MATIC', 'BNB', 'UNI', 'ICP', 'AAVE', 'FIL', 'XLM', 'ATOM', 'XTZ', 'SUSHI', 'AXS', 'THETA', 'AVAX', 'DASH', 'SHIB', 'MANA', 'GALA', 'SAND', 'DYDX', 'CRV', 'NEAR', 'EGLD', 'KSM', 'AR', 'FTM', 'PEOPLE', 'LRC', 'NEO', 'WAVES', 'ALGO', 'IOTA', 'ENJ', 'GMT', 'ZIL', 'IOST', 'APE', 'RUNE', 'KNC', 'APT', 'CHZ', 'ROSE', 'ZRX', 'KAVA', 'ENS', 'GAL', 'AUDIO', 'SXP', 'C98', 'OP', 'RSR', 'SNX', 'STORJ', '1INCH', 'COMP', 'IMX', 'LUNA2', 'FLOW', 'QTUM', 'API3', 'MASK', 'WOO', 'GRT', 'BAND', 'STG', 'LUNC', 'ONE', 'JASMY', 'MKR', 'BAT', 'MAGIC', 'ALPHA', 'LDO', 'OCEAN', 'CELO', 'BLUR', 'MINA', 'CORE', 'CFX', 'ASTR', 'AGIX', 'GMX', 'ANKR', 'ACH', 'FET', 'FXS', 'RNDR', 'HOOK', 'BNX', 'SSV', 'USDC', 'LQTY', 'STX', 'TRU', 'HBAR', 'INJ', 'BEL', 'COTI', 'VET', 'ARB', 'LOOKS', 'KLAY', 'FLM', 'OMG', 'CKB', 'ID', 'LIT', 'JOE', 'TLM', 'HOT', 'CHR', 'RDNT', 'ICX', 'ONT', 'ZEC', 'UNFI', 'NKN', 'ARPA', 'DAR', 'SFP', 'SKL', 'RVN', 'CELR', 'FLOKI', 'SPELL', 'SUI', 'EDU', 'PEPE', 'IOTX', 'CTK', 'STMX', 'UMA', 'BSV', 'TON', 'GTC', 'DENT', 'ZEN', 'ORDI', 'KEY', 'IDEX', 'SLP', 'COMBO', 'LEVER', 'RAD', 'QNT', 'MAV', 'MDT', 'XVG', '1000XEC', 'AGLD', 'WLD', 'PENDLE', 'ARKM', 'CVX', 'YGG', 'OGN', 'LPT', 'BNT', 'SEI', 'CYBER', 'BAKE', 'GLMR', 'LOOM', 'BIGTIME', 'ORBS', 'WAXP', 'POLYX', 'TIA', 'MEME', 'PYTH', 'JTO', '1000SATS', '1000RATS', 'ACE', 'XAI', 'MANTA', 'ALT', 'JUP', 'ZETA']
+reset account requested
+reset - no position - account already cleared
+equity USDT:  91.5930105371
+Problem encountered while configuring the rabbitmq receiver
+Payload delivered successfully, code 204.
+start time:  2024-02-07 21:00:00
+Payload delivered successfully, code 204.
+[RUN] [CRAG] while step 1
+[RUN] [CRAG] while step 2
+cpt start:  0
+lst_close_long_triggered:  []
+global lst_close_long:  []
+global lst_open_long:  []
+df_multi_position_status: 
+Empty DataFrame
+Columns: [open_long, close_long]
+Index: []
+FLAT -> nb_selected_to_be_open : 0
+#############################################################################################
+current_state: 
+ Empty DataFrame
+Columns: [Unnamed: 0, symbol, price, side, leverage, orderId, gridId]
+Index: []
+open_positions: 
+ Empty DataFrame
+Columns: [Unnamed: 0, symbol, holdSide, leverage, marginCoin, available, total, usdtEquity, marketPrice, averageOpenPrice, achievedProfits, unrealizedPL, liquidationPrice]
+Index: []
+price: 
+  Unnamed: 0 symbols  values
+          0     XRP 0.51305
+order list: 
+ [(0, 0.5, 'OPEN_LONG_ORDER'), (1, 0.5005, 'OPEN_LONG_ORDER'), (2, 0.501, 'OPEN_LONG_ORDER'), (3, 0.5015000000000001, 'OPEN_LONG_ORDER'), (4, 0.502, 'OPEN_LONG_ORDER'), (5, 0.5025, 'OPEN_LONG_ORDER'), (6, 0.503, 'OPEN_LONG_ORDER'), (7, 0.5035000000000001, 'OPEN_LONG_ORDER'), (8, 0.504, 'OPEN_LONG_ORDER'), (9, 0.5045, 'OPEN_LONG_ORDER'), (10, 0.505, 'OPEN_LONG_ORDER'), (11, 0.5055000000000001, 'OPEN_LONG_ORDER'), (12, 0.506, 'OPEN_LONG_ORDER'), (13, 0.5065, 'OPEN_LONG_ORDER'), (14, 0.507, 'OPEN_LONG_ORDER'), (15, 0.5075000000000001, 'OPEN_LONG_ORDER'), (16, 0.508, 'OPEN_LONG_ORDER'), (17, 0.5085, 'OPEN_LONG_ORDER'), (18, 0.509, 'OPEN_LONG_ORDER'), (19, 0.5095000000000001, 'OPEN_LONG_ORDER'), (20, 0.51, 'OPEN_LONG_ORDER'), (21, 0.5105, 'OPEN_LONG_ORDER'), (22, 0.511, 'OPEN_LONG_ORDER'), (23, 0.5115000000000001, 'OPEN_LONG_ORDER'), (24, 0.512, 'OPEN_LONG_ORDER'), (25, 0.5125, 'OPEN_LONG_ORDER'), (26, 0.513, 'OPEN_LONG_ORDER')]
+ grid_id  position orderId previous_side       side  changes  status  cross_checked  on_edge
+      40    0.5200                       close_long     True on_hold          False    False
+      39    0.5195                       close_long     True on_hold          False    False
+      38    0.5190                       close_long     True on_hold          False    False
+      37    0.5185                       close_long     True on_hold          False    False
+      36    0.5180                       close_long     True on_hold          False    False
+      35    0.5175                       close_long     True on_hold          False    False
+      34    0.5170                       close_long     True on_hold          False    False
+      33    0.5165                       close_long     True on_hold          False    False
+      32    0.5160                       close_long     True on_hold          False    False
+      31    0.5155                       close_long     True on_hold          False    False
+      30    0.5150                       close_long     True on_hold          False    False
+      29    0.5145                       close_long     True on_hold          False    False
+      28    0.5140                       close_long     True on_hold          False    False
+      27    0.5135                       close_long     True on_hold          False    False
+      26    0.5130                        open_long     True pending          False    False
+      25    0.5125                        open_long     True pending          False    False
+      24    0.5120                        open_long     True pending          False    False
+      23    0.5115                        open_long     True pending          False    False
+      22    0.5110                        open_long     True pending          False    False
+      21    0.5105                        open_long     True pending          False    False
+      20    0.5100                        open_long     True pending          False    False
+      19    0.5095                        open_long     True pending          False    False
+      18    0.5090                        open_long     True pending          False    False
+      17    0.5085                        open_long     True pending          False    False
+      16    0.5080                        open_long     True pending          False    False
+      15    0.5075                        open_long     True pending          False    False
+      14    0.5070                        open_long     True pending          False    False
+      13    0.5065                        open_long     True pending          False    False
+      12    0.5060                        open_long     True pending          False    False
+      11    0.5055                        open_long     True pending          False    False
+      10    0.5050                        open_long     True pending          False    False
+       9    0.5045                        open_long     True pending          False    False
+       8    0.5040                        open_long     True pending          False    False
+       7    0.5035                        open_long     True pending          False    False
+       6    0.5030                        open_long     True pending          False    False
+       5    0.5025                        open_long     True pending          False    False
+       4    0.5020                        open_long     True pending          False    False
+       3    0.5015                        open_long     True pending          False    False
+       2    0.5010                        open_long     True pending          False    False
+       1    0.5005                        open_long     True pending          False    False
+       0    0.5000                        open_long     True pending          False    False
+#############################################################################################
+output lst_orders_to_execute:  [{'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.5, 'grid_id': 0}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.5005, 'grid_id': 1}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.501, 'grid_id': 2}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.5015000000000001, 'grid_id': 3}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.502, 'grid_id': 4}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.5025, 'grid_id': 5}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.503, 'grid_id': 6}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.5035000000000001, 'grid_id': 7}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.504, 'grid_id': 8}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.5045, 'grid_id': 9}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.505, 'grid_id': 10}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.5055000000000001, 'grid_id': 11}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.506, 'grid_id': 12}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.5065, 'grid_id': 13}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.507, 'grid_id': 14}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.5075000000000001, 'grid_id': 15}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.508, 'grid_id': 16}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.5085, 'grid_id': 17}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.509, 'grid_id': 18}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.5095000000000001, 'grid_id': 19}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.51, 'grid_id': 20}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.5105, 'grid_id': 21}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.511, 'grid_id': 22}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.5115000000000001, 'grid_id': 23}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.512, 'grid_id': 24}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.5125, 'grid_id': 25}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.513, 'grid_id': 26}]
+None Print
+GRID ITERATION AVERAGE TIME: 0.06 seconds
+cpt end:  0
+cpt start:  1
+lst_close_long_triggered:  []
+global lst_close_long:  []
+global lst_open_long:  []
+df_multi_position_status: 
+Empty DataFrame
+Columns: [open_long, close_long]
+Index: []
+FLAT -> nb_selected_to_be_open : 0
+#############################################################################################
+current_state: 
+  Unnamed: 0 symbol  price      side  leverage     orderId  gridId
+          0    XRP 0.5000 open_long         2  order_id_0       0
+          1    XRP 0.5005 open_long         2  order_id_1       1
+          2    XRP 0.5010 open_long         2  order_id_2       2
+          3    XRP 0.5015 open_long         2  order_id_3       3
+          4    XRP 0.5020 open_long         2  order_id_4       4
+          5    XRP 0.5025 open_long         2  order_id_5       5
+          6    XRP 0.5030 open_long         2  order_id_6       6
+          7    XRP 0.5035 open_long         2  order_id_7       7
+          8    XRP 0.5040 open_long         2  order_id_8       8
+          9    XRP 0.5045 open_long         2  order_id_9       9
+         10    XRP 0.5050 open_long         2 order_id_10      10
+         11    XRP 0.5055 open_long         2 order_id_11      11
+         12    XRP 0.5060 open_long         2 order_id_12      12
+         13    XRP 0.5065 open_long         2 order_id_13      13
+         14    XRP 0.5070 open_long         2 order_id_14      14
+         15    XRP 0.5075 open_long         2 order_id_15      15
+         16    XRP 0.5080 open_long         2 order_id_16      16
+         17    XRP 0.5085 open_long         2 order_id_17      17
+         18    XRP 0.5090 open_long         2 order_id_18      18
+         19    XRP 0.5095 open_long         2 order_id_19      19
+         20    XRP 0.5100 open_long         2 order_id_20      20
+         21    XRP 0.5105 open_long         2 order_id_21      21
+         22    XRP 0.5110 open_long         2 order_id_22      22
+         23    XRP 0.5115 open_long         2 order_id_23      23
+         24    XRP 0.5120 open_long         2 order_id_24      24
+         25    XRP 0.5125 open_long         2 order_id_25      25
+         26    XRP 0.5130 open_long         2 order_id_26      26
+open_positions: 
+ Empty DataFrame
+Columns: [Unnamed: 0, symbol, holdSide, leverage, marginCoin, available, total, usdtEquity, marketPrice, averageOpenPrice, achievedProfits, unrealizedPL, liquidationPrice]
+Index: []
+price: 
+  Unnamed: 0 symbols  values
+          0     XRP 0.51359
+order list: 
+ [(27, 0.5135000000000001, 'OPEN_LONG_ORDER')]
+ grid_id  position     orderId previous_side       side  changes  status  cross_checked  on_edge
+      40    0.5200                close_long close_long    False on_hold          False    False
+      39    0.5195                close_long close_long    False on_hold          False    False
+      38    0.5190                close_long close_long    False on_hold          False    False
+      37    0.5185                close_long close_long    False on_hold          False    False
+      36    0.5180                close_long close_long    False on_hold          False    False
+      35    0.5175                close_long close_long    False on_hold          False    False
+      34    0.5170                close_long close_long    False on_hold          False    False
+      33    0.5165                close_long close_long    False on_hold          False    False
+      32    0.5160                close_long close_long    False on_hold          False    False
+      31    0.5155                close_long close_long    False on_hold          False    False
+      30    0.5150                close_long close_long    False on_hold          False    False
+      29    0.5145                close_long close_long    False on_hold          False    False
+      28    0.5140                close_long close_long    False on_hold          False    False
+      27    0.5135                close_long  open_long     True pending          False    False
+      26    0.5130 order_id_26     open_long  open_long    False engaged           True    False
+      25    0.5125 order_id_25     open_long  open_long    False engaged           True    False
+      24    0.5120 order_id_24     open_long  open_long    False engaged           True    False
+      23    0.5115 order_id_23     open_long  open_long    False engaged           True    False
+      22    0.5110 order_id_22     open_long  open_long    False engaged           True    False
+      21    0.5105 order_id_21     open_long  open_long    False engaged           True    False
+      20    0.5100 order_id_20     open_long  open_long    False engaged           True    False
+      19    0.5095 order_id_19     open_long  open_long    False engaged           True    False
+      18    0.5090 order_id_18     open_long  open_long    False engaged           True    False
+      17    0.5085 order_id_17     open_long  open_long    False engaged           True    False
+      16    0.5080 order_id_16     open_long  open_long    False engaged           True    False
+      15    0.5075 order_id_15     open_long  open_long    False engaged           True    False
+      14    0.5070 order_id_14     open_long  open_long    False engaged           True    False
+      13    0.5065 order_id_13     open_long  open_long    False engaged           True    False
+      12    0.5060 order_id_12     open_long  open_long    False engaged           True    False
+      11    0.5055 order_id_11     open_long  open_long    False engaged           True    False
+      10    0.5050 order_id_10     open_long  open_long    False engaged           True    False
+       9    0.5045  order_id_9     open_long  open_long    False engaged           True    False
+       8    0.5040  order_id_8     open_long  open_long    False engaged           True    False
+       7    0.5035  order_id_7     open_long  open_long    False engaged           True    False
+       6    0.5030  order_id_6     open_long  open_long    False engaged           True    False
+       5    0.5025  order_id_5     open_long  open_long    False engaged           True    False
+       4    0.5020  order_id_4     open_long  open_long    False engaged           True    False
+       3    0.5015  order_id_3     open_long  open_long    False engaged           True    False
+       2    0.5010  order_id_2     open_long  open_long    False engaged           True    False
+       1    0.5005  order_id_1     open_long  open_long    False engaged           True    False
+       0    0.5000  order_id_0     open_long  open_long    False engaged           True    False
+#############################################################################################
+output lst_orders_to_execute:  [{'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.5135000000000001, 'grid_id': 27}]
+None Print
+GRID ITERATION AVERAGE TIME: 0.08 seconds
+cpt end:  1
+cpt start:  2
+lst_close_long_triggered:  []
+global lst_close_long:  []
+global lst_open_long:  []
+df_multi_position_status: 
+Empty DataFrame
+Columns: [open_long, close_long]
+Index: []
+GRID ERROR - limit order failed - grid_id missing:  27  side:  open_long
+DOWN ->  nb_selected_to_be_open : 1
+#############################################################################################
+current_state: 
+  Unnamed: 0 symbol  price      side  leverage     orderId  gridId
+          0    XRP 0.5000 open_long         2  order_id_0       0
+          1    XRP 0.5005 open_long         2  order_id_1       1
+          2    XRP 0.5010 open_long         2  order_id_2       2
+          3    XRP 0.5015 open_long         2  order_id_3       3
+          4    XRP 0.5020 open_long         2  order_id_4       4
+          5    XRP 0.5025 open_long         2  order_id_5       5
+          6    XRP 0.5030 open_long         2  order_id_6       6
+          7    XRP 0.5035 open_long         2  order_id_7       7
+          8    XRP 0.5040 open_long         2  order_id_8       8
+          9    XRP 0.5045 open_long         2  order_id_9       9
+         10    XRP 0.5050 open_long         2 order_id_10      10
+         11    XRP 0.5055 open_long         2 order_id_11      11
+         12    XRP 0.5060 open_long         2 order_id_12      12
+         13    XRP 0.5065 open_long         2 order_id_13      13
+         14    XRP 0.5070 open_long         2 order_id_14      14
+         15    XRP 0.5075 open_long         2 order_id_15      15
+         16    XRP 0.5080 open_long         2 order_id_16      16
+         17    XRP 0.5085 open_long         2 order_id_17      17
+         18    XRP 0.5090 open_long         2 order_id_18      18
+         19    XRP 0.5095 open_long         2 order_id_19      19
+         20    XRP 0.5100 open_long         2 order_id_20      20
+         21    XRP 0.5105 open_long         2 order_id_21      21
+         22    XRP 0.5110 open_long         2 order_id_22      22
+         23    XRP 0.5115 open_long         2 order_id_23      23
+         24    XRP 0.5120 open_long         2 order_id_24      24
+         25    XRP 0.5125 open_long         2 order_id_25      25
+         26    XRP 0.5130 open_long         2 order_id_26      26
+open_positions: 
+  Unnamed: 0 symbol holdSide  leverage marginCoin  available  total  usdtEquity  marketPrice  averageOpenPrice  achievedProfits  unrealizedPL  liquidationPrice
+          0    XRP     long         2       USDT       10.0   10.0     5.86875      0.58664          0.586875              0.0       -0.0047               0.0
+price: 
+  Unnamed: 0 symbols  values
+          0     XRP 0.51343
+order list: 
+ [(28, 0.514, 'CLOSE_LONG_ORDER')]
+ grid_id  position     orderId previous_side       side  changes  status  cross_checked  on_edge
+      40    0.5200                close_long close_long    False on_hold          False    False
+      39    0.5195                close_long close_long    False on_hold          False    False
+      38    0.5190                close_long close_long    False on_hold          False    False
+      37    0.5185                close_long close_long    False on_hold          False    False
+      36    0.5180                close_long close_long    False on_hold          False    False
+      35    0.5175                close_long close_long    False on_hold          False    False
+      34    0.5170                close_long close_long    False on_hold          False    False
+      33    0.5165                close_long close_long    False on_hold          False    False
+      32    0.5160                close_long close_long    False on_hold          False    False
+      31    0.5155                close_long close_long    False on_hold          False    False
+      30    0.5150                close_long close_long    False on_hold          False    False
+      29    0.5145                close_long close_long    False on_hold          False    False
+      28    0.5140                close_long close_long    False pending          False    False
+      27    0.5135                 open_long close_long     True on_hold          False    False
+      26    0.5130 order_id_26     open_long  open_long    False engaged           True    False
+      25    0.5125 order_id_25     open_long  open_long    False engaged           True    False
+      24    0.5120 order_id_24     open_long  open_long    False engaged           True    False
+      23    0.5115 order_id_23     open_long  open_long    False engaged           True    False
+      22    0.5110 order_id_22     open_long  open_long    False engaged           True    False
+      21    0.5105 order_id_21     open_long  open_long    False engaged           True    False
+      20    0.5100 order_id_20     open_long  open_long    False engaged           True    False
+      19    0.5095 order_id_19     open_long  open_long    False engaged           True    False
+      18    0.5090 order_id_18     open_long  open_long    False engaged           True    False
+      17    0.5085 order_id_17     open_long  open_long    False engaged           True    False
+      16    0.5080 order_id_16     open_long  open_long    False engaged           True    False
+      15    0.5075 order_id_15     open_long  open_long    False engaged           True    False
+      14    0.5070 order_id_14     open_long  open_long    False engaged           True    False
+      13    0.5065 order_id_13     open_long  open_long    False engaged           True    False
+      12    0.5060 order_id_12     open_long  open_long    False engaged           True    False
+      11    0.5055 order_id_11     open_long  open_long    False engaged           True    False
+      10    0.5050 order_id_10     open_long  open_long    False engaged           True    False
+       9    0.5045  order_id_9     open_long  open_long    False engaged           True    False
+       8    0.5040  order_id_8     open_long  open_long    False engaged           True    False
+       7    0.5035  order_id_7     open_long  open_long    False engaged           True    False
+       6    0.5030  order_id_6     open_long  open_long    False engaged           True    False
+       5    0.5025  order_id_5     open_long  open_long    False engaged           True    False
+       4    0.5020  order_id_4     open_long  open_long    False engaged           True    False
+       3    0.5015  order_id_3     open_long  open_long    False engaged           True    False
+       2    0.5010  order_id_2     open_long  open_long    False engaged           True    False
+       1    0.5005  order_id_1     open_long  open_long    False engaged           True    False
+       0    0.5000  order_id_0     open_long  open_long    False engaged           True    False
+#############################################################################################
+output lst_orders_to_execute:  [{'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.514, 'grid_id': 28}]
+Payload delivered successfully, code 204.
+GRID ITERATION AVERAGE TIME: 0.56 seconds
+cpt end:  2
+cpt start:  3
+lst_close_long_triggered:  []
+global lst_close_long:  []
+global lst_open_long:  [27]
+df_multi_position_status: 
+Empty DataFrame
+Columns: [open_long, close_long]
+Index: []
+GRID ERROR - limit order failed - grid_id missing:  28  side:  close_long
+filter_open_control_multi_position - grid id:  27
+DOWN ->  nb_selected_to_be_open : 0
+#############################################################################################
+current_state: 
+  Unnamed: 0 symbol  price      side  leverage     orderId  gridId
+          0    XRP 0.5000 open_long         2  order_id_0       0
+          1    XRP 0.5005 open_long         2  order_id_1       1
+          2    XRP 0.5010 open_long         2  order_id_2       2
+          3    XRP 0.5015 open_long         2  order_id_3       3
+          4    XRP 0.5020 open_long         2  order_id_4       4
+          5    XRP 0.5025 open_long         2  order_id_5       5
+          6    XRP 0.5030 open_long         2  order_id_6       6
+          7    XRP 0.5035 open_long         2  order_id_7       7
+          8    XRP 0.5040 open_long         2  order_id_8       8
+          9    XRP 0.5045 open_long         2  order_id_9       9
+         10    XRP 0.5050 open_long         2 order_id_10      10
+         11    XRP 0.5055 open_long         2 order_id_11      11
+         12    XRP 0.5060 open_long         2 order_id_12      12
+         13    XRP 0.5065 open_long         2 order_id_13      13
+         14    XRP 0.5070 open_long         2 order_id_14      14
+         15    XRP 0.5075 open_long         2 order_id_15      15
+         16    XRP 0.5080 open_long         2 order_id_16      16
+         17    XRP 0.5085 open_long         2 order_id_17      17
+         18    XRP 0.5090 open_long         2 order_id_18      18
+         19    XRP 0.5095 open_long         2 order_id_19      19
+         20    XRP 0.5100 open_long         2 order_id_20      20
+         21    XRP 0.5105 open_long         2 order_id_21      21
+         22    XRP 0.5110 open_long         2 order_id_22      22
+         23    XRP 0.5115 open_long         2 order_id_23      23
+         24    XRP 0.5120 open_long         2 order_id_24      24
+         25    XRP 0.5125 open_long         2 order_id_25      25
+         26    XRP 0.5130 open_long         2 order_id_26      26
+open_positions: 
+ Empty DataFrame
+Columns: [Unnamed: 0, symbol, holdSide, leverage, marginCoin, available, total, usdtEquity, marketPrice, averageOpenPrice, achievedProfits, unrealizedPL, liquidationPrice]
+Index: []
+price: 
+  Unnamed: 0 symbols  values
+          0     XRP 0.51405
+order list: 
+ [(28, 0.514, 'OPEN_LONG_ORDER')]
+ grid_id  position     orderId previous_side       side  changes  status  cross_checked  on_edge
+      40    0.5200                close_long close_long    False on_hold          False    False
+      39    0.5195                close_long close_long    False on_hold          False    False
+      38    0.5190                close_long close_long    False on_hold          False    False
+      37    0.5185                close_long close_long    False on_hold          False    False
+      36    0.5180                close_long close_long    False on_hold          False    False
+      35    0.5175                close_long close_long    False on_hold          False    False
+      34    0.5170                close_long close_long    False on_hold          False    False
+      33    0.5165                close_long close_long    False on_hold          False    False
+      32    0.5160                close_long close_long    False on_hold          False    False
+      31    0.5155                close_long close_long    False on_hold          False    False
+      30    0.5150                close_long close_long    False on_hold          False    False
+      29    0.5145                close_long close_long    False on_hold          False    False
+      28    0.5140                close_long  open_long     True pending          False    False
+      27    0.5135                close_long  open_long     True on_hold          False    False
+      26    0.5130 order_id_26     open_long  open_long    False engaged           True    False
+      25    0.5125 order_id_25     open_long  open_long    False engaged           True    False
+      24    0.5120 order_id_24     open_long  open_long    False engaged           True    False
+      23    0.5115 order_id_23     open_long  open_long    False engaged           True    False
+      22    0.5110 order_id_22     open_long  open_long    False engaged           True    False
+      21    0.5105 order_id_21     open_long  open_long    False engaged           True    False
+      20    0.5100 order_id_20     open_long  open_long    False engaged           True    False
+      19    0.5095 order_id_19     open_long  open_long    False engaged           True    False
+      18    0.5090 order_id_18     open_long  open_long    False engaged           True    False
+      17    0.5085 order_id_17     open_long  open_long    False engaged           True    False
+      16    0.5080 order_id_16     open_long  open_long    False engaged           True    False
+      15    0.5075 order_id_15     open_long  open_long    False engaged           True    False
+      14    0.5070 order_id_14     open_long  open_long    False engaged           True    False
+      13    0.5065 order_id_13     open_long  open_long    False engaged           True    False
+      12    0.5060 order_id_12     open_long  open_long    False engaged           True    False
+      11    0.5055 order_id_11     open_long  open_long    False engaged           True    False
+      10    0.5050 order_id_10     open_long  open_long    False engaged           True    False
+       9    0.5045  order_id_9     open_long  open_long    False engaged           True    False
+       8    0.5040  order_id_8     open_long  open_long    False engaged           True    False
+       7    0.5035  order_id_7     open_long  open_long    False engaged           True    False
+       6    0.5030  order_id_6     open_long  open_long    False engaged           True    False
+       5    0.5025  order_id_5     open_long  open_long    False engaged           True    False
+       4    0.5020  order_id_4     open_long  open_long    False engaged           True    False
+       3    0.5015  order_id_3     open_long  open_long    False engaged           True    False
+       2    0.5010  order_id_2     open_long  open_long    False engaged           True    False
+       1    0.5005  order_id_1     open_long  open_long    False engaged           True    False
+       0    0.5000  order_id_0     open_long  open_long    False engaged           True    False
+#############################################################################################
+output lst_orders_to_execute:  [{'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.514, 'grid_id': 28}]
+Payload delivered successfully, code 204.
+GRID ITERATION AVERAGE TIME: 0.77 seconds
+cpt end:  3
+cpt start:  4
+lst_close_long_triggered:  []
+global lst_close_long:  [28]
+global lst_open_long:  [27]
+27  and  28  dropped from list
+df_multi_position_status: 
+Empty DataFrame
+Columns: [open_long, close_long]
+Index: []
+GRID ERROR - limit order failed - grid_id missing:  27  side:  open_long
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+DOWN ->  nb_selected_to_be_open : 0
+#############################################################################################
+current_state: 
+  Unnamed: 0 symbol  price      side  leverage     orderId  gridId
+          0    XRP 0.5000 open_long         2  order_id_0       0
+          1    XRP 0.5005 open_long         2  order_id_1       1
+          2    XRP 0.5010 open_long         2  order_id_2       2
+          3    XRP 0.5015 open_long         2  order_id_3       3
+          4    XRP 0.5020 open_long         2  order_id_4       4
+          5    XRP 0.5025 open_long         2  order_id_5       5
+          6    XRP 0.5030 open_long         2  order_id_6       6
+          7    XRP 0.5035 open_long         2  order_id_7       7
+          8    XRP 0.5040 open_long         2  order_id_8       8
+          9    XRP 0.5045 open_long         2  order_id_9       9
+         10    XRP 0.5050 open_long         2 order_id_10      10
+         11    XRP 0.5055 open_long         2 order_id_11      11
+         12    XRP 0.5060 open_long         2 order_id_12      12
+         13    XRP 0.5065 open_long         2 order_id_13      13
+         14    XRP 0.5070 open_long         2 order_id_14      14
+         15    XRP 0.5075 open_long         2 order_id_15      15
+         16    XRP 0.5080 open_long         2 order_id_16      16
+         17    XRP 0.5085 open_long         2 order_id_17      17
+         18    XRP 0.5090 open_long         2 order_id_18      18
+         19    XRP 0.5095 open_long         2 order_id_19      19
+         20    XRP 0.5100 open_long         2 order_id_20      20
+         21    XRP 0.5105 open_long         2 order_id_21      21
+         22    XRP 0.5110 open_long         2 order_id_22      22
+         23    XRP 0.5115 open_long         2 order_id_23      23
+         24    XRP 0.5120 open_long         2 order_id_24      24
+         25    XRP 0.5125 open_long         2 order_id_25      25
+         26    XRP 0.5130 open_long         2 order_id_26      26
+         27    XRP 0.5140 open_long         2 order_id_28      28
+open_positions: 
+ Empty DataFrame
+Columns: [Unnamed: 0, symbol, holdSide, leverage, marginCoin, available, total, usdtEquity, marketPrice, averageOpenPrice, achievedProfits, unrealizedPL, liquidationPrice]
+Index: []
+price: 
+  Unnamed: 0 symbols  values
+          0     XRP 0.51405
+order list: 
+ [(27, 0.5135000000000001, 'OPEN_LONG_ORDER')]
+ grid_id  position     orderId previous_side       side  changes  status  cross_checked  on_edge
+      40    0.5200                close_long close_long    False on_hold          False    False
+      39    0.5195                close_long close_long    False on_hold          False    False
+      38    0.5190                close_long close_long    False on_hold          False    False
+      37    0.5185                close_long close_long    False on_hold          False    False
+      36    0.5180                close_long close_long    False on_hold          False    False
+      35    0.5175                close_long close_long    False on_hold          False    False
+      34    0.5170                close_long close_long    False on_hold          False    False
+      33    0.5165                close_long close_long    False on_hold          False    False
+      32    0.5160                close_long close_long    False on_hold          False    False
+      31    0.5155                close_long close_long    False on_hold          False    False
+      30    0.5150                close_long close_long    False on_hold          False    False
+      29    0.5145                close_long close_long    False on_hold          False    False
+      28    0.5140 order_id_28     open_long  open_long    False engaged           True    False
+      27    0.5135                 open_long  open_long    False pending          False    False
+      26    0.5130 order_id_26     open_long  open_long    False engaged           True    False
+      25    0.5125 order_id_25     open_long  open_long    False engaged           True    False
+      24    0.5120 order_id_24     open_long  open_long    False engaged           True    False
+      23    0.5115 order_id_23     open_long  open_long    False engaged           True    False
+      22    0.5110 order_id_22     open_long  open_long    False engaged           True    False
+      21    0.5105 order_id_21     open_long  open_long    False engaged           True    False
+      20    0.5100 order_id_20     open_long  open_long    False engaged           True    False
+      19    0.5095 order_id_19     open_long  open_long    False engaged           True    False
+      18    0.5090 order_id_18     open_long  open_long    False engaged           True    False
+      17    0.5085 order_id_17     open_long  open_long    False engaged           True    False
+      16    0.5080 order_id_16     open_long  open_long    False engaged           True    False
+      15    0.5075 order_id_15     open_long  open_long    False engaged           True    False
+      14    0.5070 order_id_14     open_long  open_long    False engaged           True    False
+      13    0.5065 order_id_13     open_long  open_long    False engaged           True    False
+      12    0.5060 order_id_12     open_long  open_long    False engaged           True    False
+      11    0.5055 order_id_11     open_long  open_long    False engaged           True    False
+      10    0.5050 order_id_10     open_long  open_long    False engaged           True    False
+       9    0.5045  order_id_9     open_long  open_long    False engaged           True    False
+       8    0.5040  order_id_8     open_long  open_long    False engaged           True    False
+       7    0.5035  order_id_7     open_long  open_long    False engaged           True    False
+       6    0.5030  order_id_6     open_long  open_long    False engaged           True    False
+       5    0.5025  order_id_5     open_long  open_long    False engaged           True    False
+       4    0.5020  order_id_4     open_long  open_long    False engaged           True    False
+       3    0.5015  order_id_3     open_long  open_long    False engaged           True    False
+       2    0.5010  order_id_2     open_long  open_long    False engaged           True    False
+       1    0.5005  order_id_1     open_long  open_long    False engaged           True    False
+       0    0.5000  order_id_0     open_long  open_long    False engaged           True    False
+#############################################################################################
+output lst_orders_to_execute:  [{'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.5135000000000001, 'grid_id': 27}]
+Payload delivered successfully, code 204.
+GRID ITERATION AVERAGE TIME: 0.88 seconds
+cpt end:  4
+cpt start:  5
+lst_close_long_triggered:  []
+global lst_close_long:  []
+global lst_open_long:  [27]
+df_multi_position_status: 
+Empty DataFrame
+Columns: [open_long, close_long]
+Index: []
+DOWN ->  nb_selected_to_be_open : 0
+#############################################################################################
+current_state: 
+  Unnamed: 0 symbol  price      side  leverage     orderId  gridId
+          0    XRP 0.5000 open_long         2  order_id_0       0
+          1    XRP 0.5005 open_long         2  order_id_1       1
+          2    XRP 0.5010 open_long         2  order_id_2       2
+          3    XRP 0.5015 open_long         2  order_id_3       3
+          4    XRP 0.5020 open_long         2  order_id_4       4
+          5    XRP 0.5025 open_long         2  order_id_5       5
+          6    XRP 0.5030 open_long         2  order_id_6       6
+          7    XRP 0.5035 open_long         2  order_id_7       7
+          8    XRP 0.5040 open_long         2  order_id_8       8
+          9    XRP 0.5045 open_long         2  order_id_9       9
+         10    XRP 0.5050 open_long         2 order_id_10      10
+         11    XRP 0.5055 open_long         2 order_id_11      11
+         12    XRP 0.5060 open_long         2 order_id_12      12
+         13    XRP 0.5065 open_long         2 order_id_13      13
+         14    XRP 0.5070 open_long         2 order_id_14      14
+         15    XRP 0.5075 open_long         2 order_id_15      15
+         16    XRP 0.5080 open_long         2 order_id_16      16
+         17    XRP 0.5085 open_long         2 order_id_17      17
+         18    XRP 0.5090 open_long         2 order_id_18      18
+         19    XRP 0.5095 open_long         2 order_id_19      19
+         20    XRP 0.5100 open_long         2 order_id_20      20
+         21    XRP 0.5105 open_long         2 order_id_21      21
+         22    XRP 0.5110 open_long         2 order_id_22      22
+         23    XRP 0.5115 open_long         2 order_id_23      23
+         24    XRP 0.5120 open_long         2 order_id_24      24
+         25    XRP 0.5125 open_long         2 order_id_25      25
+         26    XRP 0.5130 open_long         2 order_id_26      26
+         27    XRP 0.5135 open_long         2 order_id_27      27
+         28    XRP 0.5140 open_long         2 order_id_28      28
+open_positions: 
+ Empty DataFrame
+Columns: [Unnamed: 0, symbol, holdSide, leverage, marginCoin, available, total, usdtEquity, marketPrice, averageOpenPrice, achievedProfits, unrealizedPL, liquidationPrice]
+Index: []
+price: 
+  Unnamed: 0 symbols  values
+          0     XRP 0.51405
+order list: 
+ []
+ grid_id  position     orderId previous_side       side  changes  status  cross_checked  on_edge
+      40    0.5200                close_long close_long    False on_hold          False    False
+      39    0.5195                close_long close_long    False on_hold          False    False
+      38    0.5190                close_long close_long    False on_hold          False    False
+      37    0.5185                close_long close_long    False on_hold          False    False
+      36    0.5180                close_long close_long    False on_hold          False    False
+      35    0.5175                close_long close_long    False on_hold          False    False
+      34    0.5170                close_long close_long    False on_hold          False    False
+      33    0.5165                close_long close_long    False on_hold          False    False
+      32    0.5160                close_long close_long    False on_hold          False    False
+      31    0.5155                close_long close_long    False on_hold          False    False
+      30    0.5150                close_long close_long    False on_hold          False    False
+      29    0.5145                close_long close_long    False on_hold          False    False
+      28    0.5140 order_id_28     open_long  open_long    False engaged           True    False
+      27    0.5135 order_id_27     open_long  open_long    False engaged           True    False
+      26    0.5130 order_id_26     open_long  open_long    False engaged           True    False
+      25    0.5125 order_id_25     open_long  open_long    False engaged           True    False
+      24    0.5120 order_id_24     open_long  open_long    False engaged           True    False
+      23    0.5115 order_id_23     open_long  open_long    False engaged           True    False
+      22    0.5110 order_id_22     open_long  open_long    False engaged           True    False
+      21    0.5105 order_id_21     open_long  open_long    False engaged           True    False
+      20    0.5100 order_id_20     open_long  open_long    False engaged           True    False
+      19    0.5095 order_id_19     open_long  open_long    False engaged           True    False
+      18    0.5090 order_id_18     open_long  open_long    False engaged           True    False
+      17    0.5085 order_id_17     open_long  open_long    False engaged           True    False
+      16    0.5080 order_id_16     open_long  open_long    False engaged           True    False
+      15    0.5075 order_id_15     open_long  open_long    False engaged           True    False
+      14    0.5070 order_id_14     open_long  open_long    False engaged           True    False
+      13    0.5065 order_id_13     open_long  open_long    False engaged           True    False
+      12    0.5060 order_id_12     open_long  open_long    False engaged           True    False
+      11    0.5055 order_id_11     open_long  open_long    False engaged           True    False
+      10    0.5050 order_id_10     open_long  open_long    False engaged           True    False
+       9    0.5045  order_id_9     open_long  open_long    False engaged           True    False
+       8    0.5040  order_id_8     open_long  open_long    False engaged           True    False
+       7    0.5035  order_id_7     open_long  open_long    False engaged           True    False
+       6    0.5030  order_id_6     open_long  open_long    False engaged           True    False
+       5    0.5025  order_id_5     open_long  open_long    False engaged           True    False
+       4    0.5020  order_id_4     open_long  open_long    False engaged           True    False
+       3    0.5015  order_id_3     open_long  open_long    False engaged           True    False
+       2    0.5010  order_id_2     open_long  open_long    False engaged           True    False
+       1    0.5005  order_id_1     open_long  open_long    False engaged           True    False
+       0    0.5000  order_id_0     open_long  open_long    False engaged           True    False
+#############################################################################################
+output lst_orders_to_execute:  []
+Payload delivered successfully, code 204.
+GRID ITERATION AVERAGE TIME: 0.97 seconds
+cpt end:  5
+cpt start:  6
+lst_close_long_triggered:  []
+global lst_close_long:  []
+global lst_open_long:  [27]
+df_multi_position_status: 
+Empty DataFrame
+Columns: [open_long, close_long]
+Index: []
+DOWN ->  nb_selected_to_be_open : 0
+#############################################################################################
+current_state: 
+  Unnamed: 0 symbol  price      side  leverage     orderId  gridId
+          0    XRP 0.5000 open_long         2  order_id_0       0
+          1    XRP 0.5005 open_long         2  order_id_1       1
+          2    XRP 0.5010 open_long         2  order_id_2       2
+          3    XRP 0.5015 open_long         2  order_id_3       3
+          4    XRP 0.5020 open_long         2  order_id_4       4
+          5    XRP 0.5025 open_long         2  order_id_5       5
+          6    XRP 0.5030 open_long         2  order_id_6       6
+          7    XRP 0.5035 open_long         2  order_id_7       7
+          8    XRP 0.5040 open_long         2  order_id_8       8
+          9    XRP 0.5045 open_long         2  order_id_9       9
+         10    XRP 0.5050 open_long         2 order_id_10      10
+         11    XRP 0.5055 open_long         2 order_id_11      11
+         12    XRP 0.5060 open_long         2 order_id_12      12
+         13    XRP 0.5065 open_long         2 order_id_13      13
+         14    XRP 0.5070 open_long         2 order_id_14      14
+         15    XRP 0.5075 open_long         2 order_id_15      15
+         16    XRP 0.5080 open_long         2 order_id_16      16
+         17    XRP 0.5085 open_long         2 order_id_17      17
+         18    XRP 0.5090 open_long         2 order_id_18      18
+         19    XRP 0.5095 open_long         2 order_id_19      19
+         20    XRP 0.5100 open_long         2 order_id_20      20
+         21    XRP 0.5105 open_long         2 order_id_21      21
+         22    XRP 0.5110 open_long         2 order_id_22      22
+         23    XRP 0.5115 open_long         2 order_id_23      23
+         24    XRP 0.5120 open_long         2 order_id_24      24
+         25    XRP 0.5125 open_long         2 order_id_25      25
+         26    XRP 0.5130 open_long         2 order_id_26      26
+         27    XRP 0.5135 open_long         2 order_id_27      27
+         28    XRP 0.5140 open_long         2 order_id_28      28
+open_positions: 
+ Empty DataFrame
+Columns: [Unnamed: 0, symbol, holdSide, leverage, marginCoin, available, total, usdtEquity, marketPrice, averageOpenPrice, achievedProfits, unrealizedPL, liquidationPrice]
+Index: []
+price: 
+  Unnamed: 0 symbols  values
+          0     XRP  0.5205
+order list: 
+ [(32, 0.516, 'OPEN_LONG_ORDER'), (33, 0.5165, 'OPEN_LONG_ORDER'), (34, 0.517, 'OPEN_LONG_ORDER'), (35, 0.5175000000000001, 'OPEN_LONG_ORDER'), (36, 0.518, 'OPEN_LONG_ORDER'), (37, 0.5185, 'OPEN_LONG_ORDER'), (38, 0.519, 'OPEN_LONG_ORDER'), (39, 0.5195000000000001, 'OPEN_LONG_ORDER'), (29, 0.5145, 'OPEN_LONG_ORDER'), (30, 0.515, 'OPEN_LONG_ORDER'), (31, 0.5155000000000001, 'OPEN_LONG_ORDER')]
+ grid_id  position     orderId previous_side      side  changes  status  cross_checked  on_edge
+      40    0.5200                close_long open_long     True on_hold          False    False
+      39    0.5195                close_long open_long     True pending          False    False
+      38    0.5190                close_long open_long     True pending          False    False
+      37    0.5185                close_long open_long     True pending          False    False
+      36    0.5180                close_long open_long     True pending          False    False
+      35    0.5175                close_long open_long     True pending          False    False
+      34    0.5170                close_long open_long     True pending          False    False
+      33    0.5165                close_long open_long     True pending          False    False
+      32    0.5160                close_long open_long     True pending          False    False
+      31    0.5155                close_long open_long     True pending          False    False
+      30    0.5150                close_long open_long     True pending          False    False
+      29    0.5145                close_long open_long     True pending          False    False
+      28    0.5140 order_id_28     open_long open_long    False engaged           True    False
+      27    0.5135 order_id_27     open_long open_long    False engaged           True    False
+      26    0.5130 order_id_26     open_long open_long    False engaged           True    False
+      25    0.5125 order_id_25     open_long open_long    False engaged           True    False
+      24    0.5120 order_id_24     open_long open_long    False engaged           True    False
+      23    0.5115 order_id_23     open_long open_long    False engaged           True    False
+      22    0.5110 order_id_22     open_long open_long    False engaged           True    False
+      21    0.5105 order_id_21     open_long open_long    False engaged           True    False
+      20    0.5100 order_id_20     open_long open_long    False engaged           True    False
+      19    0.5095 order_id_19     open_long open_long    False engaged           True    False
+      18    0.5090 order_id_18     open_long open_long    False engaged           True    False
+      17    0.5085 order_id_17     open_long open_long    False engaged           True    False
+      16    0.5080 order_id_16     open_long open_long    False engaged           True    False
+      15    0.5075 order_id_15     open_long open_long    False engaged           True    False
+      14    0.5070 order_id_14     open_long open_long    False engaged           True    False
+      13    0.5065 order_id_13     open_long open_long    False engaged           True    False
+      12    0.5060 order_id_12     open_long open_long    False engaged           True    False
+      11    0.5055 order_id_11     open_long open_long    False engaged           True    False
+      10    0.5050 order_id_10     open_long open_long    False engaged           True    False
+       9    0.5045  order_id_9     open_long open_long    False engaged           True    False
+       8    0.5040  order_id_8     open_long open_long    False engaged           True    False
+       7    0.5035  order_id_7     open_long open_long    False engaged           True    False
+       6    0.5030  order_id_6     open_long open_long    False engaged           True    False
+       5    0.5025  order_id_5     open_long open_long    False engaged           True    False
+       4    0.5020  order_id_4     open_long open_long    False engaged           True    False
+       3    0.5015  order_id_3     open_long open_long    False engaged           True    False
+       2    0.5010  order_id_2     open_long open_long    False engaged           True    False
+       1    0.5005  order_id_1     open_long open_long    False engaged           True    False
+       0    0.5000  order_id_0     open_long open_long    False engaged           True    False
+#############################################################################################
+output lst_orders_to_execute:  [{'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.516, 'grid_id': 32}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.5165, 'grid_id': 33}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.517, 'grid_id': 34}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.5175000000000001, 'grid_id': 35}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.518, 'grid_id': 36}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.5185, 'grid_id': 37}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.519, 'grid_id': 38}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.5195000000000001, 'grid_id': 39}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.5145, 'grid_id': 29}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.515, 'grid_id': 30}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.5155000000000001, 'grid_id': 31}]
+Payload delivered successfully, code 204.
+GRID ITERATION AVERAGE TIME: 1.02 seconds
+cpt end:  6
+cpt start:  7
+lst_close_long_triggered:  []
+global lst_close_long:  []
+global lst_open_long:  [27]
+df_multi_position_status: 
+Empty DataFrame
+Columns: [open_long, close_long]
+Index: []
+GRID ERROR - limit order failed - grid_id missing:  40  side:  open_long
+DOWN ->  nb_selected_to_be_open : 0
+#############################################################################################
+current_state: 
+  Unnamed: 0 symbol  price      side  leverage     orderId  gridId
+          0    XRP 0.5000 open_long         2  order_id_0       0
+          1    XRP 0.5005 open_long         2  order_id_1       1
+          2    XRP 0.5010 open_long         2  order_id_2       2
+          3    XRP 0.5015 open_long         2  order_id_3       3
+          4    XRP 0.5020 open_long         2  order_id_4       4
+          5    XRP 0.5025 open_long         2  order_id_5       5
+          6    XRP 0.5030 open_long         2  order_id_6       6
+          7    XRP 0.5035 open_long         2  order_id_7       7
+          8    XRP 0.5040 open_long         2  order_id_8       8
+          9    XRP 0.5045 open_long         2  order_id_9       9
+         10    XRP 0.5050 open_long         2 order_id_10      10
+         11    XRP 0.5055 open_long         2 order_id_11      11
+         12    XRP 0.5060 open_long         2 order_id_12      12
+         13    XRP 0.5065 open_long         2 order_id_13      13
+         14    XRP 0.5070 open_long         2 order_id_14      14
+         15    XRP 0.5075 open_long         2 order_id_15      15
+         16    XRP 0.5080 open_long         2 order_id_16      16
+         17    XRP 0.5085 open_long         2 order_id_17      17
+         18    XRP 0.5090 open_long         2 order_id_18      18
+         19    XRP 0.5095 open_long         2 order_id_19      19
+         20    XRP 0.5100 open_long         2 order_id_20      20
+         21    XRP 0.5105 open_long         2 order_id_21      21
+         22    XRP 0.5110 open_long         2 order_id_22      22
+         23    XRP 0.5115 open_long         2 order_id_23      23
+         24    XRP 0.5120 open_long         2 order_id_24      24
+         25    XRP 0.5125 open_long         2 order_id_25      25
+         26    XRP 0.5130 open_long         2 order_id_26      26
+         27    XRP 0.5135 open_long         2 order_id_27      27
+         28    XRP 0.5140 open_long         2 order_id_28      28
+         29    XRP 0.5145 open_long         2 order_id_29      29
+         30    XRP 0.5150 open_long         2 order_id_30      30
+         31    XRP 0.5155 open_long         2 order_id_31      31
+         32    XRP 0.5160 open_long         2 order_id_32      32
+         33    XRP 0.5165 open_long         2 order_id_33      33
+         34    XRP 0.5170 open_long         2 order_id_34      34
+         35    XRP 0.5175 open_long         2 order_id_35      35
+         36    XRP 0.5180 open_long         2 order_id_36      36
+         37    XRP 0.5185 open_long         2 order_id_37      37
+         38    XRP 0.5190 open_long         2 order_id_38      38
+         39    XRP 0.5195 open_long         2 order_id_39      39
+open_positions: 
+ Empty DataFrame
+Columns: [Unnamed: 0, symbol, holdSide, leverage, marginCoin, available, total, usdtEquity, marketPrice, averageOpenPrice, achievedProfits, unrealizedPL, liquidationPrice]
+Index: []
+price: 
+  Unnamed: 0 symbols  values
+          0     XRP  0.5205
+order list: 
+ []
+ grid_id  position     orderId previous_side      side  changes  status  cross_checked  on_edge
+      40    0.5200                 open_long open_long    False on_hold          False    False
+      39    0.5195 order_id_39     open_long open_long    False engaged           True    False
+      38    0.5190 order_id_38     open_long open_long    False engaged           True    False
+      37    0.5185 order_id_37     open_long open_long    False engaged           True    False
+      36    0.5180 order_id_36     open_long open_long    False engaged           True    False
+      35    0.5175 order_id_35     open_long open_long    False engaged           True    False
+      34    0.5170 order_id_34     open_long open_long    False engaged           True    False
+      33    0.5165 order_id_33     open_long open_long    False engaged           True    False
+      32    0.5160 order_id_32     open_long open_long    False engaged           True    False
+      31    0.5155 order_id_31     open_long open_long    False engaged           True    False
+      30    0.5150 order_id_30     open_long open_long    False engaged           True    False
+      29    0.5145 order_id_29     open_long open_long    False engaged           True    False
+      28    0.5140 order_id_28     open_long open_long    False engaged           True    False
+      27    0.5135 order_id_27     open_long open_long    False engaged           True    False
+      26    0.5130 order_id_26     open_long open_long    False engaged           True    False
+      25    0.5125 order_id_25     open_long open_long    False engaged           True    False
+      24    0.5120 order_id_24     open_long open_long    False engaged           True    False
+      23    0.5115 order_id_23     open_long open_long    False engaged           True    False
+      22    0.5110 order_id_22     open_long open_long    False engaged           True    False
+      21    0.5105 order_id_21     open_long open_long    False engaged           True    False
+      20    0.5100 order_id_20     open_long open_long    False engaged           True    False
+      19    0.5095 order_id_19     open_long open_long    False engaged           True    False
+      18    0.5090 order_id_18     open_long open_long    False engaged           True    False
+      17    0.5085 order_id_17     open_long open_long    False engaged           True    False
+      16    0.5080 order_id_16     open_long open_long    False engaged           True    False
+      15    0.5075 order_id_15     open_long open_long    False engaged           True    False
+      14    0.5070 order_id_14     open_long open_long    False engaged           True    False
+      13    0.5065 order_id_13     open_long open_long    False engaged           True    False
+      12    0.5060 order_id_12     open_long open_long    False engaged           True    False
+      11    0.5055 order_id_11     open_long open_long    False engaged           True    False
+      10    0.5050 order_id_10     open_long open_long    False engaged           True    False
+       9    0.5045  order_id_9     open_long open_long    False engaged           True    False
+       8    0.5040  order_id_8     open_long open_long    False engaged           True    False
+       7    0.5035  order_id_7     open_long open_long    False engaged           True    False
+       6    0.5030  order_id_6     open_long open_long    False engaged           True    False
+       5    0.5025  order_id_5     open_long open_long    False engaged           True    False
+       4    0.5020  order_id_4     open_long open_long    False engaged           True    False
+       3    0.5015  order_id_3     open_long open_long    False engaged           True    False
+       2    0.5010  order_id_2     open_long open_long    False engaged           True    False
+       1    0.5005  order_id_1     open_long open_long    False engaged           True    False
+       0    0.5000  order_id_0     open_long open_long    False engaged           True    False
+#############################################################################################
+output lst_orders_to_execute:  []
+Payload delivered successfully, code 204.
+GRID ITERATION AVERAGE TIME: 1.06 seconds
+cpt end:  7
+cpt start:  8
+lst_close_long_triggered:  []
+global lst_close_long:  []
+global lst_open_long:  [27, 40]
+df_multi_position_status: 
+Empty DataFrame
+Columns: [open_long, close_long]
+Index: []
+GRID ERROR - limit order failed - grid_id missing:  40  side:  open_long
+DOWN ->  nb_selected_to_be_open : 0
+#############################################################################################
+current_state: 
+  Unnamed: 0 symbol  price      side  leverage     orderId  gridId
+          0    XRP 0.5000 open_long         2  order_id_0       0
+          1    XRP 0.5005 open_long         2  order_id_1       1
+          2    XRP 0.5010 open_long         2  order_id_2       2
+          3    XRP 0.5015 open_long         2  order_id_3       3
+          4    XRP 0.5020 open_long         2  order_id_4       4
+          5    XRP 0.5025 open_long         2  order_id_5       5
+          6    XRP 0.5030 open_long         2  order_id_6       6
+          7    XRP 0.5035 open_long         2  order_id_7       7
+          8    XRP 0.5040 open_long         2  order_id_8       8
+          9    XRP 0.5045 open_long         2  order_id_9       9
+         10    XRP 0.5050 open_long         2 order_id_10      10
+         11    XRP 0.5055 open_long         2 order_id_11      11
+         12    XRP 0.5060 open_long         2 order_id_12      12
+         13    XRP 0.5065 open_long         2 order_id_13      13
+         14    XRP 0.5070 open_long         2 order_id_14      14
+         15    XRP 0.5075 open_long         2 order_id_15      15
+         16    XRP 0.5080 open_long         2 order_id_16      16
+         17    XRP 0.5085 open_long         2 order_id_17      17
+         18    XRP 0.5090 open_long         2 order_id_18      18
+         19    XRP 0.5095 open_long         2 order_id_19      19
+         20    XRP 0.5100 open_long         2 order_id_20      20
+         21    XRP 0.5105 open_long         2 order_id_21      21
+         22    XRP 0.5110 open_long         2 order_id_22      22
+         23    XRP 0.5115 open_long         2 order_id_23      23
+         24    XRP 0.5120 open_long         2 order_id_24      24
+         25    XRP 0.5125 open_long         2 order_id_25      25
+         26    XRP 0.5130 open_long         2 order_id_26      26
+         27    XRP 0.5135 open_long         2 order_id_27      27
+         28    XRP 0.5140 open_long         2 order_id_28      28
+         29    XRP 0.5145 open_long         2 order_id_29      29
+         30    XRP 0.5150 open_long         2 order_id_30      30
+         31    XRP 0.5155 open_long         2 order_id_31      31
+         32    XRP 0.5160 open_long         2 order_id_32      32
+         33    XRP 0.5165 open_long         2 order_id_33      33
+         34    XRP 0.5170 open_long         2 order_id_34      34
+         35    XRP 0.5175 open_long         2 order_id_35      35
+         36    XRP 0.5180 open_long         2 order_id_36      36
+         37    XRP 0.5185 open_long         2 order_id_37      37
+         38    XRP 0.5190 open_long         2 order_id_38      38
+         39    XRP 0.5195 open_long         2 order_id_39      39
+open_positions: 
+ Empty DataFrame
+Columns: [Unnamed: 0, symbol, holdSide, leverage, marginCoin, available, total, usdtEquity, marketPrice, averageOpenPrice, achievedProfits, unrealizedPL, liquidationPrice]
+Index: []
+price: 
+  Unnamed: 0 symbols  values
+          0     XRP  0.5197
+order list: 
+ []
+ grid_id  position     orderId previous_side       side  changes  status  cross_checked  on_edge
+      40    0.5200                 open_long close_long     True on_hold          False    False
+      39    0.5195 order_id_39     open_long  open_long    False engaged           True    False
+      38    0.5190 order_id_38     open_long  open_long    False engaged           True    False
+      37    0.5185 order_id_37     open_long  open_long    False engaged           True    False
+      36    0.5180 order_id_36     open_long  open_long    False engaged           True    False
+      35    0.5175 order_id_35     open_long  open_long    False engaged           True    False
+      34    0.5170 order_id_34     open_long  open_long    False engaged           True    False
+      33    0.5165 order_id_33     open_long  open_long    False engaged           True    False
+      32    0.5160 order_id_32     open_long  open_long    False engaged           True    False
+      31    0.5155 order_id_31     open_long  open_long    False engaged           True    False
+      30    0.5150 order_id_30     open_long  open_long    False engaged           True    False
+      29    0.5145 order_id_29     open_long  open_long    False engaged           True    False
+      28    0.5140 order_id_28     open_long  open_long    False engaged           True    False
+      27    0.5135 order_id_27     open_long  open_long    False engaged           True    False
+      26    0.5130 order_id_26     open_long  open_long    False engaged           True    False
+      25    0.5125 order_id_25     open_long  open_long    False engaged           True    False
+      24    0.5120 order_id_24     open_long  open_long    False engaged           True    False
+      23    0.5115 order_id_23     open_long  open_long    False engaged           True    False
+      22    0.5110 order_id_22     open_long  open_long    False engaged           True    False
+      21    0.5105 order_id_21     open_long  open_long    False engaged           True    False
+      20    0.5100 order_id_20     open_long  open_long    False engaged           True    False
+      19    0.5095 order_id_19     open_long  open_long    False engaged           True    False
+      18    0.5090 order_id_18     open_long  open_long    False engaged           True    False
+      17    0.5085 order_id_17     open_long  open_long    False engaged           True    False
+      16    0.5080 order_id_16     open_long  open_long    False engaged           True    False
+      15    0.5075 order_id_15     open_long  open_long    False engaged           True    False
+      14    0.5070 order_id_14     open_long  open_long    False engaged           True    False
+      13    0.5065 order_id_13     open_long  open_long    False engaged           True    False
+      12    0.5060 order_id_12     open_long  open_long    False engaged           True    False
+      11    0.5055 order_id_11     open_long  open_long    False engaged           True    False
+      10    0.5050 order_id_10     open_long  open_long    False engaged           True    False
+       9    0.5045  order_id_9     open_long  open_long    False engaged           True    False
+       8    0.5040  order_id_8     open_long  open_long    False engaged           True    False
+       7    0.5035  order_id_7     open_long  open_long    False engaged           True    False
+       6    0.5030  order_id_6     open_long  open_long    False engaged           True    False
+       5    0.5025  order_id_5     open_long  open_long    False engaged           True    False
+       4    0.5020  order_id_4     open_long  open_long    False engaged           True    False
+       3    0.5015  order_id_3     open_long  open_long    False engaged           True    False
+       2    0.5010  order_id_2     open_long  open_long    False engaged           True    False
+       1    0.5005  order_id_1     open_long  open_long    False engaged           True    False
+       0    0.5000  order_id_0     open_long  open_long    False engaged           True    False
+#############################################################################################
+output lst_orders_to_execute:  []
+Payload delivered successfully, code 204.
+GRID ITERATION AVERAGE TIME: 1.09 seconds
+cpt end:  8
+cpt start:  9
+lst_close_long_triggered:  []
+global lst_close_long:  []
+global lst_open_long:  [27, 39, 40]
+df_multi_position_status: 
+Empty DataFrame
+Columns: [open_long, close_long]
+Index: []
+DOWN ->  nb_selected_to_be_open : 1
+#############################################################################################
+current_state: 
+  Unnamed: 0 symbol  price      side  leverage     orderId  gridId
+          0    XRP 0.5000 open_long         2  order_id_0       0
+          1    XRP 0.5005 open_long         2  order_id_1       1
+          2    XRP 0.5010 open_long         2  order_id_2       2
+          3    XRP 0.5015 open_long         2  order_id_3       3
+          4    XRP 0.5020 open_long         2  order_id_4       4
+          5    XRP 0.5025 open_long         2  order_id_5       5
+          6    XRP 0.5030 open_long         2  order_id_6       6
+          7    XRP 0.5035 open_long         2  order_id_7       7
+          8    XRP 0.5040 open_long         2  order_id_8       8
+          9    XRP 0.5045 open_long         2  order_id_9       9
+         10    XRP 0.5050 open_long         2 order_id_10      10
+         11    XRP 0.5055 open_long         2 order_id_11      11
+         12    XRP 0.5060 open_long         2 order_id_12      12
+         13    XRP 0.5065 open_long         2 order_id_13      13
+         14    XRP 0.5070 open_long         2 order_id_14      14
+         15    XRP 0.5075 open_long         2 order_id_15      15
+         16    XRP 0.5080 open_long         2 order_id_16      16
+         17    XRP 0.5085 open_long         2 order_id_17      17
+         18    XRP 0.5090 open_long         2 order_id_18      18
+         19    XRP 0.5095 open_long         2 order_id_19      19
+         20    XRP 0.5100 open_long         2 order_id_20      20
+         21    XRP 0.5105 open_long         2 order_id_21      21
+         22    XRP 0.5110 open_long         2 order_id_22      22
+         23    XRP 0.5115 open_long         2 order_id_23      23
+         24    XRP 0.5120 open_long         2 order_id_24      24
+         25    XRP 0.5125 open_long         2 order_id_25      25
+         26    XRP 0.5130 open_long         2 order_id_26      26
+         27    XRP 0.5135 open_long         2 order_id_27      27
+         28    XRP 0.5140 open_long         2 order_id_28      28
+         29    XRP 0.5145 open_long         2 order_id_29      29
+         30    XRP 0.5150 open_long         2 order_id_30      30
+         31    XRP 0.5155 open_long         2 order_id_31      31
+         32    XRP 0.5160 open_long         2 order_id_32      32
+         33    XRP 0.5165 open_long         2 order_id_33      33
+         34    XRP 0.5170 open_long         2 order_id_34      34
+         35    XRP 0.5175 open_long         2 order_id_35      35
+         36    XRP 0.5180 open_long         2 order_id_36      36
+         37    XRP 0.5185 open_long         2 order_id_37      37
+         38    XRP 0.5190 open_long         2 order_id_38      38
+open_positions: 
+  Unnamed: 0 symbol holdSide  leverage marginCoin  available  total  usdtEquity  marketPrice  averageOpenPrice  achievedProfits  unrealizedPL  liquidationPrice
+          0    XRP     long         2       USDT       10.0   10.0     5.86875      0.58664          0.586875              0.0       -0.0047               0.0
+price: 
+  Unnamed: 0 symbols  values
+          0     XRP  0.5192
+order list: 
+ [(40, 0.52, 'CLOSE_LONG_ORDER')]
+ grid_id  position     orderId previous_side       side  changes  status  cross_checked  on_edge
+      40    0.5200                close_long close_long    False pending          False    False
+      39    0.5195                 open_long close_long     True on_hold          False    False
+      38    0.5190 order_id_38     open_long  open_long    False engaged           True    False
+      37    0.5185 order_id_37     open_long  open_long    False engaged           True    False
+      36    0.5180 order_id_36     open_long  open_long    False engaged           True    False
+      35    0.5175 order_id_35     open_long  open_long    False engaged           True    False
+      34    0.5170 order_id_34     open_long  open_long    False engaged           True    False
+      33    0.5165 order_id_33     open_long  open_long    False engaged           True    False
+      32    0.5160 order_id_32     open_long  open_long    False engaged           True    False
+      31    0.5155 order_id_31     open_long  open_long    False engaged           True    False
+      30    0.5150 order_id_30     open_long  open_long    False engaged           True    False
+      29    0.5145 order_id_29     open_long  open_long    False engaged           True    False
+      28    0.5140 order_id_28     open_long  open_long    False engaged           True    False
+      27    0.5135 order_id_27     open_long  open_long    False engaged           True    False
+      26    0.5130 order_id_26     open_long  open_long    False engaged           True    False
+      25    0.5125 order_id_25     open_long  open_long    False engaged           True    False
+      24    0.5120 order_id_24     open_long  open_long    False engaged           True    False
+      23    0.5115 order_id_23     open_long  open_long    False engaged           True    False
+      22    0.5110 order_id_22     open_long  open_long    False engaged           True    False
+      21    0.5105 order_id_21     open_long  open_long    False engaged           True    False
+      20    0.5100 order_id_20     open_long  open_long    False engaged           True    False
+      19    0.5095 order_id_19     open_long  open_long    False engaged           True    False
+      18    0.5090 order_id_18     open_long  open_long    False engaged           True    False
+      17    0.5085 order_id_17     open_long  open_long    False engaged           True    False
+      16    0.5080 order_id_16     open_long  open_long    False engaged           True    False
+      15    0.5075 order_id_15     open_long  open_long    False engaged           True    False
+      14    0.5070 order_id_14     open_long  open_long    False engaged           True    False
+      13    0.5065 order_id_13     open_long  open_long    False engaged           True    False
+      12    0.5060 order_id_12     open_long  open_long    False engaged           True    False
+      11    0.5055 order_id_11     open_long  open_long    False engaged           True    False
+      10    0.5050 order_id_10     open_long  open_long    False engaged           True    False
+       9    0.5045  order_id_9     open_long  open_long    False engaged           True    False
+       8    0.5040  order_id_8     open_long  open_long    False engaged           True    False
+       7    0.5035  order_id_7     open_long  open_long    False engaged           True    False
+       6    0.5030  order_id_6     open_long  open_long    False engaged           True    False
+       5    0.5025  order_id_5     open_long  open_long    False engaged           True    False
+       4    0.5020  order_id_4     open_long  open_long    False engaged           True    False
+       3    0.5015  order_id_3     open_long  open_long    False engaged           True    False
+       2    0.5010  order_id_2     open_long  open_long    False engaged           True    False
+       1    0.5005  order_id_1     open_long  open_long    False engaged           True    False
+       0    0.5000  order_id_0     open_long  open_long    False engaged           True    False
+#############################################################################################
+output lst_orders_to_execute:  [{'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.52, 'grid_id': 40}]
+Payload delivered successfully, code 204.
+GRID ITERATION AVERAGE TIME: 1.12 seconds
+cpt end:  9
+cpt start:  10
+lst_close_long_triggered:  []
+global lst_close_long:  [40]
+global lst_open_long:  [27, 39]
+df_multi_position_status: 
+Empty DataFrame
+Columns: [open_long, close_long]
+Index: []
+FLAT -> nb_selected_to_be_open : 0
+#############################################################################################
+current_state: 
+  Unnamed: 0 symbol  price       side  leverage     orderId  gridId
+          0    XRP 0.5000  open_long         2  order_id_0       0
+          1    XRP 0.5005  open_long         2  order_id_1       1
+          2    XRP 0.5010  open_long         2  order_id_2       2
+          3    XRP 0.5015  open_long         2  order_id_3       3
+          4    XRP 0.5020  open_long         2  order_id_4       4
+          5    XRP 0.5025  open_long         2  order_id_5       5
+          6    XRP 0.5030  open_long         2  order_id_6       6
+          7    XRP 0.5035  open_long         2  order_id_7       7
+          8    XRP 0.5040  open_long         2  order_id_8       8
+          9    XRP 0.5045  open_long         2  order_id_9       9
+         10    XRP 0.5050  open_long         2 order_id_10      10
+         11    XRP 0.5055  open_long         2 order_id_11      11
+         12    XRP 0.5060  open_long         2 order_id_12      12
+         13    XRP 0.5065  open_long         2 order_id_13      13
+         14    XRP 0.5070  open_long         2 order_id_14      14
+         15    XRP 0.5075  open_long         2 order_id_15      15
+         16    XRP 0.5080  open_long         2 order_id_16      16
+         17    XRP 0.5085  open_long         2 order_id_17      17
+         18    XRP 0.5090  open_long         2 order_id_18      18
+         19    XRP 0.5095  open_long         2 order_id_19      19
+         20    XRP 0.5100  open_long         2 order_id_20      20
+         21    XRP 0.5105  open_long         2 order_id_21      21
+         22    XRP 0.5110  open_long         2 order_id_22      22
+         23    XRP 0.5115  open_long         2 order_id_23      23
+         24    XRP 0.5120  open_long         2 order_id_24      24
+         25    XRP 0.5125  open_long         2 order_id_25      25
+         26    XRP 0.5130  open_long         2 order_id_26      26
+         27    XRP 0.5135  open_long         2 order_id_27      27
+         28    XRP 0.5140  open_long         2 order_id_28      28
+         29    XRP 0.5145  open_long         2 order_id_29      29
+         30    XRP 0.5150  open_long         2 order_id_30      30
+         31    XRP 0.5155  open_long         2 order_id_31      31
+         32    XRP 0.5160  open_long         2 order_id_32      32
+         33    XRP 0.5165  open_long         2 order_id_33      33
+         34    XRP 0.5170  open_long         2 order_id_34      34
+         35    XRP 0.5175  open_long         2 order_id_35      35
+         36    XRP 0.5180  open_long         2 order_id_36      36
+         37    XRP 0.5185  open_long         2 order_id_37      37
+         38    XRP 0.5190  open_long         2 order_id_38      38
+         39    XRP 0.5200 close_long         2 order_id_40      40
+open_positions: 
+  Unnamed: 0 symbol holdSide  leverage marginCoin  available  total  usdtEquity  marketPrice  averageOpenPrice  achievedProfits  unrealizedPL  liquidationPrice
+          0    XRP     long         2       USDT       10.0   10.0     5.86875      0.58664          0.586875              0.0       -0.0047               0.0
+price: 
+  Unnamed: 0 symbols  values
+          0     XRP  0.5192
+order list: 
+ []
+ grid_id  position     orderId previous_side       side  changes  status  cross_checked  on_edge
+      40    0.5200 order_id_40    close_long close_long    False engaged           True    False
+      39    0.5195                close_long close_long    False on_hold          False    False
+      38    0.5190 order_id_38     open_long  open_long    False engaged           True    False
+      37    0.5185 order_id_37     open_long  open_long    False engaged           True    False
+      36    0.5180 order_id_36     open_long  open_long    False engaged           True    False
+      35    0.5175 order_id_35     open_long  open_long    False engaged           True    False
+      34    0.5170 order_id_34     open_long  open_long    False engaged           True    False
+      33    0.5165 order_id_33     open_long  open_long    False engaged           True    False
+      32    0.5160 order_id_32     open_long  open_long    False engaged           True    False
+      31    0.5155 order_id_31     open_long  open_long    False engaged           True    False
+      30    0.5150 order_id_30     open_long  open_long    False engaged           True    False
+      29    0.5145 order_id_29     open_long  open_long    False engaged           True    False
+      28    0.5140 order_id_28     open_long  open_long    False engaged           True    False
+      27    0.5135 order_id_27     open_long  open_long    False engaged           True    False
+      26    0.5130 order_id_26     open_long  open_long    False engaged           True    False
+      25    0.5125 order_id_25     open_long  open_long    False engaged           True    False
+      24    0.5120 order_id_24     open_long  open_long    False engaged           True    False
+      23    0.5115 order_id_23     open_long  open_long    False engaged           True    False
+      22    0.5110 order_id_22     open_long  open_long    False engaged           True    False
+      21    0.5105 order_id_21     open_long  open_long    False engaged           True    False
+      20    0.5100 order_id_20     open_long  open_long    False engaged           True    False
+      19    0.5095 order_id_19     open_long  open_long    False engaged           True    False
+      18    0.5090 order_id_18     open_long  open_long    False engaged           True    False
+      17    0.5085 order_id_17     open_long  open_long    False engaged           True    False
+      16    0.5080 order_id_16     open_long  open_long    False engaged           True    False
+      15    0.5075 order_id_15     open_long  open_long    False engaged           True    False
+      14    0.5070 order_id_14     open_long  open_long    False engaged           True    False
+      13    0.5065 order_id_13     open_long  open_long    False engaged           True    False
+      12    0.5060 order_id_12     open_long  open_long    False engaged           True    False
+      11    0.5055 order_id_11     open_long  open_long    False engaged           True    False
+      10    0.5050 order_id_10     open_long  open_long    False engaged           True    False
+       9    0.5045  order_id_9     open_long  open_long    False engaged           True    False
+       8    0.5040  order_id_8     open_long  open_long    False engaged           True    False
+       7    0.5035  order_id_7     open_long  open_long    False engaged           True    False
+       6    0.5030  order_id_6     open_long  open_long    False engaged           True    False
+       5    0.5025  order_id_5     open_long  open_long    False engaged           True    False
+       4    0.5020  order_id_4     open_long  open_long    False engaged           True    False
+       3    0.5015  order_id_3     open_long  open_long    False engaged           True    False
+       2    0.5010  order_id_2     open_long  open_long    False engaged           True    False
+       1    0.5005  order_id_1     open_long  open_long    False engaged           True    False
+       0    0.5000  order_id_0     open_long  open_long    False engaged           True    False
+#############################################################################################
+output lst_orders_to_execute:  []
+None Print
+GRID ITERATION AVERAGE TIME: 1.02 seconds
+cpt end:  10
+cpt start:  11
+lst_close_long_triggered:  []
+global lst_close_long:  [40]
+global lst_open_long:  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]
+df_multi_position_status: 
+Empty DataFrame
+Columns: [open_long, close_long]
+Index: []
+DOWN ->  nb_selected_to_be_open : 39
+#############################################################################################
+current_state: 
+  Unnamed: 0 symbol  price       side  leverage     orderId  gridId
+          0    XRP   0.52 close_long         2 order_id_40      40
+open_positions: 
+  Unnamed: 0 symbol holdSide  leverage marginCoin  available  total  usdtEquity  marketPrice  averageOpenPrice  achievedProfits  unrealizedPL  liquidationPrice
+          0    XRP     long         2       USDT       10.0  400.0     5.86875      0.58664          0.586875              0.0       -0.0047               0.0
+price: 
+  Unnamed: 0 symbols  values
+          0     XRP    0.49
+order list: 
+ [(1, 0.5005, 'CLOSE_LONG_ORDER'), (2, 0.501, 'CLOSE_LONG_ORDER'), (3, 0.5015000000000001, 'CLOSE_LONG_ORDER'), (4, 0.502, 'CLOSE_LONG_ORDER'), (5, 0.5025, 'CLOSE_LONG_ORDER'), (6, 0.503, 'CLOSE_LONG_ORDER'), (7, 0.5035000000000001, 'CLOSE_LONG_ORDER'), (8, 0.504, 'CLOSE_LONG_ORDER'), (9, 0.5045, 'CLOSE_LONG_ORDER'), (10, 0.505, 'CLOSE_LONG_ORDER'), (11, 0.5055000000000001, 'CLOSE_LONG_ORDER'), (12, 0.506, 'CLOSE_LONG_ORDER'), (13, 0.5065, 'CLOSE_LONG_ORDER'), (14, 0.507, 'CLOSE_LONG_ORDER'), (15, 0.5075000000000001, 'CLOSE_LONG_ORDER'), (16, 0.508, 'CLOSE_LONG_ORDER'), (17, 0.5085, 'CLOSE_LONG_ORDER'), (18, 0.509, 'CLOSE_LONG_ORDER'), (19, 0.5095000000000001, 'CLOSE_LONG_ORDER'), (20, 0.51, 'CLOSE_LONG_ORDER'), (21, 0.5105, 'CLOSE_LONG_ORDER'), (22, 0.511, 'CLOSE_LONG_ORDER'), (23, 0.5115000000000001, 'CLOSE_LONG_ORDER'), (24, 0.512, 'CLOSE_LONG_ORDER'), (25, 0.5125, 'CLOSE_LONG_ORDER'), (26, 0.513, 'CLOSE_LONG_ORDER'), (27, 0.5135000000000001, 'CLOSE_LONG_ORDER'), (28, 0.514, 'CLOSE_LONG_ORDER'), (29, 0.5145, 'CLOSE_LONG_ORDER'), (30, 0.515, 'CLOSE_LONG_ORDER'), (31, 0.5155000000000001, 'CLOSE_LONG_ORDER'), (32, 0.516, 'CLOSE_LONG_ORDER'), (33, 0.5165, 'CLOSE_LONG_ORDER'), (34, 0.517, 'CLOSE_LONG_ORDER'), (35, 0.5175000000000001, 'CLOSE_LONG_ORDER'), (36, 0.518, 'CLOSE_LONG_ORDER'), (37, 0.5185, 'CLOSE_LONG_ORDER'), (38, 0.519, 'CLOSE_LONG_ORDER'), (39, 0.5195000000000001, 'CLOSE_LONG_ORDER')]
+ grid_id  position     orderId previous_side       side  changes  status  cross_checked  on_edge
+      40    0.5200 order_id_40    close_long close_long    False engaged           True    False
+      39    0.5195                close_long close_long    False pending          False    False
+      38    0.5190                 open_long close_long     True pending          False    False
+      37    0.5185                 open_long close_long     True pending          False    False
+      36    0.5180                 open_long close_long     True pending          False    False
+      35    0.5175                 open_long close_long     True pending          False    False
+      34    0.5170                 open_long close_long     True pending          False    False
+      33    0.5165                 open_long close_long     True pending          False    False
+      32    0.5160                 open_long close_long     True pending          False    False
+      31    0.5155                 open_long close_long     True pending          False    False
+      30    0.5150                 open_long close_long     True pending          False    False
+      29    0.5145                 open_long close_long     True pending          False    False
+      28    0.5140                 open_long close_long     True pending          False    False
+      27    0.5135                 open_long close_long     True pending          False    False
+      26    0.5130                 open_long close_long     True pending          False    False
+      25    0.5125                 open_long close_long     True pending          False    False
+      24    0.5120                 open_long close_long     True pending          False    False
+      23    0.5115                 open_long close_long     True pending          False    False
+      22    0.5110                 open_long close_long     True pending          False    False
+      21    0.5105                 open_long close_long     True pending          False    False
+      20    0.5100                 open_long close_long     True pending          False    False
+      19    0.5095                 open_long close_long     True pending          False    False
+      18    0.5090                 open_long close_long     True pending          False    False
+      17    0.5085                 open_long close_long     True pending          False    False
+      16    0.5080                 open_long close_long     True pending          False    False
+      15    0.5075                 open_long close_long     True pending          False    False
+      14    0.5070                 open_long close_long     True pending          False    False
+      13    0.5065                 open_long close_long     True pending          False    False
+      12    0.5060                 open_long close_long     True pending          False    False
+      11    0.5055                 open_long close_long     True pending          False    False
+      10    0.5050                 open_long close_long     True pending          False    False
+       9    0.5045                 open_long close_long     True pending          False    False
+       8    0.5040                 open_long close_long     True pending          False    False
+       7    0.5035                 open_long close_long     True pending          False    False
+       6    0.5030                 open_long close_long     True pending          False    False
+       5    0.5025                 open_long close_long     True pending          False    False
+       4    0.5020                 open_long close_long     True pending          False    False
+       3    0.5015                 open_long close_long     True pending          False    False
+       2    0.5010                 open_long close_long     True pending          False    False
+       1    0.5005                 open_long close_long     True pending          False    False
+       0    0.5000                 open_long close_long     True on_hold          False    False
+#############################################################################################
+output lst_orders_to_execute:  [{'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.5005, 'grid_id': 1}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.501, 'grid_id': 2}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.5015000000000001, 'grid_id': 3}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.502, 'grid_id': 4}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.5025, 'grid_id': 5}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.503, 'grid_id': 6}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.5035000000000001, 'grid_id': 7}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.504, 'grid_id': 8}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.5045, 'grid_id': 9}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.505, 'grid_id': 10}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.5055000000000001, 'grid_id': 11}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.506, 'grid_id': 12}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.5065, 'grid_id': 13}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.507, 'grid_id': 14}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.5075000000000001, 'grid_id': 15}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.508, 'grid_id': 16}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.5085, 'grid_id': 17}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.509, 'grid_id': 18}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.5095000000000001, 'grid_id': 19}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.51, 'grid_id': 20}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.5105, 'grid_id': 21}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.511, 'grid_id': 22}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.5115000000000001, 'grid_id': 23}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.512, 'grid_id': 24}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.5125, 'grid_id': 25}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.513, 'grid_id': 26}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.5135000000000001, 'grid_id': 27}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.514, 'grid_id': 28}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.5145, 'grid_id': 29}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.515, 'grid_id': 30}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.5155000000000001, 'grid_id': 31}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.516, 'grid_id': 32}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.5165, 'grid_id': 33}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.517, 'grid_id': 34}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.5175000000000001, 'grid_id': 35}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.518, 'grid_id': 36}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.5185, 'grid_id': 37}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.519, 'grid_id': 38}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.5195000000000001, 'grid_id': 39}]
+Payload delivered successfully, code 204.
+GRID ITERATION AVERAGE TIME: 1.05 seconds
+cpt end:  11
+cpt start:  12
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+lst_close_long_triggered:  []
+global lst_close_long:  [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40]
+global lst_open_long:  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]
+0  and  1  dropped from list
+1  and  2  dropped from list
+2  and  3  dropped from list
+3  and  4  dropped from list
+4  and  5  dropped from list
+5  and  6  dropped from list
+6  and  7  dropped from list
+7  and  8  dropped from list
+8  and  9  dropped from list
+9  and  10  dropped from list
+10  and  11  dropped from list
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+11  and  12  dropped from list
+12  and  13  dropped from list
+13  and  14  dropped from list
+14  and  15  dropped from list
+15  and  16  dropped from list
+16  and  17  dropped from list
+17  and  18  dropped from list
+18  and  19  dropped from list
+19  and  20  dropped from list
+20  and  21  dropped from list
+21  and  22  dropped from list
+22  and  23  dropped from list
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+23  and  24  dropped from list
+24  and  25  dropped from list
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+25  and  26  dropped from list
+26  and  27  dropped from list
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+27  and  28  dropped from list
+28  and  29  dropped from list
+29  and  30  dropped from list
+30  and  31  dropped from list
+31  and  32  dropped from list
+32  and  33  dropped from list
+33  and  34  dropped from list
+34  and  35  dropped from list
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+35  and  36  dropped from list
+36  and  37  dropped from list
+37  and  38  dropped from list
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+C:\Users\despo\PycharmProjects\crag_sim_3\src\rtstr_grid_trading_long.py:602: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+38  and  39  dropped from list
+39  and  40  dropped from list
+df_multi_position_status: 
+ open_long  close_long
+         0           1
+         1           2
+         2           3
+         3           4
+         4           5
+         5           6
+         6           7
+         7           8
+         8           9
+         9          10
+        10          11
+        11          12
+        12          13
+        13          14
+        14          15
+        15          16
+        16          17
+        17          18
+        18          19
+        19          20
+        20          21
+        21          22
+        22          23
+        23          24
+        24          25
+        25          26
+        26          27
+        27          28
+        28          29
+        29          30
+        30          31
+        31          32
+        32          33
+        33          34
+        34          35
+        35          36
+        36          37
+        37          38
+        38          39
+        39          40
+FLAT -> nb_selected_to_be_open : 0
+#############################################################################################
+current_state: 
+  Unnamed: 0 symbol  price       side  leverage     orderId  gridId
+          1    XRP 0.5005 close_long         2  order_id_1       1
+          2    XRP 0.5010 close_long         2  order_id_2       2
+          3    XRP 0.5015 close_long         2  order_id_3       3
+          4    XRP 0.5020 close_long         2  order_id_4       4
+          5    XRP 0.5025 close_long         2  order_id_5       5
+          6    XRP 0.5030 close_long         2  order_id_6       6
+          7    XRP 0.5035 close_long         2  order_id_7       7
+          8    XRP 0.5040 close_long         2  order_id_8       8
+          9    XRP 0.5045 close_long         2  order_id_9       9
+         10    XRP 0.5050 close_long         2 order_id_10      10
+         11    XRP 0.5055 close_long         2 order_id_11      11
+         12    XRP 0.5060 close_long         2 order_id_12      12
+         13    XRP 0.5065 close_long         2 order_id_13      13
+         14    XRP 0.5070 close_long         2 order_id_14      14
+         15    XRP 0.5075 close_long         2 order_id_15      15
+         16    XRP 0.5080 close_long         2 order_id_16      16
+         17    XRP 0.5085 close_long         2 order_id_17      17
+         18    XRP 0.5090 close_long         2 order_id_18      18
+         19    XRP 0.5095 close_long         2 order_id_19      19
+         20    XRP 0.5100 close_long         2 order_id_20      20
+         21    XRP 0.5105 close_long         2 order_id_21      21
+         22    XRP 0.5110 close_long         2 order_id_22      22
+         23    XRP 0.5115 close_long         2 order_id_23      23
+         24    XRP 0.5120 close_long         2 order_id_24      24
+         25    XRP 0.5125 close_long         2 order_id_25      25
+         26    XRP 0.5130 close_long         2 order_id_26      26
+         27    XRP 0.5135 close_long         2 order_id_27      27
+         28    XRP 0.5140 close_long         2 order_id_28      28
+         29    XRP 0.5145 close_long         2 order_id_29      29
+         30    XRP 0.5150 close_long         2 order_id_30      30
+         31    XRP 0.5155 close_long         2 order_id_31      31
+         32    XRP 0.5160 close_long         2 order_id_32      32
+         33    XRP 0.5165 close_long         2 order_id_33      33
+         34    XRP 0.5170 close_long         2 order_id_34      34
+         35    XRP 0.5175 close_long         2 order_id_35      35
+         36    XRP 0.5180 close_long         2 order_id_36      36
+         37    XRP 0.5185 close_long         2 order_id_37      37
+         38    XRP 0.5190 close_long         2 order_id_38      38
+         39    XRP 0.5195 close_long         2 order_id_39      39
+         40    XRP 0.5200 close_long         2 order_id_40      40
+open_positions: 
+  Unnamed: 0 symbol holdSide  leverage marginCoin  available  total  usdtEquity  marketPrice  averageOpenPrice  achievedProfits  unrealizedPL  liquidationPrice
+          0    XRP     long         2       USDT       10.0  400.0     5.86875      0.58664          0.586875              0.0       -0.0047               0.0
+price: 
+  Unnamed: 0 symbols  values
+          0     XRP    0.49
+order list: 
+ []
+ grid_id  position     orderId previous_side       side  changes  status  cross_checked  on_edge
+      40    0.5200 order_id_40    close_long close_long    False engaged           True    False
+      39    0.5195 order_id_39    close_long close_long    False engaged           True    False
+      38    0.5190 order_id_38    close_long close_long    False engaged           True    False
+      37    0.5185 order_id_37    close_long close_long    False engaged           True    False
+      36    0.5180 order_id_36    close_long close_long    False engaged           True    False
+      35    0.5175 order_id_35    close_long close_long    False engaged           True    False
+      34    0.5170 order_id_34    close_long close_long    False engaged           True    False
+      33    0.5165 order_id_33    close_long close_long    False engaged           True    False
+      32    0.5160 order_id_32    close_long close_long    False engaged           True    False
+      31    0.5155 order_id_31    close_long close_long    False engaged           True    False
+      30    0.5150 order_id_30    close_long close_long    False engaged           True    False
+      29    0.5145 order_id_29    close_long close_long    False engaged           True    False
+      28    0.5140 order_id_28    close_long close_long    False engaged           True    False
+      27    0.5135 order_id_27    close_long close_long    False engaged           True    False
+      26    0.5130 order_id_26    close_long close_long    False engaged           True    False
+      25    0.5125 order_id_25    close_long close_long    False engaged           True    False
+      24    0.5120 order_id_24    close_long close_long    False engaged           True    False
+      23    0.5115 order_id_23    close_long close_long    False engaged           True    False
+      22    0.5110 order_id_22    close_long close_long    False engaged           True    False
+      21    0.5105 order_id_21    close_long close_long    False engaged           True    False
+      20    0.5100 order_id_20    close_long close_long    False engaged           True    False
+      19    0.5095 order_id_19    close_long close_long    False engaged           True    False
+      18    0.5090 order_id_18    close_long close_long    False engaged           True    False
+      17    0.5085 order_id_17    close_long close_long    False engaged           True    False
+      16    0.5080 order_id_16    close_long close_long    False engaged           True    False
+      15    0.5075 order_id_15    close_long close_long    False engaged           True    False
+      14    0.5070 order_id_14    close_long close_long    False engaged           True    False
+      13    0.5065 order_id_13    close_long close_long    False engaged           True    False
+      12    0.5060 order_id_12    close_long close_long    False engaged           True    False
+      11    0.5055 order_id_11    close_long close_long    False engaged           True    False
+      10    0.5050 order_id_10    close_long close_long    False engaged           True    False
+       9    0.5045  order_id_9    close_long close_long    False engaged           True    False
+       8    0.5040  order_id_8    close_long close_long    False engaged           True    False
+       7    0.5035  order_id_7    close_long close_long    False engaged           True    False
+       6    0.5030  order_id_6    close_long close_long    False engaged           True    False
+       5    0.5025  order_id_5    close_long close_long    False engaged           True    False
+       4    0.5020  order_id_4    close_long close_long    False engaged           True    False
+       3    0.5015  order_id_3    close_long close_long    False engaged           True    False
+       2    0.5010  order_id_2    close_long close_long    False engaged           True    False
+       1    0.5005  order_id_1    close_long close_long    False engaged           True    False
+       0    0.5000                close_long close_long    False on_hold          False    False
+#############################################################################################
+output lst_orders_to_execute:  []
+None Print
+GRID ITERATION AVERAGE TIME: 0.98 seconds
+cpt end:  12
+cpt start:  13
+lst_close_long_triggered:  []
+global lst_close_long:  []
+global lst_open_long:  []
+df_multi_position_status: 
+ open_long  close_long
+         0           1
+         1           2
+         2           3
+         3           4
+         4           5
+         5           6
+         6           7
+         7           8
+         8           9
+         9          10
+        10          11
+        11          12
+        12          13
+        13          14
+        14          15
+        15          16
+        16          17
+        17          18
+        18          19
+        19          20
+        20          21
+        21          22
+        22          23
+        23          24
+        24          25
+        25          26
+        26          27
+        27          28
+        28          29
+        29          30
+        30          31
+        31          32
+        32          33
+        33          34
+        34          35
+        35          36
+        36          37
+        37          38
+        38          39
+        39          40
+FLAT -> nb_selected_to_be_open : 0
+#############################################################################################
+current_state: 
+  Unnamed: 0 symbol  price       side  leverage     orderId  gridId
+          1    XRP 0.5005 close_long         2  order_id_1       1
+          2    XRP 0.5010 close_long         2  order_id_2       2
+          3    XRP 0.5015 close_long         2  order_id_3       3
+          4    XRP 0.5020 close_long         2  order_id_4       4
+          5    XRP 0.5025 close_long         2  order_id_5       5
+          6    XRP 0.5030 close_long         2  order_id_6       6
+          7    XRP 0.5035 close_long         2  order_id_7       7
+          8    XRP 0.5040 close_long         2  order_id_8       8
+          9    XRP 0.5045 close_long         2  order_id_9       9
+         10    XRP 0.5050 close_long         2 order_id_10      10
+         11    XRP 0.5055 close_long         2 order_id_11      11
+         12    XRP 0.5060 close_long         2 order_id_12      12
+         13    XRP 0.5065 close_long         2 order_id_13      13
+         14    XRP 0.5070 close_long         2 order_id_14      14
+         15    XRP 0.5075 close_long         2 order_id_15      15
+         16    XRP 0.5080 close_long         2 order_id_16      16
+         17    XRP 0.5085 close_long         2 order_id_17      17
+         18    XRP 0.5090 close_long         2 order_id_18      18
+         19    XRP 0.5095 close_long         2 order_id_19      19
+         20    XRP 0.5100 close_long         2 order_id_20      20
+         21    XRP 0.5105 close_long         2 order_id_21      21
+         22    XRP 0.5110 close_long         2 order_id_22      22
+         23    XRP 0.5115 close_long         2 order_id_23      23
+         24    XRP 0.5120 close_long         2 order_id_24      24
+         25    XRP 0.5125 close_long         2 order_id_25      25
+         26    XRP 0.5130 close_long         2 order_id_26      26
+         27    XRP 0.5135 close_long         2 order_id_27      27
+         28    XRP 0.5140 close_long         2 order_id_28      28
+         29    XRP 0.5145 close_long         2 order_id_29      29
+         30    XRP 0.5150 close_long         2 order_id_30      30
+         31    XRP 0.5155 close_long         2 order_id_31      31
+         32    XRP 0.5160 close_long         2 order_id_32      32
+         33    XRP 0.5165 close_long         2 order_id_33      33
+         34    XRP 0.5170 close_long         2 order_id_34      34
+         35    XRP 0.5175 close_long         2 order_id_35      35
+         36    XRP 0.5180 close_long         2 order_id_36      36
+         37    XRP 0.5185 close_long         2 order_id_37      37
+         38    XRP 0.5190 close_long         2 order_id_38      38
+         39    XRP 0.5195 close_long         2 order_id_39      39
+         40    XRP 0.5200 close_long         2 order_id_40      40
+open_positions: 
+  Unnamed: 0 symbol holdSide  leverage marginCoin  available  total  usdtEquity  marketPrice  averageOpenPrice  achievedProfits  unrealizedPL  liquidationPrice
+          0    XRP     long         2       USDT       10.0  400.0     5.86875      0.58664          0.586875              0.0       -0.0047               0.0
+price: 
+  Unnamed: 0 symbols  values
+          0     XRP    0.49
+order list: 
+ []
+ grid_id  position     orderId previous_side       side  changes  status  cross_checked  on_edge
+      40    0.5200 order_id_40    close_long close_long    False engaged           True    False
+      39    0.5195 order_id_39    close_long close_long    False engaged           True    False
+      38    0.5190 order_id_38    close_long close_long    False engaged           True    False
+      37    0.5185 order_id_37    close_long close_long    False engaged           True    False
+      36    0.5180 order_id_36    close_long close_long    False engaged           True    False
+      35    0.5175 order_id_35    close_long close_long    False engaged           True    False
+      34    0.5170 order_id_34    close_long close_long    False engaged           True    False
+      33    0.5165 order_id_33    close_long close_long    False engaged           True    False
+      32    0.5160 order_id_32    close_long close_long    False engaged           True    False
+      31    0.5155 order_id_31    close_long close_long    False engaged           True    False
+      30    0.5150 order_id_30    close_long close_long    False engaged           True    False
+      29    0.5145 order_id_29    close_long close_long    False engaged           True    False
+      28    0.5140 order_id_28    close_long close_long    False engaged           True    False
+      27    0.5135 order_id_27    close_long close_long    False engaged           True    False
+      26    0.5130 order_id_26    close_long close_long    False engaged           True    False
+      25    0.5125 order_id_25    close_long close_long    False engaged           True    False
+      24    0.5120 order_id_24    close_long close_long    False engaged           True    False
+      23    0.5115 order_id_23    close_long close_long    False engaged           True    False
+      22    0.5110 order_id_22    close_long close_long    False engaged           True    False
+      21    0.5105 order_id_21    close_long close_long    False engaged           True    False
+      20    0.5100 order_id_20    close_long close_long    False engaged           True    False
+      19    0.5095 order_id_19    close_long close_long    False engaged           True    False
+      18    0.5090 order_id_18    close_long close_long    False engaged           True    False
+      17    0.5085 order_id_17    close_long close_long    False engaged           True    False
+      16    0.5080 order_id_16    close_long close_long    False engaged           True    False
+      15    0.5075 order_id_15    close_long close_long    False engaged           True    False
+      14    0.5070 order_id_14    close_long close_long    False engaged           True    False
+      13    0.5065 order_id_13    close_long close_long    False engaged           True    False
+      12    0.5060 order_id_12    close_long close_long    False engaged           True    False
+      11    0.5055 order_id_11    close_long close_long    False engaged           True    False
+      10    0.5050 order_id_10    close_long close_long    False engaged           True    False
+       9    0.5045  order_id_9    close_long close_long    False engaged           True    False
+       8    0.5040  order_id_8    close_long close_long    False engaged           True    False
+       7    0.5035  order_id_7    close_long close_long    False engaged           True    False
+       6    0.5030  order_id_6    close_long close_long    False engaged           True    False
+       5    0.5025  order_id_5    close_long close_long    False engaged           True    False
+       4    0.5020  order_id_4    close_long close_long    False engaged           True    False
+       3    0.5015  order_id_3    close_long close_long    False engaged           True    False
+       2    0.5010  order_id_2    close_long close_long    False engaged           True    False
+       1    0.5005  order_id_1    close_long close_long    False engaged           True    False
+       0    0.5000                close_long close_long    False on_hold          False    False
+#############################################################################################
+output lst_orders_to_execute:  []
+None Print
+GRID ITERATION AVERAGE TIME: 0.91 seconds
+cpt end:  13
+cpt start:  14
+lst_close_long_triggered:  []
+global lst_close_long:  []
+global lst_open_long:  []
+df_multi_position_status: 
+ open_long  close_long
+         0           1
+         1           2
+         2           3
+         3           4
+         4           5
+         5           6
+         6           7
+         7           8
+         8           9
+         9          10
+        10          11
+        11          12
+        12          13
+        13          14
+        14          15
+        15          16
+        16          17
+        17          18
+        18          19
+        19          20
+        20          21
+        21          22
+        22          23
+        23          24
+        24          25
+        25          26
+        26          27
+        27          28
+        28          29
+        29          30
+        30          31
+        31          32
+        32          33
+        33          34
+        34          35
+        35          36
+        36          37
+        37          38
+        38          39
+        39          40
+filter_open_control_multi_position - grid id:  0
+FLAT -> nb_selected_to_be_open : 0
+#############################################################################################
+current_state: 
+  Unnamed: 0 symbol  price       side  leverage     orderId  gridId
+          1    XRP 0.5005 close_long         2  order_id_1       1
+          2    XRP 0.5010 close_long         2  order_id_2       2
+          3    XRP 0.5015 close_long         2  order_id_3       3
+          4    XRP 0.5020 close_long         2  order_id_4       4
+          5    XRP 0.5025 close_long         2  order_id_5       5
+          6    XRP 0.5030 close_long         2  order_id_6       6
+          7    XRP 0.5035 close_long         2  order_id_7       7
+          8    XRP 0.5040 close_long         2  order_id_8       8
+          9    XRP 0.5045 close_long         2  order_id_9       9
+         10    XRP 0.5050 close_long         2 order_id_10      10
+         11    XRP 0.5055 close_long         2 order_id_11      11
+         12    XRP 0.5060 close_long         2 order_id_12      12
+         13    XRP 0.5065 close_long         2 order_id_13      13
+         14    XRP 0.5070 close_long         2 order_id_14      14
+         15    XRP 0.5075 close_long         2 order_id_15      15
+         16    XRP 0.5080 close_long         2 order_id_16      16
+         17    XRP 0.5085 close_long         2 order_id_17      17
+         18    XRP 0.5090 close_long         2 order_id_18      18
+         19    XRP 0.5095 close_long         2 order_id_19      19
+         20    XRP 0.5100 close_long         2 order_id_20      20
+         21    XRP 0.5105 close_long         2 order_id_21      21
+         22    XRP 0.5110 close_long         2 order_id_22      22
+         23    XRP 0.5115 close_long         2 order_id_23      23
+         24    XRP 0.5120 close_long         2 order_id_24      24
+         25    XRP 0.5125 close_long         2 order_id_25      25
+         26    XRP 0.5130 close_long         2 order_id_26      26
+         27    XRP 0.5135 close_long         2 order_id_27      27
+         28    XRP 0.5140 close_long         2 order_id_28      28
+         29    XRP 0.5145 close_long         2 order_id_29      29
+         30    XRP 0.5150 close_long         2 order_id_30      30
+         31    XRP 0.5155 close_long         2 order_id_31      31
+         32    XRP 0.5160 close_long         2 order_id_32      32
+         33    XRP 0.5165 close_long         2 order_id_33      33
+         34    XRP 0.5170 close_long         2 order_id_34      34
+         35    XRP 0.5175 close_long         2 order_id_35      35
+         36    XRP 0.5180 close_long         2 order_id_36      36
+         37    XRP 0.5185 close_long         2 order_id_37      37
+         38    XRP 0.5190 close_long         2 order_id_38      38
+         39    XRP 0.5195 close_long         2 order_id_39      39
+         40    XRP 0.5200 close_long         2 order_id_40      40
+open_positions: 
+  Unnamed: 0 symbol holdSide  leverage marginCoin  available  total  usdtEquity  marketPrice  averageOpenPrice  achievedProfits  unrealizedPL  liquidationPrice
+          0    XRP     long         2       USDT       10.0  400.0     5.86875      0.58664          0.586875              0.0       -0.0047               0.0
+price: 
+  Unnamed: 0 symbols  values
+          0     XRP  0.5002
+order list: 
+ []
+ grid_id  position     orderId previous_side       side  changes  status  cross_checked  on_edge
+      40    0.5200 order_id_40    close_long close_long    False engaged           True    False
+      39    0.5195 order_id_39    close_long close_long    False engaged           True    False
+      38    0.5190 order_id_38    close_long close_long    False engaged           True    False
+      37    0.5185 order_id_37    close_long close_long    False engaged           True    False
+      36    0.5180 order_id_36    close_long close_long    False engaged           True    False
+      35    0.5175 order_id_35    close_long close_long    False engaged           True    False
+      34    0.5170 order_id_34    close_long close_long    False engaged           True    False
+      33    0.5165 order_id_33    close_long close_long    False engaged           True    False
+      32    0.5160 order_id_32    close_long close_long    False engaged           True    False
+      31    0.5155 order_id_31    close_long close_long    False engaged           True    False
+      30    0.5150 order_id_30    close_long close_long    False engaged           True    False
+      29    0.5145 order_id_29    close_long close_long    False engaged           True    False
+      28    0.5140 order_id_28    close_long close_long    False engaged           True    False
+      27    0.5135 order_id_27    close_long close_long    False engaged           True    False
+      26    0.5130 order_id_26    close_long close_long    False engaged           True    False
+      25    0.5125 order_id_25    close_long close_long    False engaged           True    False
+      24    0.5120 order_id_24    close_long close_long    False engaged           True    False
+      23    0.5115 order_id_23    close_long close_long    False engaged           True    False
+      22    0.5110 order_id_22    close_long close_long    False engaged           True    False
+      21    0.5105 order_id_21    close_long close_long    False engaged           True    False
+      20    0.5100 order_id_20    close_long close_long    False engaged           True    False
+      19    0.5095 order_id_19    close_long close_long    False engaged           True    False
+      18    0.5090 order_id_18    close_long close_long    False engaged           True    False
+      17    0.5085 order_id_17    close_long close_long    False engaged           True    False
+      16    0.5080 order_id_16    close_long close_long    False engaged           True    False
+      15    0.5075 order_id_15    close_long close_long    False engaged           True    False
+      14    0.5070 order_id_14    close_long close_long    False engaged           True    False
+      13    0.5065 order_id_13    close_long close_long    False engaged           True    False
+      12    0.5060 order_id_12    close_long close_long    False engaged           True    False
+      11    0.5055 order_id_11    close_long close_long    False engaged           True    False
+      10    0.5050 order_id_10    close_long close_long    False engaged           True    False
+       9    0.5045  order_id_9    close_long close_long    False engaged           True    False
+       8    0.5040  order_id_8    close_long close_long    False engaged           True    False
+       7    0.5035  order_id_7    close_long close_long    False engaged           True    False
+       6    0.5030  order_id_6    close_long close_long    False engaged           True    False
+       5    0.5025  order_id_5    close_long close_long    False engaged           True    False
+       4    0.5020  order_id_4    close_long close_long    False engaged           True    False
+       3    0.5015  order_id_3    close_long close_long    False engaged           True    False
+       2    0.5010  order_id_2    close_long close_long    False engaged           True    False
+       1    0.5005  order_id_1    close_long close_long    False engaged           True    False
+       0    0.5000                close_long  open_long     True on_hold          False    False
+#############################################################################################
+output lst_orders_to_execute:  []
+None Print
+GRID ITERATION AVERAGE TIME: 0.86 seconds
+cpt end:  14
+cpt start:  15
+lst_close_long_triggered:  [1, 2, 3, 4]
+global lst_close_long:  []
+global lst_open_long:  []
+df_multi_position_status: 
+ open_long  close_long
+         4           5
+         5           6
+         6           7
+         7           8
+         8           9
+         9          10
+        10          11
+        11          12
+        12          13
+        13          14
+        14          15
+        15          16
+        16          17
+        17          18
+        18          19
+        19          20
+        20          21
+        21          22
+        22          23
+        23          24
+        24          25
+        25          26
+        26          27
+        27          28
+        28          29
+        29          30
+        30          31
+        31          32
+        32          33
+        33          34
+        34          35
+        35          36
+        36          37
+        37          38
+        38          39
+        39          40
+GRID ERROR - limit order failed - grid_id missing:  0  side:  open_long
+filter_open_control_multi_position - grid id:  4
+UP ->  nb_selected_to_be_open : 0
+#############################################################################################
+current_state: 
+  Unnamed: 0 symbol  price       side  leverage     orderId  gridId
+          5    XRP 0.5025 close_long         2  order_id_5       5
+          6    XRP 0.5030 close_long         2  order_id_6       6
+          7    XRP 0.5035 close_long         2  order_id_7       7
+          8    XRP 0.5040 close_long         2  order_id_8       8
+          9    XRP 0.5045 close_long         2  order_id_9       9
+         10    XRP 0.5050 close_long         2 order_id_10      10
+         11    XRP 0.5055 close_long         2 order_id_11      11
+         12    XRP 0.5060 close_long         2 order_id_12      12
+         13    XRP 0.5065 close_long         2 order_id_13      13
+         14    XRP 0.5070 close_long         2 order_id_14      14
+         15    XRP 0.5075 close_long         2 order_id_15      15
+         16    XRP 0.5080 close_long         2 order_id_16      16
+         17    XRP 0.5085 close_long         2 order_id_17      17
+         18    XRP 0.5090 close_long         2 order_id_18      18
+         19    XRP 0.5095 close_long         2 order_id_19      19
+         20    XRP 0.5100 close_long         2 order_id_20      20
+         21    XRP 0.5105 close_long         2 order_id_21      21
+         22    XRP 0.5110 close_long         2 order_id_22      22
+         23    XRP 0.5115 close_long         2 order_id_23      23
+         24    XRP 0.5120 close_long         2 order_id_24      24
+         25    XRP 0.5125 close_long         2 order_id_25      25
+         26    XRP 0.5130 close_long         2 order_id_26      26
+         27    XRP 0.5135 close_long         2 order_id_27      27
+         28    XRP 0.5140 close_long         2 order_id_28      28
+         29    XRP 0.5145 close_long         2 order_id_29      29
+         30    XRP 0.5150 close_long         2 order_id_30      30
+         31    XRP 0.5155 close_long         2 order_id_31      31
+         32    XRP 0.5160 close_long         2 order_id_32      32
+         33    XRP 0.5165 close_long         2 order_id_33      33
+         34    XRP 0.5170 close_long         2 order_id_34      34
+         35    XRP 0.5175 close_long         2 order_id_35      35
+         36    XRP 0.5180 close_long         2 order_id_36      36
+         37    XRP 0.5185 close_long         2 order_id_37      37
+         38    XRP 0.5190 close_long         2 order_id_38      38
+         39    XRP 0.5195 close_long         2 order_id_39      39
+         40    XRP 0.5200 close_long         2 order_id_40      40
+open_positions: 
+  Unnamed: 0 symbol holdSide  leverage marginCoin  available  total  usdtEquity  marketPrice  averageOpenPrice  achievedProfits  unrealizedPL  liquidationPrice
+          0    XRP     long         2       USDT       10.0  360.0     5.86875      0.58664          0.586875              0.0       -0.0047               0.0
+price: 
+  Unnamed: 0 symbols  values
+          0     XRP  0.5022
+order list: 
+ [(0, 0.5, 'OPEN_LONG_ORDER'), (1, 0.5005, 'OPEN_LONG_ORDER'), (2, 0.501, 'OPEN_LONG_ORDER'), (3, 0.5015000000000001, 'OPEN_LONG_ORDER')]
+ grid_id  position     orderId previous_side       side  changes  status  cross_checked  on_edge
+      40    0.5200 order_id_40    close_long close_long    False engaged           True    False
+      39    0.5195 order_id_39    close_long close_long    False engaged           True    False
+      38    0.5190 order_id_38    close_long close_long    False engaged           True    False
+      37    0.5185 order_id_37    close_long close_long    False engaged           True    False
+      36    0.5180 order_id_36    close_long close_long    False engaged           True    False
+      35    0.5175 order_id_35    close_long close_long    False engaged           True    False
+      34    0.5170 order_id_34    close_long close_long    False engaged           True    False
+      33    0.5165 order_id_33    close_long close_long    False engaged           True    False
+      32    0.5160 order_id_32    close_long close_long    False engaged           True    False
+      31    0.5155 order_id_31    close_long close_long    False engaged           True    False
+      30    0.5150 order_id_30    close_long close_long    False engaged           True    False
+      29    0.5145 order_id_29    close_long close_long    False engaged           True    False
+      28    0.5140 order_id_28    close_long close_long    False engaged           True    False
+      27    0.5135 order_id_27    close_long close_long    False engaged           True    False
+      26    0.5130 order_id_26    close_long close_long    False engaged           True    False
+      25    0.5125 order_id_25    close_long close_long    False engaged           True    False
+      24    0.5120 order_id_24    close_long close_long    False engaged           True    False
+      23    0.5115 order_id_23    close_long close_long    False engaged           True    False
+      22    0.5110 order_id_22    close_long close_long    False engaged           True    False
+      21    0.5105 order_id_21    close_long close_long    False engaged           True    False
+      20    0.5100 order_id_20    close_long close_long    False engaged           True    False
+      19    0.5095 order_id_19    close_long close_long    False engaged           True    False
+      18    0.5090 order_id_18    close_long close_long    False engaged           True    False
+      17    0.5085 order_id_17    close_long close_long    False engaged           True    False
+      16    0.5080 order_id_16    close_long close_long    False engaged           True    False
+      15    0.5075 order_id_15    close_long close_long    False engaged           True    False
+      14    0.5070 order_id_14    close_long close_long    False engaged           True    False
+      13    0.5065 order_id_13    close_long close_long    False engaged           True    False
+      12    0.5060 order_id_12    close_long close_long    False engaged           True    False
+      11    0.5055 order_id_11    close_long close_long    False engaged           True    False
+      10    0.5050 order_id_10    close_long close_long    False engaged           True    False
+       9    0.5045  order_id_9    close_long close_long    False engaged           True    False
+       8    0.5040  order_id_8    close_long close_long    False engaged           True    False
+       7    0.5035  order_id_7    close_long close_long    False engaged           True    False
+       6    0.5030  order_id_6    close_long close_long    False engaged           True    False
+       5    0.5025  order_id_5    close_long close_long    False engaged           True    False
+       4    0.5020                close_long  open_long     True on_hold          False    False
+       3    0.5015                close_long  open_long     True pending          False    False
+       2    0.5010                close_long  open_long     True pending          False    False
+       1    0.5005                close_long  open_long     True pending          False    False
+       0    0.5000                 open_long  open_long    False pending          False    False
+#############################################################################################
+output lst_orders_to_execute:  [{'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.5, 'grid_id': 0}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.5005, 'grid_id': 1}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.501, 'grid_id': 2}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'OPEN_LONG_ORDER', 'price': 0.5015000000000001, 'grid_id': 3}]
+Payload delivered successfully, code 204.
+GRID ITERATION AVERAGE TIME: 0.89 seconds
+cpt end:  15
+cpt start:  16
+lst_close_long_triggered:  []
+global lst_close_long:  []
+global lst_open_long:  [0]
+df_multi_position_status: 
+ open_long  close_long
+         4           5
+         5           6
+         6           7
+         7           8
+         8           9
+         9          10
+        10          11
+        11          12
+        12          13
+        13          14
+        14          15
+        15          16
+        16          17
+        17          18
+        18          19
+        19          20
+        20          21
+        21          22
+        22          23
+        23          24
+        24          25
+        25          26
+        26          27
+        27          28
+        28          29
+        29          30
+        30          31
+        31          32
+        32          33
+        33          34
+        34          35
+        35          36
+        36          37
+        37          38
+        38          39
+        39          40
+FLAT -> nb_selected_to_be_open : 0
+#############################################################################################
+current_state: 
+  Unnamed: 0 symbol  price       side  leverage     orderId  gridId
+          0    XRP 0.5000  open_long         2  order_id_0       0
+          1    XRP 0.5005  open_long         2  order_id_1       1
+          2    XRP 0.5010  open_long         2  order_id_2       2
+          3    XRP 0.5015  open_long         2  order_id_3       3
+          4    XRP 0.5020  open_long         2  order_id_4       4
+          5    XRP 0.5025 close_long         2  order_id_5       5
+          6    XRP 0.5030 close_long         2  order_id_6       6
+          7    XRP 0.5035 close_long         2  order_id_7       7
+          8    XRP 0.5040 close_long         2  order_id_8       8
+          9    XRP 0.5045 close_long         2  order_id_9       9
+         10    XRP 0.5050 close_long         2 order_id_10      10
+         11    XRP 0.5055 close_long         2 order_id_11      11
+         12    XRP 0.5060 close_long         2 order_id_12      12
+         13    XRP 0.5065 close_long         2 order_id_13      13
+         14    XRP 0.5070 close_long         2 order_id_14      14
+         15    XRP 0.5075 close_long         2 order_id_15      15
+         16    XRP 0.5080 close_long         2 order_id_16      16
+         17    XRP 0.5085 close_long         2 order_id_17      17
+         18    XRP 0.5090 close_long         2 order_id_18      18
+         19    XRP 0.5095 close_long         2 order_id_19      19
+         20    XRP 0.5100 close_long         2 order_id_20      20
+         21    XRP 0.5105 close_long         2 order_id_21      21
+         22    XRP 0.5110 close_long         2 order_id_22      22
+         23    XRP 0.5115 close_long         2 order_id_23      23
+         24    XRP 0.5120 close_long         2 order_id_24      24
+         25    XRP 0.5125 close_long         2 order_id_25      25
+         26    XRP 0.5130 close_long         2 order_id_26      26
+         27    XRP 0.5135 close_long         2 order_id_27      27
+         28    XRP 0.5140 close_long         2 order_id_28      28
+         29    XRP 0.5145 close_long         2 order_id_29      29
+         30    XRP 0.5150 close_long         2 order_id_30      30
+         31    XRP 0.5155 close_long         2 order_id_31      31
+         32    XRP 0.5160 close_long         2 order_id_32      32
+         33    XRP 0.5165 close_long         2 order_id_33      33
+         34    XRP 0.5170 close_long         2 order_id_34      34
+         35    XRP 0.5175 close_long         2 order_id_35      35
+         36    XRP 0.5180 close_long         2 order_id_36      36
+         37    XRP 0.5185 close_long         2 order_id_37      37
+         38    XRP 0.5190 close_long         2 order_id_38      38
+         39    XRP 0.5195 close_long         2 order_id_39      39
+         40    XRP 0.5200 close_long         2 order_id_40      40
+open_positions: 
+  Unnamed: 0 symbol holdSide  leverage marginCoin  available  total  usdtEquity  marketPrice  averageOpenPrice  achievedProfits  unrealizedPL  liquidationPrice
+          0    XRP     long         2       USDT       10.0  360.0     5.86875      0.58664          0.586875              0.0       -0.0047               0.0
+price: 
+  Unnamed: 0 symbols  values
+          0     XRP  0.5022
+order list: 
+ []
+ grid_id  position     orderId previous_side       side  changes  status  cross_checked  on_edge
+      40    0.5200 order_id_40    close_long close_long    False engaged           True    False
+      39    0.5195 order_id_39    close_long close_long    False engaged           True    False
+      38    0.5190 order_id_38    close_long close_long    False engaged           True    False
+      37    0.5185 order_id_37    close_long close_long    False engaged           True    False
+      36    0.5180 order_id_36    close_long close_long    False engaged           True    False
+      35    0.5175 order_id_35    close_long close_long    False engaged           True    False
+      34    0.5170 order_id_34    close_long close_long    False engaged           True    False
+      33    0.5165 order_id_33    close_long close_long    False engaged           True    False
+      32    0.5160 order_id_32    close_long close_long    False engaged           True    False
+      31    0.5155 order_id_31    close_long close_long    False engaged           True    False
+      30    0.5150 order_id_30    close_long close_long    False engaged           True    False
+      29    0.5145 order_id_29    close_long close_long    False engaged           True    False
+      28    0.5140 order_id_28    close_long close_long    False engaged           True    False
+      27    0.5135 order_id_27    close_long close_long    False engaged           True    False
+      26    0.5130 order_id_26    close_long close_long    False engaged           True    False
+      25    0.5125 order_id_25    close_long close_long    False engaged           True    False
+      24    0.5120 order_id_24    close_long close_long    False engaged           True    False
+      23    0.5115 order_id_23    close_long close_long    False engaged           True    False
+      22    0.5110 order_id_22    close_long close_long    False engaged           True    False
+      21    0.5105 order_id_21    close_long close_long    False engaged           True    False
+      20    0.5100 order_id_20    close_long close_long    False engaged           True    False
+      19    0.5095 order_id_19    close_long close_long    False engaged           True    False
+      18    0.5090 order_id_18    close_long close_long    False engaged           True    False
+      17    0.5085 order_id_17    close_long close_long    False engaged           True    False
+      16    0.5080 order_id_16    close_long close_long    False engaged           True    False
+      15    0.5075 order_id_15    close_long close_long    False engaged           True    False
+      14    0.5070 order_id_14    close_long close_long    False engaged           True    False
+      13    0.5065 order_id_13    close_long close_long    False engaged           True    False
+      12    0.5060 order_id_12    close_long close_long    False engaged           True    False
+      11    0.5055 order_id_11    close_long close_long    False engaged           True    False
+      10    0.5050 order_id_10    close_long close_long    False engaged           True    False
+       9    0.5045  order_id_9    close_long close_long    False engaged           True    False
+       8    0.5040  order_id_8    close_long close_long    False engaged           True    False
+       7    0.5035  order_id_7    close_long close_long    False engaged           True    False
+       6    0.5030  order_id_6    close_long close_long    False engaged           True    False
+       5    0.5025  order_id_5    close_long close_long    False engaged           True    False
+       4    0.5020  order_id_4     open_long  open_long    False engaged           True    False
+       3    0.5015  order_id_3     open_long  open_long    False engaged           True    False
+       2    0.5010  order_id_2     open_long  open_long    False engaged           True    False
+       1    0.5005  order_id_1     open_long  open_long    False engaged           True    False
+       0    0.5000  order_id_0     open_long  open_long    False engaged           True    False
+#############################################################################################
+output lst_orders_to_execute:  []
+None Print
+GRID ITERATION AVERAGE TIME: 0.84 seconds
+cpt end:  16
+cpt start:  17
+lst_close_long_triggered:  [5, 6, 7]
+global lst_close_long:  []
+global lst_open_long:  [0]
+df_multi_position_status: 
+ open_long  close_long
+         7           8
+         8           9
+         9          10
+        10          11
+        11          12
+        12          13
+        13          14
+        14          15
+        15          16
+        16          17
+        17          18
+        18          19
+        19          20
+        20          21
+        21          22
+        22          23
+        23          24
+        24          25
+        25          26
+        26          27
+        27          28
+        28          29
+        29          30
+        30          31
+        31          32
+        32          33
+        33          34
+        34          35
+        35          36
+        36          37
+        37          38
+        38          39
+        39          40
+UP ->  nb_selected_to_be_open : 0
+#############################################################################################
+current_state: 
+  Unnamed: 0 symbol  price       side  leverage     orderId  gridId
+          0    XRP 0.5000  open_long         2  order_id_0       0
+          1    XRP 0.5005  open_long         2  order_id_1       1
+          2    XRP 0.5010  open_long         2  order_id_2       2
+          3    XRP 0.5015  open_long         2  order_id_3       3
+          4    XRP 0.5020  open_long         2  order_id_4       4
+          8    XRP 0.5040 close_long         2  order_id_8       8
+          9    XRP 0.5045 close_long         2  order_id_9       9
+         10    XRP 0.5050 close_long         2 order_id_10      10
+         11    XRP 0.5055 close_long         2 order_id_11      11
+         12    XRP 0.5060 close_long         2 order_id_12      12
+         13    XRP 0.5065 close_long         2 order_id_13      13
+         14    XRP 0.5070 close_long         2 order_id_14      14
+         15    XRP 0.5075 close_long         2 order_id_15      15
+         16    XRP 0.5080 close_long         2 order_id_16      16
+         17    XRP 0.5085 close_long         2 order_id_17      17
+         18    XRP 0.5090 close_long         2 order_id_18      18
+         19    XRP 0.5095 close_long         2 order_id_19      19
+         20    XRP 0.5100 close_long         2 order_id_20      20
+         21    XRP 0.5105 close_long         2 order_id_21      21
+         22    XRP 0.5110 close_long         2 order_id_22      22
+         23    XRP 0.5115 close_long         2 order_id_23      23
+         24    XRP 0.5120 close_long         2 order_id_24      24
+         25    XRP 0.5125 close_long         2 order_id_25      25
+         26    XRP 0.5130 close_long         2 order_id_26      26
+         27    XRP 0.5135 close_long         2 order_id_27      27
+         28    XRP 0.5140 close_long         2 order_id_28      28
+         29    XRP 0.5145 close_long         2 order_id_29      29
+         30    XRP 0.5150 close_long         2 order_id_30      30
+         31    XRP 0.5155 close_long         2 order_id_31      31
+         32    XRP 0.5160 close_long         2 order_id_32      32
+         33    XRP 0.5165 close_long         2 order_id_33      33
+         34    XRP 0.5170 close_long         2 order_id_34      34
+         35    XRP 0.5175 close_long         2 order_id_35      35
+         36    XRP 0.5180 close_long         2 order_id_36      36
+         37    XRP 0.5185 close_long         2 order_id_37      37
+         38    XRP 0.5190 close_long         2 order_id_38      38
+         39    XRP 0.5195 close_long         2 order_id_39      39
+         40    XRP 0.5200 close_long         2 order_id_40      40
+open_positions: 
+  Unnamed: 0 symbol holdSide  leverage marginCoin  available  total  usdtEquity  marketPrice  averageOpenPrice  achievedProfits  unrealizedPL  liquidationPrice
+          0    XRP     long         2       USDT       10.0  330.0     5.86875      0.58664          0.586875              0.0       -0.0047               0.0
+price: 
+  Unnamed: 0 symbols  values
+          0     XRP  0.5022
+order list: 
+ []
+ grid_id  position     orderId previous_side       side  changes  status  cross_checked  on_edge
+      40    0.5200 order_id_40    close_long close_long    False engaged           True    False
+      39    0.5195 order_id_39    close_long close_long    False engaged           True    False
+      38    0.5190 order_id_38    close_long close_long    False engaged           True    False
+      37    0.5185 order_id_37    close_long close_long    False engaged           True    False
+      36    0.5180 order_id_36    close_long close_long    False engaged           True    False
+      35    0.5175 order_id_35    close_long close_long    False engaged           True    False
+      34    0.5170 order_id_34    close_long close_long    False engaged           True    False
+      33    0.5165 order_id_33    close_long close_long    False engaged           True    False
+      32    0.5160 order_id_32    close_long close_long    False engaged           True    False
+      31    0.5155 order_id_31    close_long close_long    False engaged           True    False
+      30    0.5150 order_id_30    close_long close_long    False engaged           True    False
+      29    0.5145 order_id_29    close_long close_long    False engaged           True    False
+      28    0.5140 order_id_28    close_long close_long    False engaged           True    False
+      27    0.5135 order_id_27    close_long close_long    False engaged           True    False
+      26    0.5130 order_id_26    close_long close_long    False engaged           True    False
+      25    0.5125 order_id_25    close_long close_long    False engaged           True    False
+      24    0.5120 order_id_24    close_long close_long    False engaged           True    False
+      23    0.5115 order_id_23    close_long close_long    False engaged           True    False
+      22    0.5110 order_id_22    close_long close_long    False engaged           True    False
+      21    0.5105 order_id_21    close_long close_long    False engaged           True    False
+      20    0.5100 order_id_20    close_long close_long    False engaged           True    False
+      19    0.5095 order_id_19    close_long close_long    False engaged           True    False
+      18    0.5090 order_id_18    close_long close_long    False engaged           True    False
+      17    0.5085 order_id_17    close_long close_long    False engaged           True    False
+      16    0.5080 order_id_16    close_long close_long    False engaged           True    False
+      15    0.5075 order_id_15    close_long close_long    False engaged           True    False
+      14    0.5070 order_id_14    close_long close_long    False engaged           True    False
+      13    0.5065 order_id_13    close_long close_long    False engaged           True    False
+      12    0.5060 order_id_12    close_long close_long    False engaged           True    False
+      11    0.5055 order_id_11    close_long close_long    False engaged           True    False
+      10    0.5050 order_id_10    close_long close_long    False engaged           True    False
+       9    0.5045  order_id_9    close_long close_long    False engaged           True    False
+       8    0.5040  order_id_8    close_long close_long    False engaged           True    False
+       7    0.5035                close_long close_long    False on_hold          False    False
+       6    0.5030                close_long close_long    False on_hold          False    False
+       5    0.5025                close_long close_long    False on_hold          False    False
+       4    0.5020  order_id_4     open_long  open_long    False engaged           True    False
+       3    0.5015  order_id_3     open_long  open_long    False engaged           True    False
+       2    0.5010  order_id_2     open_long  open_long    False engaged           True    False
+       1    0.5005  order_id_1     open_long  open_long    False engaged           True    False
+       0    0.5000  order_id_0     open_long  open_long    False engaged           True    False
+#############################################################################################
+output lst_orders_to_execute:  []
+Payload delivered successfully, code 204.
+GRID ITERATION AVERAGE TIME: 0.87 seconds
+cpt end:  17
+cpt start:  18
+lst_close_long_triggered:  []
+global lst_close_long:  []
+global lst_open_long:  [0, 2, 3, 4]
+df_multi_position_status: 
+ open_long  close_long
+         7           8
+         8           9
+         9          10
+        10          11
+        11          12
+        12          13
+        13          14
+        14          15
+        15          16
+        16          17
+        17          18
+        18          19
+        19          20
+        20          21
+        21          22
+        22          23
+        23          24
+        24          25
+        25          26
+        26          27
+        27          28
+        28          29
+        29          30
+        30          31
+        31          32
+        32          33
+        33          34
+        34          35
+        35          36
+        36          37
+        37          38
+        38          39
+        39          40
+DOWN ->  nb_selected_to_be_open : 3
+#############################################################################################
+current_state: 
+  Unnamed: 0 symbol  price       side  leverage     orderId  gridId
+          0    XRP 0.5000  open_long         2  order_id_0       0
+          1    XRP 0.5005  open_long         2  order_id_1       1
+          8    XRP 0.5040 close_long         2  order_id_8       8
+          9    XRP 0.5045 close_long         2  order_id_9       9
+         10    XRP 0.5050 close_long         2 order_id_10      10
+         11    XRP 0.5055 close_long         2 order_id_11      11
+         12    XRP 0.5060 close_long         2 order_id_12      12
+         13    XRP 0.5065 close_long         2 order_id_13      13
+         14    XRP 0.5070 close_long         2 order_id_14      14
+         15    XRP 0.5075 close_long         2 order_id_15      15
+         16    XRP 0.5080 close_long         2 order_id_16      16
+         17    XRP 0.5085 close_long         2 order_id_17      17
+         18    XRP 0.5090 close_long         2 order_id_18      18
+         19    XRP 0.5095 close_long         2 order_id_19      19
+         20    XRP 0.5100 close_long         2 order_id_20      20
+         21    XRP 0.5105 close_long         2 order_id_21      21
+         22    XRP 0.5110 close_long         2 order_id_22      22
+         23    XRP 0.5115 close_long         2 order_id_23      23
+         24    XRP 0.5120 close_long         2 order_id_24      24
+         25    XRP 0.5125 close_long         2 order_id_25      25
+         26    XRP 0.5130 close_long         2 order_id_26      26
+         27    XRP 0.5135 close_long         2 order_id_27      27
+         28    XRP 0.5140 close_long         2 order_id_28      28
+         29    XRP 0.5145 close_long         2 order_id_29      29
+         30    XRP 0.5150 close_long         2 order_id_30      30
+         31    XRP 0.5155 close_long         2 order_id_31      31
+         32    XRP 0.5160 close_long         2 order_id_32      32
+         33    XRP 0.5165 close_long         2 order_id_33      33
+         34    XRP 0.5170 close_long         2 order_id_34      34
+         35    XRP 0.5175 close_long         2 order_id_35      35
+         36    XRP 0.5180 close_long         2 order_id_36      36
+         37    XRP 0.5185 close_long         2 order_id_37      37
+         38    XRP 0.5190 close_long         2 order_id_38      38
+         39    XRP 0.5195 close_long         2 order_id_39      39
+         40    XRP 0.5200 close_long         2 order_id_40      40
+open_positions: 
+  Unnamed: 0 symbol holdSide  leverage marginCoin  available  total  usdtEquity  marketPrice  averageOpenPrice  achievedProfits  unrealizedPL  liquidationPrice
+          0    XRP     long         2       USDT       10.0  360.0     5.86875      0.58664          0.586875              0.0       -0.0047               0.0
+price: 
+  Unnamed: 0 symbols  values
+          0     XRP  0.5007
+order list: 
+ [(3, 0.5015000000000001, 'CLOSE_LONG_ORDER'), (4, 0.502, 'CLOSE_LONG_ORDER'), (5, 0.5025, 'CLOSE_LONG_ORDER')]
+ grid_id  position     orderId previous_side       side  changes  status  cross_checked  on_edge
+      40    0.5200 order_id_40    close_long close_long    False engaged           True    False
+      39    0.5195 order_id_39    close_long close_long    False engaged           True    False
+      38    0.5190 order_id_38    close_long close_long    False engaged           True    False
+      37    0.5185 order_id_37    close_long close_long    False engaged           True    False
+      36    0.5180 order_id_36    close_long close_long    False engaged           True    False
+      35    0.5175 order_id_35    close_long close_long    False engaged           True    False
+      34    0.5170 order_id_34    close_long close_long    False engaged           True    False
+      33    0.5165 order_id_33    close_long close_long    False engaged           True    False
+      32    0.5160 order_id_32    close_long close_long    False engaged           True    False
+      31    0.5155 order_id_31    close_long close_long    False engaged           True    False
+      30    0.5150 order_id_30    close_long close_long    False engaged           True    False
+      29    0.5145 order_id_29    close_long close_long    False engaged           True    False
+      28    0.5140 order_id_28    close_long close_long    False engaged           True    False
+      27    0.5135 order_id_27    close_long close_long    False engaged           True    False
+      26    0.5130 order_id_26    close_long close_long    False engaged           True    False
+      25    0.5125 order_id_25    close_long close_long    False engaged           True    False
+      24    0.5120 order_id_24    close_long close_long    False engaged           True    False
+      23    0.5115 order_id_23    close_long close_long    False engaged           True    False
+      22    0.5110 order_id_22    close_long close_long    False engaged           True    False
+      21    0.5105 order_id_21    close_long close_long    False engaged           True    False
+      20    0.5100 order_id_20    close_long close_long    False engaged           True    False
+      19    0.5095 order_id_19    close_long close_long    False engaged           True    False
+      18    0.5090 order_id_18    close_long close_long    False engaged           True    False
+      17    0.5085 order_id_17    close_long close_long    False engaged           True    False
+      16    0.5080 order_id_16    close_long close_long    False engaged           True    False
+      15    0.5075 order_id_15    close_long close_long    False engaged           True    False
+      14    0.5070 order_id_14    close_long close_long    False engaged           True    False
+      13    0.5065 order_id_13    close_long close_long    False engaged           True    False
+      12    0.5060 order_id_12    close_long close_long    False engaged           True    False
+      11    0.5055 order_id_11    close_long close_long    False engaged           True    False
+      10    0.5050 order_id_10    close_long close_long    False engaged           True    False
+       9    0.5045  order_id_9    close_long close_long    False engaged           True    False
+       8    0.5040  order_id_8    close_long close_long    False engaged           True    False
+       7    0.5035                close_long close_long    False on_hold          False    False
+       6    0.5030                close_long close_long    False on_hold          False    False
+       5    0.5025                close_long close_long    False pending          False    False
+       4    0.5020                 open_long close_long     True pending          False    False
+       3    0.5015                 open_long close_long     True pending          False    False
+       2    0.5010                 open_long close_long     True on_hold          False    False
+       1    0.5005  order_id_1     open_long  open_long    False engaged           True    False
+       0    0.5000  order_id_0     open_long  open_long    False engaged           True    False
+#############################################################################################
+output lst_orders_to_execute:  [{'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.5015000000000001, 'grid_id': 3}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.502, 'grid_id': 4}, {'symbol': 'XRP', 'gross_size': 5, 'type': 'CLOSE_LONG_ORDER', 'price': 0.5025, 'grid_id': 5}]
+Payload delivered successfully, code 204.
+GRID ITERATION AVERAGE TIME: 0.9 seconds
+cpt end:  18
+cpt start:  19
+lst_close_long_triggered:  []
+global lst_close_long:  [3, 4, 5]
+global lst_open_long:  [0, 2, 3, 4]
+df_multi_position_status: 
+ open_long  close_long
+         7           8
+         8           9
+         9          10
+        10          11
+        11          12
+        12          13
+        13          14
+        14          15
+        15          16
+        16          17
+        17          18
+        18          19
+        19          20
+        20          21
+        21          22
+        22          23
+        23          24
+        24          25
+        25          26
+        26          27
+        27          28
+        28          29
+        29          30
+        30          31
+        31          32
+        32          33
+        33          34
+        34          35
+        35          36
+        36          37
+        37          38
+        38          39
+        39          40
+FLAT -> nb_selected_to_be_open : 0
+#############################################################################################
+current_state: 
+  Unnamed: 0 symbol  price       side  leverage     orderId  gridId
+          0    XRP 0.5000  open_long         2  order_id_0       0
+          1    XRP 0.5005  open_long         2  order_id_1       1
+         41    XRP 0.5015 close_long         2  order_id_3       3
+         42    XRP 0.5020 close_long         2  order_id_4       4
+         43    XRP 0.5025 close_long         2  order_id_5       5
+          8    XRP 0.5040 close_long         2  order_id_8       8
+          9    XRP 0.5045 close_long         2  order_id_9       9
+         10    XRP 0.5050 close_long         2 order_id_10      10
+         11    XRP 0.5055 close_long         2 order_id_11      11
+         12    XRP 0.5060 close_long         2 order_id_12      12
+         13    XRP 0.5065 close_long         2 order_id_13      13
+         14    XRP 0.5070 close_long         2 order_id_14      14
+         15    XRP 0.5075 close_long         2 order_id_15      15
+         16    XRP 0.5080 close_long         2 order_id_16      16
+         17    XRP 0.5085 close_long         2 order_id_17      17
+         18    XRP 0.5090 close_long         2 order_id_18      18
+         19    XRP 0.5095 close_long         2 order_id_19      19
+         20    XRP 0.5100 close_long         2 order_id_20      20
+         21    XRP 0.5105 close_long         2 order_id_21      21
+         22    XRP 0.5110 close_long         2 order_id_22      22
+         23    XRP 0.5115 close_long         2 order_id_23      23
+         24    XRP 0.5120 close_long         2 order_id_24      24
+         25    XRP 0.5125 close_long         2 order_id_25      25
+         26    XRP 0.5130 close_long         2 order_id_26      26
+         27    XRP 0.5135 close_long         2 order_id_27      27
+         28    XRP 0.5140 close_long         2 order_id_28      28
+         29    XRP 0.5145 close_long         2 order_id_29      29
+         30    XRP 0.5150 close_long         2 order_id_30      30
+         31    XRP 0.5155 close_long         2 order_id_31      31
+         32    XRP 0.5160 close_long         2 order_id_32      32
+         33    XRP 0.5165 close_long         2 order_id_33      33
+         34    XRP 0.5170 close_long         2 order_id_34      34
+         35    XRP 0.5175 close_long         2 order_id_35      35
+         36    XRP 0.5180 close_long         2 order_id_36      36
+         37    XRP 0.5185 close_long         2 order_id_37      37
+         38    XRP 0.5190 close_long         2 order_id_38      38
+         39    XRP 0.5195 close_long         2 order_id_39      39
+         40    XRP 0.5200 close_long         2 order_id_40      40
+open_positions: 
+  Unnamed: 0 symbol holdSide  leverage marginCoin  available  total  usdtEquity  marketPrice  averageOpenPrice  achievedProfits  unrealizedPL  liquidationPrice
+          0    XRP     long         2       USDT       10.0  360.0     5.86875      0.58664          0.586875              0.0       -0.0047               0.0
+price: 
+  Unnamed: 0 symbols  values
+          0     XRP  0.5007
+order list: 
+ []
+ grid_id  position     orderId previous_side       side  changes  status  cross_checked  on_edge
+      40    0.5200 order_id_40    close_long close_long    False engaged           True    False
+      39    0.5195 order_id_39    close_long close_long    False engaged           True    False
+      38    0.5190 order_id_38    close_long close_long    False engaged           True    False
+      37    0.5185 order_id_37    close_long close_long    False engaged           True    False
+      36    0.5180 order_id_36    close_long close_long    False engaged           True    False
+      35    0.5175 order_id_35    close_long close_long    False engaged           True    False
+      34    0.5170 order_id_34    close_long close_long    False engaged           True    False
+      33    0.5165 order_id_33    close_long close_long    False engaged           True    False
+      32    0.5160 order_id_32    close_long close_long    False engaged           True    False
+      31    0.5155 order_id_31    close_long close_long    False engaged           True    False
+      30    0.5150 order_id_30    close_long close_long    False engaged           True    False
+      29    0.5145 order_id_29    close_long close_long    False engaged           True    False
+      28    0.5140 order_id_28    close_long close_long    False engaged           True    False
+      27    0.5135 order_id_27    close_long close_long    False engaged           True    False
+      26    0.5130 order_id_26    close_long close_long    False engaged           True    False
+      25    0.5125 order_id_25    close_long close_long    False engaged           True    False
+      24    0.5120 order_id_24    close_long close_long    False engaged           True    False
+      23    0.5115 order_id_23    close_long close_long    False engaged           True    False
+      22    0.5110 order_id_22    close_long close_long    False engaged           True    False
+      21    0.5105 order_id_21    close_long close_long    False engaged           True    False
+      20    0.5100 order_id_20    close_long close_long    False engaged           True    False
+      19    0.5095 order_id_19    close_long close_long    False engaged           True    False
+      18    0.5090 order_id_18    close_long close_long    False engaged           True    False
+      17    0.5085 order_id_17    close_long close_long    False engaged           True    False
+      16    0.5080 order_id_16    close_long close_long    False engaged           True    False
+      15    0.5075 order_id_15    close_long close_long    False engaged           True    False
+      14    0.5070 order_id_14    close_long close_long    False engaged           True    False
+      13    0.5065 order_id_13    close_long close_long    False engaged           True    False
+      12    0.5060 order_id_12    close_long close_long    False engaged           True    False
+      11    0.5055 order_id_11    close_long close_long    False engaged           True    False
+      10    0.5050 order_id_10    close_long close_long    False engaged           True    False
+       9    0.5045  order_id_9    close_long close_long    False engaged           True    False
+       8    0.5040  order_id_8    close_long close_long    False engaged           True    False
+       7    0.5035                close_long close_long    False on_hold          False    False
+       6    0.5030                close_long close_long    False on_hold          False    False
+       5    0.5025  order_id_5    close_long close_long    False engaged           True    False
+       4    0.5020  order_id_4    close_long close_long    False engaged           True    False
+       3    0.5015  order_id_3    close_long close_long    False engaged           True    False
+       2    0.5010                close_long close_long    False on_hold          False    False
+       1    0.5005  order_id_1     open_long  open_long    False engaged           True    False
+       0    0.5000  order_id_0     open_long  open_long    False engaged           True    False
+#############################################################################################
+output lst_orders_to_execute:  []
+None Print
+Traceback (most recent call last):
+  File "C:\Users\despo\PycharmProjects\crag_sim_3\main.py", line 344, in <module>
+GRID ITERATION AVERAGE TIME: 0.86 seconds
+cpt end:  19
+    crag_live(sys.argv[3], forceDoNotReset)
+  File "C:\Users\despo\PycharmProjects\crag_sim_3\main.py", line 100, in crag_live
+    bot.run()
+  File "C:\Users\despo\PycharmProjects\crag_sim_3\src\crag.py", line 235, in run
+    step_result = self.safety_step()
+  File "C:\Users\despo\PycharmProjects\crag_sim_3\src\crag.py", line 1011, in safety_step
+    self.udpate_strategy_with_broker_current_state()
+  File "C:\Users\despo\PycharmProjects\crag_sim_3\src\crag.py", line 915, in udpate_strategy_with_broker_current_state
+    self.udpate_strategy_with_broker_current_state_scenario(SCENARIO_ID)
+  File "C:\Users\despo\PycharmProjects\crag_sim_3\src\crag.py", line 888, in udpate_strategy_with_broker_current_state_scenario
+    broker_current_state = self.get_current_state_from_csv(input_dir, cpt)
+  File "C:\Users\despo\PycharmProjects\crag_sim_3\src\crag.py", line 863, in get_current_state_from_csv
+    df_open_orders = pd.read_csv(full_path)
+  File "C:\Users\despo\anaconda3\envs\CRAG_env\lib\site-packages\pandas\util\_decorators.py", line 211, in wrapper
+    return func(*args, **kwargs)
+  File "C:\Users\despo\anaconda3\envs\CRAG_env\lib\site-packages\pandas\util\_decorators.py", line 331, in wrapper
+    return func(*args, **kwargs)
+  File "C:\Users\despo\anaconda3\envs\CRAG_env\lib\site-packages\pandas\io\parsers\readers.py", line 950, in read_csv
+    return _read(filepath_or_buffer, kwds)
+  File "C:\Users\despo\anaconda3\envs\CRAG_env\lib\site-packages\pandas\io\parsers\readers.py", line 605, in _read
+    parser = TextFileReader(filepath_or_buffer, **kwds)
+  File "C:\Users\despo\anaconda3\envs\CRAG_env\lib\site-packages\pandas\io\parsers\readers.py", line 1442, in __init__
+cpt start:  20
+    self._engine = self._make_engine(f, self.engine)
+  File "C:\Users\despo\anaconda3\envs\CRAG_env\lib\site-packages\pandas\io\parsers\readers.py", line 1735, in _make_engine
+    self.handles = get_handle(
+  File "C:\Users\despo\anaconda3\envs\CRAG_env\lib\site-packages\pandas\io\common.py", line 856, in get_handle
+    handle = open(
+FileNotFoundError: [Errno 2] No such file or directory: './grid_test/8_scenario_test\\data_20_df_current_states.csv'

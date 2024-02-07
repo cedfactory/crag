@@ -69,7 +69,7 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
         for symbol in self.lst_symbols:
             df_current_state = self.grid.set_current_orders_price_to_grid(symbol, df_current_states)
             buying_size = self.get_grid_buying_size(symbol)
-            self.grid.update_control_multi_position(df_current_states)
+            self.grid.update_control_multi_position(symbol, df_current_states, df_open_positions)
             self.grid.update_nb_open_positions(symbol, df_open_positions, buying_size)
             self.grid.update_pending_status_from_current_state(symbol, df_current_state)
 
@@ -144,6 +144,10 @@ class GridPosition():
         self.diff_close_position = 0
         self.diff_open_position = 0
         self.control_multi_position = self.init_control_multi_position()
+        self.top_grid_cpt = 0
+        self.top_grid = False
+        self.bottom_grid_cpt = 0
+        self.bottom_grid = False
 
         self.df_nb_open_positions = pd.DataFrame(columns=['symbol', 'size', 'positions_size', 'nb_open_positions'])
         self.df_nb_open_positions['symbol'] = self.lst_symbols
@@ -181,9 +185,14 @@ class GridPosition():
         df = self.grid[symbol]
         # Define a condition
         condition_pending = df['status'] == 'pending'
+        condition_on_hold_1 = df['status'] == 'on_hold'
+        condition_on_hold_2 = df['side'] == 'open_long'
         # Use boolean indexing to filter the DataFrame
         df_filtered = df[condition_pending]
         lst_grid_id = df_filtered['grid_id'].tolist()
+        df_filtered_on_hold = df[condition_on_hold_1 & condition_on_hold_2]
+        lst_grid_id.extend(df_filtered_on_hold['grid_id'].tolist())
+        lst_grid_id = list(set(lst_grid_id))
         for grid_id in lst_grid_id:
             side = df.loc[df['grid_id'] == grid_id, "side"].values[0]
             if grid_id in df_current_state["gridId"].tolist():
@@ -192,6 +201,7 @@ class GridPosition():
                     df.loc[df['grid_id'] == grid_id, 'orderId'] = df_current_state.loc[df_current_state["gridId"] == grid_id, 'orderId'].values[0]
                 else:
                     # CEDE: This should not be triggered
+                    # CEDE UPDATE : Maybe Not
                     print("GRID ERROR - open_long vs open_short - grid id: ", grid_id)
             else:
                 # CEDE: Executed when high volatility is triggering an limit order just after being raised
@@ -227,8 +237,36 @@ class GridPosition():
         # Compare if column1 and column2 are the same
         df['changes'] = df['previous_side'] != df['side']
 
-        higher_grid_id = df[df['position'] > self.current_price]['grid_id'].min()
-        lower_grid_id = df[df['position'] < self.current_price]['grid_id'].max()
+        if self.current_price > df['position'].max():
+            # OUT OF GRID TOP POSITION
+            higher_grid_id = df['grid_id'].max()
+            lower_grid_id = df['grid_id'].max()
+            if ((self.top_grid_cpt == 0) and (self.top_grid == False)):
+                self.top_grid = True
+            else:
+                self.top_grid = False
+            self.top_grid_cpt += 1
+            self.bottom_grid_cpt = 0
+            self.bottom_grid = False
+        elif self.current_price < df['position'].min():
+            # OUT OF GRID BOTTOM POSITION
+            higher_grid_id = df['grid_id'].min()
+            lower_grid_id = df['grid_id'].min()
+            if ((self.bottom_grid_cpt == 0) and (self.bottom_grid == False)):
+                self.bottom_grid = True
+            else:
+                self.bottom_grid = False
+            self.bottom_grid_cpt += 1
+            self.top_grid_cpt = 0
+            self.top_grid = False
+        else:
+            higher_grid_id = df[df['position'] > self.current_price]['grid_id'].min()
+            lower_grid_id = df[df['position'] < self.current_price]['grid_id'].max()
+            self.top_grid_cpt = 0
+            self.top_grid = False
+            self.bottom_grid_cpt = 0
+            self.bottom_grid = False
+
         self.grid_position = [higher_grid_id, lower_grid_id]
 
     # Function to find the index of the closest value in an array
@@ -288,6 +326,18 @@ class GridPosition():
                             + df_filtered_checked['grid_id'].tolist() \
                             + df_filtered_pending['grid_id'].tolist()
         lst_order_grid_id = list(set(lst_order_grid_id))
+
+        # TOP GRID CANNOT BE ACTIVATED AS OPEN_LONG LIMIT ORDER AS PER SPEC
+        top_grid_id = df_grid["grid_id"].max()
+        if (top_grid_id in lst_order_grid_id) \
+                and (df_grid.loc[df_grid['grid_id'] == top_grid_id, 'side'].values[0] == "open_long"):
+            lst_order_grid_id.remove(top_grid_id)
+        """
+        bottom_grid_id = df_grid["grid_id"].min()
+        if (bottom_grid_id in lst_order_grid_id) \
+                and (df_grid.loc[df_grid['grid_id'] == bottom_grid_id, 'side'].values[0] == "close_long"):
+            lst_order_grid_id.remove(bottom_grid_id)
+        """
 
         if len(lst_filtered_on_edge) > 0:
             lst_order_grid_id = [item for item in lst_filtered_on_edge if item not in lst_order_grid_id]
@@ -404,7 +454,7 @@ class GridPosition():
         # Append a subset of CLOSE orders based on the number of open positions
         elif self.trend == "DOWN":
             grid_trend_msg = "DOWN -> " + " nb_selected_to_be_open : " + str(nb_selected_to_be_open)
-            filtered_orders.extend(close_orders[1:(nb_selected_to_be_open+1)])
+            filtered_orders.extend(close_orders[1:(nb_selected_to_be_open + 1)])
         elif self.trend == "UP":
             grid_trend_msg = "UP -> " + " nb_selected_to_be_open : " + str(nb_selected_to_be_open)
             filtered_orders.extend(close_orders[:nb_selected_to_be_open])
@@ -471,7 +521,7 @@ class GridPosition():
 
         return multi_position
 
-    def update_control_multi_position(self, df_current_state):
+    def update_control_multi_position(self, symbol, df_current_state, df_open_positions):
         self.control_multi_position['previous_close_long'] = self.control_multi_position['new_close_long']
         self.control_multi_position['previous_open_long'] = self.control_multi_position['new_open_long']
 
@@ -511,6 +561,10 @@ class GridPosition():
             print("DEBUG CEDE 1")
             print(len(self.control_multi_position['lst_close_long']))
             print(len(self.control_multi_position['lst_open_long']))
+
+        df = self.grid[symbol]
+        if df["grid_id"].max() in self.control_multi_position['lst_open_long']:
+            self.control_multi_position['lst_open_long'].remove(df["grid_id"].max())
 
         if len(self.control_multi_position['lst_close_long']) == len(self.control_multi_position['lst_open_long']):
             # Loop to extend the DataFrame in each iteration
@@ -575,6 +629,17 @@ class GridPosition():
             print(len(self.control_multi_position['new_open_long']))
             print(len(self.control_multi_position['previous_open_long']))
 
+        total_symbol = 0
+        if not df_open_positions.empty:
+            if symbol in df_open_positions["symbol"].values:
+                df_open_positions_filter = df_open_positions[df_open_positions["symbol"] == symbol]
+                if not df_open_positions_filter.empty:
+                    total_symbol = df_open_positions_filter["total"].sum()
+
+        if (total_symbol == 0) \
+                and (len(self.control_multi_position['df_multi_position_status']) > 0):
+            self.control_multi_position['df_multi_position_status'] = pd.DataFrame(columns=['open_long', 'close_long'])
+
         if not self.zero_print:
             print('df_multi_position_status: ')
             print(self.control_multi_position['df_multi_position_status'].to_string(index=False))
@@ -595,14 +660,7 @@ class GridPosition():
     def get_grid_info(self, symbol):
         df = self.grid[symbol]
         dct_status_info = {}
-        """
-        nb_limit_open = 
-        nb_limit_close = 
-        nb_position = 
-        nb_total_closed = 
-        price = 
-        grid_position =
-        """
+
         # Count of rows with side == 'close_long' and status == 'engaged'
         dct_status_info['nb_limit_close'] = len(df[(df['side'] == 'close_long') & (df['status'] == 'engaged')])
 
@@ -621,7 +679,9 @@ class GridPosition():
             return False
         self.dct_info = dct_info
 
-        if self.diff_position != 0:
+        if self.diff_position != 0 \
+                or self.top_grid \
+                or self.bottom_grid:
             return True
         else:
             return False
@@ -633,7 +693,14 @@ class GridPosition():
         msg += "RANGE FROM: " + str(self.grid_high) + " TO " + str(self.grid_low) + "\n"
         msg += "NB_GRID: " + str(self.nb_grid) + "\n"
         msg += "# GRID POSITION: " + "\n"
-        msg += "grid_position: " + str(dct_info['grid_position'][0]) + " / " + str(dct_info['grid_position'][1]) + "\n"
+        if ((dct_info['grid_position'][0] >= self.nb_grid)
+                and (dct_info['grid_position'][1] >= self.nb_grid)):
+            msg += "**ABOVE GRID**\n"
+        elif ((dct_info['grid_position'][0] <= 0)
+              and (dct_info['grid_position'][1] <= 0)):
+            msg += "**BELOW GRID**\n"
+        else:
+            msg += "**position: " + str(dct_info['grid_position'][0]) + " / " + str(dct_info['grid_position'][1]) + "**\n"
         msg += "nb_limit_close: " + str(dct_info['nb_limit_close']) + "\n"
         msg += "nb_limit_open: " + str(dct_info['nb_limit_open']) + "\n"
         msg += "nb_open_position: " + str(dct_info['nb_position']) + "\n"
@@ -649,11 +716,11 @@ class GridPosition():
             elif self.previous_grid_position[0] == dct_info['grid_position'][0] and self.previous_grid_position[1] == dct_info['grid_position'][1]:
                 msg += "FLAT / NO DIRECTION" + "\n"
             else:
-                msg += "ERROR DIRECTION" + "\n"
-                msg += "PRICE ON GRID EDGE" + "\n"
+                msg += "**ERROR DIRECTION" + "**\n"
+                msg += "**PRICE ON GRID EDGE" + "**\n"
                 df = self.grid[symbol]
                 lst_filtered_on_edge = df[df['on_edge']]['grid_id'].tolist()
-                msg += "lst_filtered_on_edge: " + ' '.join(map(str, lst_filtered_on_edge)) + "\n"
+                msg += "**lst_filtered_on_edge: " + ' '.join(map(str, lst_filtered_on_edge)) + "**\n"
                 if len(lst_filtered_on_edge) > 0:
                     msg += "**PRICE ON GRID EDGE - VERIFIED" + "**\n"
                 else:

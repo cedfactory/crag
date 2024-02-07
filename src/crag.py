@@ -880,9 +880,10 @@ class Crag:
         cpt = 0
         input_dir = "./grid_test/" + str(scenario_id) + "_scenario_test"
         while True:
-            break_pt = 35
+            break_pt = 3
             if cpt == break_pt:
-                print("cpt: ", cpt)
+                pass
+            print("cpt start: ", cpt)
             self.start_time_grid_strategy = time.time()
             broker_current_state = self.get_current_state_from_csv(input_dir, cpt)
             lst_orders_to_execute = self.rtstr.set_broker_current_state(broker_current_state)
@@ -902,13 +903,14 @@ class Crag:
             print("GRID ITERATION AVERAGE TIME: " + str(self.average_time_grid_strategy) + " seconds")
 
             if cpt == break_pt:
-                print("cpt: ", cpt)
+                pass
+            print("cpt end: ", cpt)
 
             cpt += 1
 
     def udpate_strategy_with_broker_current_state(self):
         GRID_SCENARIO_ON = False
-        SCENARIO_ID = 8
+        SCENARIO_ID = 6
         if GRID_SCENARIO_ON:
             self.udpate_strategy_with_broker_current_state_scenario(SCENARIO_ID)
         else:
