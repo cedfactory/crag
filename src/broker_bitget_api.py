@@ -784,6 +784,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     @authentication_required
     def set_account_symbol_leverage(self, symbol, leverage, hold="long"):
         n_attempts = 3
+        dct_account = None
         while n_attempts > 0:
             try:
                 dct_account = self.accountApi.leverage(symbol, "USDT", leverage, hold)
@@ -795,7 +796,9 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 print("failure: ", self.failure, " - success: ", self.success, " - percentage failure: ", self.failure / (self.success + self.failure) * 100)
                 time.sleep(2)
                 n_attempts = n_attempts - 1
-        return dct_account['data']['crossMarginLeverage'], dct_account['data']['longLeverage'], dct_account['data']['shortLeverage']
+        if dct_account:
+            return dct_account['data']['crossMarginLeverage'], dct_account['data']['longLeverage'], dct_account['data']['shortLeverage']
+        return None, None, None
 
     @authentication_required
     def set_account_symbol_margin(self, symbol, marginMode="fixed"):
