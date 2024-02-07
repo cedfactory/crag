@@ -272,8 +272,12 @@ class MainPanel(wx.Panel):
     def on_open_position(self, event):
         my_broker = self.get_broker_from_selected_account()
         if my_broker and self.panel_positions.symbols.GetSelection() >= 0:
+            symbol = self.panel_positions.symbols.GetString(self.panel_positions.symbols.GetSelection())
+            leverage = self.panel_positions.leverage.GetValue()
+            my_broker.set_symbol_leverage(my_broker._get_symbol(symbol), int(leverage), "long")
+
             mytrade = trade.Trade()
-            mytrade.symbol = self.panel_positions.symbols.GetString(self.panel_positions.symbols.GetSelection())
+            mytrade.symbol = symbol
             mytrade.gross_size = self.panel_positions.amount.GetValue() / my_broker.get_value(mytrade.symbol)
             mytrade.type = "OPEN_LONG"
             print("open position : ", mytrade.symbol, " / ", mytrade.gross_size)
@@ -300,8 +304,12 @@ class MainPanel(wx.Panel):
     def on_open_limit_order(self, event):
         my_broker = self.get_broker_from_selected_account()
         if my_broker and self.panel_orders.symbols.GetSelection() >= 0:
+            symbol = self.panel_orders.symbols.GetString(self.panel_orders.symbols.GetSelection())
+            leverage = self.panel_orders.leverage.GetValue()
+            my_broker.set_symbol_leverage(my_broker._get_symbol(symbol), int(leverage), "long")
+
             mytrade = trade.Trade()
-            mytrade.symbol = self.panel_orders.symbols.GetString(self.panel_orders.symbols.GetSelection())
+            mytrade.symbol = symbol
             mytrade.gross_size = self.panel_orders.amount.GetValue()
             mytrade.type = "OPEN_LONG_ORDER"
             mytrade.price = self.panel_orders.price.GetValue()
