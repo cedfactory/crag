@@ -49,11 +49,11 @@ class PanelPositions(wx.Panel):
 
         # open position
         hsizer = wx.BoxSizer(wx.HORIZONTAL)
-        staticOpenPosition = wx.StaticText(self,label = "Open position :", style = wx.ALIGN_LEFT)
+        staticOpenPosition = wx.StaticText(self,label = "Open position :", style=wx.ALIGN_LEFT)
         hsizer.Add(staticOpenPosition,0, wx.ALL | wx.EXPAND, 5)
         self.symbols = wx.ComboBox(self,choices = ["BTC", "ETH", "XRP"])
         hsizer.Add(self.symbols,0, wx.ALL | wx.EXPAND, 5)
-        staticAmount = wx.StaticText(self,label = "Amount ($)", style = wx.ALIGN_LEFT)
+        staticAmount = wx.StaticText(self,label="Amount ($)", style=wx.ALIGN_LEFT)
         hsizer.Add(staticAmount,0, wx.ALL | wx.EXPAND, 5)
         self.amount = FS.FloatSpin(self, -1, size=wx.Size(70, -1), min_val=0, increment=0.1, value=0., digits=3, agwStyle=FS.FS_LEFT)
         hsizer.Add(self.amount, 0, wx.ALL | wx.CENTER, 5)
@@ -61,6 +61,9 @@ class PanelPositions(wx.Panel):
         hsizer.Add(staticLeverage, 0, wx.ALL | wx.EXPAND, 5)
         self.leverage = FS.FloatSpin(self, -1, size=wx.Size(40, -1), min_val=1, increment=1, value=2, digits=0, agwStyle=FS.FS_LEFT)
         hsizer.Add(self.leverage, 0, wx.ALL | wx.CENTER, 5)
+        self.sides = wx.ComboBox(self, choices=["long", "short"])
+        self.sides.SetSelection(0)
+        hsizer.Add(self.sides, 0, wx.ALL | wx.EXPAND, 5)
         open_position_button = wx.Button(self, label="Open position")
         open_position_button.Bind(wx.EVT_BUTTON, self.main.on_open_position)
         hsizer.Add(open_position_button, 0, wx.ALL | wx.CENTER, 5)
@@ -112,10 +115,13 @@ class PanelOrders(wx.Panel):
         hsizer.Add(staticLeverage, 0, wx.ALL | wx.EXPAND, 5)
         self.leverage = FS.FloatSpin(self, -1, size=wx.Size(40, -1), min_val=1, increment=1, value=2, digits=0, agwStyle=FS.FS_LEFT)
         hsizer.Add(self.leverage, 0, wx.ALL | wx.CENTER, 5)
-        staticPrice = wx.StaticText(self,label = "Price", style = wx.ALIGN_LEFT)
+        staticPrice = wx.StaticText(self, label="Price", style = wx.ALIGN_LEFT)
         hsizer.Add(staticPrice,0, wx.ALL | wx.EXPAND, 5)
         self.price = FS.FloatSpin(self, -1, size=wx.Size(70, -1), min_val=0, increment=0.1, value=0., digits=3, agwStyle=FS.FS_LEFT)
         hsizer.Add(self.price,0, wx.ALL | wx.EXPAND, 5)
+        self.sides = wx.ComboBox(self, choices=["long", "short"])
+        self.sides.SetSelection(0)
+        hsizer.Add(self.sides, 0, wx.ALL | wx.EXPAND, 5)
         open_order_button = wx.Button(self, label="Open order")
         open_order_button.Bind(wx.EVT_BUTTON, self.main.on_open_limit_order)
         hsizer.Add(open_order_button, 0, wx.ALL | wx.CENTER, 5)
@@ -255,13 +261,17 @@ class MainPanel(wx.Panel):
             return
         symbol = self.panel_positions.positions.GetItem(index, col=0).GetText()
         gross_size = float(self.panel_positions.positions.GetItem(index, col=1).GetText())
+        side = self.panel_positions.positions.GetItem(index, col=2).GetText()
 
         my_broker = self.get_broker_from_selected_account()
         if my_broker:
             mytrade = trade.Trade()
             mytrade.symbol = symbol
             mytrade.gross_size = gross_size
-            mytrade.type = "CLOSE_LONG"
+            if side == "long":
+                mytrade.type = "CLOSE_LONG"
+            else:
+                mytrade.type = "CLOSE_SHORT"
             print("close position : ", mytrade.symbol, " / ", mytrade.gross_size)
             my_broker.execute_trade(mytrade)
             self.update_positions(my_broker)
@@ -274,12 +284,16 @@ class MainPanel(wx.Panel):
         if my_broker and self.panel_positions.symbols.GetSelection() >= 0:
             symbol = self.panel_positions.symbols.GetString(self.panel_positions.symbols.GetSelection())
             leverage = self.panel_positions.leverage.GetValue()
-            my_broker.set_symbol_leverage(my_broker._get_symbol(symbol), int(leverage), "long")
+            side = self.panel_positions.sides.GetString(self.panel_positions.sides.GetSelection()) # "long" or "short"
+            my_broker.set_symbol_leverage(my_broker._get_symbol(symbol), int(leverage), side)
 
             mytrade = trade.Trade()
             mytrade.symbol = symbol
             mytrade.gross_size = self.panel_positions.amount.GetValue() / my_broker.get_value(mytrade.symbol)
-            mytrade.type = "OPEN_LONG"
+            if side == "long":
+                mytrade.type = "OPEN_LONG"
+            else:
+                mytrade.type = "OPEN_SHORT"
             print("open position : ", mytrade.symbol, " / ", mytrade.gross_size)
             my_broker.execute_trade(mytrade)
             self.update_positions(my_broker)
@@ -306,12 +320,16 @@ class MainPanel(wx.Panel):
         if my_broker and self.panel_orders.symbols.GetSelection() >= 0:
             symbol = self.panel_orders.symbols.GetString(self.panel_orders.symbols.GetSelection())
             leverage = self.panel_orders.leverage.GetValue()
-            my_broker.set_symbol_leverage(my_broker._get_symbol(symbol), int(leverage), "long")
+            side = self.panel_orders.sides.GetString(self.panel_orders.sides.GetSelection()) # "long" or "short"
+            my_broker.set_symbol_leverage(my_broker._get_symbol(symbol), int(leverage), side)
 
             mytrade = trade.Trade()
             mytrade.symbol = symbol
             mytrade.gross_size = self.panel_orders.amount.GetValue()
-            mytrade.type = "OPEN_LONG_ORDER"
+            if side == "long":
+                mytrade.type = "OPEN_LONG_ORDER"
+            else:
+                mytrade.type = "OPEN_SHORT_ORDER"
             mytrade.price = self.panel_orders.price.GetValue()
             print("open limit order : ", mytrade.symbol, " / ", mytrade.gross_size, " / ", mytrade.price)
             my_broker.execute_trade(mytrade)
