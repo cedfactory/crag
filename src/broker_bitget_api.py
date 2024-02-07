@@ -256,8 +256,11 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                                                  presetTakeProfitPrice='', presetStopLossPrice='')
                 self.success += 1
                 break
-            except:
-                print("failure:  get_open_position_unrealizedPL  - attempt: ", n_attempts)
+            except Exception as inst:
+                print(inst)
+                if hasattr(inst, "message"):
+                    print(inst.message)
+                print("failure:  _place_order_api  - attempt: ", n_attempts)
                 self.failure += 1
                 print("failure: ", self.failure, " - success: ", self.success, " - percentage failure: ", self.failure / (self.success + self.failure) * 100)
                 time.sleep(2)
