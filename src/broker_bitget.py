@@ -85,7 +85,7 @@ class BrokerBitGet(broker.Broker):
         trade.success = False
         symbol = self._get_symbol(trade.symbol)
 
-        self.set_margin_and_leverage(symbol)
+        #self.set_margin_and_leverage(symbol)
         clientOid = self.clientOIdprovider.get_name(symbol, trade.type)
         print("TRADE GROSS SIZE: ", trade.gross_size)
         trade.gross_size = self.normalize_size(symbol, trade.gross_size)
@@ -120,7 +120,8 @@ class BrokerBitGet(broker.Broker):
             else:
                 transaction = {"msg": "failure"}
 
-            if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
+            print(transaction)
+            if "msg" in transaction and transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
                 trade.success = True
                 trade.orderId = transaction["data"]["orderId"]
                 trade.clientOid = transaction["data"]["clientOid"]
@@ -132,6 +133,9 @@ class BrokerBitGet(broker.Broker):
 
                 print('request ',trade.type, ': ', symbol, ' gross_size: ', trade.gross_size)
                 print(trade.type, ': ', symbol, ' gross_size: ', trade.gross_size, ' price: ', trade.gross_price, ' fee: ', trade.buying_fee)
+            else:
+                print("Something went wrong inside execute_trade :")
+                print(transaction)
 
         elif trade.type == "CLOSE_LONG":
             trade.gross_size = self.get_symbol_available(symbol)
