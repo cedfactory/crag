@@ -277,7 +277,9 @@ class MainPanel(wx.Panel):
             self.update_positions(my_broker)
 
     def on_close_all_positions(self, event):
-        pass
+        my_broker = self.get_broker_from_selected_account()
+        if my_broker:
+            my_broker.execute_reset_account()
 
     def on_open_position(self, event):
         my_broker = self.get_broker_from_selected_account()
