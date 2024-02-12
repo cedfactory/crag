@@ -643,9 +643,19 @@ class GridPosition():
                     while open_val in self.control_multi_position['df_multi_position_status']['open_long'].tolist():
                         open_val -= 1
                     if not(pos in self.control_multi_position['df_multi_position_status']['close_long'].tolist()):
-                        self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
-                                                                                                                                                  'close_long': pos},
-                                                                                                                                                  ignore_index=True)
+                        try:
+                            new_row_index = len(self.control_multi_position['df_multi_position_status'])
+                            self.control_multi_position['df_multi_position_status'].loc[new_row_index] = {'open_long': open_val, 'close_long': pos}
+                        except:
+                            print('open_long', open_val)  # CEDE DEBUG
+                            print('close_long', pos)  # CEDE DEBUG
+                            print('self.control_multi_position[df_multi_position_status]',
+                                  self.control_multi_position['df_multi_position_status'])  # CEDE DEBUG
+                            exit(0)
+
+                        # self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+                        #                                                                                                                           'close_long': pos},
+                        #                                                                                                                            ignore_index=True)
                     if (len(self.control_multi_position['lst_open_long']) > 0) \
                             and (open_val in self.control_multi_position['lst_open_long']):
                         self.control_multi_position['lst_open_long'].remove(open_val)
