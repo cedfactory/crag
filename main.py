@@ -383,6 +383,8 @@ if __name__ == '__main__':
             if (sys.argv[2] == "--autorestart"):
                 print("automatic restart is on")
                 forceDoNotReset = False
+                # CEDE FOR DEBUG
+                crag_live(sys.argv[3], forceDoNotReset)
                 while True:
                     try:
                         crag_live(sys.argv[3], forceDoNotReset)
