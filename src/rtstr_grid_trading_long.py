@@ -610,14 +610,16 @@ class GridPosition():
                 if not ((self.control_multi_position['df_multi_position_status']['open_long'] == open_val)
                         & (self.control_multi_position['df_multi_position_status']['close_long'] == close_val)).any():
                     # Append a new row self.control_multi_position['df_multi_position_status'] values from the lists
-
-                    print('open_long', open_val) # CEDE DEBUG
-                    print('close_long', close_val) # CEDE DEBUG
-                    print('self.control_multi_position[df_multi_position_status]', self.control_multi_position['df_multi_position_status']) # CEDE DEBUG
-
-                    new_row_index = len(self.control_multi_position['df_multi_position_status'])
-                    self.control_multi_position['df_multi_position_status'].loc[new_row_index] = {'open_long': open_val,
-                                                                                                  'close_long': close_val}
+                    try:
+                        new_row_index = len(self.control_multi_position['df_multi_position_status'])
+                        self.control_multi_position['df_multi_position_status'].loc[new_row_index] = {'open_long': open_val,
+                                                                                                      'close_long': close_val}
+                    except:
+                        print('open_long', open_val)  # CEDE DEBUG
+                        print('close_long', close_val)  # CEDE DEBUG
+                        print('self.control_multi_position[df_multi_position_status]',
+                              self.control_multi_position['df_multi_position_status'])  # CEDE DEBUG
+                        exit(0)
 
                     # self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
                     #                                                                                                                           'close_long': close_val},
