@@ -981,7 +981,7 @@ class Crag:
 
     def udpate_strategy_with_broker_current_state(self):
         GRID_SCENARIO_ON = True
-        SCENARIO_ID = 7
+        SCENARIO_ID = 6
         if GRID_SCENARIO_ON:
             self.udpate_strategy_with_broker_current_state_scenario(SCENARIO_ID)
         else:
