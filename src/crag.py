@@ -9,6 +9,7 @@ import json
 import ast
 import threading
 import pickle
+from pathlib import Path
 from datetime import datetime, timedelta
 from datetime import date
 
@@ -857,16 +858,67 @@ class Crag:
         df_price.to_csv(full_path)
 
 
-    def get_current_state_from_csv(self, input_dir, cpt):
+    def get_current_state_from_csv(self, input_dir, cpt, df_orders, df_grids):
+        exit_scenario = False
         str_cpt = str(cpt)
+
         full_path = os.path.join(input_dir, "data_" + str_cpt + "_df_current_states.csv")
-        df_open_orders = pd.read_csv(full_path)
+        file_path = Path(full_path)
+        if file_path.exists():
+            df_open_orders = pd.read_csv(full_path)
+        else:
+            exit_scenario = True
 
         full_path = os.path.join(input_dir, "data_" + str_cpt + "_df_open_positions.csv")
-        df_open_positions = pd.read_csv(full_path)
+        file_path = Path(full_path)
+        if file_path.exists():
+            df_open_positions = pd.read_csv(full_path)
+        else:
+            exit_scenario = True
 
         full_path = os.path.join(input_dir, "data_" + str_cpt + "_df_price.csv")
-        df_prices = pd.read_csv(full_path)
+        file_path = Path(full_path)
+        if file_path.exists():
+            df_prices = pd.read_csv(full_path)
+        else:
+            exit_scenario = True
+
+        if exit_scenario:
+            print("SCENARIO COMPLETED AT ROUND ", str_cpt)
+            full_path = os.path.join(input_dir, "results_scenario_grid_df_current_states.csv")
+            df_orders.to_csv(full_path)
+            full_path = os.path.join(input_dir, "baseline_" + "results_scenario_grid_df_current_states.csv")
+            file_path = Path(full_path)
+            if file_path.exists():
+                df_baseline = pd.read_csv(full_path, index_col=False)
+                df_baseline = df_baseline.loc[:, ~df_baseline.columns.str.match('Unnamed')]
+                # Check if DataFrames are identical
+                identical = df_baseline.equals(df_orders)
+                if identical:
+                    print("ORDERS MATCHING 100%")
+                else:
+                    print("ORDERS NOT MATCHING")
+            else:
+                print("NO ORDER BASELINE AVAILABLE FOR THIS SCENARIO")
+
+            full_path = os.path.join(input_dir, "results_scenario_grid_df_grids.csv")
+            df_grids.to_csv(full_path)
+            full_path = os.path.join(input_dir, "baseline_" + "results_scenario_grid_df_grids.csv")
+            file_path = Path(full_path)
+            if file_path.exists():
+                df_baseline = pd.read_csv(full_path, index_col=False)
+                # df_baseline = df_baseline.drop(columns=df_baseline.columns[0])
+                df_baseline = df_baseline.loc[:, ~df_baseline.columns.str.match('Unnamed')]
+                df_baseline = df_baseline.fillna('')
+                # Check if DataFrames are identical
+                identical = df_baseline.equals(df_grids)
+                if identical:
+                    print("GRIDS MATCHING 100%")
+                else:
+                    print("GRIDS NOT MATCHING")
+            else:
+                print("NO GRID BASELINE AVAILABLE FOR THIS SCENARIO")
+            exit(0)
 
         broker_current_state = {
             "open_orders": df_open_orders,
@@ -879,14 +931,32 @@ class Crag:
     def udpate_strategy_with_broker_current_state_scenario(self, scenario_id):
         cpt = 0
         input_dir = "./grid_test/" + str(scenario_id) + "_scenario_test"
+        df_scenario_results_global = pd.DataFrame()
+        df_grid_record = pd.DataFrame()
+        df_grid_global = df_grid_record
         while True:
-            break_pt = 3
+            break_pt = 40
             if cpt == break_pt:
+                print("toto")
                 pass
             print("cpt start: ", cpt)
             self.start_time_grid_strategy = time.time()
-            broker_current_state = self.get_current_state_from_csv(input_dir, cpt)
+            broker_current_state = self.get_current_state_from_csv(input_dir, cpt, df_scenario_results_global, df_grid_global)
             lst_orders_to_execute = self.rtstr.set_broker_current_state(broker_current_state)
+
+            if len(lst_orders_to_execute) > 0:
+                df_scenario_results = pd.DataFrame(lst_orders_to_execute)
+                df_scenario_results["round"] = cpt
+                column_to_move = 'round'
+                first_column = df_scenario_results.pop(column_to_move)  # Remove column 'C' from DataFrame
+                df_scenario_results.insert(0, column_to_move, first_column)
+                if len(df_scenario_results_global) == 0:
+                    df_scenario_results_global = df_scenario_results
+                else:
+                    df_scenario_results_global = pd.concat([df_scenario_results_global, df_scenario_results], ignore_index=True)
+            df_grid_record = self.rtstr.get_grid(cpt)
+            df_grid_global = pd.concat([df_grid_global, df_grid_record], ignore_index=True)
+
             print("output lst_orders_to_execute: ", lst_orders_to_execute)
             msg = self.rtstr.get_info_msg_status()
             if msg != None:
@@ -903,14 +973,15 @@ class Crag:
             print("GRID ITERATION AVERAGE TIME: " + str(self.average_time_grid_strategy) + " seconds")
 
             if cpt == break_pt:
+                print(cpt)
                 pass
             print("cpt end: ", cpt)
 
             cpt += 1
 
     def udpate_strategy_with_broker_current_state(self):
-        GRID_SCENARIO_ON = False
-        SCENARIO_ID = 6
+        GRID_SCENARIO_ON = True
+        SCENARIO_ID = 7
         if GRID_SCENARIO_ON:
             self.udpate_strategy_with_broker_current_state_scenario(SCENARIO_ID)
         else:
