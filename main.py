@@ -1,6 +1,8 @@
 from src import rtdp,rtdp_simulation,broker_simulation,broker_bitget,broker_bitget_api
 from src import rtstr,rtstr_dummy_test,rtstr_envelope,rtstr_envelopestochrsi,rtstr_dummy_test_tp,rtstr_bollinger_trend,rtstr_grid_trading_long,rtstr_grid_trading_short,rtstr_bollinger_trend_long,rtstr_tv_recommendation_mid,rtstr_super_reversal,rtstr_volatility_test_live,rtstr_trix,rtstr_cryptobot,rtstr_sltp_only,rtstr_bigwill,rtstr_VMC
 from src import crag,crag_helper,trade
+from src.toolbox import settings_helper
+import requests
 import pandas as pd
 import os, sys
 import time
@@ -316,8 +318,44 @@ def crag_broker():
     #usdt_position_risk = my_broker.get_positions_risk(["BTC/USDT"])
     #print("USDT oposition risk = ", usdt_position_risk)
 
+def check_broker():
+    params = {"exchange": "bitget", "account": "bitget_ayato", "reset_account": False}
+    my_broker = broker_bitget_api.BrokerBitGetApi(params)
+    value = my_broker._get_coin("XRPUSDT_UMCBL")
+    print(value)
+
+def check_fdp():
+    fdp_url = settings_helper.get_fdp_url_info("gc1").get("url", None)
+    if not fdp_url or fdp_url == "":
+        return None
+
+    url = fdp_url+"/history?exchange=bitget&symbol=BTC&start=2023-01-01&interval=1d"
+    response = requests.get(url)
+    response_json = response.json()
+    print(response_json)
+
+def check_crag():
+    configuration_file = write_file("./crag.xml", '''<configuration>
+        <strategy name="StrategyGridTradingLong">
+            <params symbols="XRP" grid_df_params="./test/data/multigrid_df_params.csv"/>
+        </strategy>
+        <broker name="bitget">
+            <params exchange="bitget" account="bitget_ayato" leverage="2" simulation="1" reset_account="False" reset_account_orders="False"/>
+        </broker>
+        <crag interval="20" />
+    </configuration>''')
+    configuration = crag_helper.load_configuration_file(configuration_file, ".")
+    params = crag_helper.get_crag_params_from_configuration(configuration)
+    bot = crag.Crag(params)
+
+
+def write_file(filename, string):
+    with open(filename, 'w') as f:
+        f.write(string)
+    return filename
 
 if __name__ == '__main__':
+
     # Bear market historical dates
     # https://cointelegraph.com/news/a-brief-history-of-bitcoin-crashes-and-bear-markets-2009-2022
     # INFO:
@@ -333,7 +371,11 @@ if __name__ == '__main__':
     ##########################################
 
     if len(sys.argv) >= 2:
-        if len(sys.argv) > 2 and (sys.argv[1] == "--simulation"):
+        if len(sys.argv) > 1 and (sys.argv[1] == "--check"):
+            check_broker()
+            check_fdp()
+            #check_crag()
+        elif len(sys.argv) > 2 and (sys.argv[1] == "--simulation"):
             crag_simulation(sys.argv[2])
         elif len(sys.argv) > 2 and (sys.argv[1] == "--reboot"):
             crag_reboot(sys.argv[2])
