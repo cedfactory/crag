@@ -54,7 +54,8 @@ class RealTimeStrategy(metaclass=ABCMeta):
         self.grid_low = 0
         self.nb_grid = 0
         self.grid_buying_size = 0
-
+        self.grid_margin = 0
+        self.percent_per_grid = 0
 
         if params:
             self.strategy_interval = params.get("strategy_interval", self.strategy_interval)
@@ -100,7 +101,18 @@ class RealTimeStrategy(metaclass=ABCMeta):
                     self.nb_grid = int(self.nb_grid)
                 elif len(self.nb_grid) == 0:
                     self.nb_grid = 0
-            self.grid_buying_size = 5 # CEDE tbd
+            self.percent_per_grid = params.get("percent_per_grid", self.percent_per_grid)
+            if isinstance(self.percent_per_grid, str):
+                if len(self.percent_per_grid) > 0:
+                    self.percent_per_grid = float(self.percent_per_grid)
+                elif len(self.percent_per_grid) == 0:
+                    self.percent_per_grid = 0
+            self.grid_margin = params.get("grid_margin", self.grid_margin)
+            if isinstance(self.grid_margin, str):
+                if len(self.grid_margin) > 0:
+                    self.grid_margin = float(self.grid_margin)
+                elif len(self.grid_margin) == 0:
+                    self.grid_margin = 0
 
             self.SL = float(params.get("sl", self.SL))
             self.TP = float(params.get("tp", self.TP))
@@ -408,8 +420,21 @@ class RealTimeStrategy(metaclass=ABCMeta):
     def reset_position_recorder_for_symbol(self, symbol):
         self.position_recorder.reset_position_record(symbol)
 
+    def get_grid_buying_min_size(self, symbol):
+        return self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "minBuyingSize"].values[0]
+
     def get_grid_buying_size(self, symbol):
-        return self.grid_buying_size
+        return self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "buyingSize"].values[0]
+
+    def set_df_buying_size(self, df_symbol_size):
+        self.df_grid_buying_size = df_symbol_size
+        for symbol in df_symbol_size['symbol'].tolist():
+            size = self.grid_margin / self.nb_grid / ((self.grid_high - self.grid_low )/2 + self.grid_low)
+            if self.get_grid_buying_min_size(symbol) <= size:
+                self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "buyingSize"] = size
+            else:
+                print("ERROR NOT ENOUGH $ FOR GRID - INCREASE MARGIN OR REDUCE GRID SIZE")
+                exit(0)
 
     def get_symbol_buying_size(self, symbol):
         if not symbol in self.rtctrl.prices_symbols or self.rtctrl.prices_symbols[symbol] < 0:  # first init at -1

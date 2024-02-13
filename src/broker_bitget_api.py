@@ -847,6 +847,11 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         else:
             return 0
 
+    def get_df_minimum_size(self, lst_symbols):
+        lst = [self.get_minimum_size(symbol) for symbol in lst_symbols]
+        df = pd.DataFrame({'symbol': lst_symbols, 'minBuyingSize': lst,'buyingSize':lst})
+        return df
+
     def get_priceEndStep(self, symbol):
         if symbol in self.df_market['baseCoin'].tolist():
             idx = self.df_market[  (self.df_market['baseCoin'] == symbol) & (self.df_market['quoteCoin'] == "USDT")  ].index

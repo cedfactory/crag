@@ -14,7 +14,10 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
         self.rtctrl.set_list_close_position_type(self.get_lst_closing_type())
 
         self.zero_print = False
-        self.grid = GridPosition(self.lst_symbols, self.grid_high, self.grid_low, self.nb_grid, self.zero_print)
+        self.grid = GridPosition(self.lst_symbols, self.grid_high, self.grid_low, self.nb_grid, self.percent_per_grid, self.zero_print)
+        if self.percent_per_grid != 0:
+            self.nb_grid = self.grid.get_grid_nb_grid()
+        self.df_grid_buying_size = pd.DataFrame()
 
     def get_data_description(self):
         ds = rtdp.DataDescription()
@@ -132,12 +135,13 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
             return self.grid.get_grid(symbol, cpt)
 
 class GridPosition():
-    def __init__(self, lst_symbols, grid_high, grid_low, nb_grid, debug_mode=True):
+    def __init__(self, lst_symbols, grid_high, grid_low, nb_grid, percent_per_grid, debug_mode=True):
         self.grid_high = grid_high
         self.grid_low = grid_low
         self.nb_grid = nb_grid
         self.lst_symbols = lst_symbols
         self.str_lst_symbol = ' '.join(map(str, lst_symbols))
+        self.percent_per_grid = percent_per_grid
 
         self.zero_print = debug_mode
         self.trend = "FLAT"
@@ -153,6 +157,8 @@ class GridPosition():
         self.top_grid = False
         self.bottom_grid_cpt = 0
         self.bottom_grid = False
+        self.percent_per_grid = percent_per_grid
+        self.steps = 0
 
         self.df_nb_open_positions = pd.DataFrame(columns=['symbol', 'size', 'positions_size', 'nb_open_positions'])
         self.df_nb_open_positions['symbol'] = self.lst_symbols
@@ -163,9 +169,14 @@ class GridPosition():
         self.df_nb_open_positions['nb_total_closed_positions'] = 0
         self.df_nb_open_positions['nb_previous_open_positions'] = 0
 
+        if self.percent_per_grid !=0:
+            self.steps = self.grid_high * self.percent_per_grid / 100
+            self.nb_grid = int((self.grid_high - self.grid_low) / self.steps)
         # Create a list with nb_grid split between high and low
         self.lst_grid_values = np.linspace(self.grid_high, self.grid_low, self.nb_grid + 1, endpoint=True).tolist()
         if not self.zero_print:
+            print("nb_grid: ", self.nb_grid)
+            print("grid steps: ", self.steps)
             print("grid values: ", self.lst_grid_values)
 
         self.columns = ["grid_id", "position", "orderId", "previous_side", "side", "changes", "status"]
@@ -213,6 +224,9 @@ class GridPosition():
                 missing_order['side'] = df.loc[df['grid_id'] == grid_id, 'side'].values[0]
                 self.lst_limit_order_missing.append(missing_order)
                 print("GRID ERROR - limit order failed - grid_id missing: ", grid_id, ' side: ', missing_order['side'])
+
+    def get_grid_nb_grid(self):
+        return self.nb_grid
 
     def update_grid_side(self, symbol, position):
         df = self.grid[symbol]
