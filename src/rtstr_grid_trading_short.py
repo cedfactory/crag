@@ -612,9 +612,21 @@ class GridPosition():
                 if not ((self.control_multi_position['df_multi_position_status']['open_short'] == open_val)
                         & (self.control_multi_position['df_multi_position_status']['close_short'] == close_val)).any():
                     # Append a new row self.control_multi_position['df_multi_position_status'] values from the lists
-                    self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_short': open_val,
-                                                                                                                                              'close_short': close_val},
-                                                                                                                                             ignore_index=True)
+                    try:
+                        new_row_index = len(self.control_multi_position['df_multi_position_status'])
+                        self.control_multi_position['df_multi_position_status'].loc[new_row_index] = {'open_short': open_val,
+                                                                                                      'close_short': close_val}
+                    except:
+                        print('open_short', open_val)  # CEDE DEBUG
+                        print('close_short', close_val)  # CEDE DEBUG
+                        print('self.control_multi_position[df_multi_position_status]',
+                              self.control_multi_position['df_multi_position_status'])  # CEDE DEBUG
+                        exit(0)
+
+                    # self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
+                    #                                                                                                                           'close_long': close_val},
+                    #                                                                                                                            ignore_index=True)
+
                     # Remove the elements from the lists
                     if (len(self.control_multi_position['lst_open_short']) > 0) \
                             and (open_val in self.control_multi_position['lst_open_short']):
@@ -632,11 +644,21 @@ class GridPosition():
                     open_val = pos + 1
                     while open_val in self.control_multi_position['df_multi_position_status']['open_short'].tolist():
                         open_val += 1
-                    self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_short': open_val,
-                                                                                                                                              'close_short': pos},
-                                                                                                                                              ignore_index=True)
+                    if not(pos in self.control_multi_position['df_multi_position_status']['close_short'].tolist()):
+                        try:
+                            new_row_index = len(self.control_multi_position['df_multi_position_status'])
+                            self.control_multi_position['df_multi_position_status'].loc[new_row_index] = {'open_short': open_val, 'close_short': pos}
+                        except:
+                            print('open_long', open_val)  # CEDE DEBUG
+                            print('close_long', pos)  # CEDE DEBUG
+                            print('self.control_multi_position[df_multi_position_status]',
+                                  self.control_multi_position['df_multi_position_status'])  # CEDE DEBUG
+                            exit(0)
+                        # self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_short': open_val,
+                        #                                                                                                                          'close_short': pos},
+                        #                                                                                                                          ignore_index=True)
                     if (len(self.control_multi_position['lst_open_short']) > 0) \
-                            and (open_val in self.control_multi_position['lst_open_short']):
+                        and (open_val in self.control_multi_position['lst_open_short']):
                         self.control_multi_position['lst_open_short'].remove(open_val)
                     if (len(self.control_multi_position['lst_close_short']) > 0) \
                             and (pos in self.control_multi_position['lst_close_short']):
