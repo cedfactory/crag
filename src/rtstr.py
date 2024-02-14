@@ -430,6 +430,9 @@ class RealTimeStrategy(metaclass=ABCMeta):
         self.df_grid_buying_size = df_symbol_size
         for symbol in df_symbol_size['symbol'].tolist():
             size = self.grid_margin / self.nb_grid / ((self.grid_high - self.grid_low )/2 + self.grid_low)
+
+            self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "buyingSize"] = size
+            """
             if (self.get_grid_buying_min_size(symbol) <= size)\
                     and (size * self.grid_low > 5) \
                     and (cash >= self.grid_margin):
@@ -442,6 +445,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
                 print("min size: ", self.get_grid_buying_min_size(symbol))
                 print("ERROR NOT ENOUGH $ FOR GRID - INCREASE MARGIN OR REDUCE GRID SIZE")
                 exit(0)
+            """
 
     def get_symbol_buying_size(self, symbol):
         if not symbol in self.rtctrl.prices_symbols or self.rtctrl.prices_symbols[symbol] < 0:  # first init at -1
