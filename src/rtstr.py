@@ -424,7 +424,8 @@ class RealTimeStrategy(metaclass=ABCMeta):
         return self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "minBuyingSize"].values[0]
 
     def get_grid_buying_size(self, symbol):
-        return self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "buyingSize"].values[0]
+        return 10
+        # return self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "buyingSize"].values[0]
 
     def set_df_buying_size(self, df_symbol_size, cash):
         self.df_grid_buying_size = df_symbol_size
