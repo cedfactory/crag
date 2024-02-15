@@ -1034,7 +1034,9 @@ class Crag:
                     msg += "side: " + side + " liquidation: " + str(round(liquidation, 2)) + "\n"
             else:
                 print("ERROR LST SYMBOLS NOT MATCHING")
-                msg += "**ERROR LST SYMBOLS NOT MATCHING" + ":\n"
+                print("symbols", symbols)
+                print("lst_usdt_symbols", lst_usdt_symbols)
+                msg += "**ERROR LST SYMBOLS NOT MATCHING" + "**:\n"
             msg += "AVERAGE RUN TIME: " + str(self.average_time_grid_strategy) + "s\n"
             msg = msg.upper()
             self.log(msg, "GRID STATUS")
