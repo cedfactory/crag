@@ -30,11 +30,14 @@ class PanelPositions(wx.Panel):
             self, size=(570, 200),
             style=wx.LC_REPORT | wx.BORDER_SUNKEN
         )
-        self.positions.InsertColumn(0, 'Symbol', width=140)
+        self.positions.InsertColumn(0, 'Symbol', width=130)
         self.positions.InsertColumn(1, 'USDT Equity', width=100)
         self.positions.InsertColumn(2, 'Side', width=50)
         self.positions.InsertColumn(3, 'Leverage', width=70)
-        self.positions.InsertColumn(4, 'unrealizedPL', width=90)
+        self.positions.InsertColumn(4, 'uPL', width=70)
+        self.positions.InsertColumn(5, 'Total', width=70)
+        self.positions.InsertColumn(6, 'Value', width=70)
+        self.positions.InsertColumn(7, 'Avg Open Price', width=70)
         main_sizer.Add(self.positions, 0, wx.ALL | wx.EXPAND, 5)
 
         hsizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -230,7 +233,10 @@ class MainPanel(wx.Panel):
         if isinstance(positions, pd.DataFrame):
             for index, row in positions.iterrows():
                 uPL = my_broker.get_symbol_unrealizedPL(row["symbol"])
-                self.panel_positions.positions.Append([row["symbol"], utils.KeepNDecimals(row["available"]*row["marketPrice"]), row["holdSide"], row["leverage"], utils.KeepNDecimals(uPL)])
+                total = row["total"]
+                value = row["total"] * row["marketPrice"]
+                avgOpenPrice = row["averageOpenPrice"]
+                self.panel_positions.positions.Append([row["symbol"], utils.KeepNDecimals(row["total"]*row["marketPrice"]), row["holdSide"], row["leverage"], utils.KeepNDecimals(uPL), utils.KeepNDecimals(total), utils.KeepNDecimals(value), utils.KeepNDecimals(avgOpenPrice)])
 
     def update_orders(self, my_broker):
         orders = []
