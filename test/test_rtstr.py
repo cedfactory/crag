@@ -20,7 +20,12 @@ class TestRTSTR:
         available_strategies = rtstr.RealTimeStrategy.get_strategies_list()
 
         # expectations
-        expected_strategies = ['StrategyDummyTest', 'StrategyEnvelope', 'StrategyEnvelopeStochRSI', 'StrategyDummyTestTP', 'StrategyBollingerTrend', 'StrategyGridTrading', 'StrategyBollingerTrendLong', 'StrategyTvRecommendationMid', 'StrategySuperReversal', 'StrategyVolatilityTest', 'StrategyTrix', 'StrategyCryptobot', 'StrategySLTPOnly', 'StrategyBigWill', 'StrategyVMC']
+        #expected_strategies = ['StrategyDummyTest', 'StrategyEnvelope', 'StrategyEnvelopeStochRSI', 'StrategyDummyTestTP', 'StrategyBollingerTrend', 'StrategyGridTrading', 'StrategyBollingerTrendLong', 'StrategyTvRecommendationMid', 'StrategySuperReversal', 'StrategyVolatilityTest', 'StrategyTrix', 'StrategyCryptobot', 'StrategySLTPOnly', 'StrategyBigWill', 'StrategyVMC']
+        expected_strategies = ['StrategyDummyTest', 'StrategyEnvelope', 'StrategyEnvelopeStochRSI',
+                               'StrategyDummyTestTP', 'StrategyBollingerTrend', 'StrategyGridTradingLong',
+                               'StrategyGridTradingShort', 'StrategyBollingerTrendLong', 'StrategyTvRecommendationMid',
+                               'StrategySuperReversal', 'StrategyVolatilityTest', 'StrategyTrix', 'StrategyCryptobot',
+                               'StrategySLTPOnly', 'StrategyBigWill', 'StrategyVMC']
         print(expected_strategies)
         print(available_strategies)
         assert(set(available_strategies) == set(expected_strategies))
