@@ -85,10 +85,11 @@ class PanelOrders(wx.Panel):
         self.orders.InsertColumn(0, 'Symbol', width=140)
         self.orders.InsertColumn(1, 'Side', width=80)
         self.orders.InsertColumn(2, 'Price', width=70)
-        self.orders.InsertColumn(3, 'Leverage', width=70)
-        self.orders.InsertColumn(4, 'MarginCoin', width=70)
-        self.orders.InsertColumn(5, 'ClientOid', width=130)
-        self.orders.InsertColumn(6, 'OrderId', width=130)
+        self.orders.InsertColumn(3, 'Size', width=70)
+        self.orders.InsertColumn(4, 'Leverage', width=70)
+        self.orders.InsertColumn(5, 'MarginCoin', width=70)
+        self.orders.InsertColumn(6, 'ClientOid', width=130)
+        self.orders.InsertColumn(7, 'OrderId', width=130)
         main_sizer.Add(self.orders, 0, wx.ALL | wx.EXPAND, 5)
 
         hsizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -241,7 +242,7 @@ class MainPanel(wx.Panel):
         self.panel_orders.orders.DeleteAllItems()
         if isinstance(orders, pd.DataFrame):
             for index, row in orders.iterrows():
-                self.panel_orders.orders.Append([row["symbol"], row["side"], row["price"], row["leverage"], row["marginCoin"], row["clientOid"], row["orderId"]])
+                self.panel_orders.orders.Append([row["symbol"], row["side"], row["price"], row["size"], row["leverage"], row["marginCoin"], row["clientOid"], row["orderId"]])
 
     def on_account(self, event):
         my_broker = self.get_broker_from_selected_account()
@@ -305,8 +306,8 @@ class MainPanel(wx.Panel):
         if index == -1:
             return
         symbol = self.panel_orders.orders.GetItem(index, col=0).GetText()
-        marginCoin = self.panel_orders.orders.GetItem(index, col=4).GetText()
-        orderId = self.panel_orders.orders.GetItem(index, col=6).GetText()
+        marginCoin = self.panel_orders.orders.GetItem(index, col=5).GetText()
+        orderId = self.panel_orders.orders.GetItem(index, col=7).GetText()
         print("cancel open order : ", orderId)
         my_broker = self.get_broker_from_selected_account()
         my_broker.cancel_order(symbol, marginCoin, orderId)
