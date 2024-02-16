@@ -981,7 +981,7 @@ class Crag:
 
     def udpate_strategy_with_broker_current_state(self):
         GRID_SCENARIO_ON = False
-        SCENARIO_ID = 6
+        SCENARIO_ID = 10
         if GRID_SCENARIO_ON:
             self.udpate_strategy_with_broker_current_state_scenario(SCENARIO_ID)
         else:
@@ -1033,10 +1033,18 @@ class Crag:
                     msg += "SIZE: " + str(round(total, 2)) + " leverage: " + str(round(leverage, 2)) + ":\n"
                     msg += "side: " + side + " liquidation: " + str(round(liquidation, 2)) + "\n"
             else:
-                print("ERROR LST SYMBOLS NOT MATCHING")
-                print("symbols", symbols)
-                print("lst_usdt_symbols", lst_usdt_symbols)
-                msg += "**ERROR LST SYMBOLS NOT MATCHING" + "**:\n"
+                if (len(symbols) != 0) and (len(lst_usdt_symbols) == 0):
+                    for symbol in symbols:   # CEDE NOT WORKING FOR MULTI
+                        msg += "# SYMBOL " + symbol + " :\n"
+                        msg += "**no positions engaged" + "**\n"
+                        df_price = broker_current_state["prices"]
+                        price_for_symbol = df_price.loc[df_price['symbols'] == symbol, 'values'].values[0]
+                        msg += "**market price: " + str(round(price_for_symbol, 4)) + "**\n"
+                else:
+                    print("ERROR LST SYMBOLS NOT MATCHING")
+                    print("symbols", symbols)
+                    print("lst_usdt_symbols", lst_usdt_symbols)
+                    msg += "**ERROR LST SYMBOLS NOT MATCHING" + "**:\n"
             msg += "AVERAGE RUN TIME: " + str(self.average_time_grid_strategy) + "s\n"
             msg = msg.upper()
             self.log(msg, "GRID STATUS")
