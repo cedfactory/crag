@@ -8,6 +8,15 @@ import os
 from datetime import datetime
 from src.toolbox import settings_helper
 
+def calculate_decimal_places(value):
+    if value >= 0.1:
+        return 1
+    if value >= 0.01:
+        return 2
+    else:
+        return 4
+    return 2
+
 def convert_ms_to_datetime(ms):
     if isinstance(ms, str):
         ms = int(ms)

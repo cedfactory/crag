@@ -451,7 +451,7 @@ class Crag:
 
         if len(lst_symbol_position) > 0:
             msg = "end step with {} open position\n".format(len(lst_symbol_position))
-            df_open_positions = pd.DataFrame(columns=["symbol", "pos_type", "size", "equity", "PL", "PL%"])
+            df_open_positions = pd.DataFrame(columns=["symb", "type", "size", "eq", "PL", "PL%"])
             for symbol in lst_symbol_position:
                 symbol_equity = self.broker.get_symbol_usdtEquity(symbol)
                 symbol_unrealizedPL = self.broker.get_symbol_unrealizedPL(symbol)
@@ -460,12 +460,17 @@ class Crag:
                 else:
                     symbol_unrealizedPL_percent = symbol_unrealizedPL * 100 / (symbol_equity - symbol_unrealizedPL)
 
+                total = self.broker.get_symbol_total(symbol)
+                dec_total = utils.calculate_decimal_places(total)
+                dec_unrealizedPL = utils.calculate_decimal_places(symbol_unrealizedPL)
+                dec_unrealizedPL_percent = utils.calculate_decimal_places(symbol_unrealizedPL_percent)
+
                 list_row = [self.broker.get_coin_from_symbol(symbol),
                             self.broker.get_symbol_holdSide(symbol).upper(),
-                            utils.KeepNDecimals(self.broker.get_symbol_available(symbol), 2),
-                            utils.KeepNDecimals(symbol_equity, 2),
-                            utils.KeepNDecimals(symbol_unrealizedPL, 2),
-                            utils.KeepNDecimals(symbol_unrealizedPL_percent, 2)
+                            utils.KeepNDecimals(total, dec_total),
+                            utils.KeepNDecimals(symbol_equity, 1),
+                            utils.KeepNDecimals(symbol_unrealizedPL, dec_unrealizedPL),
+                            utils.KeepNDecimals(symbol_unrealizedPL_percent, dec_unrealizedPL_percent)
                             ]
                 df_open_positions.loc[len(df_open_positions)] = list_row
 
@@ -475,7 +480,8 @@ class Crag:
                     unrealised_PL_short += symbol_unrealizedPL
 
             if len(df_open_positions) > 0:
-                self.log(df_open_positions, msg)
+                # self.log(df_open_positions, msg)
+                self.log(df_open_positions.to_string().upper(), msg)
             else:
                 msg = "no position\n"
                 self.log(msg, "no open position")

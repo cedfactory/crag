@@ -324,8 +324,11 @@ class BrokerBitGet(broker.Broker):
     @authentication_required
     def get_symbol_total(self, symbol):
         df_positions = self.get_open_position()
-        total = df_positions.loc[(df_positions['symbol'] == symbol), "total"].values[0]
-        return total
+        if symbol in df_positions['symbol'].tolist():
+            total = df_positions.loc[(df_positions['symbol'] == symbol), "total"].values[0]
+            return total
+        else:
+            return 0
 
     @authentication_required
     def get_symbol_available(self, symbol):
