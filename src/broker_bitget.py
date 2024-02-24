@@ -140,7 +140,7 @@ class BrokerBitGet(broker.Broker):
         elif trade.type == "CLOSE_LONG":
             trade.gross_size = self.get_symbol_available(symbol)
             transaction = self._close_long_position(symbol, trade.gross_size, clientOid)
-            if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
+            if "msg" in transaction and transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
                 trade.success = True
                 trade.orderId = transaction["data"]["orderId"]
                 trade.clientOid = transaction["data"]["clientOid"]
