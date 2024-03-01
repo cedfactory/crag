@@ -126,7 +126,6 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
             if self.grid.dct_change_status(dct_info):
                 return self.grid.dct_status_info_to_txt(dct_info, symbol)
             else:
-                print("None Print")
                 return None
 
     def get_grid(self, cpt):
@@ -153,12 +152,16 @@ class GridPosition():
         self.diff_close_position = 0
         self.diff_open_position = 0
         self.control_multi_position = self.init_control_multi_position()
-        self.top_grid_cpt = 0
         self.top_grid = False
-        self.bottom_grid_cpt = 0
         self.bottom_grid = False
+        self.previous_top_grid = False
+        self.previous_bottom_grid = False
         self.percent_per_grid = percent_per_grid
         self.steps = 0
+        self.previous_grid_uniq_position = None
+        self.grid_uniq_position = None
+        self.on_edge = False
+        self.grid_move = False
 
         self.df_nb_open_positions = pd.DataFrame(columns=['symbol', 'size', 'positions_size', 'nb_open_positions'])
         self.df_nb_open_positions['symbol'] = self.lst_symbols
@@ -238,10 +241,14 @@ class GridPosition():
         df.loc[df['position'] > position, 'side'] = 'close_long'
         df.loc[df['position'] < position, 'side'] = 'open_long'
 
+        self.previous_grid_uniq_position = self.grid_uniq_position
+        self.on_edge = False
         if (df['position'] == position).any():
             print('PRICE ON GRID EDGE - CROSSING OR NOT CROSSING')
+            self.on_edge = True
             df.loc[df['position'] == position, 'on_edge'] = True
             df.loc[df['position'] == position, 'side'] = df.loc[df['position'] == position, 'previous_side'].values[0]
+            self.grid_uniq_position = df.loc[df['on_edge'], 'grid_id'].iloc[0]
 
         if self.diff_position == 0:
             self.trend = "FLAT"
@@ -253,37 +260,40 @@ class GridPosition():
         # Compare if column1 and column2 are the same
         df['changes'] = df['previous_side'] != df['side']
 
+        self.previous_top_grid = self.top_grid
+        self.top_grid = False
+        self.previous_bottom_grid = self.bottom_grid
+        self.bottom_grid = False
         if self.current_price > df['position'].max():
             # OUT OF GRID TOP POSITION
             higher_grid_id = df['grid_id'].max()
             lower_grid_id = df['grid_id'].max()
-            if ((self.top_grid_cpt == 0) and (self.top_grid == False)):
-                self.top_grid = True
-            else:
-                self.top_grid = False
-            self.top_grid_cpt += 1
-            self.bottom_grid_cpt = 0
-            self.bottom_grid = False
+            self.top_grid = True
+            self.grid_uniq_position = lower_grid_id
         elif self.current_price < df['position'].min():
             # OUT OF GRID BOTTOM POSITION
             higher_grid_id = df['grid_id'].min()
             lower_grid_id = df['grid_id'].min()
-            if ((self.bottom_grid_cpt == 0) and (self.bottom_grid == False)):
-                self.bottom_grid = True
-            else:
-                self.bottom_grid = False
-            self.bottom_grid_cpt += 1
-            self.top_grid_cpt = 0
-            self.top_grid = False
+            self.bottom_grid = True
+            self.grid_uniq_position = lower_grid_id
         else:
             higher_grid_id = df[df['position'] > self.current_price]['grid_id'].min()
             lower_grid_id = df[df['position'] < self.current_price]['grid_id'].max()
-            self.top_grid_cpt = 0
+            self.grid_uniq_position = min(higher_grid_id, lower_grid_id)
             self.top_grid = False
-            self.bottom_grid_cpt = 0
             self.bottom_grid = False
 
         self.grid_position = [higher_grid_id, lower_grid_id]
+
+        if (self.previous_grid_uniq_position != self.grid_uniq_position) \
+                or self.on_edge \
+                or (self.top_grid and (not self.previous_top_grid))\
+                or (self.bottom_grid and (not self.previous_bottom_grid))\
+                or ((self.diff_close_position != 0)
+                    and (self.diff_open_position != 0)):
+            self.grid_move = True
+        else:
+            self.grid_move = False
 
     # Function to find the index of the closest value in an array
     def find_closest(self, value, array):
@@ -340,7 +350,8 @@ class GridPosition():
             print("total_symbol: ", total_symbol)
             nb_reduce_open_long = total_symbol - total_engaged_close_long - total_pending_close_long
             print("missing ", nb_reduce_open_long, " close_long")
-            lst_order_to_execute = self.remove_open_short_order_from_list(symbol, lst_order_to_execute, nb_reduce_open_long)
+            lst_order_to_execute = self.remove_open_short_order_from_list(symbol, lst_order_to_execute,
+                                                                          nb_reduce_open_long)
         return lst_order_to_execute
 
     def remove_open_short_order_from_list(self, symbol, order_list, x):
@@ -666,7 +677,6 @@ class GridPosition():
                             print('self.control_multi_position[df_multi_position_status]',
                                   self.control_multi_position['df_multi_position_status'])  # CEDE DEBUG
                             exit(0)
-
                         # self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
                         #                                                                                                                           'close_long': pos},
                         #                                                                                                                            ignore_index=True)
@@ -730,6 +740,10 @@ class GridPosition():
         dct_status_info['price'] = self.current_price
         dct_status_info['grid_position'] = self.grid_position
 
+        dct_status_info['previous_grid_uniq_position'] = self.previous_grid_uniq_position
+        dct_status_info['grid_uniq_position'] = self.grid_uniq_position
+        dct_status_info['grid_move'] = self.grid_move
+
         return dct_status_info
 
     def dct_change_status(self, dct_info):
@@ -738,20 +752,19 @@ class GridPosition():
             return False
         self.dct_info = dct_info
 
-        if self.diff_position != 0 \
-                or self.top_grid \
-                or self.bottom_grid:
+        if self.grid_move:
+            self.grid_move = False
             return True
         else:
             return False
 
     def dct_status_info_to_txt(self, dct_info, symbol):
-        # msg = "# SYMBOL: " + self.str_lst_symbol + "\n"
-        # msg += "- symbol price: " + str(dct_info['price']) + "\n"
         msg = "# GRID LONG: " + "\n"
         msg += "RANGE FROM: " + str(self.grid_high) + " TO " + str(self.grid_low) + "\n"
         msg += "NB_GRID: " + str(self.nb_grid) + "\n"
         msg += "# GRID POSITION: " + "\n"
+        msg += "**POSITION: " + str(self.grid_uniq_position) + "**\n"
+        msg += "**PREV POSITION: " + str(self.previous_grid_uniq_position) + "**\n"
         if ((dct_info['grid_position'][0] >= self.nb_grid)
                 and (dct_info['grid_position'][1] >= self.nb_grid)):
             msg += "**ABOVE GRID**\n"
@@ -794,7 +807,8 @@ class GridPosition():
             elif self.diff_position == 0:
                 msg += "DIFF POSITION: " + str(self.diff_position) + "\n"
 
-        if self.diff_close_position != 0 and self.diff_open_position != 0:
+        if (self.diff_close_position != 0) \
+                and (self.diff_open_position != 0):
             msg += "# WARNING HIGH VOLATILITY:" + "\n"
             msg += "TREND: UP/DOW" + "\n"
             msg += "DIFF OPENED POSITION: " + str(self.diff_open_position) + "\n"

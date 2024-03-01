@@ -845,7 +845,7 @@
 843,20,17,0.585,,close_long,close_long,False,pending,False,False
 844,20,16,0.58,order_id_16,close_long,close_long,False,engaged,True,False
 845,20,15,0.575,order_id_24,close_long,close_long,False,engaged,True,False
-846,20,14,0.57,,close_long,open_long,True,on_hold,False,False
+846,20,14,0.57,,close_long,open_long,True,pending,False,False
 847,20,13,0.565,,close_long,open_long,True,pending,False,False
 848,20,12,0.5599999999999999,,close_long,open_long,True,pending,False,False
 849,20,11,0.5549999999999999,,close_long,open_long,True,pending,False,False
@@ -886,7 +886,7 @@
 884,21,17,0.585,order_id_32,close_long,close_long,False,engaged,True,False
 885,21,16,0.58,order_id_16,close_long,close_long,False,engaged,True,False
 886,21,15,0.575,order_id_24,close_long,close_long,False,engaged,True,False
-887,21,14,0.57,,open_long,open_long,False,on_hold,False,False
+887,21,14,0.57,,open_long,open_long,False,pending,False,False
 888,21,13,0.565,order_id_29,open_long,open_long,False,engaged,True,False
 889,21,12,0.5599999999999999,order_id_28,open_long,open_long,False,engaged,True,False
 890,21,11,0.5549999999999999,order_id_27,open_long,open_long,False,engaged,True,False
@@ -926,8 +926,8 @@
 924,22,18,0.59,order_id_26,close_long,close_long,False,engaged,True,False
 925,22,17,0.585,order_id_32,close_long,close_long,False,engaged,False,False
 926,22,16,0.58,order_id_16,close_long,close_long,False,engaged,True,False
-927,22,15,0.575,,close_long,open_long,True,on_hold,False,False
-928,22,14,0.57,,open_long,open_long,False,pending,False,False
+927,22,15,0.575,,close_long,open_long,True,pending,False,False
+928,22,14,0.57,,open_long,open_long,False,on_hold,False,False
 929,22,13,0.565,order_id_29,open_long,open_long,False,engaged,True,False
 930,22,12,0.5599999999999999,order_id_28,open_long,open_long,False,engaged,True,False
 931,22,11,0.5549999999999999,order_id_27,open_long,open_long,False,engaged,True,False
@@ -967,8 +967,8 @@
 965,23,18,0.59,order_id_26,close_long,close_long,False,engaged,True,False
 966,23,17,0.585,order_id_32,close_long,close_long,False,engaged,False,False
 967,23,16,0.58,order_id_16,close_long,close_long,False,engaged,True,False
-968,23,15,0.575,,open_long,open_long,False,on_hold,False,False
-969,23,14,0.57,order_id_32,open_long,open_long,False,engaged,True,False
+968,23,15,0.575,,open_long,open_long,False,pending,False,False
+969,23,14,0.57,,open_long,open_long,False,on_hold,False,False
 970,23,13,0.565,order_id_29,open_long,open_long,False,engaged,True,False
 971,23,12,0.5599999999999999,order_id_28,open_long,open_long,False,engaged,True,False
 972,23,11,0.5549999999999999,order_id_27,open_long,open_long,False,engaged,True,False
@@ -1008,8 +1008,8 @@
 1006,24,18,0.59,,close_long,open_long,True,pending,False,False
 1007,24,17,0.585,,close_long,open_long,True,pending,False,False
 1008,24,16,0.58,,close_long,open_long,True,pending,False,False
-1009,24,15,0.575,,open_long,open_long,False,pending,False,False
-1010,24,14,0.57,order_id_32,open_long,open_long,False,engaged,True,False
+1009,24,15,0.575,,open_long,open_long,False,on_hold,False,False
+1010,24,14,0.57,,open_long,open_long,False,on_hold,False,False
 1011,24,13,0.565,order_id_29,open_long,open_long,False,engaged,True,False
 1012,24,12,0.5599999999999999,order_id_28,open_long,open_long,False,engaged,True,False
 1013,24,11,0.5549999999999999,order_id_27,open_long,open_long,False,engaged,True,False
@@ -1049,8 +1049,8 @@
 1047,25,18,0.59,order_id_36,open_long,open_long,False,engaged,True,False
 1048,25,17,0.585,order_id_35,open_long,open_long,False,engaged,True,False
 1049,25,16,0.58,order_id_34,open_long,open_long,False,engaged,True,False
-1050,25,15,0.575,order_id_33,open_long,open_long,False,engaged,True,False
-1051,25,14,0.57,order_id_32,open_long,open_long,False,engaged,True,False
+1050,25,15,0.575,,open_long,open_long,False,on_hold,False,False
+1051,25,14,0.57,,open_long,open_long,False,on_hold,False,False
 1052,25,13,0.565,order_id_29,open_long,open_long,False,engaged,True,False
 1053,25,12,0.5599999999999999,order_id_28,open_long,open_long,False,engaged,True,False
 1054,25,11,0.5549999999999999,order_id_27,open_long,open_long,False,engaged,True,False

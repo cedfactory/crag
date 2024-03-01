@@ -3,7 +3,7 @@
         <params symbols="./symbols_df_sltp_XRP_usdt.csv" strategy_interval="3600" multi_param="False" candle_stick="released" max_position="1" sl="-5" tp="20" global_sl="-5" global_tp="20" trailer_tp="5" trailer_delta_tp="2" trailer_global_tp="0" trailer_global_delta_tp="0" trailer_sl="0" high_volatility="False" grid_high="0.7" grid_low="0.5" nb_grid="40"/>
     </strategy>
     <broker name="bitget">
-        <params exchange="bitget" fdp_url_id="gc1" account="subfortest1" leverage_short="2" leverage_long="2" simulation="1" intervals="1h" orders="market" reset_account="True" reset_account_orders="False"/>
+        <params exchange="bitget" fdp_url_id="gc1" account="subfortest2" leverage_short="2" leverage_long="2" simulation="1" intervals="1h" orders="market" reset_account="True" reset_account_orders="False"/>
     </broker>
-    <crag id="grid" interval="3600" botId="ayato"/>
+    <crag id="grid" interval="3600" botId="ayato_sub3"/>
 </configuration>

@@ -368,12 +368,12 @@ class Crag:
                 self.start_date_for_log = self.start_date_from_resumed_data
             else:
                 self.start_date_for_log = self.start_date
-        msg += "original portfolio value : ${} ({})\n".format(utils.KeepNDecimals(self.original_portfolio_value, 2),
+        msg += "original value : ${} ({})\n".format(utils.KeepNDecimals(self.original_portfolio_value, 2),
                                                               self.start_date_for_log)
         lst_stored_data_for_reboot.append(self.start_date_for_log)
         lst_stored_data_for_reboot.append(self.original_portfolio_value)
         variation_percent = utils.get_variation(self.original_portfolio_value, portfolio_value)
-        msg += "current portfolio value : ${} / %{}\n".format(utils.KeepNDecimals(portfolio_value, 2),
+        msg += "current value : ${} / %{}\n".format(utils.KeepNDecimals(portfolio_value, 2),
                                                               utils.KeepNDecimals(variation_percent, 2))
         msg += "max value : ${} %{} ({})\n".format(utils.KeepNDecimals(self.maximal_portfolio_value, 2),
                                                    utils.KeepNDecimals(self.maximal_portfolio_variation, 2),
@@ -429,7 +429,7 @@ class Crag:
         msg += "account equity = ${} / %{}".format(utils.KeepNDecimals(usdt_equity, 2),
                                                    utils.KeepNDecimals(variation_percent, 2))
 
-        self.log(msg, "start step")
+        self.log(msg.upper(), "start step".upper())
 
         if positions_at_step_start and len(df_position_at_start) >= 0:
             log_title = "step start with {} open position".format(len(df_position_at_start))
@@ -483,15 +483,15 @@ class Crag:
                 # self.log(df_open_positions, msg)
                 self.log(df_open_positions.to_string().upper(), msg)
             else:
-                msg = "no position\n"
-                self.log(msg, "no open position")
+                msg = "no open position\n"
+                self.log(msg.upper(), "no open position".upper())
         else:
-            msg = "no position\n"
-            self.log(msg, "no open position")
+            msg = "no open position\n"
+            self.log(msg.upper(), "no open position".upper())
 
         current_date = self.broker.get_current_datetime("%Y/%m/%d %H:%M:%S")
         msg = "end step current time : {}\n".format(current_date)
-        msg += "account equity at start : $ {} ({})\n".format(utils.KeepNDecimals(self.original_portfolio_value, 2), self.start_date)
+        msg += "equity at start : $ {} ({})\n".format(utils.KeepNDecimals(self.original_portfolio_value, 2), self.start_date)
         msg += "unrealized PL LONG : ${}\n".format(utils.KeepNDecimals(unrealised_PL_long, 2))
         msg += "unrealized PL SHORT : ${}\n".format(utils.KeepNDecimals(unrealised_PL_short, 2))
         msg += "global unrealized PL : ${} / %{}\n".format(utils.KeepNDecimals(self.broker.get_global_unrealizedPL(), 2),
@@ -512,7 +512,7 @@ class Crag:
                                                                    utils.KeepNDecimals(usdt_equity - self.previous_usdt_equity, 2),
                                                                    utils.KeepNDecimals(variation_percent, 2))
         self.previous_usdt_equity = usdt_equity
-        self.log(msg, "end step")
+        self.log(msg.upper(), "end step".upper())
 
         self.tradetraces.export()
 
@@ -987,7 +987,7 @@ class Crag:
 
     def udpate_strategy_with_broker_current_state(self):
         GRID_SCENARIO_ON = False
-        SCENARIO_ID = 10
+        SCENARIO_ID = 6
         if GRID_SCENARIO_ON:
             self.udpate_strategy_with_broker_current_state_scenario(SCENARIO_ID)
         else:
