@@ -1024,10 +1024,14 @@ class Crag:
             # wallet_equity = self.broker.get_wallet_equity()
             msg += "# STATUS EQUITY:" + "\n"
             # msg += "WALLET EQUITY: " + str(round(wallet_equity, 2)) + " - PNL: " + str(round(self.broker.get_global_unrealizedPL(), 2)) + "\n"
-            msg += "**USDT: " + str(round(usdt_equity, 2)) + " - PNL: " + str(round(self.broker.get_global_unrealizedPL(), 2)) + "**\n"
-            msg += "**INITIAL: " + str(round(self.original_portfolio_value, 2)) + " (" + str(round(self.total_SL_TP, 2)) + ")" + "**\n"
-            msg += "MAX: " + str(round(self.maximal_portfolio_value, 2)) + " (" + str(round(self.maximal_portfolio_variation, 2)) + ")" + "\n"
-            msg += "MIN: " + str(round(self.minimal_portfolio_value, 2)) + " (" + str(round(self.minimal_portfolio_variation, 2)) + ")" + "\n"
+            msg += "**USDT: " + str(round(usdt_equity, 2)) + " %: " + str(round(self.total_SL_TP * 100 / self.original_portfolio_value, 2)) + "**\n"
+            msg += "**INITIAL: " + str(round(self.original_portfolio_value, 2)) + " $: " + str(round(self.total_SL_TP, 2)) + "**\n"
+            msg += "MAX: " + str(round(self.maximal_portfolio_value, 2)) \
+                   + " $: " + str(round(self.maximal_portfolio_variation, 2)) \
+                   + " %: " + str(round(self.maximal_portfolio_variation * 100 / self.original_portfolio_value, 2)) + "\n"
+            msg += "MIN: " + str(round(self.minimal_portfolio_value, 2)) \
+                   + " $: " + str(round(self.minimal_portfolio_variation, 2)) \
+                   + " %: " + str(round(self.minimal_portfolio_variation * 100 / self.original_portfolio_value, 2)) + "\n"
             lst_usdt_symbols = self.broker.get_lst_symbol_position()
             if len(symbols) == len(lst_usdt_symbols):
                 for symbol, usdt_symbol in zip(symbols, lst_usdt_symbols):
