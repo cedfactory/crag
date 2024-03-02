@@ -7,6 +7,25 @@ import requests
 import os
 from datetime import datetime
 from src.toolbox import settings_helper
+import datetime
+
+def format_duration(timestamp):
+    duration = datetime.timedelta(seconds=timestamp)
+    weeks = duration.days // 7
+    days = duration.days % 7
+    hours, remainder = divmod(duration.seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+
+    if duration < datetime.timedelta(minutes=1):
+        return f"{seconds}s"
+    elif duration < datetime.timedelta(hours=1):
+        return f"{minutes}m {seconds}s"
+    elif duration < datetime.timedelta(days=1):
+        return f"{hours}h {minutes}m"
+    elif duration < datetime.timedelta(weeks=1):
+        return f"{days}d {hours}h {minutes}m"
+    else:
+        return f"{weeks}w {days}d {hours}h {minutes}m"
 
 def calculate_decimal_places(value):
     if value >= 0.1:

@@ -979,6 +979,8 @@ class Crag:
                 usdt_equity = self.broker.get_usdt_equity()
                 msg += "- USDT EQUITY: " + str(round(usdt_equity, 2)) + " - PNL: " + str(round(self.broker.get_global_unrealizedPL(), 2)) + "\n"
                 msg += "AVERAGE RUN TIME: " + str(self.average_time_grid_strategy) + "s\n"
+                end_time = time.time()
+                msg += "DURATION: " + utils.format_duration(round((end_time - self.start_time_grid_strategy_init), 2)) + "\n"
                 self.log(msg, "GRID STATUS")
             end_time = time.time()
             self.iteration_times_grid_strategy.append(end_time - self.start_time_grid_strategy)
@@ -986,14 +988,13 @@ class Crag:
             self.average_time_grid_strategy_overall = round((end_time - self.start_time_grid_strategy_init) / self.grid_iteration, 2)
             print("GRID ITERATION AVERAGE TIME: " + str(self.average_time_grid_strategy) + " seconds")
             print("CRAG AVERAGE TIME: " + str(self.average_time_grid_strategy_overall) + " seconds")
+            print("OVERALL DURATION: ", utils.format_duration(round((end_time - self.start_time_grid_strategy_init), 2)))
             print("ITERATIONS: ", self.grid_iteration)
-
 
             if cpt == break_pt:
                 print(cpt)
                 pass
             print("cpt end: ", cpt)
-
             cpt += 1
 
     def udpate_strategy_with_broker_current_state(self):
@@ -1067,6 +1068,8 @@ class Crag:
                     print("lst_usdt_symbols", lst_usdt_symbols)
                     msg += "**ERROR LST SYMBOLS NOT MATCHING" + "**:\n"
             msg += "AVERAGE RUN TIME: " + str(self.average_time_grid_strategy) + "s\n"
+            end_time = time.time()
+            msg += "DURATION: " + utils.format_duration(round((end_time - self.start_time_grid_strategy_init), 2)) + "\n"
             msg = msg.upper()
             self.log(msg, "GRID STATUS")
 
@@ -1085,6 +1088,7 @@ class Crag:
             # CEDE MEASURE RUN TIME IN ORDER TO BENCHMARK PC VS RASPBERRY
             print("GRID ITERATION AVERAGE TIME:  " + str(self.average_time_grid_strategy) + " seconds")
             print("CRAG AVERAGE TIME:            " + str(self.average_time_grid_strategy_overall) + " seconds")
+            print("OVERALL DURATION:             ", utils.format_duration(round((end_time - self.start_time_grid_strategy_init), 2)))
             print("ITERATIONS:                   ", self.grid_iteration)
 
     def safety_step(self):
