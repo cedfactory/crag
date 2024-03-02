@@ -7,7 +7,6 @@ import requests
 import os
 from datetime import datetime
 from src.toolbox import settings_helper
-import datetime
 import psutil
 
 def get_memory_usage():
