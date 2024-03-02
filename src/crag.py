@@ -970,6 +970,8 @@ class Crag:
             df_grid_record = self.rtstr.get_grid(cpt)
             df_grid_global = pd.concat([df_grid_global, df_grid_record], ignore_index=True)
 
+            memory_used_bytes = utils.get_memory_usage()
+            memory_used_mb = memory_used_bytes / (1024 * 1024)  # Convert bytes to megabytes
             print("output lst_orders_to_execute: ", lst_orders_to_execute)
             msg = self.rtstr.get_info_msg_status()
             if msg != None:
@@ -981,6 +983,7 @@ class Crag:
                 msg += "AVERAGE RUN TIME: " + str(self.average_time_grid_strategy) + "s\n"
                 end_time = time.time()
                 msg += "DURATION: " + utils.format_duration(round((end_time - self.start_time_grid_strategy_init), 2)) + "\n"
+                msg += f"MEMORY: {memory_used_mb:.2f}MB" + "\n"
                 self.log(msg, "GRID STATUS")
             end_time = time.time()
             self.iteration_times_grid_strategy.append(end_time - self.start_time_grid_strategy)
@@ -990,6 +993,7 @@ class Crag:
             print("CRAG AVERAGE TIME: " + str(self.average_time_grid_strategy_overall) + " seconds")
             print("OVERALL DURATION: ", utils.format_duration(round((end_time - self.start_time_grid_strategy_init), 2)))
             print("ITERATIONS: ", self.grid_iteration)
+            print("MEMORY: ", round(memory_used_mb, 2), "MB")
 
             if cpt == break_pt:
                 print(cpt)
@@ -1027,7 +1031,8 @@ class Crag:
             broker_current_state = self.broker.get_current_state(symbols)
 
         lst_orders_to_execute = self.rtstr.set_broker_current_state(broker_current_state)
-
+        memory_used_bytes = utils.get_memory_usage()
+        memory_used_mb = memory_used_bytes / (1024 * 1024)  # Convert bytes to megabytes
         msg = self.rtstr.get_info_msg_status()
         if msg != None:
             current_datetime = datetime.today().strftime("%Y/%m/%d - %H:%M:%S")
@@ -1070,6 +1075,7 @@ class Crag:
             msg += "AVERAGE RUN TIME: " + str(self.average_time_grid_strategy) + "s\n"
             end_time = time.time()
             msg += "DURATION: " + utils.format_duration(round((end_time - self.start_time_grid_strategy_init), 2)) + "\n"
+            msg += f"MEMORY: {memory_used_mb:.2f}MB" + "\n"
             msg = msg.upper()
             self.log(msg, "GRID STATUS")
 
@@ -1090,6 +1096,7 @@ class Crag:
             print("CRAG AVERAGE TIME:            " + str(self.average_time_grid_strategy_overall) + " seconds")
             print("OVERALL DURATION:             ", utils.format_duration(round((end_time - self.start_time_grid_strategy_init), 2)))
             print("ITERATIONS:                   ", self.grid_iteration)
+            print("MEMORY:                       ", round(memory_used_mb, 2), "MB")
 
     def safety_step(self):
         usdt_equity = self.broker.get_usdt_equity()

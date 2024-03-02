@@ -8,6 +8,12 @@ import os
 from datetime import datetime
 from src.toolbox import settings_helper
 import datetime
+import psutil
+
+def get_memory_usage():
+    process = psutil.Process()
+    mem_info = process.memory_info()
+    return mem_info.rss  # Return the Resident Set Size (RSS) in bytes
 
 def format_duration(timestamp):
     duration = datetime.timedelta(seconds=timestamp)
