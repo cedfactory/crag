@@ -941,6 +941,13 @@ class Crag:
         df_grid_record = pd.DataFrame()
         df_grid_global = df_grid_record
         while True:
+            self.start_time_grid_strategy = time.time()
+            if self.start_time_grid_strategy_init == None:
+                self.start_time_grid_strategy_init = self.start_time_grid_strategy
+                self.grid_iteration = 1
+            else:
+                self.grid_iteration += 1
+
             break_pt = 40
             if cpt == break_pt:
                 print("toto")
@@ -976,7 +983,11 @@ class Crag:
             end_time = time.time()
             self.iteration_times_grid_strategy.append(end_time - self.start_time_grid_strategy)
             self.average_time_grid_strategy = round(sum(self.iteration_times_grid_strategy) / len(self.iteration_times_grid_strategy), 2)
+            self.average_time_grid_strategy_overall = round((end_time - self.start_time_grid_strategy_init) / self.grid_iteration, 2)
             print("GRID ITERATION AVERAGE TIME: " + str(self.average_time_grid_strategy) + " seconds")
+            print("CRAG AVERAGE TIME: " + str(self.average_time_grid_strategy_overall) + " seconds")
+            print("ITERATIONS: ", self.grid_iteration)
+
 
             if cpt == break_pt:
                 print(cpt)
@@ -1071,11 +1082,10 @@ class Crag:
         self.average_time_grid_strategy_overall = round((end_time - self.start_time_grid_strategy_init) / self.grid_iteration, 2)
 
         if not self.zero_print:
-            print("GRID ITERATION AVERAGE TIME: " + str(self.average_time_grid_strategy) + " seconds")
-        # CEDE MEASURE RUN TIME IN ORDER TO BENCHMARK PC VS RASPBERRY
-        print("GRID ITERATION AVERAGE TIME: " + str(self.average_time_grid_strategy) + " seconds")
-        print("GRID ITERATION AVERAGE OVERALL TIME: " + str(self.average_time_grid_strategy_overall) + " seconds")
-        print("CRAG TIME: " + str(round(self.average_time_grid_strategy_overall - self.average_time_grid_strategy, 4)) + " seconds - ITERATION: ", self.grid_iteration)
+            # CEDE MEASURE RUN TIME IN ORDER TO BENCHMARK PC VS RASPBERRY
+            print("GRID ITERATION AVERAGE TIME:  " + str(self.average_time_grid_strategy) + " seconds")
+            print("CRAG AVERAGE TIME:            " + str(self.average_time_grid_strategy_overall) + " seconds")
+            print("ITERATIONS:                   ", self.grid_iteration)
 
     def safety_step(self):
         usdt_equity = self.broker.get_usdt_equity()
