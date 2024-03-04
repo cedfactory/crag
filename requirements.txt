@@ -25,3 +25,5 @@ svglib==1.5.1
 python-binance==1.0.17
 mplfinance==0.12.9b7
 #wxpython==4.2.1
+scipy==1.12.0
+psutil==5.9.8
