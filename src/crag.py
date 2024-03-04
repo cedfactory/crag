@@ -1,4 +1,5 @@
 import os
+from pympler import asizeof
 import shutil
 import time
 import pandas as pd
@@ -56,6 +57,27 @@ class Crag:
         self.average_time_grid_strategy_overall = 0
         self.start_time_grid_strategy_init = None
         self.grid_iteration = 0
+
+        self.crag_size_previous = 0
+        self.crag_size = 0
+        self.crag_size_init = 0
+        self.rtstr_size_previous = 0
+        self.rtstr_size = 0
+        self.rtstr_size_init = 0
+        self.broker_size_previous = 0
+        self.broker_size = 0
+        self.broker_size_init = 0
+        self.rtctrl_size_previous = 0
+        self.rtctrl_size = 0
+        self.rtctrl_size_init = 0
+        self.rtstr_grid_size_previous = 0
+        self.rtstr_grid_size = 0
+        self.rtstr_grid_size_init = 0
+        self.init_debug_memory = False
+
+        self.init_memory_usage = {}
+        self.previous_memory_usage = {}
+        self.memory_usage = {}
 
         if params:
             self.broker = params.get("broker", self.broker)
@@ -987,6 +1009,7 @@ class Crag:
                 self.log(msg, "GRID STATUS")
             end_time = time.time()
             self.iteration_times_grid_strategy.append(end_time - self.start_time_grid_strategy)
+            self.iteration_times_grid_strategy = self.iteration_times_grid_strategy[-10:]
             self.average_time_grid_strategy = round(sum(self.iteration_times_grid_strategy) / len(self.iteration_times_grid_strategy), 2)
             self.average_time_grid_strategy_overall = round((end_time - self.start_time_grid_strategy_init) / self.grid_iteration, 2)
             print("GRID ITERATION AVERAGE TIME: " + str(self.average_time_grid_strategy) + " seconds")
@@ -1000,6 +1023,22 @@ class Crag:
                 pass
             print("cpt end: ", cpt)
             cpt += 1
+
+    def get_memory_usage(self, class_memory):
+        memory_usage = {}
+        for attr_name, attr_value in vars(class_memory).items():
+            # memory_usage[attr_name] = sys.getsizeof(attr_value)
+            memory_usage[attr_name] = asizeof.asizeof(attr_value)
+        return memory_usage
+
+    def print_memory_usage(self, id, size_init, size_previous, size):
+        if size_previous == 0:
+            return
+        for (key1, value1), (key2, value2), (key3, value3) in zip(size_init.items(), size_previous.items(), size.items()):
+            if (((value3 - value1) > 0)
+                or ((value3 - value2) > 0))\
+                    and not("_size" in key1):
+                print("MEMORY ", id, " - ", key1, " VALUE: ", value3, " PREV DIFF: ",  value3 - value2, " INIT DIFF: ", value3 - value1)
 
     def udpate_strategy_with_broker_current_state(self):
         GRID_SCENARIO_ON = False
@@ -1086,17 +1125,45 @@ class Crag:
 
         end_time = time.time()
         self.iteration_times_grid_strategy.append(end_time - self.start_time_grid_strategy)
-        self.iteration_times_grid_strategy = self.iteration_times_grid_strategy[-100:]
+        self.iteration_times_grid_strategy = self.iteration_times_grid_strategy[-10:]
         self.average_time_grid_strategy = round(sum(self.iteration_times_grid_strategy) / len(self.iteration_times_grid_strategy), 2)
         self.average_time_grid_strategy_overall = round((end_time - self.start_time_grid_strategy_init) / self.grid_iteration, 2)
 
-        if not self.zero_print:
+        # if not self.zero_print:
+        if True: # CEDE FOR DEBUG
             # CEDE MEASURE RUN TIME IN ORDER TO BENCHMARK PC VS RASPBERRY
             print("GRID ITERATION AVERAGE TIME:  " + str(self.average_time_grid_strategy) + " seconds")
             print("CRAG AVERAGE TIME:            " + str(self.average_time_grid_strategy_overall) + " seconds")
             print("OVERALL DURATION:             ", utils.format_duration(round((end_time - self.start_time_grid_strategy_init), 2)))
             print("ITERATIONS:                   ", self.grid_iteration)
             print("MEMORY:                       ", round(memory_used_mb, 2), "MB")
+
+            if self.init_debug_memory:
+                self.crag_size_previous = self.crag_size
+                self.crag_size = self.get_memory_usage(self)
+                if self.crag_size_init == 0:
+                    self.crag_size_init = self.crag_size
+                self.print_memory_usage("CRAG", self.crag_size_init, self.crag_size_previous, self.crag_size)
+
+                self.rtstr_size_previous = self.rtstr_size
+                self.rtstr_size = self.get_memory_usage(self.rtstr)
+                if self.rtstr_size_init == 0:
+                    self.rtstr_size_init = self.rtstr_size
+                self.print_memory_usage("rtstr", self.rtstr_size_init, self.rtstr_size_previous, self.rtstr_size)
+
+                self.broker_size_previous = self.broker_size
+                self.broker_size = self.get_memory_usage(self.broker)
+                if self.broker_size_init == 0:
+                    self.broker_size_init = self.broker_size
+                self.print_memory_usage("broker", self.broker_size_init, self.broker_size_previous, self.broker_size)
+
+                self.rtstr_grid_size_previous = self.rtstr_grid_size
+                self.rtstr_grid_size = self.get_memory_usage(self.rtstr.grid)
+                if self.rtstr_grid_size_init == 0:
+                    self.rtstr_grid_size_init = self.rtstr_grid_size
+                self.print_memory_usage("rtstr_grid", self.rtstr_grid_size_init, self.rtstr_grid_size_previous, self.rtstr_grid_size)
+            else:
+                self.init_debug_memory = True
 
     def safety_step(self):
         usdt_equity = self.broker.get_usdt_equity()
