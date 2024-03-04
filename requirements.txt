@@ -27,3 +27,4 @@ mplfinance==0.12.9b7
 #wxpython==4.2.1
 scipy==1.10.1
 psutil==5.9.8
+Pympler==1.0.1
