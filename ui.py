@@ -53,20 +53,24 @@ class PanelPositions(wx.Panel):
         # open position
         hsizer = wx.BoxSizer(wx.HORIZONTAL)
         staticOpenPosition = wx.StaticText(self,label = "Open position :", style=wx.ALIGN_LEFT)
-        hsizer.Add(staticOpenPosition,0, wx.ALL | wx.EXPAND, 5)
+        hsizer.Add(staticOpenPosition,0, wx.ALL | wx.ALIGN_CENTER, 5)
         self.symbols = wx.ComboBox(self,choices = ["BTC", "ETH", "XRP"])
-        hsizer.Add(self.symbols,0, wx.ALL | wx.EXPAND, 5)
-        staticAmount = wx.StaticText(self,label="Amount ($)", style=wx.ALIGN_LEFT)
-        hsizer.Add(staticAmount,0, wx.ALL | wx.EXPAND, 5)
+        hsizer.Add(self.symbols,0, wx.ALL | wx.CENTER, 5)
+
+        panel = wx.Panel(self, -1)
+        self.rb_amount = wx.RadioButton(panel, -1, 'Amount ($)', (10, 10), style=wx.RB_GROUP)
+        self.rb_size = wx.RadioButton(panel, -1, 'Size ($)', (10, 30))
+        hsizer.Add(panel, 0, wx.ALL | wx.CENTER, 5)
+
         self.amount = FS.FloatSpin(self, -1, size=wx.Size(70, -1), min_val=0, increment=0.1, value=0., digits=3, agwStyle=FS.FS_LEFT)
         hsizer.Add(self.amount, 0, wx.ALL | wx.CENTER, 5)
         staticLeverage = wx.StaticText(self, label="Leverage", style=wx.ALIGN_LEFT)
-        hsizer.Add(staticLeverage, 0, wx.ALL | wx.EXPAND, 5)
+        hsizer.Add(staticLeverage, 0, wx.ALL | wx.CENTER, 5)
         self.leverage = FS.FloatSpin(self, -1, size=wx.Size(40, -1), min_val=1, increment=1, value=2, digits=0, agwStyle=FS.FS_LEFT)
         hsizer.Add(self.leverage, 0, wx.ALL | wx.CENTER, 5)
         self.sides = wx.ComboBox(self, choices=["long", "short"])
         self.sides.SetSelection(0)
-        hsizer.Add(self.sides, 0, wx.ALL | wx.EXPAND, 5)
+        hsizer.Add(self.sides, 0, wx.ALL | wx.CENTER, 5)
         open_position_button = wx.Button(self, label="Open position")
         open_position_button.Bind(wx.EVT_BUTTON, self.main.on_open_position)
         hsizer.Add(open_position_button, 0, wx.ALL | wx.CENTER, 5)
@@ -108,24 +112,28 @@ class PanelOrders(wx.Panel):
         # open limit order
         hsizer = wx.BoxSizer(wx.HORIZONTAL)
         staticOpenOrderLimit = wx.StaticText(self,label = "Open order :", style = wx.ALIGN_LEFT)
-        hsizer.Add(staticOpenOrderLimit,0, wx.ALL | wx.EXPAND, 5)
+        hsizer.Add(staticOpenOrderLimit,0, wx.ALL | wx.CENTER, 5)
         self.symbols = wx.ComboBox(self,choices = ["BTC", "ETH", "XRP"])
-        hsizer.Add(self.symbols,0, wx.ALL | wx.EXPAND, 5)
-        staticAmount = wx.StaticText(self,label = "Amount ($)", style = wx.ALIGN_LEFT)
-        hsizer.Add(staticAmount,0, wx.ALL | wx.EXPAND, 5)
-        self.amount = FS.FloatSpin(self, -1, size=wx.Size(70, -1), min_val=0, increment=0.1, value=0., digits=2, agwStyle=FS.FS_LEFT)
+        hsizer.Add(self.symbols,0, wx.ALL | wx.CENTER, 5)
+
+        panel = wx.Panel(self, -1)
+        self.rb_amount = wx.RadioButton(panel, -1, 'Amount ($)', (10, 10), style=wx.RB_GROUP)
+        self.rb_size = wx.RadioButton(panel, -1, 'Size ($)', (10, 30))
+        hsizer.Add(panel, 0, wx.ALL | wx.CENTER, 5)
+
+        self.amount = FS.FloatSpin(self, -1, size=wx.Size(60, -1), min_val=0, increment=0.1, value=0., digits=2, agwStyle=FS.FS_LEFT)
         hsizer.Add(self.amount, 0, wx.ALL | wx.CENTER, 5)
         staticLeverage = wx.StaticText(self, label="Leverage", style=wx.ALIGN_LEFT)
-        hsizer.Add(staticLeverage, 0, wx.ALL | wx.EXPAND, 5)
+        hsizer.Add(staticLeverage, 0, wx.ALL | wx.CENTER, 5)
         self.leverage = FS.FloatSpin(self, -1, size=wx.Size(40, -1), min_val=1, increment=1, value=2, digits=0, agwStyle=FS.FS_LEFT)
         hsizer.Add(self.leverage, 0, wx.ALL | wx.CENTER, 5)
         staticPrice = wx.StaticText(self, label="Price", style = wx.ALIGN_LEFT)
-        hsizer.Add(staticPrice,0, wx.ALL | wx.EXPAND, 5)
-        self.price = FS.FloatSpin(self, -1, size=wx.Size(70, -1), min_val=0, increment=0.1, value=0., digits=3, agwStyle=FS.FS_LEFT)
-        hsizer.Add(self.price,0, wx.ALL | wx.EXPAND, 5)
+        hsizer.Add(staticPrice,0, wx.ALL | wx.CENTER, 5)
+        self.price = FS.FloatSpin(self, -1, size=wx.Size(60, -1), min_val=0, increment=0.1, value=0., digits=3, agwStyle=FS.FS_LEFT)
+        hsizer.Add(self.price,0, wx.ALL | wx.CENTER, 5)
         self.sides = wx.ComboBox(self, choices=["long", "short"])
         self.sides.SetSelection(0)
-        hsizer.Add(self.sides, 0, wx.ALL | wx.EXPAND, 5)
+        hsizer.Add(self.sides, 0, wx.ALL | wx.CENTER, 5)
         open_order_button = wx.Button(self, label="Open order")
         open_order_button.Bind(wx.EVT_BUTTON, self.main.on_open_limit_order)
         hsizer.Add(open_order_button, 0, wx.ALL | wx.CENTER, 5)
@@ -298,7 +306,13 @@ class MainPanel(wx.Panel):
 
             mytrade = trade.Trade()
             mytrade.symbol = symbol
-            mytrade.gross_size = self.panel_positions.amount.GetValue() / my_broker.get_value(mytrade.symbol)
+            if self.panel_positions.rb_amount.GetValue(): # amount
+                mytrade.gross_size = self.panel_positions.amount.GetValue() / my_broker.get_value(mytrade.symbol)
+            elif self.panel_positions.rb_size.GetValue():
+                mytrade.gross_size = self.panel_positions.amount.GetValue()
+            else:
+                print("open position : amount or size ???")
+                return
             if side == "long":
                 mytrade.type = "OPEN_LONG"
             else:
@@ -334,7 +348,13 @@ class MainPanel(wx.Panel):
 
             mytrade = trade.Trade()
             mytrade.symbol = symbol
-            mytrade.gross_size = self.panel_orders.amount.GetValue()
+            if self.panel_orders.rb_amount.GetValue(): # amount
+                mytrade.gross_size = self.panel_orders.amount.GetValue() / my_broker.get_value(mytrade.symbol)
+            elif self.panel_orders.rb_size.GetValue():
+                mytrade.gross_size = self.panel_orders.amount.GetValue()
+            else:
+                print("open limit order : amount or size ???")
+                return
             if side == "long":
                 mytrade.type = "OPEN_LONG_ORDER"
             else:
