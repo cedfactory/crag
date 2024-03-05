@@ -63,6 +63,9 @@ class StrategyGridTradingShort(rtstr.RealTimeStrategy):
             "prices": df_prices
         }
         """
+        if not current_state:
+            return []
+
         df_current_states = current_state["open_orders"]
         df_open_positions = current_state["open_positions"]
         df_price = current_state["prices"]
@@ -109,6 +112,9 @@ class StrategyGridTradingShort(rtstr.RealTimeStrategy):
             self.grid.normalize_grid_price(symbol, pricePlace, priceEndStep)
 
     def activate_grid(self, current_state):
+        if not current_state:
+            return []
+
         df_prices = current_state["prices"]
         lst_buying_market_order = []
         for symbol in self.lst_symbols:

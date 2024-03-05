@@ -210,7 +210,7 @@ class Crag:
             self.logger.log(msg, header="["+self.id+"] "+header, author=type(self).__name__, attachments=attachments)
 
     def send_alive_notification(self):
-        if self.broker and self.rtstr:
+        if self.broker and self.broker.account and self.rtstr:
             current_datetime = datetime.now()
             current_timestamp = datetime.timestamp(current_datetime)
             self.monitoring.send_alive_notification(current_timestamp, self.broker.account.get("id"), self.rtstr.id)

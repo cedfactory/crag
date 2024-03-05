@@ -5,7 +5,7 @@ import ast
 class Broker(metaclass = ABCMeta):
     
     def __init__(self, params = None):
-        self.cash = 0
+        self.cash = 1
         self.fdp_url_id = "localhost:5000"
         self.reset_account = True  # Reset account default behavior
         self.reset_account_orders = True  # Reset account orders default behavior
@@ -64,6 +64,9 @@ class Broker(metaclass = ABCMeta):
     def get_cash_borrowed(self):
         return self.cash_borrowed
 
+    def get_balance(self):
+        return None
+
     def get_portfolio_value(self):
         # todo : to implement
         return self.cash
@@ -77,6 +80,38 @@ class Broker(metaclass = ABCMeta):
         if self.rtdp:
             return self.rtdp.get_final_datetime()
         return None
+
+    def get_info(self):
+        return None, None, None
+
+    def broker_resumed(self):
+        return False
+
+    def get_usdt_equity(self):
+        return 0.
+
+    def get_current_state(self, lst_symbols):
+        current_state = {
+            "open_orders": None,
+            "open_positions": None,
+            "prices": None
+        }
+        return None
+
+    def get_df_minimum_size(self, lst_symbols):
+        return None
+
+    def get_price_place_endstep(self, lst_symbol):
+        return []
+
+    def execute_reset_account(self):
+        pass
+
+    def execute_orders(self, lst_orders):
+        pass
+
+    def reset_current_postion(self, current_state):
+        pass
 
     @abstractmethod
     def get_value(self, symbol):

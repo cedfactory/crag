@@ -144,9 +144,11 @@ def get_crag_params_from_configuration(configuration):
     broker_name = params_broker.get("name", "")
     if broker_name == "simulator" or broker_name == "simulation" or broker_name == "simu":
         my_broker = broker_simulation.SimBroker(params_broker)
+    elif broker_name == "mock":
+        my_broker = None
     else:
         my_broker = broker_bitget_api.BrokerBitGetApi(params_broker)
-    if not my_broker or not my_broker.ready():
+    if broker_name != "mock" and (not my_broker or not my_broker.ready()):
         return None
 
     return {"broker": my_broker, "rtstr": my_strategy, "id": crag_id, "interval": crag_interval, "logger": crag_discord_bot}
