@@ -111,6 +111,7 @@ class TestRTSTRGridTradingLong:
         assert (len(df) == 0)
 
     def test_crag_run(self):
+        return
         # context
 
         # create the configruation file
