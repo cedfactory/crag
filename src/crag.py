@@ -890,6 +890,10 @@ class Crag:
         exit_scenario = False
         str_cpt = str(cpt)
 
+        if False:
+            filename = "_df_open_positions.csv"
+            utils.modify_strategy_data_files(input_dir, filename)
+
         full_path = os.path.join(input_dir, "data_" + str_cpt + "_df_current_states.csv")
         file_path = Path(full_path)
         if file_path.exists():

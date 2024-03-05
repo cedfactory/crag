@@ -9,6 +9,17 @@ from datetime import datetime, timedelta
 from src.toolbox import settings_helper
 import psutil
 
+def modify_strategy_data_files(input_dir, str):
+    # Get list of all files in the directory
+    files = os.listdir(input_dir)
+    # Filter files containing "_df_open_positions.csv"
+    matching_files = [file for file in files if str in file]
+    for filename in matching_files:
+        df_tmp = pd.read_csv(os.path.join(input_dir, filename))
+        if len(df_tmp) > 0:
+            df_tmp["total"] = df_tmp["total"] / 2
+            df_tmp.to_csv(os.path.join(input_dir, filename))
+
 def get_memory_usage():
     process = psutil.Process()
     mem_info = process.memory_info()
