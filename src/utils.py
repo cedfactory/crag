@@ -8,6 +8,7 @@ import os
 from datetime import datetime, timedelta
 from src.toolbox import settings_helper
 import psutil
+import pandas as pd
 
 def modify_strategy_data_files(input_dir, str):
     # Get list of all files in the directory
@@ -17,7 +18,7 @@ def modify_strategy_data_files(input_dir, str):
     for filename in matching_files:
         df_tmp = pd.read_csv(os.path.join(input_dir, filename))
         if len(df_tmp) > 0:
-            df_tmp["total"] = df_tmp["total"] / 2
+            df_tmp["total"] = df_tmp["total"] * 2
             df_tmp.to_csv(os.path.join(input_dir, filename))
 
 def get_memory_usage():

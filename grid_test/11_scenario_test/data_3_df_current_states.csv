@@ -1,0 +1,3 @@
+,symbol,price,side,leverage,orderId,gridId
+0,XRP,0.62000,open_long,5,order_id_0,0
+1,XRP,0.62750,close_long,5,order_id_0,2

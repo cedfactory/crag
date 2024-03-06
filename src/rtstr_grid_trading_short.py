@@ -80,9 +80,9 @@ class StrategyGridTradingShort(rtstr.RealTimeStrategy):
             self.grid.update_pending_status_from_current_state(symbol, df_current_state)
 
             price_for_symbol = df_price.loc[df_price['symbols'] == symbol, 'values'].values[0]
-            self.grid.update_grid_side(symbol, price_for_symbol)
-
             self.grid.cross_check_with_current_state(symbol, df_current_state)
+            self.grid.update_grid_side(symbol, price_for_symbol)
+            # self.grid.cross_check_with_current_state(symbol, df_current_state)
 
             lst_order_to_execute = self.grid.get_order_list(symbol, buying_size, df_current_state)
             self.grid.set_to_pending_execute_order(symbol, lst_order_to_execute)
@@ -245,20 +245,27 @@ class GridPosition():
         df = self.grid[symbol]
         self.current_price = position
 
+        self.previous_grid_uniq_position = self.grid_uniq_position
+        self.on_edge = False
+        if (df['position'] == position).any():
+            print('PRICE ON GRID EDGE - CROSSING OR NOT CROSSING')
+            delta = abs((df.at[0, 'position'] - df.at[1,'position']) / 2)
+            if df.loc[df['position'] == position, 'cross_checked'].values[0] == False:
+                if df.loc[df['position'] == position, 'side'].values[0] == "open_short":
+                    position += delta
+                else:
+                    position -= delta
+            else:
+                if df.loc[df['position'] == position, 'side'].values[0] == "open_short":
+                    position -= delta
+                else:
+                    position += delta
+
         df['on_edge'] = False
         df['previous_side'] = df['side']
         # Set the 'side' column based on conditions
         df.loc[df['position'] < position, 'side'] = 'close_short'
         df.loc[df['position'] > position, 'side'] = 'open_short'
-
-        self.previous_grid_uniq_position = self.grid_uniq_position
-        self.on_edge = False
-        if (df['position'] == position).any():
-            print('PRICE ON GRID EDGE - CROSSING OR NOT CROSSING')
-            self.on_edge = True
-            df.loc[df['position'] == position, 'on_edge'] = True
-            df.loc[df['position'] == position, 'side'] = df.loc[df['position'] == position, 'previous_side'].values[0]
-            self.grid_uniq_position = df.loc[df['on_edge'], 'grid_id'].iloc[0]
 
         if self.diff_position == 0:
             self.trend = "FLAT"
@@ -407,8 +414,8 @@ class GridPosition():
                 and (df_grid.loc[df_grid['grid_id'] == bottom_grid_id, 'side'].values[0] == "open_short"):
             lst_order_grid_id.remove(bottom_grid_id)
 
-        if len(lst_filtered_on_edge) > 0:
-            lst_order_grid_id = [item for item in lst_filtered_on_edge if item not in lst_order_grid_id]
+        # if len(lst_filtered_on_edge) > 0:
+        #     lst_order_grid_id = [item for item in lst_filtered_on_edge if item not in lst_order_grid_id]
 
         # Safety net to avoid any multiple / redundant limit order
         lst_price_existing_orders = df_current_order['price'].tolist()
@@ -459,12 +466,14 @@ class GridPosition():
             # filtered_df = df_open_positions[df_open_positions['symbol'] == symbol]
             filtered_df = df_open_positions[(df_open_positions['symbol'] == symbol) & (df_open_positions['holdSide'] == "short")]
             self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_previous_open_positions'] = self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_open_positions'].values[0]
-            if len(filtered_df):
+            if len(filtered_df) > 0:
                 # sum_available_position = filtered_df['available'].sum() if not filtered_df.empty else 0
                 sum_available_position = filtered_df['total'].sum() if not filtered_df.empty else 0
                 # sum_available_position = sum_available_position / filtered_df['leverage'].iloc[0]    # Modif CEDE
                 self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'positions_size'] = sum_available_position
-                nb_open_positions = int(sum_available_position / buying_size)
+                leverage = filtered_df['leverage'].iloc[0]
+                self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'leverage'] = leverage
+                nb_open_positions = int(sum_available_position / buying_size / leverage)
                 self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_open_positions'] = nb_open_positions
                 previous_nb_open_positions = self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_previous_open_positions'].values[0]
                 self.df_nb_open_positions['previous_nb_open_positions'] = previous_nb_open_positions
@@ -481,6 +490,17 @@ class GridPosition():
             self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'positions_size'] = 0
             self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_open_positions'] = 0
             self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'leverage'] = 0
+            previous_nb_open_positions = self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_previous_open_positions'].values[0]
+            nb_open_positions = 0
+            self.diff_position = nb_open_positions - previous_nb_open_positions
+            self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'diff_position'] = self.diff_position
+            if self.diff_position >= 0:
+                self.df_nb_open_positions.loc[
+                    self.df_nb_open_positions['symbol'] == symbol, 'nb_total_opened_positions'] += self.diff_position
+            else:
+                self.df_nb_open_positions.loc[
+                    self.df_nb_open_positions['symbol'] == symbol, 'nb_total_closed_positions'] += abs(
+                    self.diff_position)
 
     def get_nb_open_positions(self, symbol):
         row = self.df_nb_open_positions[self.df_nb_open_positions['symbol'] == symbol]
@@ -661,10 +681,6 @@ class GridPosition():
                               self.control_multi_position['df_multi_position_status'])  # CEDE DEBUG
                         exit(0)
 
-                    # self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_long': open_val,
-                    #                                                                                                                           'close_long': close_val},
-                    #                                                                                                                            ignore_index=True)
-
                     # Remove the elements from the lists
                     if (len(self.control_multi_position['lst_open_short']) > 0) \
                             and (open_val in self.control_multi_position['lst_open_short']):
@@ -692,15 +708,12 @@ class GridPosition():
                             print('self.control_multi_position[df_multi_position_status]',
                                   self.control_multi_position['df_multi_position_status'])  # CEDE DEBUG
                             exit(0)
-                        # self.control_multi_position['df_multi_position_status'] = self.control_multi_position['df_multi_position_status'].append({'open_short': open_val,
-                        #                                                                                                                          'close_short': pos},
-                        #                                                                                                                          ignore_index=True)
-                    if (len(self.control_multi_position['lst_open_short']) > 0) \
-                        and (open_val in self.control_multi_position['lst_open_short']):
-                        self.control_multi_position['lst_open_short'].remove(open_val)
-                    if (len(self.control_multi_position['lst_close_short']) > 0) \
-                            and (pos in self.control_multi_position['lst_close_short']):
-                        self.control_multi_position['lst_close_short'].remove(pos)
+                    if (len(self.control_multi_position['lst_open_long']) > 0) \
+                            and (open_val in self.control_multi_position['lst_open_long']):
+                        self.control_multi_position['lst_open_long'].remove(open_val)
+                    if (len(self.control_multi_position['lst_close_long']) > 0) \
+                            and (pos in self.control_multi_position['lst_close_long']):
+                        self.control_multi_position['lst_close_long'].remove(pos)
 
         # reorder df_multi_position_status
         if len(self.control_multi_position['df_multi_position_status']) > 0:

@@ -85,7 +85,7 @@ class BrokerBitGet(broker.Broker):
         trade.success = False
         symbol = self._get_symbol(trade.symbol)
 
-        #self.set_margin_and_leverage(symbol)
+        self.set_margin_and_leverage(symbol)
         clientOid = self.clientOIdprovider.get_name(symbol, trade.type)
         print("TRADE GROSS SIZE: ", trade.gross_size)
         trade.gross_size = self.normalize_size(symbol, trade.gross_size)

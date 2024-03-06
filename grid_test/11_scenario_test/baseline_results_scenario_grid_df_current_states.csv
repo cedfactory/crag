@@ -1,0 +1,4 @@
+,round,symbol,gross_size,type,price,grid_id
+0,0,XRP,10,OPEN_LONG_ORDER,0.62,0
+1,0,XRP,10,OPEN_LONG_ORDER,0.62375,1
+2,2,XRP,10,CLOSE_LONG_ORDER,0.6275,2
