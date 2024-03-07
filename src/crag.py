@@ -1016,7 +1016,11 @@ class Crag:
                 msg += "AVERAGE RUN TIME: " + str(self.average_time_grid_strategy) + "s\n"
                 end_time = time.time()
                 msg += "DURATION: " + utils.format_duration(round((end_time - self.start_time_grid_strategy_init), 2)) + "\n"
-                msg += f"MEMORY: {self.memory_used_mb:.1f}MB" + " DELTA: " + str(round(self.memory_used_mb - self.init_memory_used_mb,1)) + "\n"
+                delta_memory = self.memory_used_mb - self.init_memory_used_mb
+                if delta_memory >= 0:
+                    msg += f"MEMORY: {self.memory_used_mb:.1f}MB" + " (+" + str(round(delta_memory, 1)) + ")\n"
+                else:
+                    msg += f"MEMORY: {self.memory_used_mb:.1f}MB" + " (-" + str(round(abs(delta_memory), 1)) + ")\n"
                 self.log(msg, "GRID STATUS")
             end_time = time.time()
             self.iteration_times_grid_strategy.append(end_time - self.start_time_grid_strategy)
@@ -1129,7 +1133,11 @@ class Crag:
             msg += "AVERAGE RUN TIME: " + str(self.average_time_grid_strategy) + "s\n"
             end_time = time.time()
             msg += "DURATION: " + utils.format_duration(round((end_time - self.start_time_grid_strategy_init), 2)) + "\n"
-            msg += f"MEMORY: {self.memory_used_mb:.1f}MB" + " DELTA: " + str(round(self.memory_used_mb - self.init_memory_used_mb,1)) + "\n"
+            delta_memory = self.memory_used_mb - self.init_memory_used_mb
+            if delta_memory >= 0:
+                msg += f"MEMORY: {self.memory_used_mb:.1f}MB" + " (+" + str(round(delta_memory,1)) + ")\n"
+            else:
+                msg += f"MEMORY: {self.memory_used_mb:.1f}MB" + " (-" + str(round(abs(delta_memory),1)) + ")\n"
             msg = msg.upper()
             self.log(msg, "GRID STATUS")
 

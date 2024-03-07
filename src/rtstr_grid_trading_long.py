@@ -247,7 +247,10 @@ class GridPosition():
 
         self.previous_grid_uniq_position = self.grid_uniq_position
         self.on_edge = False
+        df['on_edge'] = False
         if (df['position'] == position).any():
+            self.on_edge = True
+            df.loc[df['position'] == position, 'on_edge'] = True
             print('PRICE ON GRID EDGE - CROSSING OR NOT CROSSING')
             delta = abs((df.at[0, 'position'] - df.at[1,'position']) / 2)
             if df.loc[df['position'] == position, 'cross_checked'].values[0] == False:
@@ -261,7 +264,6 @@ class GridPosition():
                 else:
                     position -= delta
 
-        df['on_edge'] = False
         df['previous_side'] = df['side']
         # Set the 'side' column based on conditions
         df.loc[df['position'] > position, 'side'] = 'close_long'
@@ -400,7 +402,7 @@ class GridPosition():
         df_filtered_checked = df_grid[~df_grid['cross_checked']]
         df_filtered_pending = df_grid[df_grid['status'].isin(["pending", "empty"])]
 
-        lst_filtered_on_edge = df_grid[df_grid['on_edge']]['grid_id'].tolist()
+        # lst_filtered_on_edge = df_grid[df_grid['on_edge']]['grid_id'].tolist()
 
         lst_order_grid_id = df_filtered_changes['grid_id'].tolist() \
                             + df_filtered_checked['grid_id'].tolist() \
@@ -816,14 +818,15 @@ class GridPosition():
                 msg += "FLAT / NO DIRECTION" + "\n"
             else:
                 msg += "**ERROR DIRECTION" + "**\n"
-                msg += "**PRICE ON GRID EDGE" + "**\n"
                 df = self.grid[symbol]
                 lst_filtered_on_edge = df[df['on_edge']]['grid_id'].tolist()
-                msg += "**lst_filtered_on_edge: " + ' '.join(map(str, lst_filtered_on_edge)) + "**\n"
-                if len(lst_filtered_on_edge) > 0:
+                if (len(lst_filtered_on_edge) > 0) \
+                        or self.on_edge:
                     msg += "**PRICE ON GRID EDGE - VERIFIED" + "**\n"
+                    msg += "**lst_filtered_on_edge: " + ' '.join(map(str, lst_filtered_on_edge)) + "**\n"
                 else:
                     msg += "**WARNING - PRICE ON GRID EDGE - NOT VERIFIED" + "**\n"
+                    msg += "**lst_filtered_on_edge: " + ' '.join(map(str, lst_filtered_on_edge)) + "**\n"
 
         if self.diff_position != 0:
             # msg += "# DIFF:" + "\n"
