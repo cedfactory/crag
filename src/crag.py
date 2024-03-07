@@ -73,6 +73,8 @@ class Crag:
         self.rtstr_grid_size_previous = 0
         self.rtstr_grid_size = 0
         self.rtstr_grid_size_init = 0
+        self.memory_used_mb = 0
+        self.init_memory_used_mb = 0
         self.init_debug_memory = False
 
         self.init_memory_usage = {}
@@ -998,7 +1000,11 @@ class Crag:
             df_grid_global = pd.concat([df_grid_global, df_grid_record], ignore_index=True)
 
             memory_used_bytes = utils.get_memory_usage()
-            memory_used_mb = memory_used_bytes / (1024 * 1024)  # Convert bytes to megabytes
+            if self.memory_used_mb == 0:
+                self.init_memory_used_mb = memory_used_bytes / (1024 * 1024)
+                self.memory_used_mb = self.init_memory_used_mb
+            else:
+                self.memory_used_mb = memory_used_bytes / (1024 * 1024)  # Convert bytes to megabytes
             print("output lst_orders_to_execute: ", lst_orders_to_execute)
             msg = self.rtstr.get_info_msg_status()
             if msg != None:
@@ -1010,7 +1016,7 @@ class Crag:
                 msg += "AVERAGE RUN TIME: " + str(self.average_time_grid_strategy) + "s\n"
                 end_time = time.time()
                 msg += "DURATION: " + utils.format_duration(round((end_time - self.start_time_grid_strategy_init), 2)) + "\n"
-                msg += f"MEMORY: {memory_used_mb:.2f}MB" + "\n"
+                msg += f"MEMORY: {self.memory_used_mb:.1f}MB" + " DELTA: " + str(round(self.memory_used_mb - self.init_memory_used_mb,1)) + "\n"
                 self.log(msg, "GRID STATUS")
             end_time = time.time()
             self.iteration_times_grid_strategy.append(end_time - self.start_time_grid_strategy)
@@ -1021,7 +1027,7 @@ class Crag:
             print("CRAG AVERAGE TIME: " + str(self.average_time_grid_strategy_overall) + " seconds")
             print("OVERALL DURATION: ", utils.format_duration(round((end_time - self.start_time_grid_strategy_init), 2)))
             print("ITERATIONS: ", self.grid_iteration)
-            print("MEMORY: ", round(memory_used_mb, 2), "MB")
+            print("MEMORY: ", round(self.memory_used_mb, 2), "MB DELTA: " + str(round(self.memory_used_mb - self.init_memory_used_mb,2)) + " MB" + "\n")
 
             if cpt == break_pt:
                 print(cpt)
@@ -1076,7 +1082,11 @@ class Crag:
 
         lst_orders_to_execute = self.rtstr.set_broker_current_state(broker_current_state)
         memory_used_bytes = utils.get_memory_usage()
-        memory_used_mb = memory_used_bytes / (1024 * 1024)  # Convert bytes to megabytes
+        if self.memory_used_mb == 0:
+            self.init_memory_used_mb = memory_used_bytes / (1024 * 1024)
+            self.memory_used_mb = self.init_memory_used_mb
+        else:
+            self.memory_used_mb = memory_used_bytes / (1024 * 1024)  # Convert bytes to megabytes
         msg = self.rtstr.get_info_msg_status()
         if msg != None:
             current_datetime = datetime.today().strftime("%Y/%m/%d - %H:%M:%S")
@@ -1119,7 +1129,7 @@ class Crag:
             msg += "AVERAGE RUN TIME: " + str(self.average_time_grid_strategy) + "s\n"
             end_time = time.time()
             msg += "DURATION: " + utils.format_duration(round((end_time - self.start_time_grid_strategy_init), 2)) + "\n"
-            msg += f"MEMORY: {memory_used_mb:.2f}MB" + "\n"
+            msg += f"MEMORY: {self.memory_used_mb:.1f}MB" + " DELTA: " + str(round(self.memory_used_mb - self.init_memory_used_mb,1)) + "\n"
             msg = msg.upper()
             self.log(msg, "GRID STATUS")
 
@@ -1141,7 +1151,7 @@ class Crag:
             print("CRAG AVERAGE TIME:            " + str(self.average_time_grid_strategy_overall) + " seconds")
             print("OVERALL DURATION:             ", utils.format_duration(round((end_time - self.start_time_grid_strategy_init), 2)))
             print("ITERATIONS:                   ", self.grid_iteration)
-            print("MEMORY:                       ", round(memory_used_mb, 2), "MB")
+            print("MEMORY:                       ", round(self.memory_used_mb, 2), "MB - DELTA: " + str(round(self.memory_used_mb - self.init_memory_used_mb,2)) + " MB" + "\n")
 
             if self.init_debug_memory:
                 self.crag_size_previous = self.crag_size
