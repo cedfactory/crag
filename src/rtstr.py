@@ -424,8 +424,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
         return self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "minBuyingSize"].values[0]
 
     def get_grid_buying_size(self, symbol):
-        return 10
-        # return self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "buyingSize"].values[0]
+        return self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "buyingSize"].values[0]
 
     def set_df_buying_size(self, df_symbol_size, cash):
         if not isinstance(df_symbol_size, pd.DataFrame):
@@ -433,23 +432,44 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
         self.df_grid_buying_size = df_symbol_size
         for symbol in df_symbol_size['symbol'].tolist():
-            size = self.grid_margin / self.nb_grid / ((self.grid_high - self.grid_low )/2 + self.grid_low)
+            dol_per_grid = self.grid_margin / self.nb_grid
+            size = dol_per_grid / ((self.grid_high - self.grid_low )/2 + self.grid_low)
 
             self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "buyingSize"] = size
-            """
             if (self.get_grid_buying_min_size(symbol) <= size)\
                     and (size * self.grid_low > 5) \
                     and (cash >= self.grid_margin):
                 self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "buyingSize"] = size
+                msg = "**cash: " + str(round(cash, 2)) + "**\n"
+                msg += "**grid_margin: " + str(round(self.grid_margin, 2)) + "**\n"
+                msg += "**nb grid: " + str(self.nb_grid) + "**\n"
+                msg += "**amount buying > 5 usd: " + str(round(size * self.grid_low, 2)) + "**\n"
+                msg += "**buying size: " + str(round(size, 2)) + "**\n"
+                msg += "**min size: " + str(round(self.get_grid_buying_min_size(symbol), 2)) + "**\n"
+
+                print("cash: ", cash)
+                print("grid_margin: ",self.grid_margin)
+                print("amount buying > 5 usd : ", round(size * self.grid_low, 2))
+                print("buying size", round(size, 2))
+                print("min size: ", self.get_grid_buying_min_size(symbol))
+                self.log(msg, "GRID SETUP")
             else:
+                msg = "**cash: " + str(round(cash, 2)) + "**\n"
+                msg += "**grid_margin: " + str(round(self.grid_margin, 2)) + "**\n"
+                msg += "**nb grid: " + str(self.nb_grid) + "**\n"
+                msg += "**amount buying > 5 usd: " + str(round(size * self.grid_low, 2)) + "**\n"
+                msg += "**buying size: " + str(round(size, 2)) + "**\n"
+                msg += "**min size: " + str(round(self.get_grid_buying_min_size(symbol), 2)) + "**\n"
+                msg += "**strategy stopped: " + "**\n"
+
                 print("cash: ", cash)
                 print("grid_margin: ",self.grid_margin)
                 print("amount buying > 5 usd : ", round(size * self.grid_low, 2))
                 print("buying size", round(size, 2))
                 print("min size: ", self.get_grid_buying_min_size(symbol))
                 print("ERROR NOT ENOUGH $ FOR GRID - INCREASE MARGIN OR REDUCE GRID SIZE")
+                self.log(msg, "GRID SETUP FAILED")
                 exit(0)
-            """
 
     def get_symbol_buying_size(self, symbol):
         if not symbol in self.rtctrl.prices_symbols or self.rtctrl.prices_symbols[symbol] < 0:  # first init at -1
