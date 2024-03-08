@@ -247,7 +247,10 @@ class GridPosition():
 
         self.previous_grid_uniq_position = self.grid_uniq_position
         self.on_edge = False
+        df['on_edge'] = False
         if (df['position'] == position).any():
+            self.on_edge = True
+            df.loc[df['position'] == position, 'on_edge'] = True
             print('PRICE ON GRID EDGE - CROSSING OR NOT CROSSING')
             delta = abs((df.at[0, 'position'] - df.at[1,'position']) / 2)
             if df.loc[df['position'] == position, 'cross_checked'].values[0] == False:
