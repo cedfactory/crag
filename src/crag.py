@@ -1115,7 +1115,7 @@ class Crag:
                     msg += "**market price: " + str(round(marketPrice, 4)) + "**\n"
                     msg += "**price average: " + str(round(averageOpenPrice, 4)) + "**\n"
                     msg += "**EQUITY: " + str(round(total * averageOpenPrice * leverage, 2)) + " PNL: " + str(round(unrealizedPL, 2)) + "**\n"
-                    msg += "SIZE: " + str(round(total, 2)) + " leverage: " + str(round(leverage, 2)) + ":\n"
+                    msg += "SIZE: " + str(round(total, 2)) + " leverage: " + str(round(leverage, 2)) + "\n"
                     msg += "side: " + side + " liquidation: " + str(round(liquidation, 2)) + "\n"
             else:
                 if (len(symbols) != 0) and (len(lst_usdt_symbols) == 0):
@@ -1130,7 +1130,9 @@ class Crag:
                     print("symbols", symbols)
                     print("lst_usdt_symbols", lst_usdt_symbols)
                     msg += "**ERROR LST SYMBOLS NOT MATCHING" + "**:\n"
-            msg += "AVERAGE RUN TIME: " + str(self.average_time_grid_strategy) + "s\n"
+            msg += "# TIME & MEMORY" + "\n"
+            msg += "CRAG TIME: " + str(self.average_time_grid_strategy_overall) + "s\n"
+            msg += "GRID TIME: " + str(self.average_time_grid_strategy) + "s\n"
             end_time = time.time()
             msg += "DURATION: " + utils.format_duration(round((end_time - self.start_time_grid_strategy_init), 2)) + "\n"
             delta_memory = self.memory_used_mb - self.init_memory_used_mb
