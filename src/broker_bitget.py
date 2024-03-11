@@ -183,17 +183,18 @@ class BrokerBitGet(broker.Broker):
                     trade.roi = (-1) * utils.get_variation(trade.bought_gross_price, trade.gross_price)
 
         if not trade.success:
-            msg = 'transaction failed: ' + symbol + '\n'
-            msg += "position: " + str(trade.price) + '\n'
-            msg += "type: " + trade.type + '\n'
-            msg += "size: " + str(trade.gross_size) + '\n'
-            print('transaction failed : ', symbol, " - type: ", trade.type, ' - gross_size: ', trade.gross_size)
+            msg = 'trade failed: ' + trade.symbol
+            msg += " - " + trade.type
+            msg += " - " + str(trade.price)
+            msg += " - " + str(trade.gross_size) + '\n'
+            print('transaction failed : ', trade.symbol, " - type: ", trade.type, ' - gross_size: ', trade.gross_size)
             print("!!!!!!! EXECUTE THE TRADE NOT COMPLETED !!!!!!!")
         else:
-            # msg = 'transaction success: ' + symbol + '\n'
-            # msg += "position: " + str(trade.price) + '\n'
-            # msg += "type: " + trade.type + '\n'
-            # msg += "size: " + str(trade.gross_size) + '\n'
+            msg = trade.symbol
+            msg += " - " + trade.type
+            msg += " - " + str(trade.price)
+            msg += " - " + str(trade.gross_size) + '\n'
+            print('transaction success : ', trade.symbol, " - type: ", trade.type, ' - gross_size: ', trade.gross_size)
             print("!!!!!!! EXECUTE THE TRADE COMPLETED !!!!!!!")
         self.log_trade = self.log_trade + msg.upper()
         return trade.success
