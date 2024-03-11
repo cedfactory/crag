@@ -432,8 +432,8 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
         self.df_grid_buying_size = df_symbol_size
         for symbol in df_symbol_size['symbol'].tolist():
-            dol_per_grid = self.grid_margin / self.nb_grid
-            size = dol_per_grid / ((self.grid_high - self.grid_low )/2 + self.grid_low)
+            dol_per_grid = self.grid_margin / (self.nb_grid + 1)
+            size = dol_per_grid / (self.grid_high + self.grid_low )/2
 
             self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "buyingSize"] = size
             if (self.get_grid_buying_min_size(symbol) <= size)\

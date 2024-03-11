@@ -465,17 +465,16 @@ class GridPosition():
     def update_nb_open_positions(self, symbol, df_open_positions, buying_size):
         self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'size'] = buying_size
         if len(df_open_positions) > 0:
-            # filtered_df = df_open_positions[df_open_positions['symbol'] == symbol]
             filtered_df = df_open_positions[(df_open_positions['symbol'] == symbol) & (df_open_positions['holdSide'] == "long")]
             self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_previous_open_positions'] = self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_open_positions'].values[0]
             if len(filtered_df) > 0:
-                # sum_available_position = filtered_df['available'].sum() if not filtered_df.empty else 0
                 sum_available_position = filtered_df['total'].sum() if not filtered_df.empty else 0
                 # sum_available_position = sum_available_position / filtered_df['leverage'].iloc[0]    # Modif CEDE
                 self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'positions_size'] = sum_available_position
                 leverage = filtered_df['leverage'].iloc[0]
                 self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'leverage'] = leverage
-                nb_open_positions = int(sum_available_position / buying_size / leverage)
+                # nb_open_positions = int(sum_available_position / buying_size / leverage)
+                nb_open_positions = int(sum_available_position / buying_size)
                 self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_open_positions'] = nb_open_positions
                 previous_nb_open_positions = self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_previous_open_positions'].values[0]
                 self.df_nb_open_positions['previous_nb_open_positions'] = previous_nb_open_positions
@@ -826,7 +825,7 @@ class GridPosition():
                     msg += "**lst_filtered_on_edge: " + ' '.join(map(str, lst_filtered_on_edge)) + "**\n"
                 else:
                     msg += "**WARNING - PRICE ON GRID EDGE - NOT VERIFIED" + "**\n"
-                    msg += "**lst_filtered_on_edge: " + ' '.join(map(str, lst_filtered_on_edge)) + "**\n"
+                    msg += "**lst_filtered_on_edge empty" + ' '.join(map(str, lst_filtered_on_edge)) + "**\n"
 
         if self.diff_position != 0:
             # msg += "# DIFF:" + "\n"

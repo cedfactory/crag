@@ -10,6 +10,7 @@ class BrokerBitGet(broker.Broker):
         self.name = ""
         self.exchange_name = "bitget"
         self.chase_limit = False
+        self.log_trade = ""
         if params:
             self.simulation = params.get("simulation", self.simulation)
             if self.simulation == 0 or self.simulation == "0":
@@ -52,6 +53,12 @@ class BrokerBitGet(broker.Broker):
         info += "\nCash : $ {}".format(utils.KeepNDecimals(cash, 2))
         # info += "\nLeverage : {}".format(self.leverage)
         return info
+
+    def log_info_trade(self):
+        return self.log_trade
+
+    def clear_log_info_trade(self):
+        self.log_trade = ""
 
     @authentication_required
     def get_commission(self, symbol):
@@ -100,23 +107,23 @@ class BrokerBitGet(broker.Broker):
 
         if trade.type in ["OPEN_LONG", "OPEN_SHORT", "OPEN_LONG_ORDER", "OPEN_SHORT_ORDER", "CLOSE_LONG_ORDER", "CLOSE_SHORT_ORDER"]:
             if trade.type == "OPEN_LONG":
-                print(trade.type, " size: ", trade.gross_size * self.leverage_short)
-                transaction = self._open_long_position(symbol, trade.gross_size * self.leverage_long, clientOid)
+                print(trade.type, " size: ", trade.gross_size)
+                transaction = self._open_long_position(symbol, trade.gross_size, clientOid)
             elif trade.type == "OPEN_SHORT":
-                print(trade.type, " size: ", trade.gross_size * self.leverage_short)
-                transaction = self._open_short_position(symbol, trade.gross_size * self.leverage_short, clientOid)
+                print(trade.type, " size: ", trade.gross_size)
+                transaction = self._open_short_position(symbol, trade.gross_size, clientOid)
             elif trade.type == "OPEN_LONG_ORDER":
-                print(trade.type, " size: ", trade.gross_size * self.leverage_short, " price: ", trade.price)
-                transaction = self._open_long_order(symbol, trade.gross_size * self.leverage_long, clientOid, trade.price)
+                print(trade.type, " size: ", trade.gross_size, " price: ", trade.price)
+                transaction = self._open_long_order(symbol, trade.gross_size, clientOid, trade.price)
             elif trade.type == "OPEN_SHORT_ORDER":
-                print(trade.type, " size: ", trade.gross_size * self.leverage_short, " price: ", trade.price)
-                transaction = self._open_short_order(symbol, trade.gross_size * self.leverage_long, clientOid, trade.price)
+                print(trade.type, " size: ", trade.gross_size, " price: ", trade.price)
+                transaction = self._open_short_order(symbol, trade.gross_size, clientOid, trade.price)
             elif trade.type == "CLOSE_LONG_ORDER":
-                print(trade.type, " size: ", trade.gross_size * self.leverage_short, " price: ", trade.price)
-                transaction = self._close_long_order(symbol, trade.gross_size * self.leverage_long, clientOid, trade.price)
+                print(trade.type, " size: ", trade.gross_size, " price: ", trade.price)
+                transaction = self._close_long_order(symbol, trade.gross_size, clientOid, trade.price)
             elif trade.type == "CLOSE_SHORT_ORDER":
-                print(trade.type, " size: ", trade.gross_size * self.leverage_short, " price: ", trade.price)
-                transaction = self._close_short_order(symbol, trade.gross_size * self.leverage_short, clientOid, trade.price)
+                print(trade.type, " size: ", trade.gross_size, " price: ", trade.price)
+                transaction = self._close_short_order(symbol, trade.gross_size, clientOid, trade.price)
             else:
                 transaction = {"msg": "failure"}
 
@@ -125,7 +132,11 @@ class BrokerBitGet(broker.Broker):
                 trade.success = True
                 trade.orderId = transaction["data"]["orderId"]
                 trade.clientOid = transaction["data"]["clientOid"]
-                trade.tradeId, trade.symbol_price, trade.gross_price, trade.gross_size, trade.buying_fee = self.get_order_fill_detail(symbol, trade.orderId)
+                if "_ORDER" in trade.type:
+                    trade.symbol_price = trade.price
+                    trade.tradeId = trade.orderId
+                else:
+                    trade.tradeId, trade.symbol_price, trade.gross_price, trade.gross_size, trade.buying_fee = self.get_order_fill_detail(symbol, trade.orderId)
                 trade.net_size = trade.gross_size
                 trade.net_price = trade.gross_price
                 trade.bought_gross_price = trade.gross_price
@@ -172,12 +183,21 @@ class BrokerBitGet(broker.Broker):
                     trade.roi = (-1) * utils.get_variation(trade.bought_gross_price, trade.gross_price)
 
         if not trade.success:
-            print('transaction failed ", trade.type, " : ', symbol, ' - gross_size: ', trade.gross_size)
-        # MODIF CEDE
-        print("!!!!!!! EXECUTE THE TRADE COMPLETED !!!!!!!")
+            msg = 'transaction failed: ' + symbol + '\n'
+            msg += "position: " + str(trade.price) + '\n'
+            msg += "type: " + trade.type + '\n'
+            msg += "size: " + str(trade.gross_size) + '\n'
+            print('transaction failed : ', symbol, " - type: ", trade.type, ' - gross_size: ', trade.gross_size)
+            print("!!!!!!! EXECUTE THE TRADE NOT COMPLETED !!!!!!!")
+        else:
+            # msg = 'transaction success: ' + symbol + '\n'
+            # msg += "position: " + str(trade.price) + '\n'
+            # msg += "type: " + trade.type + '\n'
+            # msg += "size: " + str(trade.gross_size) + '\n'
+            print("!!!!!!! EXECUTE THE TRADE COMPLETED !!!!!!!")
+        self.log_trade = self.log_trade + msg.upper()
         return trade.success
 
-    @authentication_required
     def check_validity_order(self, order):
         # CEDE avoid empty dict field: from order -> trade
         lst_key = ["time", "success", "orderId", "clientOid", "tradeId", "symbol_price", "gross_price",

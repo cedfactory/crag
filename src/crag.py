@@ -1114,7 +1114,7 @@ class Crag:
                     msg += "# SYMBOL " + symbol + " :\n"
                     msg += "**market price: " + str(round(marketPrice, 4)) + "**\n"
                     msg += "**price average: " + str(round(averageOpenPrice, 4)) + "**\n"
-                    msg += "**EQUITY: " + str(round(total * averageOpenPrice * leverage, 2)) + " PNL: " + str(round(unrealizedPL, 2)) + "**\n"
+                    msg += "**EQUITY: " + str(round(total * averageOpenPrice, 2)) + " PNL: " + str(round(unrealizedPL, 2)) + "**\n"
                     msg += "SIZE: " + str(round(total, 2)) + " leverage: " + str(round(leverage, 2)) + "\n"
                     msg += "side: " + side + " liquidation: " + str(round(liquidation, 2)) + "\n"
             else:
@@ -1147,6 +1147,11 @@ class Crag:
             print("output lst_orders_to_execute: ", lst_orders_to_execute)
 
         self.broker.execute_orders(lst_orders_to_execute)
+
+        msg_broker_trade_info = self.broker.log_info_trade()
+        if len(msg_broker_trade_info) != 0:
+            self.log(msg_broker_trade_info, "broker trade")
+            self.broker.clear_log_info_trade()
 
         end_time = time.time()
         self.iteration_times_grid_strategy.append(end_time - self.start_time_grid_strategy)
