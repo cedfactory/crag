@@ -249,7 +249,7 @@ class MainPanel(wx.Panel):
     def update_orders(self, my_broker):
         orders = []
         if my_broker:
-            orders = my_broker.get_open_orders(["XRP"])
+            orders = my_broker.get_open_orders(["XRP", "BTC", "SOL"])
 
         # update orders
         print("orders : ", orders)

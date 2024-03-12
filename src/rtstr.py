@@ -433,39 +433,44 @@ class RealTimeStrategy(metaclass=ABCMeta):
         self.df_grid_buying_size = df_symbol_size
         for symbol in df_symbol_size['symbol'].tolist():
             dol_per_grid = self.grid_margin / (self.nb_grid + 1)
-            size = dol_per_grid / (self.grid_high + self.grid_low )/2
+            size = dol_per_grid / ((self.grid_high + self.grid_low )/2)
 
             self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "buyingSize"] = size
             if (self.get_grid_buying_min_size(symbol) <= size)\
                     and (size * self.grid_low > 5) \
                     and (cash >= self.grid_margin):
                 self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "buyingSize"] = size
-                msg = "**cash: " + str(round(cash, 2)) + "**\n"
+                msg = "**" + symbol + "**\n"
+                msg += "**cash: " + str(round(cash, 2)) + "**\n"
                 msg += "**grid_margin: " + str(round(self.grid_margin, 2)) + "**\n"
                 msg += "**nb grid: " + str(self.nb_grid) + "**\n"
+                msg += "**steps: " + str((self.grid_high - self.grid_low) / self.nb_grid) + "**\n"
                 msg += "**amount buying > 5 usd: " + str(round(size * self.grid_low, 2)) + "**\n"
-                msg += "**buying size: " + str(round(size, 2)) + "**\n"
-                msg += "**min size: " + str(round(self.get_grid_buying_min_size(symbol), 2)) + "**\n"
+                msg += "**buying size: " + str(size) + " - $" + str(size * (self.grid_high + self.grid_low )/2) + "**\n"
+                msg += "**min size: " + str(self.get_grid_buying_min_size(symbol)) + " - $" + str(self.get_grid_buying_min_size(symbol) * (self.grid_high + self.grid_low )/2) + "**\n"
 
-                print("cash: ", cash)
+                print(symbol, " cash: ", cash)
                 print("grid_margin: ",self.grid_margin)
                 print("amount buying > 5 usd : ", round(size * self.grid_low, 2))
-                print("buying size", round(size, 2))
+                print("buying size", size)
                 print("min size: ", self.get_grid_buying_min_size(symbol))
+                msg += "**strategy verified" + "**\n"
                 self.log(msg, "GRID SETUP")
             else:
-                msg = "**cash: " + str(round(cash, 2)) + "**\n"
+                msg = "**" + symbol + "**\n"
+                msg += "**cash: " + str(round(cash, 2)) + "**\n"
                 msg += "**grid_margin: " + str(round(self.grid_margin, 2)) + "**\n"
                 msg += "**nb grid: " + str(self.nb_grid) + "**\n"
+                msg += "**steps: " + str((self.grid_high - self.grid_low) / self.nb_grid) + "**\n"
                 msg += "**amount buying > 5 usd: " + str(round(size * self.grid_low, 2)) + "**\n"
-                msg += "**buying size: " + str(round(size, 2)) + "**\n"
-                msg += "**min size: " + str(round(self.get_grid_buying_min_size(symbol), 2)) + "**\n"
-                msg += "**strategy stopped: " + "**\n"
+                msg += "**buying size: " + str(size) + " - $" + str(size * (self.grid_high + self.grid_low )/2) + "**\n"
+                msg += "**min size: " + str(self.get_grid_buying_min_size(symbol)) + " - $" + str(self.get_grid_buying_min_size(symbol) * (self.grid_high + self.grid_low )/2) + "**\n"
+                msg += "**strategy stopped" + "**\n"
 
-                print("cash: ", cash)
+                print(symbol, " cash: ", cash)
                 print("grid_margin: ",self.grid_margin)
                 print("amount buying > 5 usd : ", round(size * self.grid_low, 2))
-                print("buying size", round(size, 2))
+                print("buying size", size)
                 print("min size: ", self.get_grid_buying_min_size(symbol))
                 print("ERROR NOT ENOUGH $ FOR GRID - INCREASE MARGIN OR REDUCE GRID SIZE")
                 self.log(msg, "GRID SETUP FAILED")
