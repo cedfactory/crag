@@ -54,7 +54,7 @@ class PanelPositions(wx.Panel):
         hsizer = wx.BoxSizer(wx.HORIZONTAL)
         staticOpenPosition = wx.StaticText(self,label = "Open position :", style=wx.ALIGN_LEFT)
         hsizer.Add(staticOpenPosition,0, wx.ALL | wx.ALIGN_CENTER, 5)
-        self.symbols = wx.ComboBox(self,choices = ["BTC", "ETH", "XRP"])
+        self.symbols = wx.ComboBox(self,choices = ["BTC", "ETH", "XRP",  "SOL"])
         hsizer.Add(self.symbols,0, wx.ALL | wx.CENTER, 5)
 
         panel = wx.Panel(self, -1)
@@ -113,7 +113,7 @@ class PanelOrders(wx.Panel):
         hsizer = wx.BoxSizer(wx.HORIZONTAL)
         staticOpenOrderLimit = wx.StaticText(self,label = "Open order :", style = wx.ALIGN_LEFT)
         hsizer.Add(staticOpenOrderLimit,0, wx.ALL | wx.CENTER, 5)
-        self.symbols = wx.ComboBox(self,choices = ["BTC", "ETH", "XRP"])
+        self.symbols = wx.ComboBox(self,choices = ["BTC", "ETH", "XRP", "SOL"])
         hsizer.Add(self.symbols,0, wx.ALL | wx.CENTER, 5)
 
         panel = wx.Panel(self, -1)
@@ -249,7 +249,7 @@ class MainPanel(wx.Panel):
     def update_orders(self, my_broker):
         orders = []
         if my_broker:
-            orders = my_broker.get_open_orders(["XRP", "BTC", "SOL"])
+            orders = my_broker.get_open_orders(["XRP", "BTC", "ETH", "SOL"])
 
         # update orders
         print("orders : ", orders)
@@ -335,7 +335,7 @@ class MainPanel(wx.Panel):
 
     def on_cancel_all_limit_orders(self, event):
         my_broker = self.get_broker_from_selected_account()
-        my_broker.cancel_all_orders(["XRP", "BTC", "ETH"])
+        my_broker.cancel_all_orders(["XRP", "BTC", "ETH", "SOL"])
         self.update_orders(my_broker)
 
     def on_open_limit_order(self, event):
