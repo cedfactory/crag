@@ -84,6 +84,17 @@ class BrokerBitGet(broker.Broker):
             self.set_symbol_leverage(symbol, self.leverage_short, "short")
             self.leveraged_symbols.append(symbol)
 
+    def normalize_grid_df_buying_size_size(self, df_buying_size):
+        if not isinstance(df_buying_size, pd.DataFrame) \
+                or len(df_buying_size) == 0:
+            return
+
+        for symbol in df_buying_size['symbol'].tolist():
+            size = df_buying_size.loc[df_buying_size['symbol'] == symbol, "buyingSize"].values[0]
+            normalized_size = self.normalize_size(symbol, size)
+            df_buying_size.loc[df_buying_size['symbol'] == symbol, "buyingSize"] = normalized_size
+        return df_buying_size
+
     @authentication_required
     def execute_trade(self, trade):
         print("!!!!!!! EXECUTE THE TRADE !!!!!!!")

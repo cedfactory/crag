@@ -1076,7 +1076,9 @@ class Crag:
         if self.init_grid_position:
             self.init_grid_position = False
             df_symbol_minsize = self.broker.get_df_minimum_size(symbols)
-            self.rtstr.set_df_buying_size(df_symbol_minsize, self.broker.get_usdt_equity())
+            df_buying_size = self.rtstr.set_df_buying_size(df_symbol_minsize, self.broker.get_usdt_equity())
+            df_buying_size_normalise = self.broker.normalize_grid_df_buying_size_size(df_buying_size)
+            self.rtstr.set_df_normalize_buying_size(df_buying_size_normalise)
             self.rtstr.set_normalized_grid_price(self.broker.get_price_place_endstep(symbols))
             lst_orders_to_execute = self.rtstr.activate_grid(broker_current_state)
             lst_orders_to_execute = []
