@@ -1,11 +1,29 @@
 from abc import ABCMeta, abstractmethod
 from src.toolbox import settings_helper
+import pandas as pd
 import ast
+
+def create_df_open_positions():
+    df_open_positions = pd.DataFrame(columns=["symbol", "holdSide", "leverage", "marginCoin",
+                                              "available", "total", "usdtEquity",
+                                              "marketPrice", "averageOpenPrice",
+                                              "achievedProfits", "unrealizedPL", "liquidationPrice"])
+    return df_open_positions
+
+def create_df_open_orders():
+    df_open_orders = pd.DataFrame(columns=["symbol", "price", "side", "size", "leverage",
+                                           "marginCoin", "clientOid", "orderId",
+                                           "gridId"]) # gridId to to remove...
+    return df_open_orders
+
+def create_df_prices():
+    df_prices = pd.DataFrame(columns = ["symbols", "values"])
+    return df_prices
 
 class Broker(metaclass = ABCMeta):
     
     def __init__(self, params = None):
-        self.cash = 1
+        self.cash = 10
         self.fdp_url_id = "localhost:5000"
         self.reset_account = True  # Reset account default behavior
         self.reset_account_orders = True  # Reset account orders default behavior
@@ -24,7 +42,7 @@ class Broker(metaclass = ABCMeta):
                     self.reset_account_orders = ast.literal_eval(self.reset_account_orders)
                 except BaseException as err:
                     self.reset_account_orders = True
-        self.cash_borrowed = 0
+        self.cash_borrowed = 10
         self.rtdp = None
         self.account = None
         if params:
@@ -88,21 +106,29 @@ class Broker(metaclass = ABCMeta):
         return False
 
     def get_usdt_equity(self):
-        return 0.
+        return 1000.
 
     def get_current_state(self, lst_symbols):
         current_state = {
-            "open_orders": None,
-            "open_positions": None,
-            "prices": None
+            "open_orders": create_df_open_orders(),
+            "open_positions": create_df_open_positions(),
+            "prices": create_df_prices()
         }
-        return None
+        return current_state
+
+    def get_minimum_size(self, symbol):
+        return 0
 
     def get_df_minimum_size(self, lst_symbols):
-        return None
+        lst = [self.get_minimum_size(symbol) for symbol in lst_symbols]
+        df = pd.DataFrame({'symbol': lst_symbols, 'minBuyingSize': lst,'buyingSize':lst})
+        return df
 
     def get_price_place_endstep(self, lst_symbol):
         return []
+
+    def normalize_grid_df_buying_size_size(self, df_buying_size):
+        return df_buying_size
 
     def execute_reset_account(self):
         pass
@@ -117,6 +143,9 @@ class Broker(metaclass = ABCMeta):
     def get_value(self, symbol):
         pass
 
+    def get_trading_range(self, symbol):
+        return 0, 0
+
     @abstractmethod
     def get_commission(self, symbol):
         pass
@@ -127,6 +156,12 @@ class Broker(metaclass = ABCMeta):
 
     @abstractmethod
     def export_history(self, target):
+        pass
+
+    def log_info_trade(self):
+        pass
+
+    def clear_log_info_trade(self):
         pass
 
     @abstractmethod

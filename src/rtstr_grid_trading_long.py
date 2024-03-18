@@ -120,9 +120,10 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
         for symbol in self.lst_symbols:
             lst_buying_market_order = []
             buying_size = self.get_grid_buying_size(symbol)
-            price = df_prices.loc[df_prices['symbols'] == symbol, 'values'].values[0]
-            order = self.grid.get_buying_market_order(symbol, buying_size, price)
-            lst_buying_market_order.append(order)
+            if symbol in df_prices['symbols']:
+                price = df_prices.loc[df_prices['symbols'] == symbol, 'values'].values[0]
+                order = self.grid.get_buying_market_order(symbol, buying_size, price)
+                lst_buying_market_order.append(order)
         return lst_buying_market_order
 
     def get_info_msg_status(self):

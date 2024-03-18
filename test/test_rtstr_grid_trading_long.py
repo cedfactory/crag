@@ -117,7 +117,9 @@ class TestRTSTRGridTradingLong:
         # create the configruation file
         filename = utils.write_file("./test/generated/crag.xml", '''<configuration>
             <strategy name="StrategyGridTradingLong">
-                <params symbols="BTC/USD" grid_df_params="./test/data/multigrid_df_params.csv"/>
+                <params symbols="BTC/USD" grid_df_params="./test/data/multigrid_df_params.csv"
+                sl="0" tp="0" global_sl="0" global_tp="0"
+                grid_high="130" grid_low="100" percent_per_grid="0.4" nb_grid="5" grid_margin="500"/>
             </strategy>
             <broker name="mock">
                 <params exchange="broker" account="test_bot" simulation="1" reset_account="False" />
