@@ -159,7 +159,7 @@ class Broker(metaclass = ABCMeta):
         pass
 
     def log_info_trade(self):
-        pass
+        return ""
 
     def clear_log_info_trade(self):
         pass
