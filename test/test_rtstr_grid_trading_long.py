@@ -32,6 +32,8 @@ class BrokerMock(broker.Broker):
     def _get_coin(self, symbol):
         return ""
 
+    def get_current_data(self, data_description):
+        return {}
 
 class TestRTSTRGridTradingLong:
 
@@ -118,7 +120,7 @@ class TestRTSTRGridTradingLong:
         filename = utils.write_file("./test/generated/crag.xml", '''<configuration>
             <strategy name="StrategyGridTradingLong">
                 <params symbols="BTC/USD" grid_df_params="./test/data/multigrid_df_params.csv"
-                sl="0" tp="0" global_sl="0" global_tp="0"
+                sl="0" tp="0" global_sl="0" global_tp="0" global_safety_TP="0" global_safety_SL="0"
                 grid_high="130" grid_low="100" percent_per_grid="0.4" nb_grid="5" grid_margin="500"/>
             </strategy>
             <broker name="mock">
@@ -132,6 +134,9 @@ class TestRTSTRGridTradingLong:
         params = crag_helper.get_crag_params_from_configuration(configuration)
 
         params["broker"] = BrokerMock()
+
+        params["rtstr"].global_safety_TP = 0
+        params["rtstr"].global_safety_SL = 0
 
         bot = crag.Crag(params)
 

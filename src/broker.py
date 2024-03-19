@@ -164,6 +164,12 @@ class Broker(metaclass = ABCMeta):
     def clear_log_info_trade(self):
         pass
 
+    def save_reboot_data(self, df):
+        pass
+
+    def get_global_unrealizedPL(self):
+        return 0
+
     @abstractmethod
     def _get_symbol(self, coin):
         pass
