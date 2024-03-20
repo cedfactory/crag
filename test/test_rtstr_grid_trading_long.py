@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import patch
 import pandas as pd
 from src import rtstr_grid_trading_long, rtdp
 from src import crag, crag_helper
@@ -112,9 +113,13 @@ class TestRTSTRGridTradingLong:
         assert (any(item in df.columns.to_list() for item in ['symbol', 'stimulus']))
         assert (len(df) == 0)
 
-    def test_crag_run(self):
-        return
+
+    def test_crag_run(self, mocker):
         # context
+        def mock_step(self):
+            return False
+
+        mocker.patch('src.crag.Crag.step',mock_step)
 
         # create the configruation file
         filename = utils.write_file("./test/generated/crag.xml", '''<configuration>
