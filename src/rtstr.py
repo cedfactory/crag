@@ -436,7 +436,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
     def set_df_buying_size(self, df_symbol_size, cash):
         if not isinstance(df_symbol_size, pd.DataFrame):
             return
-        cash = 10000
+        # cash = 10000 # CEDE GRID SCENARIO
         self.df_grid_buying_size = df_symbol_size
         for symbol in df_symbol_size['symbol'].tolist():
             dol_per_grid = self.grid_margin / (self.nb_grid + 1)
