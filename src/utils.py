@@ -10,6 +10,10 @@ from src.toolbox import settings_helper
 import psutil
 import pandas as pd
 
+def drop_smallest_items(lst, x):
+    sorted_lst = sorted(lst)  # Sort the list
+    return sorted_lst[x:]  # Slice the list to remove the smallest x items
+
 def modify_strategy_data_files(input_dir, str):
     # Get list of all files in the directory
     files = os.listdir(input_dir)
@@ -17,9 +21,14 @@ def modify_strategy_data_files(input_dir, str):
     matching_files = [file for file in files if str in file]
     for filename in matching_files:
         df_tmp = pd.read_csv(os.path.join(input_dir, filename))
-        if len(df_tmp) > 0:
-            df_tmp["total"] = df_tmp["total"] * 2
-            df_tmp.to_csv(os.path.join(input_dir, filename))
+
+        unnamed_columns = [col for col in df_tmp.columns if col.startswith('Unnamed')]
+        df_tmp = df_tmp.drop(columns=unnamed_columns)
+        df_tmp.to_csv(os.path.join(input_dir, filename))
+
+        # if len(df_tmp) > 0:
+        #     df_tmp["total"] = df_tmp["total"] / 2
+        #     df_tmp.to_csv(os.path.join(input_dir, filename))
 
 def get_memory_usage():
     process = psutil.Process()

@@ -1,2 +1,2 @@
-,Unnamed: 0.1,Unnamed: 0,symbol,holdSide,leverage,marginCoin,available,total,usdtEquity,marketPrice,averageOpenPrice,achievedProfits,unrealizedPL,liquidationPrice
-0,0,0,XRP,long,2,USDT,10.0,140.0,5.86875,0.58664,0.586875,0.0,-0.0047,0.0
+,symbol,holdSide,leverage,marginCoin,available,total,usdtEquity,marketPrice,averageOpenPrice,achievedProfits,unrealizedPL,liquidationPrice
+0,XRP,long,2,USDT,10.0,70.0,5.86875,0.58664,0.586875,0.0,-0.0047,0.0

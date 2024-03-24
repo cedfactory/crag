@@ -972,12 +972,18 @@ class Crag:
         while True:
             self.start_time_grid_strategy = time.time()
             if self.start_time_grid_strategy_init == None:
+                symbols = ["XRP"]
                 self.start_time_grid_strategy_init = self.start_time_grid_strategy
                 self.grid_iteration = 1
+                df_symbol_minsize = self.broker.get_df_minimum_size(symbols)
+                df_buying_size = self.rtstr.set_df_buying_size_scenario(df_symbol_minsize, self.broker.get_usdt_equity())
+                df_buying_size_normalise = self.broker.normalize_grid_df_buying_size_size(df_buying_size)
+                self.rtstr.set_df_normalize_buying_size(df_buying_size_normalise)
+                self.rtstr.set_normalized_grid_price(self.broker.get_price_place_endstep(symbols))
             else:
                 self.grid_iteration += 1
 
-            break_pt = 40
+            break_pt = 11
             if cpt == break_pt:
                 print("toto")
                 pass
@@ -1056,8 +1062,8 @@ class Crag:
                 print("MEMORY ", id, " - ", key1, " VALUE: ", value3, " PREV DIFF: ",  value3 - value2, " INIT DIFF: ", value3 - value1)
 
     def udpate_strategy_with_broker_current_state(self):
-        GRID_SCENARIO_ON = False
-        SCENARIO_ID = 6
+        GRID_SCENARIO_ON = True
+        SCENARIO_ID = 8
         if GRID_SCENARIO_ON:
             self.udpate_strategy_with_broker_current_state_scenario(SCENARIO_ID)
         else:

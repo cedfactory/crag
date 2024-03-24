@@ -426,15 +426,21 @@ class RealTimeStrategy(metaclass=ABCMeta):
     def get_grid_buying_size(self, symbol):
         return self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "buyingSize"].values[0]
 
+    def set_df_buying_size_scenario(self, df_symbol_size, cash):
+        self.df_grid_buying_size = df_symbol_size
+        for symbol in df_symbol_size['symbol'].tolist():
+            self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "buyingSize"] = 10
+
+        return self.df_grid_buying_size
+
     def set_df_buying_size(self, df_symbol_size, cash):
         if not isinstance(df_symbol_size, pd.DataFrame):
             return
-
+        cash = 10000
         self.df_grid_buying_size = df_symbol_size
         for symbol in df_symbol_size['symbol'].tolist():
             dol_per_grid = self.grid_margin / (self.nb_grid + 1)
             size = dol_per_grid / ((self.grid_high + self.grid_low )/2)
-            self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "buyingSize"] = size
             if (self.get_grid_buying_min_size(symbol) <= size)\
                     and (size * self.grid_low > 5) \
                     and (cash >= self.grid_margin):
