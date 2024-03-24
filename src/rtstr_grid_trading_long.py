@@ -81,7 +81,7 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
             self.grid.update_nb_open_positions(symbol, df_open_positions, buying_size)
             self.grid.update_pending_status_from_current_state(symbol, df_current_state)
 
-            if symbol in df_price['symbols']:
+            if symbol in df_price['symbols'].tolist():
                 price_for_symbol = df_price.loc[df_price['symbols'] == symbol, 'values'].values[0]
                 self.grid.cross_check_with_current_state(symbol, df_current_state)
                 self.grid.update_grid_side(symbol, price_for_symbol)
