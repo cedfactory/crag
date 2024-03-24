@@ -81,10 +81,11 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
             self.grid.update_nb_open_positions(symbol, df_open_positions, buying_size)
             self.grid.update_pending_status_from_current_state(symbol, df_current_state)
 
-            price_for_symbol = df_price.loc[df_price['symbols'] == symbol, 'values'].values[0]
-            self.grid.cross_check_with_current_state(symbol, df_current_state)
-            self.grid.update_grid_side(symbol, price_for_symbol)
-            # self.grid.cross_check_with_current_state(symbol, df_current_state)
+            if symbol in df_price['symbols']:
+                price_for_symbol = df_price.loc[df_price['symbols'] == symbol, 'values'].values[0]
+                self.grid.cross_check_with_current_state(symbol, df_current_state)
+                self.grid.update_grid_side(symbol, price_for_symbol)
+                # self.grid.cross_check_with_current_state(symbol, df_current_state)
 
             lst_order_to_execute = self.grid.get_order_list(symbol, buying_size, df_current_state)
             self.grid.set_to_pending_execute_order(symbol, lst_order_to_execute)
@@ -121,9 +122,10 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
         for symbol in self.lst_symbols:
             lst_buying_market_order = []
             buying_size = self.get_grid_buying_size(symbol)
-            price = df_prices.loc[df_prices['symbols'] == symbol, 'values'].values[0]
-            order = self.grid.get_buying_market_order(symbol, buying_size, price)
-            lst_buying_market_order.append(order)
+            if symbol in df_prices['symbols']:
+                price = df_prices.loc[df_prices['symbols'] == symbol, 'values'].values[0]
+                order = self.grid.get_buying_market_order(symbol, buying_size, price)
+                lst_buying_market_order.append(order)
         return lst_buying_market_order
 
     def get_info_msg_status(self):
@@ -417,9 +419,10 @@ class GridPosition():
                 order_to_execute["type"] = "OPEN_SHORT_ORDER"
             elif df_grid.loc[df_grid["grid_id"] == grid_id, 'side'].values[0] == "close_short":
                 order_to_execute["type"] = "CLOSE_SHORT_ORDER"
-            order_to_execute["price"] = df_grid.loc[df_grid["grid_id"] == grid_id, 'position'].values[0]
-            order_to_execute["grid_id"] = grid_id
-            lst_order.append(order_to_execute)
+            if "type" in order_to_execute:
+                order_to_execute["price"] = df_grid.loc[df_grid["grid_id"] == grid_id, 'position'].values[0]
+                order_to_execute["grid_id"] = grid_id
+                lst_order.append(order_to_execute)
 
         sorting_order = ['OPEN_LONG_ORDER', 'OPEN_SHORT_ORDER', 'CLOSE_LONG_ORDER', 'CLOSE_SHORT_ORDER']
         sorted_list = sorted(lst_order, key=lambda x: sorting_order.index(x['type']))

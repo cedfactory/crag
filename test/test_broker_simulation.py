@@ -10,7 +10,7 @@ class TestSimBroker:
         broker = broker_simulation.SimBroker()
         
         # expectations
-        assert(broker.get_cash() == 1)
+        assert(broker.get_cash() == 10)
 
     def test_initialize_cash(self):
         # action

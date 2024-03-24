@@ -196,7 +196,8 @@ class rtctrl():
         self.df_rtctrl['wallet_%'] = np.where(self.df_rtctrl['wallet_value'] != 0, 100 * self.df_rtctrl['portfolio_value'] / self.df_rtctrl['wallet_value'], 0.)
 
         self.global_roi_value = self.wallet_value - self.init_cash_value
-        self.global_roi_percent = self.global_roi_value / self.init_cash_value * 100
+        if self.init_cash_value != 0:
+            self.global_roi_percent = self.global_roi_value / self.init_cash_value * 100
 
         self.df_roi_sl_tp = self.df_rtctrl.copy()
         self.df_roi_sl_tp.set_index('symbol', inplace=True)
