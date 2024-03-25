@@ -121,9 +121,10 @@ class StrategyGridTradingShort(rtstr.RealTimeStrategy):
         for symbol in self.lst_symbols:
             lst_buying_market_order = []
             buying_size = self.get_grid_buying_size(symbol)
-            price = df_prices.loc[df_prices['symbols'] == symbol, 'values'].values[0]
-            order = self.grid.get_buying_market_order(symbol, buying_size, price)
-            lst_buying_market_order.append(order)
+            if symbol in df_prices['symbols']:
+                price = df_prices.loc[df_prices['symbols'] == symbol, 'values'].values[0]
+                order = self.grid.get_buying_market_order(symbol, buying_size, price)
+                lst_buying_market_order.append(order)
         return lst_buying_market_order
 
     def get_info_msg_status(self):
@@ -178,8 +179,6 @@ class GridPosition():
         self.df_nb_open_positions['positions_size'] = 0
         self.df_nb_open_positions['nb_open_positions'] = 0
         self.df_nb_open_positions['nb_open_limit_order'] = 0
-        self.df_nb_open_positions['nb_total_opened_positions'] = 0
-        self.df_nb_open_positions['nb_total_closed_positions'] = 0
         self.df_nb_open_positions['nb_previous_open_positions'] = 0
         self.df_nb_open_positions['diff_position'] = 0
         self.df_nb_open_positions['previous_nb_open_positions'] = 0
@@ -417,9 +416,10 @@ class GridPosition():
                 order_to_execute["type"] = "OPEN_SHORT_ORDER"
             elif df_grid.loc[df_grid["grid_id"] == grid_id, 'side'].values[0] == "close_short":
                 order_to_execute["type"] = "CLOSE_SHORT_ORDER"
-            order_to_execute["price"] = df_grid.loc[df_grid["grid_id"] == grid_id, 'position'].values[0]
-            order_to_execute["grid_id"] = grid_id
-            lst_order.append(order_to_execute)
+            if "type" in order_to_execute:
+                order_to_execute["price"] = df_grid.loc[df_grid["grid_id"] == grid_id, 'position'].values[0]
+                order_to_execute["grid_id"] = grid_id
+                lst_order.append(order_to_execute)
 
         sorting_order = ['OPEN_LONG_ORDER', 'OPEN_SHORT_ORDER', 'CLOSE_LONG_ORDER', 'CLOSE_SHORT_ORDER']
         sorted_list = sorted(lst_order, key=lambda x: sorting_order.index(x['type']))
@@ -461,8 +461,6 @@ class GridPosition():
                 self.diff_close_position = self.nb_close_positions - self.previous_nb_close_positions
                 self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'diff_open_position'] = self.diff_open_position
                 self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'diff_close_position'] = self.diff_close_position
-                self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_total_opened_positions'] += self.diff_open_position
-                self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_total_closed_positions'] += self.diff_close_position
             else:
                 self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'positions_size'] = 0
                 self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_open_positions'] = 0
@@ -477,8 +475,6 @@ class GridPosition():
             self.diff_close_position = self.nb_close_positions - self.previous_nb_close_positions
             self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'diff_open_position'] = self.diff_open_position
             self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'diff_close_position'] = self.diff_close_position
-            self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_total_opened_positions'] += self.diff_open_position
-            self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_total_closed_positions'] += self.diff_close_position
 
     def get_nb_open_positions_from_state(self, symbol):
         row = self.df_nb_open_positions[self.df_nb_open_positions['symbol'] == symbol]
@@ -653,6 +649,9 @@ class GridPosition():
         self.diff_nb_close_positions = self.nb_close_positions - self.nb_previous_close_positions
 
     def update_control_multi_position(self, symbol, df_current_state, df_open_positions):
+        self.control_multi_position['nb_current_limit_close'] = len(df_current_state[(df_current_state['side'] == 'close_long')])
+        self.control_multi_position['nb_current_limit_open'] = len(df_current_state[(df_current_state['side'] == 'open_long')])
+
         df = self.grid[symbol]
 
         condition_engaged = df['status'] == 'engaged'
@@ -743,6 +742,9 @@ class GridPosition():
         # Count of rows with side == 'open_short' and status == 'engaged'
         dct_status_info['nb_limit_open'] = len(df[(df['side'] == 'open_short') & (df['status'] == 'engaged')])
 
+        dct_status_info['nb_current_limit_close'] = self.control_multi_position['nb_current_limit_close']
+        dct_status_info['nb_current_limit_open'] = self.control_multi_position['nb_current_limit_open']
+
         dct_status_info['nb_position'] = self.get_nb_open_positions_from_state(symbol)
         dct_status_info['price'] = self.current_price
         dct_status_info['grid_position'] = self.grid_position
@@ -780,11 +782,11 @@ class GridPosition():
             msg += "**BELOW GRID**\n"
         else:
             msg += "**position: " + str(dct_info['grid_position'][0]) + " / " + str(dct_info['grid_position'][1]) + "**\n"
-        msg += "nb_limit_close: " + str(dct_info['nb_limit_close']) + "\n"
-        msg += "nb_limit_open: " + str(dct_info['nb_limit_open']) + "\n"
-        msg += "nb_open_position: " + str(dct_info['nb_position']) + "\n"
-        msg += "nb_total_opened_positions: " + str(self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_total_opened_positions'].values[0]) + "\n"
-        msg += "nb_total_closed_positions: " + str(self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_total_closed_positions'].values[0]) + "\n"
+        msg += "broker limit_close: " + str(dct_info['nb_current_limit_close']) + "\n"
+        msg += "broker limit_open: " + str(dct_info['nb_current_limit_open']) + "\n"
+        msg += "grid limit_close: " + str(dct_info['nb_limit_close']) + "\n"
+        msg += "grid limit_open: " + str(dct_info['nb_limit_open']) + "\n"
+        msg += "total open_position: " + str(dct_info['nb_position']) + "\n"
 
         if len(self.previous_grid_position) == 2:
             msg += "# TREND:" + "\n"

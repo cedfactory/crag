@@ -983,7 +983,7 @@ class Crag:
             else:
                 self.grid_iteration += 1
 
-            break_pt = 11
+            break_pt = 4
             if cpt == break_pt:
                 print("toto")
                 pass
@@ -1110,11 +1110,11 @@ class Crag:
             msg += "**USDT: " + str(round(usdt_equity, 2)) + " %: " + str(round(self.total_SL_TP * 100 / self.original_portfolio_value, 2)) + "**\n"
             msg += "**INITIAL: " + str(round(self.original_portfolio_value, 2)) + " $: " + str(round(self.total_SL_TP, 2)) + "**\n"
             msg += "MAX: " + str(round(self.maximal_portfolio_value, 2)) \
-                   + " $: " + str(round(self.maximal_portfolio_variation, 2)) \
-                   + " %: " + str(round(self.maximal_portfolio_variation * 100 / self.original_portfolio_value, 2)) + "\n"
+                   + " $: " + str(round(self.maximal_portfolio_value - self.original_portfolio_value, 2)) \
+                   + " %: " + str(round((self.maximal_portfolio_value - self.original_portfolio_value) * 100 / self.original_portfolio_value, 2)) + "\n"
             msg += "MIN: " + str(round(self.minimal_portfolio_value, 2)) \
-                   + " $: " + str(round(self.minimal_portfolio_variation, 2)) \
-                   + " %: " + str(round(self.minimal_portfolio_variation * 100 / self.original_portfolio_value, 2)) + "\n"
+                   + " $: " + str(round(self.minimal_portfolio_value - self.original_portfolio_value, 2)) \
+                   + " %: " + str(round((self.minimal_portfolio_value - self.original_portfolio_value) * 100 / self.original_portfolio_value, 2)) + "\n"
             lst_usdt_symbols = self.broker.get_lst_symbol_position()
             if len(symbols) == len(lst_usdt_symbols):
                 for symbol, usdt_symbol in zip(symbols, lst_usdt_symbols):

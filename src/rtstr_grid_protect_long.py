@@ -179,8 +179,6 @@ class GridPosition():
         self.df_nb_open_positions['side'] = "LONG"
         self.df_nb_open_positions['positions_size'] = 0
         self.df_nb_open_positions['nb_open_positions'] = 0
-        self.df_nb_open_positions['nb_total_opened_positions'] = 0
-        self.df_nb_open_positions['nb_total_closed_positions'] = 0
         self.df_nb_open_positions['nb_previous_open_positions'] = 0
         self.df_nb_open_positions['diff_position'] = 0
         self.df_nb_open_positions['previous_nb_open_positions'] = 0
@@ -483,10 +481,6 @@ class GridPosition():
                 self.df_nb_open_positions['previous_nb_open_positions'] = previous_nb_open_positions
                 self.diff_position = nb_open_positions - previous_nb_open_positions
                 self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'diff_position'] = self.diff_position
-                if self.diff_position >= 0:
-                    self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_total_opened_positions'] += self.diff_position
-                else:
-                    self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_total_closed_positions'] += abs(self.diff_position)
             else:
                 self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'positions_size'] = 0
                 self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_open_positions'] = 0
@@ -498,13 +492,6 @@ class GridPosition():
             nb_open_positions = 0
             self.diff_position = nb_open_positions - previous_nb_open_positions
             self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'diff_position'] = self.diff_position
-            if self.diff_position >= 0:
-                self.df_nb_open_positions.loc[
-                    self.df_nb_open_positions['symbol'] == symbol, 'nb_total_opened_positions'] += self.diff_position
-            else:
-                self.df_nb_open_positions.loc[
-                    self.df_nb_open_positions['symbol'] == symbol, 'nb_total_closed_positions'] += abs(
-                    self.diff_position)
 
     def get_nb_open_positions(self, symbol):
         row = self.df_nb_open_positions[self.df_nb_open_positions['symbol'] == symbol]
