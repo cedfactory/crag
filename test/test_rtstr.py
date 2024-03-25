@@ -1,6 +1,10 @@
 import pytest
 from . import test_rtctrl
-from src import rtstr,rtstr_bigwill,rtstr_cryptobot,rtstr_super_reversal,rtstr_trix,rtstr_VMC
+from src import rtstr
+from src import rtstr_bigwill, rtstr_bollinger_trend, rtstr_bollinger_trend_long
+from src import rtstr_cryptobot, rtstr_envelope, rtstr_envelopestochrsi
+from src import rtstr_grid_protect_long, rtstr_grid_trading_long, rtstr_grid_trading_short
+from src import rtstr_super_reversal, rtstr_trix, rtstr_VMC
 import pandas as pd
 
 def update_rtctrl(rtstr):
@@ -21,11 +25,11 @@ class TestRTSTR:
 
         # expectations
         #expected_strategies = ['StrategyDummyTest', 'StrategyEnvelope', 'StrategyEnvelopeStochRSI', 'StrategyDummyTestTP', 'StrategyBollingerTrend', 'StrategyGridTrading', 'StrategyBollingerTrendLong', 'StrategyTvRecommendationMid', 'StrategySuperReversal', 'StrategyVolatilityTest', 'StrategyTrix', 'StrategyCryptobot', 'StrategySLTPOnly', 'StrategyBigWill', 'StrategyVMC']
-        expected_strategies = ['StrategyDummyTest', 'StrategyEnvelope', 'StrategyEnvelopeStochRSI',
-                               'StrategyDummyTestTP', 'StrategyBollingerTrend', 'StrategyGridTradingLong',
-                               'StrategyGridTradingShort', 'StrategyBollingerTrendLong', 'StrategyTvRecommendationMid',
-                               'StrategySuperReversal', 'StrategyVolatilityTest', 'StrategyTrix', 'StrategyCryptobot',
-                               'StrategySLTPOnly', 'StrategyBigWill', 'StrategyVMC']
+        expected_strategies = ['StrategyEnvelope', 'StrategyEnvelopeStochRSI',
+                               'StrategyBollingerTrend', 'StrategyGridTradingLong',
+                               'StrategyGridTradingShort', 'StrategyBollingerTrendLong',
+                               'StrategySuperReversal', 'StrategyTrix', 'StrategyCryptobot',
+                               'StrategyGridTradingProtectLong', 'StrategyBigWill', 'StrategyVMC']
         print(expected_strategies)
         print(available_strategies)
         assert(set(available_strategies) == set(expected_strategies))
