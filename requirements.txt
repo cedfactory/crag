@@ -28,3 +28,4 @@ mplfinance==0.12.9b7
 scipy==1.10.1
 psutil==5.9.8
 Pympler==1.0.1
+websocket-client==1.7.0

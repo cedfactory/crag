@@ -6,6 +6,8 @@ from .bitget.mix import position_api as position
 from .bitget.mix import order_api as order
 from .bitget.spot import public_api as public
 
+from .bitget_ws.bitget_ws import BitgetWsClient
+
 from . import broker_bitget
 from . import utils
 from datetime import datetime
@@ -46,6 +48,21 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             print('reset account not requested')
             print('resume strategy')
             self.set_boot_status_to_resumed()
+
+        # initialize the websocket client
+        exchange_api_key = self.account.get("api_key", None)
+        exchange_api_secret = self.account.get("api_secret", None)
+        exchange_api_password = self.account.get("api_password", None)
+
+        def handle_error(message):
+            print("[handle_error]", message)
+        self.ws_client = BitgetWsClient() \
+            .error_listener(handle_error) \
+            .build()
+
+    def __del__(self):
+        if self.ws_client:
+            self.ws_client.close()
 
     def _authentification(self):
         if not self.account:
