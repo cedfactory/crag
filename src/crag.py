@@ -162,13 +162,15 @@ class Crag:
             channel.queue_declare(queue="StrategyMonitoring")
 
             def callback(ch, method, properties, bbody):
-                print(" [x] Received {}".format(bbody))
+                if not self.zero_print:
+                    print(" [x] Received {}".format(bbody))
                 body = bbody.decode()
                 body = json.loads(body)
                 if body and body["id"] == "command" and body["strategy_id"] == self.rtstr.id:
                     command = body["command"]
                     if command == "stop":
-                        print("stopping ", self.rtstr.id)
+                        if not self.zero_print:
+                            print("stopping ", self.rtstr.id)
                         os._exit(0)
 
                 if body == "history" or body == "stop":
@@ -204,7 +206,8 @@ class Crag:
             thread.setDaemon(True)
             thread.start()
         except:
-            print("Problem encountered while configuring the rabbitmq receiver")
+            if not self.zero_print:
+                print("Problem encountered while configuring the rabbitmq receiver")
 
 
     def log(self, msg, header="", attachments=[]):
@@ -241,14 +244,14 @@ class Crag:
                 or self.interval is None:  # 1s
             start = start.replace(second=0, microsecond=0)
             start += timedelta(seconds=1)
-        print("start time: ", start)
+        if not self.zero_print:
+            print("start time: ", start)
         msg = "start time: " + start.strftime("%Y/%m/%d %H:%M:%S")
         self.log(msg, "start time")
         start = datetime.timestamp(start)
 
         done = False
         while not done:
-            print("[RUN] [CRAG] while step 1")
             now = time.time()
             sleeping_time = start - now
             # sleeping_time = 0 # CEDE DEBUG TO SKIP THE SLEEPING TIME
@@ -256,9 +259,7 @@ class Crag:
                 if self.safety_run:
                     start_minus_one_sec = datetime.timestamp(datetime.fromtimestamp(start) - timedelta(seconds=1))
                     while time.time() < start_minus_one_sec:
-                        print("[RUN] [CRAG] while step 2")
                         step_result = self.safety_step()
-                        print("[RUN] [CRAG] while step 3")
                         if not step_result:
                             print("safety_step result exit")
                             os._exit(0)
@@ -268,29 +269,22 @@ class Crag:
                             time.sleep(self.rtstr.high_volatility.high_volatility_get_duration())
                     while time.time() < start:
                         pass
-                    print("[RUN] [CRAG] while step 4")
                 else:
-                    print("[RUN] [CRAG] while step 6")
                     time.sleep(sleeping_time)
-                    print("[RUN] [CRAG] while step 7")
             else:
                 # COMMENT CEDE REDUNDANT CODE
                 if self.safety_run:
-                    print("[RUN] [CRAG] while step 8")
                     step_result = self.safety_step()
-                    print("[RUN] [CRAG] while step 9")
                     if self.interval != 1:  # 1s
                         self.log("safety run executed\n"
                                  + "warning : time elapsed for the step ({}) is greater than the interval ({})".format(sleeping_time, self.interval))
                     if not step_result:
                         os._exit(0)
-                    print("[RUN] [CRAG] while step 10")
                     if self.rtstr.high_volatility.high_volatility_pause_status():
                         msg = "duration: " + str(self.rtstr.high_volatility.high_volatility_get_duration()) + "seconds"
                         self.log(msg, "PAUSE DUE HIGH VOLATILITY")
                         time.sleep(self.rtstr.high_volatility.high_volatility_get_duration())
                 else:
-                    print("[RUN] [CRAG] while step 11")
                     if self.interval != 1:  # 1s
                         self.log(
                             "warning : time elapsed for the step ({}) is greater than the interval ({})".format(
@@ -306,12 +300,9 @@ class Crag:
             self.strategy_start_time = start
             start = datetime.timestamp(start)
 
-            print("[RUN] [CRAG] while step 12")
             done = not self.step()
             if done:
-                print("[RUN] [CRAG] while step 13")
                 break
-            print("[RUN] [CRAG] while step 14")
 
             self.broker.tick() # increment
             # self.backup() # backup for reboot
@@ -335,29 +326,31 @@ class Crag:
         if (self.rtstr.rtctrl.get_rtctrl_nb_symbols() > 0)\
                 and (self.rtstr.position_recorder.get_total_position_engaged() == 0):
             # After reset PositionRecorder have to be updated
-            print('reset PositionRecorder')
+            if not self.zero_print:
+                print('reset PositionRecorder')
             self.rtstr.position_recorder.update_position_recorder(self.rtstr.rtctrl.get_rtctrl_lst_symbols())
         else:
-            print('DEBUG - nb positions from rctctrl:          ', self.rtstr.rtctrl.get_rtctrl_nb_symbols())
-            print('DEBUG - nb positions from PositionRecorder: ', self.rtstr.position_recorder.get_total_position_engaged())
+            if not self.zero_print:
+                print('DEBUG - nb positions from rctctrl:          ', self.rtstr.rtctrl.get_rtctrl_nb_symbols())
+                print('DEBUG - nb positions from PositionRecorder: ', self.rtstr.position_recorder.get_total_position_engaged())
 
         measure_time_fdp_start = datetime.now()
 
         nb_try = 0
         current_data_received = False
 
-        # CEDE DEBUG
-        print("request fdp [CRAG] [step]")
         while current_data_received != True:
             current_data = self.broker.get_current_data(ds)
             if current_data is None:
-                print("current_data not received: ", nb_try)
+                if not self.zero_print:
+                    print("current_data not received: ", nb_try)
                 nb_try += 1
             else:
                 current_data_received = True
 
         measure_time_fdp_end = datetime.now()
-        print("measure time fdp:", measure_time_fdp_end - measure_time_fdp_start)
+        if not self.zero_print:
+            print("measure time fdp:", measure_time_fdp_end - measure_time_fdp_start)
 
         if current_data is None:
             if not self.zero_print:
@@ -471,7 +464,8 @@ class Crag:
         unrealised_PL_short = 0
         lst_symbol_position = self.broker.get_lst_symbol_position()
 
-        print("lst_symbol_position", lst_symbol_position)  # CEDE DEBUG
+        if not self.zero_print:
+            print("lst_symbol_position", lst_symbol_position)  # CEDE DEBUG
 
         if len(lst_symbol_position) > 0:
             msg = "end step with {} open position\n".format(len(lst_symbol_position))
@@ -558,7 +552,8 @@ class Crag:
         try:
             sell_trade.trace_id = bought_trade.id
         except:
-            print("DEBUG TRACES ERROR - NO bought_trade.id")
+            if not self.zero_print:
+                print("DEBUG TRACES ERROR - NO bought_trade.id")
             sell_trade.trace_id = 0
         sell_trade.commission = self.broker.get_commission(sell_trade.symbol)
         sell_trade.minsize = self.broker.get_minimum_size(sell_trade.symbol)
@@ -656,7 +651,8 @@ class Crag:
             df_buying_symbols.drop(df_buying_symbols.index, inplace=True)
         symbols_bought = {"symbol":[], "size":[], "percent":[], "gross_price":[], "pos_type": []}
         for symbol in df_buying_symbols.index.to_list():
-            print("buying symbol: ", symbol)
+            if not self.zero_print:
+                print("buying symbol: ", symbol)
             current_trade = trade.Trade(current_datetime)
             # current_trade.type = self.rtstr.get_open_type(symbol)
             current_trade.type = df_buying_symbols['pos_type'][symbol]
@@ -673,13 +669,12 @@ class Crag:
 
             # TMP HACK CEDE
             if abs(round(current_trade.gross_price, 4)) >= round(self.cash, 4):
-                print("=========== > gross price do not fit cash value:")
-                print("===========================================================================")
-                print('cash', self.cash)
-                print('gross_price', current_trade.gross_price)
+                if not self.zero_print:
+                    print("=========== > gross price do not fit cash value:")
+                    print('cash', self.cash)
+                    print('gross_price', current_trade.gross_price)
                 current_trade.gross_price = self.cash - self.cash * 0.1
                 current_trade.gross_size = current_trade.gross_price / current_trade.buying_price
-                print("===========================================================================")
 
             current_trade.net_price = round(current_trade.gross_price * (1 - current_trade.commission), 4)
             current_trade.net_size = round(current_trade.net_price / current_trade.symbol_price, 6)
@@ -713,11 +708,12 @@ class Crag:
                 else:
                     self.rtstr.open_position_failed(symbol)
             else:
-                print("=========== > execute trade not actioned - gross price do not fit cash value:")
-                print("=========== >abs(round(current_trade.gross_price, 4)) <= round(self.cash, 4)",
-                      abs(round(current_trade.gross_price, 4)) <= round(self.cash, 4))
-                print('=========== >current_trade.gross_price: ', current_trade.gross_price)
-                print('=========== >self.cash: ', self.cash)
+                if not self.zero_print:
+                    print("=========== > execute trade not actioned - gross price do not fit cash value:")
+                    print("=========== >abs(round(current_trade.gross_price, 4)) <= round(self.cash, 4)",
+                          abs(round(current_trade.gross_price, 4)) <= round(self.cash, 4))
+                    print('=========== >current_trade.gross_price: ', current_trade.gross_price)
+                    print('=========== >self.cash: ', self.cash)
                 self.rtstr.open_position_failed(symbol)
 
         df_symbols_bought = pd.DataFrame(symbols_bought)
@@ -776,7 +772,7 @@ class Crag:
 
     def backup(self):
         with open(self.backup_filename, 'wb') as file:
-            # print("[crah::backup]", self.backup_filename)
+            print("[crah::backup]", self.backup_filename)
             pickle.dump(self, file)
 
     def merge_current_trades_from_symbol(self, current_trades, symbol, current_datetime, position_type):
@@ -854,14 +850,17 @@ class Crag:
             msg = msg + ' type: ' + str(current_trade.type)
             msg = msg + ' price: ' + str(round(current_trade.net_price, 1))
             msg = msg + ' size: ' + str(round(current_trade.net_size, 4))
-        print(msg)
+        if not self.zero_print:
+            print(msg)
 
     def create_directory(self, directory_path):
         if not os.path.exists(directory_path):
             os.makedirs(directory_path)
-            print(f"Directory '{directory_path}' created successfully.")
+            if not self.zero_print:
+                print(f"Directory '{directory_path}' created successfully.")
         else:
-            print(f"Directory '{directory_path}' already exists.")
+            if not self.zero_print:
+                print(f"Directory '{directory_path}' already exists.")
 
     def save_df_csv_broker_current_state(self, output_dir, current_state):
         self.create_directory(output_dir)
@@ -919,7 +918,8 @@ class Crag:
             exit_scenario = True
 
         if exit_scenario:
-            print("SCENARIO COMPLETED AT ROUND ", str_cpt)
+            if not self.zero_print:
+                print("SCENARIO COMPLETED AT ROUND ", str_cpt)
             full_path = os.path.join(input_dir, "results_scenario_grid_df_current_states.csv")
             df_orders.to_csv(full_path)
             full_path = os.path.join(input_dir, "baseline_" + "results_scenario_grid_df_current_states.csv")
@@ -930,11 +930,14 @@ class Crag:
                 # Check if DataFrames are identical
                 identical = df_baseline.equals(df_orders)
                 if identical:
-                    print("ORDERS MATCHING 100%")
+                    if not self.zero_print:
+                        print("ORDERS MATCHING 100%")
                 else:
-                    print("ORDERS NOT MATCHING")
+                    if not self.zero_print:
+                        print("ORDERS NOT MATCHING")
             else:
-                print("NO ORDER BASELINE AVAILABLE FOR THIS SCENARIO")
+                if not self.zero_print:
+                    print("NO ORDER BASELINE AVAILABLE FOR THIS SCENARIO")
 
             full_path = os.path.join(input_dir, "results_scenario_grid_df_grids.csv")
             df_grids.to_csv(full_path)
@@ -948,11 +951,14 @@ class Crag:
                 # Check if DataFrames are identical
                 identical = df_baseline.equals(df_grids)
                 if identical:
-                    print("GRIDS MATCHING 100%")
+                    if not self.zero_print:
+                        print("GRIDS MATCHING 100%")
                 else:
-                    print("GRIDS NOT MATCHING")
+                    if not self.zero_print:
+                        print("GRIDS NOT MATCHING")
             else:
-                print("NO GRID BASELINE AVAILABLE FOR THIS SCENARIO")
+                if not self.zero_print:
+                    print("NO GRID BASELINE AVAILABLE FOR THIS SCENARIO")
             exit(0)
 
         broker_current_state = {
@@ -985,9 +991,15 @@ class Crag:
 
             break_pt = 4
             if cpt == break_pt:
-                print("toto")
+                if not self.zero_print:
+                    print("toto")
                 pass
-            print("cpt start: ", cpt)
+            if cpt == 60:
+                cpt = 0
+                if not self.zero_print:
+                    print("restart")
+            if not self.zero_print:
+                print("cpt start: ", cpt)
             self.start_time_grid_strategy = time.time()
             broker_current_state = self.get_current_state_from_csv(input_dir, cpt, df_scenario_results_global, df_grid_global)
             lst_orders_to_execute = self.rtstr.set_broker_current_state(broker_current_state)
@@ -1011,7 +1023,8 @@ class Crag:
                 self.memory_used_mb = self.init_memory_used_mb
             else:
                 self.memory_used_mb = memory_used_bytes / (1024 * 1024)  # Convert bytes to megabytes
-            print("output lst_orders_to_execute: ", lst_orders_to_execute)
+            if not self.zero_print:
+                print("output lst_orders_to_execute: ", lst_orders_to_execute)
             msg = self.rtstr.get_info_msg_status()
             if msg != None:
                 current_datetime = datetime.today().strftime("%Y/%m/%d - %H:%M:%S")
@@ -1033,16 +1046,19 @@ class Crag:
             self.iteration_times_grid_strategy = self.iteration_times_grid_strategy[-10:]
             self.average_time_grid_strategy = round(sum(self.iteration_times_grid_strategy) / len(self.iteration_times_grid_strategy), 2)
             self.average_time_grid_strategy_overall = round((end_time - self.start_time_grid_strategy_init) / self.grid_iteration, 2)
-            print("GRID ITERATION AVERAGE TIME: " + str(self.average_time_grid_strategy) + " seconds")
-            print("CRAG AVERAGE TIME: " + str(self.average_time_grid_strategy_overall) + " seconds")
-            print("OVERALL DURATION: ", utils.format_duration(round((end_time - self.start_time_grid_strategy_init), 2)))
-            print("ITERATIONS: ", self.grid_iteration)
-            print("MEMORY: ", round(self.memory_used_mb, 2), "MB DELTA: " + str(round(self.memory_used_mb - self.init_memory_used_mb,2)) + " MB" + "\n")
+            if not self.zero_print:
+                print("GRID ITERATION AVERAGE TIME: " + str(self.average_time_grid_strategy) + " seconds")
+                print("CRAG AVERAGE TIME: " + str(self.average_time_grid_strategy_overall) + " seconds")
+                print("OVERALL DURATION: ", utils.format_duration(round((end_time - self.start_time_grid_strategy_init), 2)))
+                print("ITERATIONS: ", self.grid_iteration)
+                print("MEMORY: ", round(self.memory_used_mb, 2), "MB DELTA: " + str(round(self.memory_used_mb - self.init_memory_used_mb,2)) + " MB" + "\n")
 
             if cpt == break_pt:
-                print(cpt)
+                if not self.zero_print:
+                    print(cpt)
                 pass
-            print("cpt end: ", cpt)
+            if not self.zero_print:
+                print("cpt end: ", cpt)
             cpt += 1
 
     def get_memory_usage(self, class_memory):
@@ -1053,13 +1069,14 @@ class Crag:
         return memory_usage
 
     def print_memory_usage(self, id, size_init, size_previous, size):
-        if size_previous == 0:
-            return
-        for (key1, value1), (key2, value2), (key3, value3) in zip(size_init.items(), size_previous.items(), size.items()):
-            if (((value3 - value1) > 0)
-                or ((value3 - value2) > 0))\
-                    and not("_size" in key1):
-                print("MEMORY ", id, " - ", key1, " VALUE: ", value3, " PREV DIFF: ",  value3 - value2, " INIT DIFF: ", value3 - value1)
+        if not self.zero_print:
+            if size_previous == 0:
+                return
+            for (key1, value1), (key2, value2), (key3, value3) in zip(size_init.items(), size_previous.items(), size.items()):
+                if (((value3 - value1) > 0)
+                    or ((value3 - value2) > 0))\
+                        and not("_size" in key1):
+                    print("MEMORY ", id, " - ", key1, " VALUE: ", value3, " PREV DIFF: ",  value3 - value2, " INIT DIFF: ", value3 - value1)
 
     def udpate_strategy_with_broker_current_state(self):
         GRID_SCENARIO_ON = False
@@ -1134,9 +1151,10 @@ class Crag:
                         price_for_symbol = df_price.loc[df_price['symbols'] == symbol, 'values'].values[0]
                         msg += "**market price: " + str(round(price_for_symbol, 4)) + "**\n"
                 else:
-                    print("ERROR LST SYMBOLS NOT MATCHING")
-                    print("symbols", symbols)
-                    print("lst_usdt_symbols", lst_usdt_symbols)
+                    if not self.zero_print:
+                        print("ERROR LST SYMBOLS NOT MATCHING")
+                        print("symbols", symbols)
+                        print("lst_usdt_symbols", lst_usdt_symbols)
                     msg += "**ERROR LST SYMBOLS NOT MATCHING" + "**:\n"
             msg += "# TIME & MEMORY" + "\n"
             msg += "CRAG TIME: " + str(self.average_time_grid_strategy_overall) + "s\n"
@@ -1167,8 +1185,7 @@ class Crag:
         self.average_time_grid_strategy = round(sum(self.iteration_times_grid_strategy) / len(self.iteration_times_grid_strategy), 2)
         self.average_time_grid_strategy_overall = round((end_time - self.start_time_grid_strategy_init) / self.grid_iteration, 2)
 
-        # if not self.zero_print:
-        if True: # CEDE FOR DEBUG
+        if not self.zero_print:
             # CEDE MEASURE RUN TIME IN ORDER TO BENCHMARK PC VS RASPBERRY
             print("GRID ITERATION AVERAGE TIME:  " + str(self.average_time_grid_strategy) + " seconds")
             print("CRAG AVERAGE TIME:            " + str(self.average_time_grid_strategy_overall) + " seconds")
@@ -1233,9 +1250,6 @@ class Crag:
                 or self.rtstr.condition_for_global_trailer_TP(self.total_SL_TP_percent) \
                 or self.rtstr.condition_for_global_trailer_SL(self.total_SL_TP_percent) \
                 or self.rtstr.condition_for_max_drawdown_SL(self.actual_drawdown_percent):
-            print('reset - global TP')
-            print('total SL TP: $', self.total_SL_TP, "      ", self.total_SL_TP_percent, "%")
-            print('max drawdown: $', self.drawdown, " - ", self.actual_drawdown_percent, "%")
             msg = "reset - total SL TP"
             msg += "total SL TP: ${} / %{}\n".format(utils.KeepNDecimals(self.total_SL_TP, 2),
                                                      utils.KeepNDecimals(self.total_SL_TP_percent, 2))
@@ -1257,7 +1271,6 @@ class Crag:
                     symbol_unrealizedPL_percent = 0
                 else:
                     symbol_unrealizedPL_percent = symbol_unrealizedPL * 100 / (symbol_equity - symbol_unrealizedPL)
-                # print("symbol", symbol, "symbol_unrealizedPL: $", symbol_unrealizedPL, " - ", symbol_unrealizedPL_percent, "%") # DEBUG CEDE
                 if self.rtstr.condition_for_SLTP(symbol_unrealizedPL_percent) \
                         or self.rtstr.condition_trailer_TP(self.broker._get_coin(symbol), symbol_unrealizedPL_percent)\
                         or self.rtstr.condition_trailer_SL(self.broker._get_coin(symbol), symbol_unrealizedPL_percent):
@@ -1272,7 +1285,8 @@ class Crag:
                 lst_record_volatility = [current_datetime, current_timestamp, 'BTC', BTC_price, 0, equity, 0]
                 self.rtstr.set_high_volatility_protection_data(lst_record_volatility)
                 if self.rtstr.high_volatility_protection_activation(self.actual_drawdown_percent):
-                    print("DUMP POSITIONS DUE TO HIGH VOLATILITY")
+                    if not self.zero_print:
+                        print("DUMP POSITIONS DUE TO HIGH VOLATILITY")
                     lst_symbol_for_closure = self.broker.get_lst_symbol_position()
                     self.maximal_portfolio_value
 
@@ -1282,13 +1296,15 @@ class Crag:
                     symbol = self.broker._get_symbol(current_trade.symbol)
                     coin = current_trade.symbol
                     if self.rtstr.is_open_type(current_trade.type) and symbol in lst_symbol_for_closure:
-                        print("SELL TRIGGERED SL TP: ", current_trade.symbol, " at: ", current_datetime) # DEBUG CEDE
+                        if not self.zero_print:
+                            print("SELL TRIGGERED SL TP: ", current_trade.symbol, " at: ", current_datetime) # DEBUG CEDE
                         msg = "SELL TRIGGERED SL TP: {} at: {}\n".format(current_trade.symbol, current_datetime)
                         sell_trade = self._prepare_sell_trade_from_bought_trade(current_trade,
                                                                                 current_datetime)
                         done = self.broker.execute_trade(sell_trade)
                         if done:
-                            print("SELL PERFORMED SL TP: ", current_trade.symbol, " at: ", current_datetime) # DEBUG CEDE
+                            if not self.zero_print:
+                                print("SELL PERFORMED SL TP: ", current_trade.symbol, " at: ", current_datetime) # DEBUG CEDE
                             msg += "SELL PERFORMED SL TP"
                             self.log(msg, "SL TP PERFORMED")
 
@@ -1310,7 +1326,8 @@ class Crag:
 
                             self.current_trades.append(sell_trade)
                         else:
-                            print("SELL TRANSACTION FAILED SL TP: ", current_trade.symbol, " at: ", current_datetime)  # DEBUG CEDE
+                            if not self.zero_print:
+                                print("SELL TRANSACTION FAILED SL TP: ", current_trade.symbol, " at: ", current_datetime)  # DEBUG CEDE
                             msg += "SELL TRANSACTION FAILED SL TP"
                             self.log(msg, "SL TP FAILED")
 
@@ -1348,7 +1365,8 @@ class Crag:
             current_trade.net_size = self.broker.get_symbol_available(symbol)
 
             if current_trade.net_size != current_trade.gross_size:
-                print("warning size check: ", symbol, " - ", current_trade.net_size, " - ", current_trade.gross_size)
+                if not self.zero_print:
+                    print("warning size check: ", symbol, " - ", current_trade.net_size, " - ", current_trade.gross_size)
 
             current_trade.buying_fee = 0
             current_trade.profit_loss = 0
@@ -1384,9 +1402,11 @@ class Crag:
                 try:
                     self.broker.get_value(symbol)
                 except:
-                    print("symbol error: ", symbol)
+                    if not self.zero_print:
+                        print("symbol error: ", symbol)
 
-        print('price: ', prices_symbols)
+        if not self.zero_print:
+            print('price: ', prices_symbols)
 
         return prices_symbols, ds
 

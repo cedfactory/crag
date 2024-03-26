@@ -11,6 +11,7 @@ class BrokerBitGet(broker.Broker):
         self.exchange_name = "bitget"
         self.chase_limit = False
         self.log_trade = ""
+        self.zero_print = True
         if params:
             self.simulation = params.get("simulation", self.simulation)
             if self.simulation == 0 or self.simulation == "0":
@@ -97,48 +98,62 @@ class BrokerBitGet(broker.Broker):
 
     @authentication_required
     def execute_trade(self, trade):
-        print("!!!!!!! EXECUTE THE TRADE !!!!!!!")
+        if not self.zero_print:
+            print("!!!!!!! EXECUTE THE TRADE !!!!!!!")
         if trade.time != None:
-            print("execute trade at: ", trade.time)
+            if not self.zero_print:
+                print("execute trade at: ", trade.time)
         trade.success = False
         symbol = self._get_symbol(trade.symbol)
 
         self.set_margin_and_leverage(symbol)
         clientOid = self.clientOIdprovider.get_name(symbol, trade.type)
-        print("TRADE GROSS SIZE: ", trade.gross_size)
+        if not self.zero_print:
+            print("TRADE GROSS SIZE: ", trade.gross_size)
         trade.gross_size = self.normalize_size(symbol, trade.gross_size)
-        print("TRADE GROSS SIZE NORMALIZED: ", trade.gross_size)
+        if not self.zero_print:
+            print("TRADE GROSS SIZE NORMALIZED: ", trade.gross_size)
         if hasattr(trade, 'price'):
-            print("TRADE GROSS PRICE: ", trade.price)
+            if not self.zero_print:
+                print("TRADE GROSS PRICE: ", trade.price)
             trade.price = self.normalize_price(symbol, trade.price) # price not used yet
-            print("TRADE GROSS PRICE NORMALIZED: ", trade.price)
+            if not self.zero_print:
+                print("TRADE GROSS PRICE NORMALIZED: ", trade.price)
 
         if trade.gross_size == 0:
-            print('transaction failed ", trade.type, " : ', symbol, ' - gross_size: ', trade.gross_size)
+            if not self.zero_print:
+                print('transaction failed ", trade.type, " : ', symbol, ' - gross_size: ', trade.gross_size)
 
         if trade.type in ["OPEN_LONG", "OPEN_SHORT", "OPEN_LONG_ORDER", "OPEN_SHORT_ORDER", "CLOSE_LONG_ORDER", "CLOSE_SHORT_ORDER"]:
             if trade.type == "OPEN_LONG":
-                print(trade.type, " size: ", trade.gross_size)
+                if not self.zero_print:
+                    print(trade.type, " size: ", trade.gross_size)
                 transaction = self._open_long_position(symbol, trade.gross_size, clientOid)
             elif trade.type == "OPEN_SHORT":
-                print(trade.type, " size: ", trade.gross_size)
+                if not self.zero_print:
+                    print(trade.type, " size: ", trade.gross_size)
                 transaction = self._open_short_position(symbol, trade.gross_size, clientOid)
             elif trade.type == "OPEN_LONG_ORDER":
-                print(trade.type, " size: ", trade.gross_size, " price: ", trade.price)
+                if not self.zero_print:
+                    print(trade.type, " size: ", trade.gross_size, " price: ", trade.price)
                 transaction = self._open_long_order(symbol, trade.gross_size, clientOid, trade.price)
             elif trade.type == "OPEN_SHORT_ORDER":
-                print(trade.type, " size: ", trade.gross_size, " price: ", trade.price)
+                if not self.zero_print:
+                    print(trade.type, " size: ", trade.gross_size, " price: ", trade.price)
                 transaction = self._open_short_order(symbol, trade.gross_size, clientOid, trade.price)
             elif trade.type == "CLOSE_LONG_ORDER":
-                print(trade.type, " size: ", trade.gross_size, " price: ", trade.price)
+                if not self.zero_print:
+                    print(trade.type, " size: ", trade.gross_size, " price: ", trade.price)
                 transaction = self._close_long_order(symbol, trade.gross_size, clientOid, trade.price)
             elif trade.type == "CLOSE_SHORT_ORDER":
-                print(trade.type, " size: ", trade.gross_size, " price: ", trade.price)
+                if not self.zero_print:
+                    print(trade.type, " size: ", trade.gross_size, " price: ", trade.price)
                 transaction = self._close_short_order(symbol, trade.gross_size, clientOid, trade.price)
             else:
                 transaction = {"msg": "failure"}
 
-            print(transaction)
+            if not self.zero_print:
+                print(transaction)
             if "msg" in transaction and transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
                 trade.success = True
                 trade.orderId = transaction["data"]["orderId"]
@@ -153,11 +168,13 @@ class BrokerBitGet(broker.Broker):
                 trade.bought_gross_price = trade.gross_price
                 trade.buying_price = trade.symbol_price
 
-                print('request ',trade.type, ': ', symbol, ' gross_size: ', trade.gross_size)
-                print(trade.type, ': ', symbol, ' gross_size: ', trade.gross_size, ' price: ', trade.gross_price, ' fee: ', trade.buying_fee)
+                if not self.zero_print:
+                    print('request ',trade.type, ': ', symbol, ' gross_size: ', trade.gross_size)
+                    print(trade.type, ': ', symbol, ' gross_size: ', trade.gross_size, ' price: ', trade.gross_price, ' fee: ', trade.buying_fee)
             else:
-                print("Something went wrong inside execute_trade :")
-                print(transaction)
+                if not self.zero_print:
+                    print("Something went wrong inside execute_trade :")
+                    print(transaction)
 
         elif trade.type == "CLOSE_LONG":
             trade.gross_size = self.get_symbol_available(symbol)
@@ -166,9 +183,11 @@ class BrokerBitGet(broker.Broker):
                 trade.success = True
                 trade.orderId = transaction["data"]["orderId"]
                 trade.clientOid = transaction["data"]["clientOid"]
-                print('request CLOSE_LONG: ', symbol, ' gross_size: ', trade.gross_size)
+                if not self.zero_print:
+                    print('request CLOSE_LONG: ', symbol, ' gross_size: ', trade.gross_size)
                 trade.tradeId, trade.symbol_price, trade.gross_price, trade.gross_size, trade.selling_fee = self.get_order_fill_detail(symbol, trade.orderId)
-                print('CLOSE_LONG: ', symbol, ' gross_size: ', trade.gross_size, ' price: ', trade.gross_price, ' fee: ', trade.selling_fee)
+                if not self.zero_print:
+                    print('CLOSE_LONG: ', symbol, ' gross_size: ', trade.gross_size, ' price: ', trade.gross_price, ' fee: ', trade.selling_fee)
                 # CEDE to be confirmed : selling_fee is selling_fee + buying_fee or just selling_fee
                 trade.net_size = trade.gross_size
                 trade.net_price = trade.gross_price
@@ -183,10 +202,11 @@ class BrokerBitGet(broker.Broker):
                 trade.success = True
                 trade.orderId = transaction["data"]["orderId"]
                 trade.clientOid = transaction["data"]["clientOid"]
-                print('request CLOSE_SHORT: ', symbol, ' gross_size: ', trade.gross_size)
+                if not self.zero_print:
+                    print('request CLOSE_SHORT: ', symbol, ' gross_size: ', trade.gross_size)
                 trade.tradeId, trade.symbol_price, trade.gross_price, trade.gross_size, trade.selling_fee = self.get_order_fill_detail(symbol, trade.orderId)
-                print('CLOSE_SHORT: ', symbol, ' gross_size: ', trade.gross_size, ' price: ', trade.gross_price, ' fee: ', trade.selling_fee)
-                # CEDE to be confirmed : selling_fee is selling_fee + buying_fee or just selling_fee
+                if not self.zero_print:
+                    print('CLOSE_SHORT: ', symbol, ' gross_size: ', trade.gross_size, ' price: ', trade.gross_price, ' fee: ', trade.selling_fee)
                 trade.net_size = trade.gross_size
                 trade.net_price = trade.gross_price
                 if hasattr(trade, "bought_gross_price"):
@@ -198,15 +218,17 @@ class BrokerBitGet(broker.Broker):
             msg += " - " + trade.type
             msg += " - " + str(trade.price)
             msg += " - " + str(trade.gross_size) + '\n'
-            print('transaction failed : ', trade.symbol, " - type: ", trade.type, ' - gross_size: ', trade.gross_size)
-            print("!!!!!!! EXECUTE THE TRADE NOT COMPLETED !!!!!!!")
+            if not self.zero_print:
+                print('transaction failed : ', trade.symbol, " - type: ", trade.type, ' - gross_size: ', trade.gross_size)
+                print("!!!!!!! EXECUTE THE TRADE NOT COMPLETED !!!!!!!")
         else:
             msg = trade.symbol
             msg += " - " + trade.type
             msg += " - " + str(trade.price)
             msg += " - " + str(trade.gross_size) + '\n'
-            print('transaction success : ', trade.symbol, " - type: ", trade.type, ' - gross_size: ', trade.gross_size)
-            print("!!!!!!! EXECUTE THE TRADE COMPLETED !!!!!!!")
+            if not self.zero_print:
+                print('transaction success : ', trade.symbol, " - type: ", trade.type, ' - gross_size: ', trade.gross_size)
+                print("!!!!!!! EXECUTE THE TRADE COMPLETED !!!!!!!")
         self.log_trade = self.log_trade + msg.upper()
         return trade.success
 
@@ -289,8 +311,9 @@ class BrokerBitGet(broker.Broker):
 
         if len(df_positions) == 0:
             usdtEquity = self.get_account_equity()
-            print("reset - no position - account already cleared")
-            print('equity USDT: ', usdtEquity)
+            if not self.zero_print:
+                print("reset - no position - account already cleared")
+                print('equity USDT: ', usdtEquity)
             return original_df_positions
 
         original_df_positions = df_positions
@@ -309,15 +332,18 @@ class BrokerBitGet(broker.Broker):
             res = self.execute_trade(current_trade)
             if res:
                 usdtEquity = df_positions.loc[(df_positions['symbol'] == symbol), "usdtEquity"].values[0]
-                print('reset - close ', holdSize, 'position - symbol: ', symbol,' value: ', current_trade.gross_size, ' - $', usdtEquity)
+                if not self.zero_print:
+                    print('reset - close ', holdSize, 'position - symbol: ', symbol,' value: ', current_trade.gross_size, ' - $', usdtEquity)
 
         df_positions = self.get_open_position()
         if len(df_positions) != 0:
-            print("reset - failure")
+            if not self.zero_print:
+                print("reset - failure")
         else:
             usdtEquity = self.get_account_equity()
-            print('reset - account cleared')
-            print('equity USDT: ', usdtEquity)
+            if not self.zero_print:
+                print('reset - account cleared')
+                print('equity USDT: ', usdtEquity)
 
         return original_df_positions
 
@@ -327,7 +353,8 @@ class BrokerBitGet(broker.Broker):
         try:
             unrealizedPL = df_positions.loc[(df_positions['symbol'] == symbol), "unrealizedPL"].values[0]
         except:
-            print("error: get_symbol_unrealizedPL ", len(df_positions))
+            if not self.zero_print:
+                print("error: get_symbol_unrealizedPL ", len(df_positions))
             unrealizedPL = 0
         return unrealizedPL
 
@@ -337,7 +364,8 @@ class BrokerBitGet(broker.Broker):
         try:
             holdSide = df_positions.loc[(df_positions['symbol'] == symbol), "holdSide"].values[0]
         except:
-            print("error: get_symbol_holdSide ", len(df_positions))
+            if not self.zero_print:
+                print("error: get_symbol_holdSide ", len(df_positions))
             holdSide = ""
         return holdSide
 
@@ -403,7 +431,6 @@ class BrokerBitGet(broker.Broker):
         df_positions = self.get_open_position()
         if len(df_positions) > 0:
             global_unrealizedPL = df_positions["unrealizedPL"].sum()
-            # print('global_unrealizedPL: ', global_unrealizedPL) #CEDE DEBUG
             return global_unrealizedPL
         else:
             return 0

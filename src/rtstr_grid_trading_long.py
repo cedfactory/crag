@@ -14,7 +14,7 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
         self.rtctrl.set_list_open_position_type(self.get_lst_opening_type())
         self.rtctrl.set_list_close_position_type(self.get_lst_closing_type())
 
-        self.zero_print = False
+        self.zero_print = True
         self.grid = GridPosition(self.lst_symbols, self.grid_high, self.grid_low, self.nb_grid, self.percent_per_grid, self.zero_print)
         if self.percent_per_grid != 0:
             self.nb_grid = self.grid.get_grid_nb_grid()
@@ -30,8 +30,9 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
 
         ds.features = self.get_feature_from_fdp_features(ds.fdp_features)
         ds.interval = self.strategy_interval
-        print("startegy: ", self.get_info())
-        print("strategy features: ", ds.features)
+        if not self.zero_print:
+            print("startegy: ", self.get_info())
+            print("strategy features: ", ds.features)
         return ds
 
     def get_info(self):
@@ -50,7 +51,8 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
         return False
 
     def sort_list_symbols(self, lst_symbols):
-        print("symbol list: ", lst_symbols)
+        if not self.zero_print:
+            print("symbol list: ", lst_symbols)
         return lst_symbols
 
     def need_broker_current_state(self):
@@ -237,7 +239,8 @@ class GridPosition():
                 else:
                     # CEDE: This should not be triggered
                     # CEDE UPDATE : Maybe Not
-                    print("GRID ERROR - open_long vs open_short - grid id: ", grid_id)
+                    if not self.zero_print:
+                        print("GRID ERROR - open_long vs open_short - grid id: ", grid_id)
             else:
                 # CEDE: Executed when high volatility is triggering an limit order just after being raised
                 #       and before being recorded by the strategy in the grid process structure
@@ -245,7 +248,8 @@ class GridPosition():
                 missing_order['grid_id'] = grid_id
                 missing_order['side'] = df.loc[df['grid_id'] == grid_id, 'side'].values[0]
                 self.lst_limit_order_missing.append(missing_order)
-                print("GRID ERROR - limit order failed - grid_id missing: ", grid_id, ' side: ', missing_order['side'])
+                if not self.zero_print:
+                    print("GRID ERROR - limit order failed - grid_id missing: ", grid_id, ' side: ', missing_order['side'])
 
     def get_grid_nb_grid(self):
         return self.nb_grid
@@ -260,7 +264,8 @@ class GridPosition():
         if (df['position'] == position).any():
             self.on_edge = True
             df.loc[df['position'] == position, 'on_edge'] = True
-            print('PRICE ON GRID EDGE - CROSSING OR NOT CROSSING')
+            if not self.zero_print:
+                print('PRICE ON GRID EDGE - CROSSING OR NOT CROSSING')
             delta = abs((df.at[0, 'position'] - df.at[1,'position']) / 2)
             if df.loc[df['position'] == position, 'cross_checked'].values[0] == False:
                 if df.loc[df['position'] == position, 'side'].values[0] == "open_long":
@@ -328,13 +333,14 @@ class GridPosition():
             df_current_state['price'] = [df_grid['position'].iloc[self.find_closest(price, df_grid['position'])] for price in df_current_state['price']]
             # Check if all elements in df_current_state['price'] are in df_grid['position']
             all_prices_in_grid = df_current_state['price'].isin(df_grid['position']).all()
-            if not all_prices_in_grid:
-                # Print the elements that are different
-                different_prices = df_current_state.loc[~df_current_state['price'].isin(df_grid['position']), 'price']
-                print("################ WARNING PRICE DIFF WITH ORDER AND GRID ###############################")
-                print("Elements in df_current_state['price'] that are not in df_grid['position']:")
-                print(different_prices)
-                exit(0)
+            if not self.zero_print:
+                if not all_prices_in_grid:
+                    # Print the elements that are different
+                    different_prices = df_current_state.loc[~df_current_state['price'].isin(df_grid['position']), 'price']
+                    print("################ WARNING PRICE DIFF WITH ORDER AND GRID ###############################")
+                    print("Elements in df_current_state['price'] that are not in df_grid['position']:")
+                    print(different_prices)
+                    exit(0)
         return df_current_state
 
     def cross_check_with_current_state(self, symbol, df_current_state_all):
@@ -438,9 +444,10 @@ class GridPosition():
         df.loc[df['orderId'] == grid_id, 'orderId'] = ""
 
     def print_grid(self):
-        for symbol in self.lst_symbols:
-            df_grid = self.grid[symbol]
-            print(df_grid.to_string(index=False))
+        if not self.zero_print:
+            for symbol in self.lst_symbols:
+                df_grid = self.grid[symbol]
+                print(df_grid.to_string(index=False))
 
     def update_nb_open_positions(self, symbol, df_open_positions, buying_size):
         self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'size'] = buying_size
