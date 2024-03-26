@@ -28,6 +28,8 @@ class TestRTSTR:
         expected_strategies = ['StrategyEnvelope', 'StrategyEnvelopeStochRSI',
                                'StrategyBollingerTrend', 'StrategyGridTradingLong',
                                'StrategyGridTradingShort', 'StrategyBollingerTrendLong',
+                               'StrategyDummyTest', 'StrategyDummyTestTP', 'StrategySLTPOnly',
+                               'StrategyTvRecommendationMid', 'StrategyVolatilityTest',
                                'StrategySuperReversal', 'StrategyTrix', 'StrategyCryptobot',
                                'StrategyGridTradingProtectLong', 'StrategyBigWill', 'StrategyVMC']
         print(expected_strategies)
