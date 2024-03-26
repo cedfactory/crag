@@ -30,6 +30,7 @@ class Crag:
         self.working_directory = None
         self.interval = 1
         self.logger = None
+        self.loggers = []
         self.clear_unused_data = True
         self.start_date = ""
         self.end_date = ""
@@ -91,6 +92,7 @@ class Crag:
             self.rtstr = params.get("rtstr", self.rtstr)
             self.interval = params.get("interval", self.interval)
             self.logger = params.get("logger", self.logger)
+            self.loggers = params.get("loggers", self.loggers)
             self.working_directory = params.get("working_directory", self.working_directory)
             self.id = params.get("id", self.id)
             self.working_directory = params.get("working_directory", self.working_directory)
@@ -212,6 +214,10 @@ class Crag:
 
 
     def log(self, msg, header="", attachments=[]):
+        if self.zero_print:
+            return
+        for iter_logger in self.loggers:
+            iter_logger.log(msg, header="["+self.id+"] "+header, author=type(self).__name__, attachments=attachments)
         if self.logger:
             self.logger.log(msg, header="["+self.id+"] "+header, author=type(self).__name__, attachments=attachments)
 
