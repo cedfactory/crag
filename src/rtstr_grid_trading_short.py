@@ -820,9 +820,9 @@ class GridPosition():
         if (self.diff_close_position != 0) \
                 and (self.diff_open_position != 0):
             msg += "# WARNING HIGH VOLATILITY:" + "\n"
-            msg += "TREND: UP/DOW" + "\n"
-            msg += "DIFF OPENED POSITION: " + str(self.diff_open_position) + "\n"
-            msg += "DIFF CLOSED POSITION: " + str(self.diff_close_position) + "\n"
+            msg += "TREND: UP/DOWN" + "\n"
+            # msg += "DIFF OPENED POSITION: " + str(self.diff_open_position) + "\n"
+            # msg += "DIFF CLOSED POSITION: " + str(self.diff_close_position) + "\n"
 
         self.previous_grid_position = dct_info['grid_position']
 

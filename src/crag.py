@@ -76,6 +76,7 @@ class Crag:
         self.memory_used_mb = 0
         self.init_memory_used_mb = 0
         self.init_debug_memory = False
+        self.init_market_price = 0
 
         self.init_memory_usage = {}
         self.previous_memory_usage = {}
@@ -1136,10 +1137,14 @@ class Crag:
             if len(symbols) == len(lst_usdt_symbols):
                 for symbol, usdt_symbol in zip(symbols, lst_usdt_symbols):
                     total, available, leverage, averageOpenPrice, marketPrice, unrealizedPL, liquidation, side= self.broker.get_symbol_data(usdt_symbol)
+                    if self.init_market_price == 0:
+                        self.init_market_price = marketPrice
+                    price_delta = (marketPrice - self.init_market_price) * 100 / self.init_market_price
                     msg += "# SYMBOL " + symbol + " :\n"
                     msg += "**market price: " + str(round(marketPrice, 4)) + "**\n"
-                    msg += "**price average: " + str(round(averageOpenPrice, 4)) + "**\n"
-                    msg += "**EQUITY: " + str(round(total * averageOpenPrice, 2)) + " PNL: " + str(round(unrealizedPL, 2)) + "**\n"
+                    msg += "**init price: " + str(round(self.init_market_price, 4)) + " %: " + str(round(price_delta, 2)) + "**\n"
+                    msg += "price average: " + str(round(averageOpenPrice, 4)) + "\n"
+                    msg += "EQUITY: " + str(round(total * averageOpenPrice, 2)) + " PNL: " + str(round(unrealizedPL, 2)) + "\n"
                     msg += "SIZE: " + str(round(total, 2)) + " leverage: " + str(round(leverage, 2)) + "\n"
                     msg += "side: " + side + " liquidation: " + str(round(liquidation, 2)) + "\n"
             else:
