@@ -50,10 +50,15 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             self.set_boot_status_to_resumed()
 
         # initialize the websocket client
-        exchange_api_key = self.account.get("api_key", None)
-        exchange_api_secret = self.account.get("api_secret", None)
-        exchange_api_password = self.account.get("api_password", None)
+        exchange_api_key = self.account.get("api_key", "")
+        exchange_api_secret = self.account.get("api_secret", "")
+        exchange_api_password = self.account.get("api_password", "")
 
+        # initialize the public api
+        self.publicApi = public.PublicApi(exchange_api_key, exchange_api_secret, exchange_api_password,
+                                          use_server_time=False, first=False)
+
+        # initialize the websocket client
         def handle_error(message):
             print("[handle_error]", message)
         self.ws_client = BitgetWsClient() \
@@ -75,7 +80,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         self.accountApi = account.AccountApi(exchange_api_key, exchange_api_secret, exchange_api_password, use_server_time=False, first=False)
         self.positionApi = position.PositionApi(exchange_api_key, exchange_api_secret, exchange_api_password, use_server_time=False, first=False)
         self.orderApi = order.OrderApi(exchange_api_key, exchange_api_secret, exchange_api_password, use_server_time=False, first=False)
-        self.publicApi = public.PublicApi(exchange_api_key, exchange_api_secret, exchange_api_password, use_server_time=False, first=False)
+        #self.publicApi = public.PublicApi(exchange_api_key, exchange_api_secret, exchange_api_password, use_server_time=False, first=False)
 
         return True
 
