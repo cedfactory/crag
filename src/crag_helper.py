@@ -116,7 +116,8 @@ def load_configuration_file(configuration_file, config_path = './conf'):
     params_crag = {
         "id": crag_node.get("id", ""),
         "interval": int(crag_node.get("interval", 10)),
-        "bot_id": crag_node.get("botId", "")
+        "bot_id": crag_node.get("botId", ""),
+        "loggers": crag_node.get("loggers", "")
     }
 
     return {'broker': params_broker, 'strategy': params_strategy, "crag": params_crag}
@@ -128,6 +129,18 @@ def get_crag_params_from_configuration(configuration):
 
     crag_id = params_crag.get("id", "")
     crag_interval = params_crag.get("interval", "")
+    lst_loggers = params_crag.get("loggers", "").split(';')
+    loggers = []
+    for iter_logger in lst_loggers:
+        logger_params = iter_logger.split("=")
+        if logger_params[0] == "console":
+            logger.LoggerConsole()
+            loggers.append(logger)
+        elif logger_params[0] == "file" and len(logger_params) == 2:
+            loggers.append(logger.LoggerFile({"filename": logger_params[1]}))
+        elif logger_params[0] == "discordBot" and len(logger_params) == 2:
+            loggers.append(_initialize_crag_discord_bot(logger_params[1]))
+
     bot_id = params_crag.get("bot_id", None)
     crag_discord_bot = _initialize_crag_discord_bot(bot_id)
     params_strategy["logger"] = crag_discord_bot
@@ -151,7 +164,7 @@ def get_crag_params_from_configuration(configuration):
     if broker_name != "mock" and (not my_broker or not my_broker.ready()):
         return None
 
-    return {"broker": my_broker, "rtstr": my_strategy, "id": crag_id, "interval": crag_interval, "logger": crag_discord_bot}
+    return {"broker": my_broker, "rtstr": my_strategy, "id": crag_id, "interval": crag_interval, "logger": crag_discord_bot, "loggers": loggers}
 
 def initialization_from_pickle(picklefilename):
     with open(picklefilename, 'rb') as file:

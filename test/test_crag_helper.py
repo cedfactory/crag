@@ -66,6 +66,28 @@ class TestCrag:
         # cleaning
         os.remove(configuration_file)
 
+    # parse loggers
+    def test_parse_loggers(self):
+        # context : create the configuration file
+        configuration_file = utils.write_file("./test/generated/crag.xml", '''<configuration>
+            <strategy name="StrategyGridTradingLong" />
+            <broker name="simulator">
+                <params account="test_bot" simulation="1" reset_account="False" reset_account_orders="False"/>
+            </broker>
+            <crag interval="20" loggers="console;file=output.log;discordBot=botId"/>
+        </configuration>''')
+
+        # action
+        configuration = crag_helper.load_configuration_file(configuration_file, config_path="./")
+        params = crag_helper.get_crag_params_from_configuration(configuration)
+
+        # expectations
+        assert(params != None)
+        assert(len(params["loggers"]) == 3)
+
+        # cleaning
+        os.remove(configuration_file)
+
     def test_initialization_from_configuration_file_ok(self):
         return  # TODO : reactivate the test
 
