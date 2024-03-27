@@ -216,7 +216,8 @@ class BrokerBitGet(broker.Broker):
         if not trade.success:
             msg = 'trade failed: ' + trade.symbol
             msg += " - " + trade.type
-            msg += " - " + str(trade.price)
+            if hasattr(trade, 'price'):
+                msg += " - " + str(trade.price)
             msg += " - " + str(trade.gross_size) + '\n'
             if not self.zero_print:
                 print('transaction failed : ', trade.symbol, " - type: ", trade.type, ' - gross_size: ', trade.gross_size)
@@ -224,7 +225,8 @@ class BrokerBitGet(broker.Broker):
         else:
             msg = trade.symbol
             msg += " - " + trade.type
-            msg += " - " + str(trade.price)
+            if hasattr(trade, 'price'):
+                msg += " - " + str(trade.price)
             msg += " - " + str(trade.gross_size) + '\n'
             if not self.zero_print:
                 print('transaction success : ', trade.symbol, " - type: ", trade.type, ' - gross_size: ', trade.gross_size)
