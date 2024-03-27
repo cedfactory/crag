@@ -112,7 +112,7 @@ class Crag:
         self.sell_performed = False
         self.epsilon_size_reduce = 0.1
 
-        self.zero_print = True
+        self.zero_print = False
         self.flush_current_trade = False
 
         if self.rtstr:
@@ -1053,8 +1053,8 @@ class Crag:
                     self.log("MEMORY " + id + " - " + key1 + " VALUE: " + str(value3) + " PREV DIFF: " +  str(value3 - value2) + " INIT DIFF: " + str(value3 - value1))
 
     def udpate_strategy_with_broker_current_state(self):
-        GRID_SCENARIO_ON = False
-        SCENARIO_ID = 6
+        GRID_SCENARIO_ON = True
+        SCENARIO_ID = 12
         if GRID_SCENARIO_ON:
             self.udpate_strategy_with_broker_current_state_scenario(SCENARIO_ID)
         else:

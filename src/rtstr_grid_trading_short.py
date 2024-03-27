@@ -30,8 +30,9 @@ class StrategyGridTradingShort(rtstr.RealTimeStrategy):
 
         ds.features = self.get_feature_from_fdp_features(ds.fdp_features)
         ds.interval = self.strategy_interval
-        print("startegy: ", self.get_info())
-        print("strategy features: ", ds.features)
+        if not self.zero_print:
+            print("startegy: ", self.get_info())
+            print("strategy features: ", ds.features)
         return ds
 
     def get_info(self):
@@ -50,7 +51,8 @@ class StrategyGridTradingShort(rtstr.RealTimeStrategy):
         return False
 
     def sort_list_symbols(self, lst_symbols):
-        print("symbol list: ", lst_symbols)
+        if not self.zero_print:
+            print("symbol list: ", lst_symbols)
         return lst_symbols
 
     def need_broker_current_state(self):
@@ -81,10 +83,11 @@ class StrategyGridTradingShort(rtstr.RealTimeStrategy):
             self.grid.update_nb_open_positions(symbol, df_open_positions, buying_size)
             self.grid.update_pending_status_from_current_state(symbol, df_current_state)
 
-            price_for_symbol = df_price.loc[df_price['symbols'] == symbol, 'values'].values[0]
-            self.grid.cross_check_with_current_state(symbol, df_current_state)
-            self.grid.update_grid_side(symbol, price_for_symbol)
-            # self.grid.cross_check_with_current_state(symbol, df_current_state)
+            if symbol in df_price['symbols'].tolist():
+                price_for_symbol = df_price.loc[df_price['symbols'] == symbol, 'values'].values[0]
+                self.grid.cross_check_with_current_state(symbol, df_current_state)
+                self.grid.update_grid_side(symbol, price_for_symbol)
+                # self.grid.cross_check_with_current_state(symbol, df_current_state)
 
             lst_order_to_execute = self.grid.get_order_list(symbol, buying_size, df_current_state)
             self.grid.set_to_pending_execute_order(symbol, lst_order_to_execute)
@@ -184,6 +187,17 @@ class GridPosition():
         self.df_nb_open_positions['previous_nb_open_positions'] = 0
         self.df_nb_open_positions['previous_nb_open_limit_order'] = 0
 
+        self.max_grid_close_order = -1
+        self.min_grid_close_order = -1
+        self.nb_close_missing = -1
+
+        self.max_grid_open_order = -1
+        self.min_grid_open_order = -1
+        self.nb_open_missing = -1
+
+        self.nb_open_selected_to_be_open = 0
+        self.nb_close_selected_to_be_open = 0
+
         if self.percent_per_grid !=0:
             self.steps = self.grid_high * self.percent_per_grid / 100
             self.nb_grid = int((self.grid_high - self.grid_low) / self.steps)
@@ -236,7 +250,8 @@ class GridPosition():
                 else:
                     # CEDE: This should not be triggered
                     # CEDE UPDATE : Maybe Not
-                    print("GRID ERROR - open_short vs open_short - grid id: ", grid_id)
+                    if not self.zero_print:
+                        print("GRID ERROR - open_short vs open_short - grid id: ", grid_id)
             else:
                 # CEDE: Executed when high volatility is triggering an limit order just after being raised
                 #       and before being recorded by the strategy in the grid process structure
@@ -244,7 +259,8 @@ class GridPosition():
                 missing_order['grid_id'] = grid_id
                 missing_order['side'] = df.loc[df['grid_id'] == grid_id, 'side'].values[0]
                 self.lst_limit_order_missing.append(missing_order)
-                print("GRID ERROR - limit order failed - grid_id missing: ", grid_id, ' side: ', missing_order['side'])
+                if not self.zero_print:
+                    print("GRID ERROR - limit order failed - grid_id missing: ", grid_id, ' side: ', missing_order['side'])
 
     def get_grid_nb_grid(self):
         return self.nb_grid
@@ -259,7 +275,8 @@ class GridPosition():
         if (df['position'] == position).any():
             self.on_edge = True
             df.loc[df['position'] == position, 'on_edge'] = True
-            print('PRICE ON GRID EDGE - CROSSING OR NOT CROSSING')
+            if not self.zero_print:
+                print('PRICE ON GRID EDGE - CROSSING OR NOT CROSSING')
             delta = abs((df.at[0, 'position'] - df.at[1,'position']) / 2)
             if df.loc[df['position'] == position, 'cross_checked'].values[0] == False:
                 if df.loc[df['position'] == position, 'side'].values[0] == "open_short":
@@ -327,13 +344,14 @@ class GridPosition():
             df_current_state['price'] = [df_grid['position'].iloc[self.find_closest(price, df_grid['position'])] for price in df_current_state['price']]
             # Check if all elements in df_current_state['price'] are in df_grid['position']
             all_prices_in_grid = df_current_state['price'].isin(df_grid['position']).all()
-            if not all_prices_in_grid:
-                # Print the elements that are different
-                different_prices = df_current_state.loc[~df_current_state['price'].isin(df_grid['position']), 'price']
-                print("################ WARNING PRICE DIFF WITH ORDER AND GRID ###############################")
-                print("Elements in df_current_state['price'] that are not in df_grid['position']:")
-                print(different_prices)
-                exit(0)
+            if not self.zero_print:
+                if not all_prices_in_grid:
+                    # Print the elements that are different
+                    different_prices = df_current_state.loc[~df_current_state['price'].isin(df_grid['position']), 'price']
+                    print("################ WARNING PRICE DIFF WITH ORDER AND GRID ###############################")
+                    print("Elements in df_current_state['price'] that are not in df_grid['position']:")
+                    print(different_prices)
+                    exit(0)
         return df_current_state
 
     def cross_check_with_current_state(self, symbol, df_current_state_all):
@@ -437,9 +455,10 @@ class GridPosition():
         df.loc[df['orderId'] == grid_id, 'orderId'] = ""
 
     def print_grid(self):
-        for symbol in self.lst_symbols:
-            df_grid = self.grid[symbol]
-            print(df_grid.to_string(index=False))
+        if not self.zero_print:
+            for symbol in self.lst_symbols:
+                df_grid = self.grid[symbol]
+                print(df_grid.to_string(index=False))
 
     def update_nb_open_positions(self, symbol, df_open_positions, buying_size):
         self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'size'] = buying_size
@@ -513,6 +532,9 @@ class GridPosition():
         nb_open_limit_order = len(df_filtered)
         nb_open_selected_to_be_open = nb_open_limit_order - nb_open_limit_already_open
 
+        self.nb_open_selected_to_be_open = nb_open_selected_to_be_open
+        self.nb_close_selected_to_be_open = nb_close_selected_to_be_open
+
         if nb_close_selected_to_be_open == 0 \
                 and nb_open_selected_to_be_open == 0:
             self.trend = "FLAT"
@@ -576,6 +598,67 @@ class GridPosition():
 
         if not self.zero_print:
             print(grid_trend_msg)
+
+
+        df_filtered = df[(df['status'] == 'engaged')
+                         & (df['side'] == 'open_short')
+                         & (df['cross_checked'])]
+        lst_open_engaged = df_filtered['grid_id'].tolist()
+        if len(lst_open_engaged) > 1:
+            self.max_grid_open_order = max(lst_open_engaged)
+            self.min_grid_open_order = min(lst_open_engaged)
+
+            reference_list = list(range(self.min_grid_open_order, self.max_grid_open_order + 1))
+            # Find the missing elements
+            missing_elements = [i for i in reference_list if i not in lst_open_engaged]
+            self.nb_open_missing = len(missing_elements)
+        else:
+            if len(lst_open_engaged) == 1:
+                self.max_grid_open_order = lst_open_engaged[0]
+                self.min_grid_open_order = lst_open_engaged[0]
+                self.nb_open_missing = 0
+            else:
+                self.max_grid_open_order = -1
+                self.min_grid_open_order = -1
+                self.nb_open_missing = -1
+
+        # fill the gaps
+        # get lower close position
+        # get higher close position
+        # get holes that are not engaged
+        # get numbers of close order into filtered_orders
+        # replace grid id of holes in the filtered_orders
+        df_filtered = df[(df['status'] == 'engaged')
+                         & (df['side'] == 'close_short')
+                         & (df['cross_checked'])]
+        lst_close_engaged = df_filtered['grid_id'].tolist()
+        if len(lst_close_engaged) > 1:
+            self.max_grid_close_order = max(lst_close_engaged)
+            self.min_grid_close_order = min(lst_close_engaged)
+
+            reference_list = list(range(self.min_grid_close_order, self.max_grid_close_order + 1))
+            # Find the missing elements
+            missing_elements = [i for i in reference_list if i not in lst_close_engaged]
+            self.nb_close_missing = len(missing_elements)
+            if len(missing_elements) > 0 \
+                    and len(filtered_orders) > 0:
+                filtered_orders = sorted(filtered_orders, key=lambda x: x["grid_id"])
+                for order in reversed(filtered_orders):
+                    if order["type"] in ["CLOSE_LONG_ORDER", "CLOSE_SHORT_ORDER"] \
+                            and (order["grid_id"] > self.max_grid_close_order)\
+                            and (len(missing_elements) > 0):
+                        order["grid_id"] = missing_elements[0]
+                        order["price"] = df.loc[df['grid_id'] == missing_elements[0], 'position'].values[0]
+                        del missing_elements[0]
+        else:
+            if len(lst_close_engaged) == 1:
+                self.max_grid_close_order = lst_close_engaged[0]
+                self.min_grid_close_order = lst_close_engaged[0]
+                self.nb_close_missing = 0
+            else:
+                self.max_grid_close_order = -1
+                self.min_grid_close_order = -1
+                self.nb_close_missing = -1
 
         self.set_grid_positions_to_on_hold(lst_order_to_execute, filtered_orders)
 
@@ -808,21 +891,32 @@ class GridPosition():
                     msg += "**WARNING - PRICE ON GRID EDGE - NOT VERIFIED" + "**\n"
                     msg += "**lst_filtered_on_edge empty" + ' '.join(map(str, lst_filtered_on_edge)) + "**\n"
 
-        if self.diff_position != 0:
-            # msg += "# DIFF:" + "\n"
-            if self.diff_position > 0:
-                msg += "DIFF OPENED POSITION: " + str(self.diff_position) + "\n"
-            elif self.diff_position < 0:
-                msg += "DIFF CLOSED POSITION: " + str(self.diff_position) + "\n"
-            elif self.diff_position == 0:
-                msg += "DIFF POSITION: " + str(self.diff_position) + "\n"
+        if (self.nb_open_selected_to_be_open != 0) \
+                and (self.nb_close_selected_to_be_open != 0):
+            msg += "WARNING HIGH VOLATILITY:" + "\n"
+        if self.nb_open_selected_to_be_open != 0:
+            msg += "DIFF OPENED POSITION: " + str(self.nb_open_selected_to_be_open) + "\n"
+        if self.nb_close_selected_to_be_open != 0:
+            msg += "DIFF CLOSED POSITION: " + str(self.nb_close_selected_to_be_open) + "\n"
 
-        if (self.diff_close_position != 0) \
-                and (self.diff_open_position != 0):
-            msg += "# WARNING HIGH VOLATILITY:" + "\n"
-            msg += "TREND: UP/DOWN" + "\n"
-            # msg += "DIFF OPENED POSITION: " + str(self.diff_open_position) + "\n"
-            # msg += "DIFF CLOSED POSITION: " + str(self.diff_close_position) + "\n"
+        if (self.max_grid_open_order == -1) \
+            and (self.min_grid_open_order == -1):
+            msg += "no open position" + "\n"
+        else:
+            if self.nb_open_missing > 0:
+                msg += "open range: " + str(self.min_grid_open_order) + " / " + str(self.max_grid_open_order) + " gaps: " + str(self.nb_open_missing) + "\n"
+            else:
+                msg += "open range: " + str(self.min_grid_open_order) + " / " + str(self.max_grid_open_order) + "\n"
+
+        if (self.max_grid_close_order == -1) \
+            and (self.min_grid_close_order == -1) \
+            and (self.nb_close_missing == -1):
+            msg += "no close position" + "\n"
+        else:
+            if self.nb_close_missing > 0:
+                msg += "close range: " + str(self.min_grid_close_order) + " / " + str(self.max_grid_close_order) + " gaps: " + str(self.nb_close_missing) + "\n"
+            else:
+                msg += "close range: " + str(self.min_grid_close_order) + " / " + str(self.max_grid_close_order) + "\n"
 
         self.previous_grid_position = dct_info['grid_position']
 
