@@ -91,7 +91,7 @@ class Crag:
                 self.maximal_portfolio_value = self.original_portfolio_value
             self.rtstr = params.get("rtstr", self.rtstr)
             self.interval = params.get("interval", self.interval)
-            self.logger = params.get("logger", self.logger)
+            self.logger_discord = params.get("logger", self.logger)
             self.loggers = params.get("loggers", self.loggers)
             self.working_directory = params.get("working_directory", self.working_directory)
             self.id = params.get("id", self.id)
@@ -178,7 +178,7 @@ class Crag:
 
                 if body == "history" or body == "stop":
                     self.export_history(self.export_filename)
-                    self.log(msg="> {}".format(self.export_filename), header="{}".format(body), attachments=[self.export_filename])
+                    self.log_discord(msg="> {}".format(self.export_filename), header="{}".format(body), attachments=[self.export_filename])
                     os.remove(self.export_filename)
                     if body == "stop":
                         os._exit(0)
@@ -190,17 +190,17 @@ class Crag:
                         if isinstance(df_rtctrl, pd.DataFrame):
                             filename = str(utils.get_random_id())+"_rtctrl.csv"
                             df_rtctrl.to_csv(filename)
-                            self.log(msg="> {}".format(filename), header="{}".format(body), attachments=[filename])
+                            self.log_discord(msg="> {}".format(filename), header="{}".format(body), attachments=[filename])
                             os.remove(filename)
                         else:
-                            self.log("rtctrl is not a dataframe", header="{}".format(body))
+                            self.log_discord("rtctrl is not a dataframe", header="{}".format(body))
                 elif body == "rtctrl_summary":
                     rtctrl = self.rtstr.get_rtctrl()
                     if rtctrl:
                         summary = rtctrl.display_summary_info()
-                        self.log(msg=summary, header="{}".format(body))
+                        self.log_discord(msg=summary, header="{}".format(body))
                 else:
-                    self.log(msg="> {} : unknown message".format(body))
+                    self.log_discord(msg="> {} : unknown message".format(body))
 
             channel.basic_consume(queue="StrategyMonitoring", on_message_callback=callback, auto_ack=True)
             
@@ -212,14 +212,15 @@ class Crag:
             if not self.zero_print:
                 print("Problem encountered while configuring the rabbitmq receiver")
 
-
     def log(self, msg, header="", attachments=[]):
         if self.zero_print:
             return
         for iter_logger in self.loggers:
             iter_logger.log(msg, header="["+self.id+"] "+header, author=type(self).__name__, attachments=attachments)
-        if self.logger:
-            self.logger.log(msg, header="["+self.id+"] "+header, author=type(self).__name__, attachments=attachments)
+
+    def log_discord(self, msg, header="", attachments=[]):
+        if self.logger_discord:
+            self.logger_discord.log(msg, header="["+self.id+"] "+header, author=type(self).__name__, attachments=attachments)
 
     def send_alive_notification(self):
         if self.broker and self.broker.account and self.rtstr:
@@ -233,7 +234,7 @@ class Crag:
         self.minimal_portfolio_date = self.start_date
         self.maximal_portfolio_date = self.start_date
         msg_broker_info = self.broker.log_info()
-        self.log(msg_broker_info, "run")
+        self.log_discord(msg_broker_info, "run")
         self.rtstr.log_info()
 
         start = datetime.now()
@@ -254,7 +255,7 @@ class Crag:
         if not self.zero_print:
             print("start time: ", start)
         msg = "start time: " + start.strftime("%Y/%m/%d %H:%M:%S")
-        self.log(msg, "start time")
+        self.log_discord(msg, "start time")
         start = datetime.timestamp(start)
 
         done = False
@@ -272,7 +273,7 @@ class Crag:
                             os._exit(0)
                         if self.rtstr.high_volatility.high_volatility_pause_status():
                             msg = "duration: " + str(self.rtstr.high_volatility.high_volatility_get_duration()) + "seconds"
-                            self.log(msg, "PAUSE DUE HIGH VOLATILITY")
+                            self.log_discord(msg, "PAUSE DUE HIGH VOLATILITY")
                             time.sleep(self.rtstr.high_volatility.high_volatility_get_duration())
                     while time.time() < start:
                         pass
@@ -283,17 +284,17 @@ class Crag:
                 if self.safety_run:
                     step_result = self.safety_step()
                     if self.interval != 1:  # 1s
-                        self.log("safety run executed\n"
+                        self.log_discord("safety run executed\n"
                                  + "warning : time elapsed for the step ({}) is greater than the interval ({})".format(sleeping_time, self.interval))
                     if not step_result:
                         os._exit(0)
                     if self.rtstr.high_volatility.high_volatility_pause_status():
                         msg = "duration: " + str(self.rtstr.high_volatility.high_volatility_get_duration()) + "seconds"
-                        self.log(msg, "PAUSE DUE HIGH VOLATILITY")
+                        self.log_discord(msg, "PAUSE DUE HIGH VOLATILITY")
                         time.sleep(self.rtstr.high_volatility.high_volatility_get_duration())
                 else:
                     if self.interval != 1:  # 1s
-                        self.log(
+                        self.log_discord(
                             "warning : time elapsed for the step ({}) is greater than the interval ({})".format(
                                 sleeping_time, self.interval))
 
@@ -453,11 +454,11 @@ class Crag:
         msg += "account equity = ${} / %{}".format(utils.KeepNDecimals(usdt_equity, 2),
                                                    utils.KeepNDecimals(variation_percent, 2))
 
-        self.log(msg.upper(), "start step".upper())
+        self.log_discord(msg.upper(), "start step".upper())
 
         if positions_at_step_start and len(df_position_at_start) >= 0:
             log_title = "step start with {} open position".format(len(df_position_at_start))
-            self.log(df_position_at_start, log_title)
+            self.log_discord(df_position_at_start, log_title)
 
         if not self.zero_print:
             print("[Crag] ⌛")
@@ -505,14 +506,14 @@ class Crag:
                     unrealised_PL_short += symbol_unrealizedPL
 
             if len(df_open_positions) > 0:
-                # self.log(df_open_positions, msg)
-                self.log(df_open_positions.to_string().upper(), msg)
+                # self.log_discord(df_open_positions, msg)
+                self.log_discord(df_open_positions.to_string().upper(), msg)
             else:
                 msg = "no open position\n"
-                self.log(msg.upper(), "no open position".upper())
+                self.log_discord(msg.upper(), "no open position".upper())
         else:
             msg = "no open position\n"
-            self.log(msg.upper(), "no open position".upper())
+            self.log_discord(msg.upper(), "no open position".upper())
 
         current_date = self.broker.get_current_datetime("%Y/%m/%d %H:%M:%S")
         msg = "end step current time : {}\n".format(current_date)
@@ -537,7 +538,7 @@ class Crag:
                                                                    utils.KeepNDecimals(usdt_equity - self.previous_usdt_equity, 2),
                                                                    utils.KeepNDecimals(variation_percent, 2))
         self.previous_usdt_equity = usdt_equity
-        self.log(msg.upper(), "end step".upper())
+        self.log_discord(msg.upper(), "end step".upper())
 
         self.tradetraces.export()
 
@@ -646,7 +647,7 @@ class Crag:
 
         if self.sell_performed:
             if len(df_sell_performed) > 0:
-                self.log(df_sell_performed, "symbol sold - performed")
+                self.log_discord(df_sell_performed, "symbol sold - performed")
             self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(),  self.broker.get_cash_borrowed(), self.rtstr.rtctrl.prices_symbols, False, self.final_datetime, self.broker.get_balance())
             self.sell_performed = False
 
@@ -727,7 +728,7 @@ class Crag:
 
         if not df_symbols_bought.empty:
             df_traces = df_symbols_bought.copy()
-            self.log(df_traces, "symbols bought")
+            self.log_discord(df_traces, "symbols bought")
 
         if self.temp_debug:
             self.debug_trace_current_trades('end_trade', self.current_trades)
@@ -1047,7 +1048,7 @@ class Crag:
                     msg += f"MEMORY: {self.memory_used_mb:.1f}MB" + " (+" + str(round(delta_memory, 1)) + ")\n"
                 else:
                     msg += f"MEMORY: {self.memory_used_mb:.1f}MB" + " (-" + str(round(abs(delta_memory), 1)) + ")\n"
-                self.log(msg, "GRID STATUS")
+                self.log_discord(msg, "GRID STATUS")
             end_time = time.time()
             self.iteration_times_grid_strategy.append(end_time - self.start_time_grid_strategy)
             self.iteration_times_grid_strategy = self.iteration_times_grid_strategy[-10:]
@@ -1178,7 +1179,7 @@ class Crag:
             else:
                 msg += f"MEMORY: {self.memory_used_mb:.1f}MB" + " (-" + str(round(abs(delta_memory),1)) + ")\n"
             msg = msg.upper()
-            self.log(msg, "GRID STATUS")
+            self.log_discord(msg, "GRID STATUS")
 
         if not self.zero_print:
             print("output lst_orders_to_execute: ", lst_orders_to_execute)
@@ -1187,7 +1188,7 @@ class Crag:
 
         msg_broker_trade_info = self.broker.log_info_trade()
         if len(msg_broker_trade_info) != 0:
-            self.log(msg_broker_trade_info, "broker trade")
+            self.log_discord(msg_broker_trade_info, "broker trade")
             self.broker.clear_log_info_trade()
 
         end_time = time.time()
@@ -1266,7 +1267,7 @@ class Crag:
                                                      utils.KeepNDecimals(self.total_SL_TP_percent, 2))
             msg += "max drawdown: ${} / %{}\n".format(utils.KeepNDecimals(self.drawdown, 2),
                                                       utils.KeepNDecimals(self.actual_drawdown_percent, 2))
-            self.log(msg, "total SL TP")
+            self.log_discord(msg, "total SL TP")
 
             self.broker.execute_reset_account()
             return False
@@ -1317,7 +1318,7 @@ class Crag:
                             if not self.zero_print:
                                 print("SELL PERFORMED SL TP: ", current_trade.symbol, " at: ", current_datetime) # DEBUG CEDE
                             msg += "SELL PERFORMED SL TP"
-                            self.log(msg, "SL TP PERFORMED")
+                            self.log_discord(msg, "SL TP PERFORMED")
 
                             self.sell_performed = True
                             current_trade.type = self.rtstr.get_close_type_and_close(current_trade.symbol)
@@ -1340,7 +1341,7 @@ class Crag:
                             if not self.zero_print:
                                 print("SELL TRANSACTION FAILED SL TP: ", current_trade.symbol, " at: ", current_datetime)  # DEBUG CEDE
                             msg += "SELL TRANSACTION FAILED SL TP"
-                            self.log(msg, "SL TP FAILED")
+                            self.log_discord(msg, "SL TP FAILED")
 
                         if self.sell_performed:
                             self.rtstr.update(current_datetime, self.current_trades, self.broker.get_cash(),
