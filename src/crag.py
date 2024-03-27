@@ -1133,7 +1133,7 @@ class Crag:
                     self.log("symbols {}".format(symbols))
                     self.log("lst_usdt_symbols {}".format(lst_usdt_symbols))
                     msg += "**ERROR LST SYMBOLS NOT MATCHING" + "**:\n"
-            msg += "# TIME & MEMORY" + "\n"
+            msg += "# PERFORMANCE" + "\n"
             msg += "CRAG TIME: " + str(self.average_time_grid_strategy_overall) + "s\n"
             msg += "GRID TIME: " + str(self.average_time_grid_strategy) + "s\n"
             end_time = time.time()
