@@ -5,42 +5,97 @@ import pandas as pd
 
 class TestLoggerFile:
 
-    def test_constructor(self):
+    def test_logger_file_constructor(self):
         # context
-        filename = "./test/log.txt"
-        if os.path.isfile(filename):
-            os.remove(filename)
-        params = {"filename":filename}
+        filename = "./test/log"
+        expected_filename = "./test/log000.log"
+        params = {"filename": filename}
+        if os.path.isfile(expected_filename):
+            os.remove(expected_filename)
 
         # action
         my_logger = logger.LoggerFile(params)
 
         # expectations
-        assert(os.path.isfile(filename))
+        assert(os.path.isfile(expected_filename))
+
+
+    def test_logger_file_get_current_filename(self):
+        # context
+        filename = "./test/log"
+        expected_filename = "./test/log000.log"
+        params = {"filename": filename}
+        my_logger = logger.LoggerFile(params)
+
+        # action
+        current_filename = my_logger._get_current_filename()
+    
+        # expectations
+        assert(current_filename == expected_filename)
 
         # cleaning
-        os.remove(filename)
+        os.remove(expected_filename)
 
-    def test_log(self):
+    def test_logger_file_log(self):
         # context
-        filename = "./test/log.txt"
-        if os.path.isfile(filename):
-            os.remove(filename)
-        params = {"filename":filename}
+        filename = "./test/log"
+        expected_filename = "./test/log000.log"
+        if os.path.isfile(expected_filename):
+            os.remove(expected_filename)
+        params = {"filename": filename}
         my_logger = logger.LoggerFile(params)
 
         # action
         my_logger.log("hello")
-    
+
         # expectations
-        assert(os.path.isfile(filename))
-        with open(filename) as f:
+        assert (os.path.isfile(expected_filename))
+        current_filesize = my_logger._get_current_filesize()
+        assert (current_filesize == 7)
+        with open(expected_filename) as f:
             lines = f.readlines()
-            assert(len(lines) == 1)
-            assert(lines[0] == "hello\n")
+            assert (len(lines) == 1)
+            assert (lines[0] == "hello\n")
 
         # cleaning
-        #os.remove(filename)
+        os.remove(expected_filename)
+
+
+    def test_logger_file_log_new_file(self):
+        # context
+        filename = "./test/log"
+        expected_filename0 = "./test/log000.log"
+        expected_filename1 = "./test/log001.log"
+        if os.path.isfile(expected_filename0):
+            os.remove(expected_filename0)
+        if os.path.isfile(expected_filename1):
+            os.remove(expected_filename1)
+        params = {"filename": filename}
+        my_logger = logger.LoggerFile(params)
+
+        my_logger.max_size = 20 # change the max size
+        my_logger.log("abcdefghijklmnopqrstuvwxyz")
+
+        # action
+        my_logger.log("0123456789")
+
+        # expectations
+        assert (os.path.isfile(expected_filename0))
+        assert (os.path.isfile(expected_filename1))
+        current_filesize = my_logger._get_current_filesize()
+        assert (current_filesize == 12)
+        with open(expected_filename0) as f:
+            lines = f.readlines()
+            assert (len(lines) == 1)
+            assert (lines[0] == "abcdefghijklmnopqrstuvwxyz\n")
+        with open(expected_filename1) as f:
+            lines = f.readlines()
+            assert (len(lines) == 1)
+            assert (lines[0] == "0123456789\n")
+
+        # cleaning
+        os.remove(expected_filename0)
+        os.remove(expected_filename1)
 
 
 class TestLoggerDiscordBot:

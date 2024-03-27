@@ -34,10 +34,13 @@ class LoggerConsole(ILogger):
 
 class LoggerFile(ILogger):
     def __init__(self, params=None):
-        self.filename = 'log.txt'
+        self.filename_base = 'log'
+        self.current_id = 0
         if params:
-            self.filename = params.get("filename", self.filename)
-        
+            self.filename_base = params.get("filename", self.filename_base)
+        self.filename = self._get_current_filename()
+        self.max_size = 10000 # 10Mo
+
         if os.path.isdir(self.filename):
             self.filename = ""
         elif os.path.isfile(self.filename):
@@ -45,8 +48,19 @@ class LoggerFile(ILogger):
         else:
             pathlib.Path(self.filename).touch()
 
+    def _get_current_filename(self):
+        return "{}{:03d}.log".format(self.filename_base, self.current_id)
+
+    def _get_current_filesize(self):
+        if self.filename != "" and os.path.isfile(self.filename):
+            return os.stat(self.filename).st_size
+        return 0
+
     def log(self, msg, header="", author="", attachments=[]):
         if self.filename != "":
+            if self._get_current_filesize() > self.max_size:
+                self.current_id += 1
+                self.filename = self._get_current_filename()
             with open(self.filename, 'a') as f:
                 content = ""
                 if author != "":
