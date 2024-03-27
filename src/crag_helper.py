@@ -134,8 +134,7 @@ def get_crag_params_from_configuration(configuration):
     for iter_logger in lst_loggers:
         logger_params = iter_logger.split("=")
         if logger_params[0] == "console":
-            logger.LoggerConsole()
-            loggers.append(logger)
+            loggers.append(logger.LoggerConsole())
         elif logger_params[0] == "file" and len(logger_params) == 2:
             loggers.append(logger.LoggerFile({"filename": logger_params[1]}))
         elif logger_params[0] == "discordBot" and len(logger_params) == 2:

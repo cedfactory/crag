@@ -53,7 +53,7 @@ class LoggerFile(ILogger):
                     content = content + "[{}] ".format(author)
                 if header != "":
                     content = content + "[{}] ".format(header)
-                content = content + msg
+                content = content + msg + "\n"
                 f.write(content)
 
 class LoggerDiscordBot(ILogger):
