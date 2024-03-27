@@ -39,7 +39,7 @@ class LoggerFile(ILogger):
         if params:
             self.filename_base = params.get("filename", self.filename_base)
         self.filename = self._get_current_filename()
-        self.max_size = 10000 # 10Mo
+        self.max_size = 10000000 # 10Mo
 
         if os.path.isdir(self.filename):
             self.filename = ""
