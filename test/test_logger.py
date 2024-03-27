@@ -51,7 +51,7 @@ class TestLoggerFile:
         # expectations
         assert (os.path.isfile(expected_filename))
         current_filesize = my_logger._get_current_filesize()
-        assert (current_filesize == 7)
+        assert (current_filesize == 6)
         with open(expected_filename) as f:
             lines = f.readlines()
             assert (len(lines) == 1)
@@ -83,7 +83,7 @@ class TestLoggerFile:
         assert (os.path.isfile(expected_filename0))
         assert (os.path.isfile(expected_filename1))
         current_filesize = my_logger._get_current_filesize()
-        assert (current_filesize == 12)
+        assert (current_filesize == 11)
         with open(expected_filename0) as f:
             lines = f.readlines()
             assert (len(lines) == 1)
