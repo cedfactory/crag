@@ -21,8 +21,8 @@ class BrokerBitGet(broker.Broker):
             self.leverage = params.get("leverage", self.leverage)
             if isinstance(self.leverage, str):
                 self.leverage = int(self.leverage)
-        if not self._authentification():
-            print("[BrokerBitGet] : Problem encountered during authentification")
+        #if not self._authentification():
+        #    print("[BrokerBitGet] : Problem encountered during authentification")
 
         self.clientOIdprovider = utils.ClientOIdProvider()
         # leverages management
@@ -308,6 +308,7 @@ class BrokerBitGet(broker.Broker):
     def execute_reset_account(self):
         df_positions = self.get_open_position()
         original_df_positions = df_positions
+        #return original_df_positions
 
         if len(df_positions) == 0:
             usdtEquity = self.get_account_equity()

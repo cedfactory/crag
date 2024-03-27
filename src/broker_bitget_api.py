@@ -25,18 +25,34 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         self.orderApi = None
         self.publicApi = None
 
-        self.df_market = self.get_future_market()
-        if isinstance(self.df_market, pd.DataFrame):
-            self.df_market.drop( self.df_market[self.df_market['quoteCoin'] != 'USDT'].index, inplace=True)
-            self.df_market.reset_index(drop=True)
-            print('list symbols perpetual/USDT: ', self.df_market["baseCoin"].tolist())
-
         self.failure = 0
         self.success = 0
 
         self.boot_status = ""
         self.broker_dir_path = "./broker_data/"
         self.broker_dir_path_filename = os.path.join(self.broker_dir_path, "broker_init_data.csv")
+
+        # initialize the websocket client
+        api_key = self.account.get("api_key", "")
+        api_secret = self.account.get("api_secret", "")
+        api_password = self.account.get("api_password", "")
+
+        if api_key != "" and api_secret != "" and api_password != "":
+            self.marketApi = market.MarketApi(api_key, api_secret, api_password, use_server_time=False, first=False)
+            self.accountApi = account.AccountApi(api_key, api_secret, api_password, use_server_time=False, first=False)
+            self.positionApi = position.PositionApi(api_key, api_secret, api_password, use_server_time=False, first=False)
+            self.orderApi = order.OrderApi(api_key, api_secret, api_password, use_server_time=False, first=False)
+
+        # initialize the public api
+        self.publicApi = public.PublicApi(api_key, api_secret, api_password, use_server_time=False, first=False)
+
+        self.df_market = self.get_future_market()
+        if isinstance(self.df_market, pd.DataFrame):
+            self.df_market.drop( self.df_market[self.df_market['quoteCoin'] != 'USDT'].index, inplace=True)
+            self.df_market.reset_index(drop=True)
+            print('list symbols perpetual/USDT: ', self.df_market["baseCoin"].tolist())
+
+        # reset account
         if self.reset_account_orders:
             self.cancel_all_orders(["XRP", "BTC", "ETH"])
         if self.reset_account:
@@ -49,14 +65,6 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             print('resume strategy')
             self.set_boot_status_to_resumed()
 
-        # initialize the websocket client
-        exchange_api_key = self.account.get("api_key", "")
-        exchange_api_secret = self.account.get("api_secret", "")
-        exchange_api_password = self.account.get("api_password", "")
-
-        # initialize the public api
-        self.publicApi = public.PublicApi(exchange_api_key, exchange_api_secret, exchange_api_password,
-                                          use_server_time=False, first=False)
 
         # initialize the websocket client
         def handle_error(message):
@@ -70,19 +78,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             self.ws_client.close()
 
     def _authentification(self):
-        if not self.account:
-            return False
-        exchange_api_key = self.account.get("api_key", None)
-        exchange_api_secret = self.account.get("api_secret", None)
-        exchange_api_password = self.account.get("api_password", None)
-
-        self.marketApi = market.MarketApi(exchange_api_key, exchange_api_secret, exchange_api_password, use_server_time=False, first=False)
-        self.accountApi = account.AccountApi(exchange_api_key, exchange_api_secret, exchange_api_password, use_server_time=False, first=False)
-        self.positionApi = position.PositionApi(exchange_api_key, exchange_api_secret, exchange_api_password, use_server_time=False, first=False)
-        self.orderApi = order.OrderApi(exchange_api_key, exchange_api_secret, exchange_api_password, use_server_time=False, first=False)
-        #self.publicApi = public.PublicApi(exchange_api_key, exchange_api_secret, exchange_api_password, use_server_time=False, first=False)
-
-        return True
+        return self.marketApi and self.accountApi and  self.positionApi and self.orderApi
 
     def authentication_required(fn):
         """decoration for methods that require authentification"""
