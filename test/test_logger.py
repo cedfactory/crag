@@ -37,10 +37,10 @@ class TestLoggerFile:
         with open(filename) as f:
             lines = f.readlines()
             assert(len(lines) == 1)
-            assert(lines[0] == "hello")
+            assert(lines[0] == "hello\n")
 
         # cleaning
-        os.remove(filename)
+        #os.remove(filename)
 
 
 class TestLoggerDiscordBot:
