@@ -5,6 +5,7 @@ from .bitget.mix import account_api as account
 from .bitget.mix import position_api as position
 from .bitget.mix import order_api as order
 from .bitget.spot import public_api as public
+from . bitget import exceptions
 
 from .bitget_ws.bitget_ws import BitgetWsClient
 
@@ -190,7 +191,9 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             self.cancel_all_orders(self.get_lst_symbol_current_state(current_state))
 
     def get_lst_symbol_current_state(self, current_state):
-        return current_state["open_orders"]["symbol"].tolist()
+        symbols = current_state["open_orders"]["symbol"].tolist()
+        symbols = list(set(symbols))
+        return symbols
 
     def get_lst_orderId_current_state(self, current_state):
         return current_state["open_orders"]["orderId"].tolist()
@@ -710,14 +713,18 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 result = self.orderApi.cancel_orders(symbol, marginCoin, orderId)
                 self.success += 1
                 break
-            except:
+            except exceptions.BitgetAPIException as e:
+                if e.code == '40768':
+                    print("Warning : Order does not exist")
+                    result = {"msg": "success", "data": {"orderId": orderId}}
+                    break
                 print("failure:  cancel_order  - attempt: ", n_attempts)
                 self.failure += 1
                 print("failure: ", self.failure, " - success: ", self.success, " - percentage failure: ", self.failure / (self.success + self.failure) * 100)
                 time.sleep(2)
                 n_attempts = n_attempts - 1
         if result.get("msg", "") == "success":
-            return True, result['data']['orderId']
+            return True, result["data"]["orderId"]
         else:
             return False , False
 
