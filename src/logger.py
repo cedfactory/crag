@@ -61,7 +61,7 @@ class LoggerFile(ILogger):
             if self._get_current_filesize() > self.max_size:
                 self.current_id += 1
                 self.filename = self._get_current_filename()
-            with open(self.filename, 'a') as f:
+            with open(self.filename, "a", encoding="utf-8") as f:
                 content = ""
                 if author != "":
                     content = content + "[{}] ".format(author)
