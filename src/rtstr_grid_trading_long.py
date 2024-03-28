@@ -886,11 +886,13 @@ class GridPosition():
                 lst_filtered_on_edge = df[df['on_edge']]['grid_id'].tolist()
                 if (len(lst_filtered_on_edge) > 0) \
                         or self.on_edge:
-                    msg += "**PRICE ON GRID EDGE - VERIFIED" + "**\n"
-                    msg += "**lst_filtered_on_edge: " + ' '.join(map(str, lst_filtered_on_edge)) + "**\n"
+                    msg += "**PRICE ON EDGE" + "**\n"
+                    msg += "**VERIFIED" + "**\n"
+                    msg += "lst_filtered_on_edge: " + ' '.join(map(str, lst_filtered_on_edge)) + "\n"
                 else:
-                    msg += "**WARNING - PRICE ON GRID EDGE - NOT VERIFIED" + "**\n"
-                    msg += "**lst_filtered_on_edge empty" + ' '.join(map(str, lst_filtered_on_edge)) + "**\n"
+                    msg += "**WARNING - PRICE ON EDGE" + "**\n"
+                    msg += "**NOT VERIFIED" + "**\n"
+                    msg += "lst_filtered_on_edge empty" + ' '.join(map(str, lst_filtered_on_edge)) + "\n"
 
         if (self.nb_open_selected_to_be_open != 0) \
                 and (self.nb_close_selected_to_be_open != 0):

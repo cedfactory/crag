@@ -78,6 +78,8 @@ class Crag:
         self.init_memory_used_mb = 0
         self.init_debug_memory = False
         self.init_market_price = 0
+        self.market_price_max = 0
+        self.market_price_min = 0
 
         self.init_memory_usage = {}
         self.previous_memory_usage = {}
@@ -1127,9 +1129,20 @@ class Crag:
                         self.init_market_price = marketPrice
                     price_delta = (marketPrice - self.init_market_price) * 100 / self.init_market_price
                     msg += "# SYMBOL " + symbol + " :\n"
-                    msg += "**market price: " + str(round(marketPrice, 4)) + "**\n"
-                    msg += "**init price: " + str(round(self.init_market_price, 4)) + " %: " + str(round(price_delta, 2)) + "**\n"
-                    msg += "price average: " + str(round(averageOpenPrice, 4)) + "\n"
+                    msg += "**market: " + str(round(marketPrice, 4)) + "**\n"
+                    msg += "**init: " + str(round(self.init_market_price, 4)) + " %: " + str(round(price_delta, 2)) + "**\n"
+                    if (self.market_price_max == 0) \
+                            and (self.market_price_min == 0):
+                        self.market_price_max = marketPrice
+                        self.market_price_min = marketPrice
+                    else:
+                        self.market_price_max = max(self.market_price_max, marketPrice)
+                        market_price_max_percent = (self.market_price_max - self.init_market_price) * 100 / self.init_market_price
+                        self.market_price_min = min(self.market_price_min, marketPrice)
+                        market_price_min_percent = (self.market_price_min - self.init_market_price) * 100 / self.init_market_price
+                        msg += "max: " + str(round(self.market_price_max, 4)) + " %: " + str(round(market_price_max_percent, 2)) + "\n"
+                        msg += "min: " + str(round(self.market_price_min, 4)) + " %: " + str(round(market_price_min_percent, 2)) + "\n"
+                    msg += "average: " + str(round(averageOpenPrice, 4)) + "\n"
                     msg += "EQUITY: " + str(round(total * averageOpenPrice, 2)) + " PNL: " + str(round(unrealizedPL, 2)) + "\n"
                     msg += "SIZE: " + str(round(total, 2)) + " leverage: " + str(round(leverage, 2)) + "\n"
                     msg += "side: " + side + " liquidation: " + str(round(liquidation, 2)) + "\n"
