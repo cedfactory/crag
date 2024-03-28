@@ -860,16 +860,17 @@ class GridPosition():
         # msg += "# GRID POSITION: " + "\n"
         msg += "**POSITION: " + str(self.grid_uniq_position) + "**\n"
         msg += "**PREV POS: " + str(self.previous_grid_uniq_position) + "**\n"
-        if self.max_position == 0 \
-                and self.min_position == 0:
-            self.max_position = self.grid_uniq_position
-            self.min_position = self.grid_uniq_position
-        else:
-            self.max_position = max(self.max_position, self.grid_uniq_position)
-            self.min_position = min(self.min_position, self.grid_uniq_position)
-            if isinstance(self.max_position, int) \
-                    and isinstance(self.min_position, int):
-                msg += "**MAX/MIN POS: " + str(self.max_position) + "/" + str(self.min_position) + "**\n"
+        if self.grid_uniq_position is not None:
+            if self.max_position == 0 \
+                    and self.min_position == 0:
+                self.max_position = self.grid_uniq_position
+                self.min_position = self.grid_uniq_position
+            else:
+                self.max_position = max(self.max_position, self.grid_uniq_position)
+                self.min_position = min(self.min_position, self.grid_uniq_position)
+                if isinstance(self.max_position, int) \
+                        and isinstance(self.min_position, int):
+                    msg += "**MAX/MIN POS: " + str(self.max_position) + "/" + str(self.min_position) + "**\n"
         if ((dct_info['grid_position'][0] >= self.nb_grid)
                 and (dct_info['grid_position'][1] >= self.nb_grid)):
             msg += "**ABOVE GRID**\n"
