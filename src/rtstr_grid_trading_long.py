@@ -171,6 +171,8 @@ class GridPosition():
         self.steps = 0
         self.previous_grid_uniq_position = None
         self.grid_uniq_position = None
+        self.max_position = 0
+        self.min_position = 0
         self.on_edge = False
         self.grid_move = False
 
@@ -855,9 +857,19 @@ class GridPosition():
         msg = "# GRID LONG: " + "\n"
         msg += "RANGE FROM: " + str(self.grid_high) + " TO " + str(self.grid_low) + "\n"
         msg += "NB_GRID: " + str(self.nb_grid) + "\n"
-        msg += "# GRID POSITION: " + "\n"
+        # msg += "# GRID POSITION: " + "\n"
         msg += "**POSITION: " + str(self.grid_uniq_position) + "**\n"
-        msg += "**PREV POSITION: " + str(self.previous_grid_uniq_position) + "**\n"
+        msg += "**PREV POS: " + str(self.previous_grid_uniq_position) + "**\n"
+        if self.max_position == 0 \
+                and self.min_position == 0:
+            self.max_position = self.grid_uniq_position
+            self.min_position = self.grid_uniq_position
+        else:
+            self.max_position = max(self.max_position, self.grid_uniq_position)
+            self.min_position = min(self.min_position, self.grid_uniq_position)
+            if isinstance(self.max_position, int) \
+                    and isinstance(self.min_position, int):
+                msg += "**MAX/MIN POS: " + str(self.max_position) + "/" + str(self.min_position) + "**\n"
         if ((dct_info['grid_position'][0] >= self.nb_grid)
                 and (dct_info['grid_position'][1] >= self.nb_grid)):
             msg += "**ABOVE GRID**\n"
@@ -865,7 +877,7 @@ class GridPosition():
               and (dct_info['grid_position'][1] <= 0)):
             msg += "**BELOW GRID**\n"
         else:
-            msg += "**position: " + str(dct_info['grid_position'][0]) + " / " + str(dct_info['grid_position'][1]) + "**\n"
+            msg += "**pos range: " + str(dct_info['grid_position'][0]) + " / " + str(dct_info['grid_position'][1]) + "**\n"
         msg += "broker limit_close: " + str(dct_info['nb_current_limit_close']) + "\n"
         msg += "broker limit_open: " + str(dct_info['nb_current_limit_open']) + "\n"
         msg += "grid limit_close: " + str(dct_info['nb_limit_close']) + "\n"
