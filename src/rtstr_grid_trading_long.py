@@ -14,7 +14,7 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
         self.rtctrl.set_list_open_position_type(self.get_lst_opening_type())
         self.rtctrl.set_list_close_position_type(self.get_lst_closing_type())
 
-        self.zero_print = False
+        self.zero_print = True
         self.grid = GridPosition(self.lst_symbols, self.grid_high, self.grid_low, self.nb_grid, self.percent_per_grid, self.zero_print)
         if self.percent_per_grid != 0:
             self.nb_grid = self.grid.get_grid_nb_grid()
