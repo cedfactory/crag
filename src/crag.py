@@ -229,9 +229,12 @@ class Crag:
 
     def run(self):
         tracker = classtracker.ClassTracker()
-        tracker.track_object(self.rtstr)
-        tracker.track_object(self.broker)
         tracker.track_object(self)
+        tracker.track_object(self.broker)
+        tracker.track_object(self.rtstr)
+        tracker.track_object(self.rtstr.rtctrl)
+        tracker.track_object(self.rtstr.grid)
+        tracker.track_object(self.rtstr.df_grid_buying_size)
         tracker.create_snapshot("init")
 
         self.start_date = self.broker.get_current_datetime("%Y/%m/%d %H:%M:%S")
