@@ -137,9 +137,11 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
         for symbol in self.lst_symbols:
             dct_info = self.grid.get_grid_info(symbol)
             if self.grid.dct_change_status(dct_info):
-                return self.grid.dct_status_info_to_txt(dct_info, symbol)
+                msg = self.grid.dct_status_info_to_txt(dct_info, symbol)
             else:
-                return None
+                msg = None
+            dct_info = None
+            return msg
 
     def get_grid(self, cpt):
         # CEDE: MULTI SYMBOL TO BE IMPLEMENTED IF EVER ONE DAY.....
