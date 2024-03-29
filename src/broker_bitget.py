@@ -232,6 +232,7 @@ class BrokerBitGet(broker.Broker):
                 print('transaction success : ', trade.symbol, " - type: ", trade.type, ' - gross_size: ', trade.gross_size)
                 print("!!!!!!! EXECUTE THE TRADE COMPLETED !!!!!!!")
         self.log_trade = self.log_trade + msg.upper()
+        transaction = None
         return trade.success
 
     def check_validity_order(self, order):
@@ -267,6 +268,7 @@ class BrokerBitGet(broker.Broker):
             trade = self.OrderToTradeConverter(**order)
             self.execute_trade(trade)
             self.store_gridId_orderId(trade)
+            trade = None
         lst_orders = None
 
     def set_open_orders_gridId(self, df_open_orders):
