@@ -1094,6 +1094,8 @@ class Crag:
             df_buying_size = self.rtstr.set_df_buying_size(df_symbol_minsize, self.broker.get_usdt_equity())
             df_buying_size_normalise = self.broker.normalize_grid_df_buying_size_size(df_buying_size)
             self.rtstr.set_df_normalize_buying_size(df_buying_size_normalise)
+            df_buying_size = None
+            df_buying_size_normalise = None
             self.rtstr.set_normalized_grid_price(self.broker.get_price_place_endstep(symbols))
             lst_orders_to_execute = self.rtstr.activate_grid(broker_current_state)
             lst_orders_to_execute = []
@@ -1178,11 +1180,14 @@ class Crag:
         self.log("output lst_orders_to_execute: {}".format(lst_orders_to_execute))
 
         self.broker.execute_orders(lst_orders_to_execute)
+        lst_orders_to_execute = None
+        msg = None
 
         msg_broker_trade_info = self.broker.log_info_trade()
         if len(msg_broker_trade_info) != 0:
             self.log_discord(msg_broker_trade_info, "broker trade")
             self.broker.clear_log_info_trade()
+        msg_broker_trade_info = None
 
         end_time = time.time()
         self.iteration_times_grid_strategy.append(end_time - self.start_time_grid_strategy)
@@ -1338,6 +1343,7 @@ class Crag:
                                               self.final_datetime, self.broker.get_balance())
                             self.rtstr.set_symbol_trailer_tp_turned_off(coin)
                             self.sell_performed = False
+        usdt_equity = None
         return True
 
 
