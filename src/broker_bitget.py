@@ -267,6 +267,7 @@ class BrokerBitGet(broker.Broker):
             trade = self.OrderToTradeConverter(**order)
             self.execute_trade(trade)
             self.store_gridId_orderId(trade)
+        lst_orders = None
 
     def set_open_orders_gridId(self, df_open_orders):
         df_open_orders["gridId"] = None

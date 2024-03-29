@@ -69,9 +69,11 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
         if not current_state:
             return []
 
-        df_current_states = current_state["open_orders"]
-        df_open_positions = current_state["open_positions"]
-        df_price = current_state["prices"]
+        df_current_states = current_state["open_orders"].copy()
+        df_open_positions = current_state["open_positions"].copy()
+        df_price = current_state["prices"].copy()
+
+        current_state = None
 
         lst_order_to_execute = []
 
