@@ -1157,6 +1157,7 @@ class Crag:
             end_time = time.time()
             msg += "DURATION: " + utils.format_duration(round((end_time - self.start_time_grid_strategy_init), 2)) + "\n"
             delta_memory = self.memory_used_mb - self.init_memory_used_mb
+            msg += "iter: " + str(self.grid_iteration) + " / " + str(round(delta_memory/self.grid_iteration, 4)) + " byte/it\n"
             if delta_memory >= 0:
                 msg += f"MEMORY: {self.memory_used_mb:.1f}MB" + " (+" + str(round(delta_memory,1)) + ")\n"
             else:
