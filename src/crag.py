@@ -1,5 +1,5 @@
 import os
-from pympler import asizeof,classtracker
+from pympler import asizeof
 import shutil
 import time
 import pandas as pd
@@ -229,15 +229,6 @@ class Crag:
             self.monitoring.send_alive_notification(current_timestamp, self.broker.account.get("id"), self.rtstr.id)
 
     def run(self):
-        tracker = classtracker.ClassTracker()
-        tracker.track_object(self)
-        tracker.track_object(self.broker)
-        tracker.track_object(self.rtstr)
-        tracker.track_object(self.rtstr.rtctrl)
-        tracker.track_object(self.rtstr.grid)
-        tracker.track_object(self.rtstr.df_grid_buying_size)
-        tracker.create_snapshot("init")
-
         self.start_date = self.broker.get_current_datetime("%Y/%m/%d %H:%M:%S")
 
         self.minimal_portfolio_date = self.start_date
@@ -276,9 +267,6 @@ class Crag:
                     start_minus_one_sec = datetime.timestamp(datetime.fromtimestamp(start) - timedelta(seconds=1))
                     while time.time() < start_minus_one_sec:
                         step_result = self.safety_step()
-                        tracker.create_snapshot("step")
-                        tracker.stats.print_summary()
-                        tracker.stats.dump_stats("snapshot")
 
                         if not step_result:
                             print("safety_step result exit")
@@ -295,8 +283,6 @@ class Crag:
                 # COMMENT CEDE REDUNDANT CODE
                 if self.safety_run:
                     step_result = self.safety_step()
-                    tracker.create_snapshot("step")
-                    tracker.stats.print_summary()
 
                     if self.interval != 1:  # 1s
                         self.log_discord("safety run executed\n"
