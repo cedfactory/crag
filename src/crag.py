@@ -58,6 +58,7 @@ class Crag:
         self.average_time_grid_strategy_overall = 0
         self.start_time_grid_strategy_init = None
         self.grid_iteration = 0
+        self.symbols = []
 
         self.crag_size_previous = 0
         self.crag_size = 0
@@ -1086,22 +1087,22 @@ class Crag:
         else:
             self.grid_iteration += 1
 
-        symbols = self.rtstr.lst_symbols
-        broker_current_state = self.broker.get_current_state(symbols)
+        self.symbols = self.rtstr.lst_symbols
+        broker_current_state = self.broker.get_current_state(self.symbols)
         if self.init_grid_position:
             self.init_grid_position = False
-            df_symbol_minsize = self.broker.get_df_minimum_size(symbols)
+            df_symbol_minsize = self.broker.get_df_minimum_size(self.symbols)
             df_buying_size = self.rtstr.set_df_buying_size(df_symbol_minsize, self.broker.get_usdt_equity())
             df_buying_size_normalise = self.broker.normalize_grid_df_buying_size_size(df_buying_size)
             self.rtstr.set_df_normalize_buying_size(df_buying_size_normalise)
             df_buying_size = None
             df_buying_size_normalise = None
-            self.rtstr.set_normalized_grid_price(self.broker.get_price_place_endstep(symbols))
+            self.rtstr.set_normalized_grid_price(self.broker.get_price_place_endstep(self.symbols))
             lst_orders_to_execute = self.rtstr.activate_grid(broker_current_state)
             lst_orders_to_execute = []
             self.broker.execute_orders(lst_orders_to_execute)
             self.broker.reset_current_postion(broker_current_state)
-            broker_current_state = self.broker.get_current_state(symbols)
+            broker_current_state = self.broker.get_current_state(self.symbols)
 
         lst_orders_to_execute = self.rtstr.set_broker_current_state(broker_current_state)
         memory_used_bytes = utils.get_memory_usage()
@@ -1127,8 +1128,8 @@ class Crag:
                    + " $: " + str(round(self.minimal_portfolio_value - self.original_portfolio_value, 2)) \
                    + " %: " + str(round((self.minimal_portfolio_value - self.original_portfolio_value) * 100 / self.original_portfolio_value, 2)) + "\n"
             lst_usdt_symbols = self.broker.get_lst_symbol_position()
-            if len(symbols) == len(lst_usdt_symbols):
-                for symbol, usdt_symbol in zip(symbols, lst_usdt_symbols):
+            if len(self.symbols) == len(lst_usdt_symbols):
+                for symbol, usdt_symbol in zip(self.symbols, lst_usdt_symbols):
                     total, available, leverage, averageOpenPrice, marketPrice, unrealizedPL, liquidation, side= self.broker.get_symbol_data(usdt_symbol)
                     if self.init_market_price == 0:
                         self.init_market_price = marketPrice
@@ -1152,8 +1153,8 @@ class Crag:
                     msg += "SIZE: " + str(round(total, 2)) + " leverage: " + str(round(leverage, 2)) + "\n"
                     msg += "side: " + side + " liquidation: " + str(round(liquidation, 2)) + "\n"
             else:
-                if (len(symbols) != 0) and (len(lst_usdt_symbols) == 0):
-                    for symbol in symbols:   # CEDE NOT WORKING FOR MULTI
+                if (len(self.symbols) != 0) and (len(lst_usdt_symbols) == 0):
+                    for symbol in self.symbols:   # CEDE NOT WORKING FOR MULTI
                         msg += "# SYMBOL " + symbol + " :\n"
                         msg += "**no positions engaged" + "**\n"
                         df_price = broker_current_state["prices"]
@@ -1161,7 +1162,7 @@ class Crag:
                         msg += "**market price: " + str(round(price_for_symbol, 4)) + "**\n"
                 else:
                     self.log("ERROR LST SYMBOLS NOT MATCHING")
-                    self.log("symbols {}".format(symbols))
+                    self.log("symbols {}".format(self.symbols))
                     self.log("lst_usdt_symbols {}".format(lst_usdt_symbols))
                     msg += "**ERROR LST SYMBOLS NOT MATCHING" + "**:\n"
             msg += "# PERFORMANCE:" + "\n"
@@ -1181,6 +1182,7 @@ class Crag:
 
         self.broker.execute_orders(lst_orders_to_execute)
         lst_orders_to_execute = None
+        lst_usdt_symbols = None
         msg = None
 
         msg_broker_trade_info = self.broker.log_info_trade()
@@ -1188,6 +1190,10 @@ class Crag:
             self.log_discord(msg_broker_trade_info, "broker trade")
             self.broker.clear_log_info_trade()
         msg_broker_trade_info = None
+        broker_current_state["open_orders"] = None
+        broker_current_state["open_positions"] = None
+        broker_current_state["prices"] = None
+        broker_current_state = None
 
         end_time = time.time()
         self.iteration_times_grid_strategy.append(end_time - self.start_time_grid_strategy)
