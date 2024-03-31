@@ -569,7 +569,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                                     unrealizedPL,
                                     0, 0, "", "", "", 0, 0, 0, 0, 0, 0, 0]
                 df.loc[len(df)] = lst_info_symbol
-        return df.copy()
+        return df
 
     @authentication_required
     def get_future_market(self):
@@ -593,24 +593,29 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     def _get_df_account(self):
         # update market
         not_usdt = False
-        dct_account = self.accountApi.accounts('umcbl')
-        df_account_umcbl = self._account_results_to_df(dct_account)
+        df_account_assets = None
         if not_usdt:
+            dct_account = self.accountApi.accounts('umcbl')
+            df_account_umcbl = self._account_results_to_df(dct_account)
             dct_account = self.accountApi.accounts('dmcbl')
             df_account_dmcbl =  self._account_results_to_df(dct_account)
             dct_account = self.accountApi.accounts('cmcbl')
             df_account_cmcbl = self._account_results_to_df(dct_account)
-            self.df_account_assets = pd.concat([df_account_umcbl, df_account_dmcbl, df_account_cmcbl])
+            df_account_assets = pd.concat([df_account_umcbl, df_account_dmcbl, df_account_cmcbl])
+            df_account_umcbl = None
+            df_account_dmcbl = None
+            df_account_cmcbl = None
         else:
-            self.df_account_assets = df_account_umcbl
+            dct_account = self.accountApi.accounts('umcbl')
+            df_account_assets = self._account_results_to_df(dct_account)
 
+        self.df_account_open_position = None
         self.df_account_open_position = self.get_open_position()
-        self.df_account_open_position.rename(columns={'usdEquity': 'usdtEquity',
-                                                      'total': 'size'},
-                                             inplace=True)
+        self.df_account_open_position.rename(columns={'usdEquity': 'usdtEquity', 'total': 'size'}, inplace=True)
         self.df_account_open_position['equity'] = self.df_account_open_position['usdtEquity']
-        self.df_account_assets = pd.concat([self.df_account_assets, self.df_account_open_position])
+        self.df_account_assets = pd.concat([df_account_assets, self.df_account_open_position])
         self.df_account_assets.reset_index(inplace=True, drop=True)
+        df_account_assets = None
 
     def _get_df_spot_account(self, lst_symbols):
         df_spot_asset = pd.DataFrame(columns=["symbol", "size", "price", "equity"])
@@ -733,6 +738,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         df_open_orders = self.get_open_orders(lst_symbols)
         for index, row in df_open_orders.iterrows():
             self.cancel_order(row["symbol"], row["marginCoin"], row["orderId"])
+        df_open_orders = None
 
     def get_order_fill_detail(self, symbol, order_id):
         trade_id = price = fillAmount = sizeQty = fee = None

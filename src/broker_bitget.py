@@ -362,6 +362,7 @@ class BrokerBitGet(broker.Broker):
             if not self.zero_print:
                 print("error: get_symbol_unrealizedPL ", len(df_positions))
             unrealizedPL = 0
+        df_positions = None
         return unrealizedPL
 
     @authentication_required
@@ -373,37 +374,40 @@ class BrokerBitGet(broker.Broker):
             if not self.zero_print:
                 print("error: get_symbol_holdSide ", len(df_positions))
             holdSide = ""
+        df_positions = None
         return holdSide
 
     @authentication_required
     def get_symbol_averageOpenPrice(self, symbol):
         df_positions = self.get_open_position()
         averageOpenPrice = df_positions.loc[(df_positions['symbol'] == symbol), "averageOpenPrice"].values[0]
+        df_positions = None
         return averageOpenPrice
 
     @authentication_required
     def get_symbol_marketPrice(self, symbol):
         df_positions = self.get_open_position()
         marketPrice = df_positions.loc[(df_positions['symbol'] == symbol), "marketPrice"].values[0]
+        df_positions = None
         return marketPrice
 
     @authentication_required
     def get_symbol_total(self, symbol):
         df_positions = self.get_open_position()
+        total = 0
         if symbol in df_positions['symbol'].tolist():
             total = df_positions.loc[(df_positions['symbol'] == symbol), "total"].values[0]
-            return total
-        else:
-            return 0
+        df_positions = None
+        return total
 
     @authentication_required
     def get_symbol_available(self, symbol):
         df_positions = self.get_open_position()
+        available = 0
         if symbol in df_positions['symbol'].tolist():
             available = df_positions.loc[(df_positions['symbol'] == symbol), "available"].values[0]
-            return available
-        else:
-            return 0
+        df_positions = None
+        return available
 
     @authentication_required
     def get_symbol_data(self, symbol):
@@ -417,29 +421,34 @@ class BrokerBitGet(broker.Broker):
             unrealizedPL = df_positions.loc[(df_positions['symbol'] == symbol), "unrealizedPL"].values[0]
             liquidation = df_positions.loc[(df_positions['symbol'] == symbol), "liquidationPrice"].values[0]
             side = df_positions.loc[(df_positions['symbol'] == symbol), "holdSide"].values[0]
+            df_positions = None
             return total, available, leverage, averageOpenPrice, marketPrice, unrealizedPL, liquidation, side
         else:
+            df_positions = None
             return 0
 
     @authentication_required
     def get_symbol_usdtEquity(self, symbol):
         df_positions = self.get_open_position()
         usdtEquity = df_positions.loc[(df_positions['symbol'] == symbol), "usdtEquity"].values[0]
+        df_positions = None
         return usdtEquity
 
     @authentication_required
     def get_lst_symbol_position(self):
         df_positions = self.get_open_position()
-        return df_positions['symbol'].tolist()
+        lst_positions = df_positions['symbol'].tolist()
+        df_positions = None
+        return lst_positions
 
     @authentication_required
     def get_global_unrealizedPL(self):
         df_positions = self.get_open_position()
+        global_unrealizedPL = 0
         if len(df_positions) > 0:
             global_unrealizedPL = df_positions["unrealizedPL"].sum()
-            return global_unrealizedPL
-        else:
-            return 0
+        df_positions = None
+        return global_unrealizedPL
 
     def get_coin_from_symbol(self, symbol):
         return self._get_coin(symbol)
