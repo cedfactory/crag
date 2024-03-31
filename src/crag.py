@@ -1247,6 +1247,21 @@ class Crag:
         if self.rtstr.need_broker_current_state():
             # GRID TRADING STRATEGY
             self.udpate_strategy_with_broker_current_state()
+        else:
+            memory_used_bytes = utils.get_memory_usage()
+            if self.memory_used_mb == 0:
+                self.init_memory_used_mb = memory_used_bytes / (1024 * 1024)
+                self.memory_used_mb = self.init_memory_used_mb
+            else:
+                self.memory_used_mb = memory_used_bytes / (1024 * 1024)  # Convert bytes to megabytes
+
+            delta_memory = self.memory_used_mb - self.init_memory_used_mb
+            if delta_memory >= 0:
+                msg = f"MEMORY: {self.memory_used_mb:.1f}MB" + " (+" + str(round(delta_memory, 1)) + ")\n"
+            else:
+                msg = f"MEMORY: {self.memory_used_mb:.1f}MB" + " (-" + str(round(abs(delta_memory), 1)) + ")\n"
+            self.log_discord(msg, "MEMORY STATUS")
+
 
         if self.rtstr.condition_for_global_SLTP(self.total_SL_TP_percent) \
                 or self.rtstr.condition_for_global_trailer_TP(self.total_SL_TP_percent) \

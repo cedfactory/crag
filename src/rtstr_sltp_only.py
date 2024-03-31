@@ -44,3 +44,6 @@ class StrategySLTPOnly(rtstr.RealTimeStrategy):
     def sort_list_symbols(self, lst_symbols):
         print("symbol list: ", lst_symbols)
         return lst_symbols
+
+    def need_broker_current_state(self):
+        return False
