@@ -131,6 +131,8 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 all_positions = self.positionApi.all_position(productType='umcbl',marginCoin='USDT')
                 lst_all_positions = [data for data in all_positions["data"] if float(data["total"]) != 0.]
                 res = self._build_df_open_positions(lst_all_positions)
+                all_positions = None
+                lst_all_positions = None
                 self.success += 1
                 break
             except:
@@ -152,6 +154,8 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                     lst_all_orders = [data for data in all_orders["data"]]
                     current_res = self._build_df_open_orders(lst_all_orders)
                     res = pd.concat([res, current_res])
+                    lst_all_orders = None
+                    current_res = None
                     self.success += 1
                     break
                 except:
@@ -239,12 +243,14 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 self.log_api_failure("positionApi.all_position", n_attempts)
                 time.sleep(2)
                 n_attempts = n_attempts - 1
+        upl = 0.
         for data in all_positions["data"]:
             if data["symbol"] == symbol:
                 if float(data["total"]) != 0.:
-                    return float(data["unrealizedPL"])
-                else:
-                    return 0.0
+                    upl = float(data["unrealizedPL"])
+                break
+        all_positions = None
+        return upl
 
     '''
     marginCoin: Deposit currency

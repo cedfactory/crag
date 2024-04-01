@@ -483,7 +483,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
         return self.df_grid_buying_size
 
     def set_df_normalize_buying_size(self, df_normalized_buying_size):
-        self.df_grid_buying_size = df_normalized_buying_size.copy()
+        self.df_grid_buying_size = df_normalized_buying_size
 
     def get_symbol_buying_size(self, symbol):
         if not symbol in self.rtctrl.prices_symbols or self.rtctrl.prices_symbols[symbol] < 0:  # first init at -1

@@ -423,6 +423,7 @@ class Crag:
         lst_stored_data_for_reboot.append(self.traces_trade_positive)
         lst_stored_data_for_reboot.append(self.traces_trade_negative)
         self.save_reboot_data(lst_stored_data_for_reboot)
+        lst_stored_data_for_reboot = None
         msg += "win rate : %{}\n\n".format(utils.KeepNDecimals(win_rate, 2))
 
         if self.rtstr.rtctrl.get_rtctrl_nb_symbols() > 0:
@@ -969,6 +970,7 @@ class Crag:
                 self.grid_iteration = 1
                 df_symbol_minsize = self.broker.get_df_minimum_size(symbols)
                 df_buying_size = self.rtstr.set_df_buying_size_scenario(df_symbol_minsize, self.broker.get_usdt_equity())
+                df_symbol_minsize = None
                 df_buying_size_normalise = self.broker.normalize_grid_df_buying_size_size(df_buying_size)
                 self.rtstr.set_df_normalize_buying_size(df_buying_size_normalise)
                 self.rtstr.set_normalized_grid_price(self.broker.get_price_place_endstep(symbols))
@@ -1079,6 +1081,7 @@ class Crag:
             self.init_grid_position = False
             df_symbol_minsize = self.broker.get_df_minimum_size(self.symbols)
             df_buying_size = self.rtstr.set_df_buying_size(df_symbol_minsize, self.broker.get_usdt_equity())
+            df_symbol_minsize = None
             df_buying_size_normalise = self.broker.normalize_grid_df_buying_size_size(df_buying_size)
             self.rtstr.set_df_normalize_buying_size(df_buying_size_normalise)
             df_buying_size = None
