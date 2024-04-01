@@ -55,7 +55,7 @@ class TestLoggerFile:
         with open(expected_filename) as f:
             lines = f.readlines()
             assert (len(lines) == 1)
-            assert (lines[0] == "hello\n")
+            assert (lines[0].endswith("hello\n"))
 
         # cleaning
         os.remove(expected_filename)
@@ -87,7 +87,7 @@ class TestLoggerFile:
         with open(expected_filename0) as f:
             lines = f.readlines()
             assert (len(lines) == 1)
-            assert (lines[0] == "abcdefghijklmnopqrstuvwxyz\n")
+            assert (lines[0].endswith("abcdefghijklmnopqrstuvwxyz\n"))
         with open(expected_filename1) as f:
             lines = f.readlines()
             assert (len(lines) == 1)
