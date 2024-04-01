@@ -1,5 +1,6 @@
 from abc import ABCMeta, abstractmethod
 import pandas as pd
+from datetime import datetime
 
 # for LoggerFile
 import pathlib
@@ -25,6 +26,9 @@ class LoggerConsole(ILogger):
 
     def log(self, msg, header="", author="", attachments=[]):
         content = ""
+        now = datetime.now()
+        current_time = now.strftime("%Y/%m/%d %H:%M:%S.%f")
+        content = content + "[{}] ".format(current_time)
         if author != "":
             content = content + "[{}] ".format(author)
         if header != "":
@@ -63,6 +67,9 @@ class LoggerFile(ILogger):
                 self.filename = self._get_current_filename()
             with open(self.filename, "a", encoding="utf-8") as f:
                 content = ""
+                now = datetime.now()
+                current_time = now.strftime("%Y/%m/%d %H:%M:%S.%f")
+                content = content + "[{}] ".format(current_time)
                 if author != "":
                     content = content + "[{}] ".format(author)
                 if header != "":

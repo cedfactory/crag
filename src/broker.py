@@ -1,5 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from src.toolbox import settings_helper
+from src import logger
 import pandas as pd
 import ast
 
@@ -23,6 +24,8 @@ def create_df_prices():
 class Broker(metaclass = ABCMeta):
     
     def __init__(self, params = None):
+        self.zero_print = False
+        self.loggers = [ logger.LoggerConsole() ]
         self.cash = 10
         self.fdp_url_id = "localhost:5000"
         self.reset_account = True  # Reset account default behavior
@@ -49,7 +52,7 @@ class Broker(metaclass = ABCMeta):
             account_id = params.get("account", "")
             self.account = settings_helper.get_account_info(account_id)
             if not self.account:
-                print("[Broker] : ⚠ account {} not found".format(account_id))
+                self.log("⚠ account {} not found".format(account_id))
 
     def resume_strategy(self):
         return not self.reset_account
@@ -59,6 +62,12 @@ class Broker(metaclass = ABCMeta):
 
     def ready(self):
         return False
+
+    def log(self, msg, header="", attachments=[]):
+        if self.zero_print:
+            return
+        for iter_logger in self.loggers:
+            iter_logger.log(msg, header=header, author=type(self).__name__, attachments=attachments)
 
     def log_info(self):
         return ""
