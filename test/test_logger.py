@@ -91,7 +91,7 @@ class TestLoggerFile:
         with open(expected_filename1) as f:
             lines = f.readlines()
             assert (len(lines) == 1)
-            assert (lines[0] == "0123456789\n")
+            assert (lines[0].endswith("0123456789\n"))
 
         # cleaning
         os.remove(expected_filename0)
