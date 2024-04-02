@@ -14,7 +14,8 @@ class BrokerBitGet(broker.Broker):
         self.zero_print = True
         if params:
             self.zero_print = params.get("zero_print", self.zero_print)
-            self.zero_print = self.zero_print == "True" # convert to boolean
+            if isinstance(self.zero_print, str):
+                self.zero_print = self.zero_print == "True" # convert to boolean
             self.simulation = params.get("simulation", self.simulation)
             if self.simulation == 0 or self.simulation == "0":
                 self.simulation = False

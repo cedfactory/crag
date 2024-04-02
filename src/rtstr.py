@@ -6,6 +6,7 @@ import importlib
 import ast
 from os import path
 from datetime import datetime, timedelta
+from src import logger
 
 class RealTimeStrategy(metaclass=ABCMeta):
 
@@ -37,7 +38,8 @@ class RealTimeStrategy(metaclass=ABCMeta):
         self.MAX_POSITION = 5    # Asset Overall Percent Size
         self.set_buying_size = False
         self.buying_size = 0
-        self.logger = None
+        self.zero_print = True
+        self.loggers = [ logger.LoggerConsole() ]
         self.id = ""
         self.min_bol_spread = 0   # Bollinger Trend startegy
         self.trade_over_range_limits = False
@@ -118,7 +120,12 @@ class RealTimeStrategy(metaclass=ABCMeta):
             self.TP = float(params.get("tp", self.TP))
             self.global_SL = float(params.get("global_sl", self.global_SL))
             self.global_TP = float(params.get("global_tp", self.global_TP))
-            self.logger = params.get("logger", self.logger)
+
+            self.zero_print = params.get("zero_print", self.zero_print)
+            if isinstance(self.zero_print, str):
+                self.zero_print = self.zero_print == "True"  # convert string to boolean
+            self.loggers = params.get("loggers", self.loggers)
+
             self.id = params.get("id", self.id)
             self.min_bol_spread = params.get("min_bol_spread", self.min_bol_spread)
             if isinstance(self.min_bol_spread, str):
@@ -197,8 +204,10 @@ class RealTimeStrategy(metaclass=ABCMeta):
         pass
 
     def log(self, msg, header="", attachments=[]):
-        if self.logger:
-            self.logger.log(msg, header="[#"+self.id+"] "+header, author=type(self).__name__, attachments=attachments)
+        if self.zero_print:
+            return
+        for iter_logger in self.loggers:
+            iter_logger.log(msg, header=header, author=self.get_name(), attachments=attachments)
 
     def get_name(self):
         return type(self).__name__
@@ -377,12 +386,13 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
         df_result = pd.DataFrame(data)
         
-        if self.logger != None and len(df_result) > 0:
+        if self.zero_print == False and len(df_result) > 0:
             df_traces = df_result.copy()
             df_traces.drop(columns=['stimulus', 'gridzone'], axis=1, inplace=True)
             df_traces['percent'] = df_traces['percent'].round(decimals=2)
             df_traces['size'] = df_traces['size'].round(decimals=3)
-            self.logger.log(df_traces, header="get_df_selling_symbols", author=self.get_name())
+            self.log(df_traces, header="get_df_selling_symbols")
+            df_traces = None
          
         return df_result
 

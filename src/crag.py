@@ -1354,6 +1354,9 @@ class Crag:
                                               self.final_datetime, self.broker.get_balance())
                             self.rtstr.set_symbol_trailer_tp_turned_off(coin)
                             self.sell_performed = False
+
+            lst_symbol_for_closure = None
+
         usdt_equity = None
         return True
 

@@ -33,6 +33,8 @@ class LoggerConsole(ILogger):
             content = content + "[{}] ".format(author)
         if header != "":
             content = content + "[{}] ".format(header)
+        if isinstance(msg, dict):
+            msg = str(msg)
         content = content + msg
         print(content)
 
