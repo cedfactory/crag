@@ -2,6 +2,9 @@ from abc import ABCMeta, abstractmethod
 import pandas as pd
 from datetime import datetime
 
+# for LoggerConsole
+from rich import print
+
 # for LoggerFile
 import pathlib
 import os.path

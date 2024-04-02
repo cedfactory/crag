@@ -2,7 +2,7 @@ httplib2==0.20.4
 lxml==4.9.1
 plotly==5.9.0
 pandas==2.0.0
-rich==12.5.1
+rich==13.7.1
 urllib3==1.26.10
 ccxt==2.6.58
 joblib==1.1.0
