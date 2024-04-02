@@ -31,6 +31,7 @@ class Broker(metaclass = ABCMeta):
         self.reset_account = True  # Reset account default behavior
         self.reset_account_orders = True  # Reset account orders default behavior
         if params:
+            self.loggers = params.get("loggers", self.loggers)
             self.cash = params.get("cash", self.cash)
             self.fdp_url_id = params.get("fdp_url_id", self.fdp_url_id)
             self.reset_account = params.get("reset_account", self.reset_account)

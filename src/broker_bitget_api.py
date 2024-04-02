@@ -276,7 +276,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 self.success += 1
                 break
             except Exception as inst:
-                self.log(inst)
+                self.log(str(inst))
                 if hasattr(inst, "message"):
                     self.log(inst.message)
                 self.log_api_failure("orderApi.place_order", n_attempts)

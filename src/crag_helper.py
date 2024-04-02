@@ -122,14 +122,8 @@ def load_configuration_file(configuration_file, config_path = './conf'):
 
     return {'broker': params_broker, 'strategy': params_strategy, "crag": params_crag}
 
-def get_crag_params_from_configuration(configuration):
-    params_broker = configuration["broker"]
-    params_strategy = configuration["strategy"]
-    params_crag = configuration["crag"]
-
-    crag_id = params_crag.get("id", "")
-    crag_interval = params_crag.get("interval", "")
-    lst_loggers = params_crag.get("loggers", "").split(';')
+def get_loggers(str_loggers):
+    lst_loggers = str_loggers.split(';')
     loggers = []
     for iter_logger in lst_loggers:
         logger_params = iter_logger.split("=")
@@ -139,6 +133,24 @@ def get_crag_params_from_configuration(configuration):
             loggers.append(logger.LoggerFile({"filename": logger_params[1]}))
         elif logger_params[0] == "discordBot" and len(logger_params) == 2:
             loggers.append(_initialize_crag_discord_bot(logger_params[1]))
+    return loggers
+
+def get_crag_params_from_configuration(configuration):
+    params_broker = configuration["broker"]
+    str_loggers = params_broker.get("loggers", "")
+    loggers = get_loggers(str_loggers)
+    params_broker["loggers"] = loggers
+
+    params_strategy = configuration["strategy"]
+    str_loggers = params_strategy.get("loggers", "")
+    loggers = get_loggers(str_loggers)
+    params_strategy["loggers"] = loggers
+
+    params_crag = configuration["crag"]
+    crag_id = params_crag.get("id", "")
+    crag_interval = params_crag.get("interval", "")
+    str_loggers = params_crag.get("loggers", "")
+    loggers = get_loggers(str_loggers)
 
     bot_id = params_crag.get("bot_id", None)
     crag_discord_bot = _initialize_crag_discord_bot(bot_id)

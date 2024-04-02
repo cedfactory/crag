@@ -15,7 +15,9 @@
                 grid_high="0.70" grid_low="0.58"
                 percent_per_grid="0.1"
                 nb_grid="10"
-                grid_margin="1000"/>
+                grid_margin="1000"
+                loggers="console;file=log_strategygridtradinglong"
+        />
     </strategy>
     <broker name="bitget">
         <params exchange="bitget" fdp_url_id="gc1" account="subfortest1"
@@ -26,7 +28,8 @@
                 reset_account="True"
                 reset_account_orders="False"
                 zero_print="False"
+                loggers="console;file=log_broker"
         />
     </broker>
-    <crag id="grid" interval="3600" loggers="file=log_strategygridtradinglong" botId="ayato"/>
+    <crag id="grid" interval="3600" loggers="console;file=log_crag" botId="ayato"/>
 </configuration>

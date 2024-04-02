@@ -16,7 +16,7 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
         self.rtctrl.set_list_close_position_type(self.get_lst_closing_type())
 
         self.zero_print = False
-        self.grid = GridPosition(self.lst_symbols, self.grid_high, self.grid_low, self.nb_grid, self.percent_per_grid, self.zero_print)
+        self.grid = GridPosition(self.lst_symbols, self.grid_high, self.grid_low, self.nb_grid, self.percent_per_grid, self.zero_print, self.loggers)
         if self.percent_per_grid != 0:
             self.nb_grid = self.grid.get_grid_nb_grid()
         self.df_grid_buying_size = pd.DataFrame()
@@ -149,7 +149,7 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
             return self.grid.get_grid(symbol, cpt)
 
 class GridPosition():
-    def __init__(self, lst_symbols, grid_high, grid_low, nb_grid, percent_per_grid, debug_mode=True):
+    def __init__(self, lst_symbols, grid_high, grid_low, nb_grid, percent_per_grid, debug_mode=True, loggers=[]):
         self.grid_high = grid_high
         self.grid_low = grid_low
         self.nb_grid = nb_grid
@@ -158,7 +158,7 @@ class GridPosition():
         self.percent_per_grid = percent_per_grid
 
         self.zero_print = debug_mode
-        self.loggers = [ logger.LoggerConsole() ]
+        self.loggers = loggers
         self.trend = "FLAT"
         self.grid_position = []
         self.dct_info = None

@@ -142,7 +142,7 @@ class BrokerBitGet(broker.Broker):
             else:
                 transaction = {"msg": "failure"}
 
-            self.log(transaction)
+            self.log(str(transaction))
             if "msg" in transaction and transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
                 trade.success = True
                 trade.orderId = transaction["data"]["orderId"]
@@ -160,7 +160,7 @@ class BrokerBitGet(broker.Broker):
                 self.log("request " + trade.type + ": " + symbol + " gross_size: " + str(trade.gross_size))
                 self.log(trade.type + ": " + symbol + " gross_size: " + str(trade.gross_size) + " price: " + str(trade.gross_price) + " fee: " + str(trade.buying_fee))
             else:
-                self.log("Something went wrong inside execute_trade : {}".format(transaction))
+                self.log("Something went wrong inside execute_trade : " + str(transaction))
 
         elif trade.type == "CLOSE_LONG":
             trade.gross_size = self.get_symbol_total(symbol)
