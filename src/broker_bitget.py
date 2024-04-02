@@ -161,7 +161,7 @@ class BrokerBitGet(broker.Broker):
                 self.log("Something went wrong inside execute_trade : {}".format(transaction))
 
         elif trade.type == "CLOSE_LONG":
-            trade.gross_size = self.get_symbol_available(symbol)
+            trade.gross_size = self.get_symbol_total(symbol)
             transaction = self._close_long_position(symbol, trade.gross_size, clientOid)
             if "msg" in transaction and transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
                 trade.success = True
@@ -178,7 +178,7 @@ class BrokerBitGet(broker.Broker):
                    trade.roi = utils.get_variation(trade.bought_gross_price, trade.gross_price)
 
         elif trade.type == "CLOSE_SHORT":
-            trade.gross_size = self.get_symbol_available(symbol)
+            trade.gross_size = self.get_symbol_total(symbol)
             transaction = self._close_short_position(symbol, trade.gross_size, clientOid)
             if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
                 trade.success = True
@@ -304,7 +304,7 @@ class BrokerBitGet(broker.Broker):
         for symbol in df_positions['symbol'].tolist():
             current_trade = trade.Trade()
             current_trade.symbol = symbol
-            current_trade.gross_size = df_positions.loc[(df_positions['symbol'] == symbol), "available"].values[0]
+            current_trade.gross_size = df_positions.loc[(df_positions['symbol'] == symbol), "total"].values[0]
             current_trade.type = "CLOSE_LONG"
             holdSize = df_positions.loc[(df_positions['symbol'] == symbol), "holdSide"].values[0]
             if holdSize == 'long':

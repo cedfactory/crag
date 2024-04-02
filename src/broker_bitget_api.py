@@ -474,7 +474,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         n_attempts = 3
         while n_attempts > 0:
             try:
-                value = float(self.marketApi.market_price(symbol)["data"]["available"])
+                value = float(self.marketApi.market_price(symbol)["data"]["total"])
                 self.success += 1
                 break
             except:
@@ -599,7 +599,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         df_spot_asset = pd.DataFrame(columns=["symbol", "size", "price", "equity"])
         for symbol in lst_symbols:
             spot_asset = self.accountApi.assets_spot(symbol)
-            spot_asset_size = float(spot_asset["data"][0]["available"])
+            spot_asset_size = float(spot_asset["data"][0]["total"])
             if spot_asset_size != 0:
                 if symbol == "USDT":
                     spot_asset_equity = spot_asset_size
