@@ -1,9 +1,10 @@
 from . import rtdp, rtstr, rtctrl
+import math
 import pandas as pd
 import numpy as np
 
 from . import utils
-import math
+from src import logger
 
 class StrategyGridTradingLong(rtstr.RealTimeStrategy):
 
@@ -14,7 +15,7 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
         self.rtctrl.set_list_open_position_type(self.get_lst_opening_type())
         self.rtctrl.set_list_close_position_type(self.get_lst_closing_type())
 
-        self.zero_print = True
+        self.zero_print = False
         self.grid = GridPosition(self.lst_symbols, self.grid_high, self.grid_low, self.nb_grid, self.percent_per_grid, self.zero_print)
         if self.percent_per_grid != 0:
             self.nb_grid = self.grid.get_grid_nb_grid()
@@ -30,9 +31,8 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
 
         ds.features = self.get_feature_from_fdp_features(ds.fdp_features)
         ds.interval = self.strategy_interval
-        if not self.zero_print:
-            print("startegy: ", self.get_info())
-            print("strategy features: ", ds.features)
+        self.log("strategy: " + self.get_info())
+        self.log("strategy features: " + ds.features)
         return ds
 
     def get_info(self):
@@ -51,8 +51,7 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
         return False
 
     def sort_list_symbols(self, lst_symbols):
-        if not self.zero_print:
-            print("symbol list: ", lst_symbols)
+        self.log("symbol list: ", lst_symbols)
         return lst_symbols
 
     def need_broker_current_state(self):
@@ -97,16 +96,17 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
 
         if not self.zero_print:
             df_sorted = df_current_state.sort_values(by='price')
-            print("#############################################################################################")
-            print("current_state: \n", df_sorted.to_string(index=False))
-            print("open_positions: \n", df_open_positions.to_string(index=False))
-            print("price: \n", df_price.to_string(index=False))
+            self.log("#############################################################################################")
+            self.log("current_state: \n" + df_sorted.to_string(index=False))
+            self.log("open_positions: \n" + df_open_positions.to_string(index=False))
+            self.log("price: \n" + df_price.to_string(index=False))
             lst_order_to_print = []
             for order in lst_order_to_execute:
                 lst_order_to_print.append((order["grid_id"], order["price"], order["type"]))
-            print("order list: \n", lst_order_to_print)
+            self.log("order list: \n" + str(lst_order_to_print))
+            lst_order_to_print = None
             self.grid.print_grid()
-            print("#############################################################################################")
+            self.log("#############################################################################################")
 
         return lst_order_to_execute
 
@@ -158,6 +158,7 @@ class GridPosition():
         self.percent_per_grid = percent_per_grid
 
         self.zero_print = debug_mode
+        self.loggers = [ logger.LoggerConsole() ]
         self.trend = "FLAT"
         self.grid_position = []
         self.dct_info = None
@@ -209,10 +210,9 @@ class GridPosition():
             self.nb_grid = int((self.grid_high - self.grid_low) / self.steps)
         # Create a list with nb_grid split between high and low
         self.lst_grid_values = np.linspace(self.grid_high, self.grid_low, self.nb_grid + 1, endpoint=True).tolist()
-        if not self.zero_print:
-            print("nb_grid: ", self.nb_grid)
-            print("grid steps: ", self.steps)
-            print("grid values: ", self.lst_grid_values)
+        self.log("nb_grid: {}".format(self.nb_grid))
+        self.log("grid steps: {}".format(self.steps))
+        self.log("grid values: {}".format(self.lst_grid_values))
 
         self.columns = ["grid_id", "position", "orderId", "previous_side", "side", "changes", "status"]
         self.grid = {key: pd.DataFrame(columns=self.columns) for key in self.lst_symbols}
@@ -235,6 +235,12 @@ class GridPosition():
         self.diff_nb_open_positions = 0
         self.diff_nb_close_positions = 0
 
+    def log(self, msg, header="", attachments=[]):
+        if self.zero_print:
+            return
+        for iter_logger in self.loggers:
+            iter_logger.log(msg, header=header, author=type(self).__name__, attachments=attachments)
+
     def update_pending_status_from_current_state(self, symbol, df_current_state):
         # Update grid status from 'pending' status to 'engaged'
         # from previous cycle request to open limit order
@@ -256,8 +262,7 @@ class GridPosition():
                 else:
                     # CEDE: This should not be triggered
                     # CEDE UPDATE : Maybe Not
-                    if not self.zero_print:
-                        print("GRID ERROR - open_long vs open_short - grid id: ", grid_id)
+                    self.log("GRID ERROR - open_long vs open_short - grid id: {}".format(grid_id))
             else:
                 # CEDE: Executed when high volatility is triggering an limit order just after being raised
                 #       and before being recorded by the strategy in the grid process structure
@@ -265,8 +270,7 @@ class GridPosition():
                 missing_order['grid_id'] = grid_id
                 missing_order['side'] = df.loc[df['grid_id'] == grid_id, 'side'].values[0]
                 self.lst_limit_order_missing.append(missing_order)
-                if not self.zero_print:
-                    print("GRID ERROR - limit order failed - grid_id missing: ", grid_id, ' side: ', missing_order['side'])
+                self.log("GRID ERROR - limit order failed - grid_id missing: " + str(grid_id) + ' side: ' + missing_order['side'])
 
     def get_grid_nb_grid(self):
         return self.nb_grid
@@ -281,8 +285,7 @@ class GridPosition():
         if (df['position'] == position).any():
             self.on_edge = True
             df.loc[df['position'] == position, 'on_edge'] = True
-            if not self.zero_print:
-                print('PRICE ON GRID EDGE - CROSSING OR NOT CROSSING')
+            self.log('PRICE ON GRID EDGE - CROSSING OR NOT CROSSING')
             delta = abs((df.at[0, 'position'] - df.at[1,'position']) / 2)
             if df.loc[df['position'] == position, 'cross_checked'].values[0] == False:
                 if df.loc[df['position'] == position, 'side'].values[0] == "open_long":
@@ -350,13 +353,12 @@ class GridPosition():
             df_current_state['price'] = [df_grid['position'].iloc[self.find_closest(price, df_grid['position'])] for price in df_current_state['price']]
             # Check if all elements in df_current_state['price'] are in df_grid['position']
             all_prices_in_grid = df_current_state['price'].isin(df_grid['position']).all()
-            if not self.zero_print:
-                if not all_prices_in_grid:
+            if not self.zero_print and not all_prices_in_grid:
                     # Print the elements that are different
                     different_prices = df_current_state.loc[~df_current_state['price'].isin(df_grid['position']), 'price']
-                    print("################ WARNING PRICE DIFF WITH ORDER AND GRID ###############################")
-                    print("Elements in df_current_state['price'] that are not in df_grid['position']:")
-                    print(different_prices)
+                    self.log("################ WARNING PRICE DIFF WITH ORDER AND GRID ###############################")
+                    self.log("Elements in df_current_state['price'] that are not in df_grid['position']:")
+                    self.log(different_prices)
                     exit(0)
         return df_current_state
 
@@ -464,7 +466,7 @@ class GridPosition():
         if not self.zero_print:
             for symbol in self.lst_symbols:
                 df_grid = self.grid[symbol]
-                print(df_grid.to_string(index=False))
+                self.log("\n" + df_grid.to_string(index=False))
 
     def update_nb_open_positions(self, symbol, df_open_positions, buying_size):
         self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'size'] = buying_size
@@ -601,8 +603,7 @@ class GridPosition():
             grid_trend_msg += "FLAT ->" + " nb_open_selected_to_be_open: " + str(nb_open_selected_to_be_open)
             # filtered_orders.extend(close_orders[:nb_selected_to_be_open])
 
-        if not self.zero_print:
-            print(grid_trend_msg)
+        self.log(grid_trend_msg)
 
 
         df_filtered = df[(df['status'] == 'engaged')
@@ -681,8 +682,7 @@ class GridPosition():
     def normalize_grid_price(self, symbol, pricePlace, priceEndStep):
         df = self.grid[symbol]
         df['position'] = df['position'].apply(lambda x: self.normalize_price(x, pricePlace, priceEndStep))
-        if not self.zero_print:
-            print("grid price normalized: ", df['position'].tolist())
+        self.log("grid price normalized: " + str(df['position'].tolist()))
 
     def normalize_price(self, amount, pricePlace, priceEndStep):
         amount = amount * pow(10, pricePlace)
@@ -801,10 +801,10 @@ class GridPosition():
         self.control_multi_position['lst_open_long'] = list(set(self.control_multi_position['lst_open_long']))
 
         if not self.zero_print:
-            print('global lst_close_long_triggered: ', self.control_multi_position['lst_close_long_triggered'])
-            print('global nb_close_long_triggered: ', self.control_multi_position['nb_close_long_triggered'])
-            print('global lst_open_long_triggered: ', self.control_multi_position['lst_open_long_triggered'])
-            print('global lst_open_long: ', self.control_multi_position['lst_open_long'])
+            self.log('global lst_close_long_triggered: ' + str(self.control_multi_position['lst_close_long_triggered']))
+            self.log('global nb_close_long_triggered: ' + str(self.control_multi_position['nb_close_long_triggered']))
+            self.log('global lst_open_long_triggered: ' + str(self.control_multi_position['lst_open_long_triggered']))
+            self.log('global lst_open_long: ' + str(self.control_multi_position['lst_open_long']))
 
     def filter_open_control_multi_position(self, open_grid_id):
         if (open_grid_id == self.grid_uniq_position) \
@@ -812,8 +812,7 @@ class GridPosition():
             return False
         else:
             if open_grid_id in self.control_multi_position['lst_open_long']:
-                if not self.zero_print:
-                    print("filter_open_control_multi_position - grid id: ", open_grid_id)
+                self.log("filter_open_control_multi_position - grid id: {}".format(open_grid_id))
                 return False
             else:
                 return True
