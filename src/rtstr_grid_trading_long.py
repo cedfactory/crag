@@ -32,7 +32,9 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
         ds.features = self.get_feature_from_fdp_features(ds.fdp_features)
         ds.interval = self.strategy_interval
         self.log("strategy: " + self.get_info())
+        list_as_string = ', '.join(ds.features)
         self.log("strategy features: " + ds.features)
+        # self.log("strategy features: " + ds.features)
         return ds
 
     def get_info(self):
