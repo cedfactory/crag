@@ -16,7 +16,7 @@
                 trailer_sl="0"
                 high_volatility="False"
                 grid_high="0.6"
-                grid_low="0.57"
+                grid_low="0.56"
                 percent_per_grid="0"
                 nb_grid="60"
                 grid_margin="490"
