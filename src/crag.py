@@ -1162,7 +1162,7 @@ class Crag:
         if len(lst_memory_leak) == len(self.df_memory_leak.columns):
             self.df_memory_leak.loc[len(self.df_memory_leak)] = lst_memory_leak
             lst_memory_leak = None
-        if len(self.df_memory_leak) > 10:
+        if len(self.df_memory_leak) > 300:
             directoty = "./memory_leak/"
             if not os.path.exists(directoty):
                 os.makedirs(directoty)

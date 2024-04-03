@@ -20,13 +20,13 @@
                 percent_per_grid="0"
                 nb_grid="60"
                 grid_margin="490"
-                loggers="console"
+                loggers="file=log"
         />
     </strategy>
     <broker name="bitget">
         <params exchange="bitget"
                 fdp_url_id="gc1"
-                account="subfortest2"
+                account="subfortest1"
                 leverage_short="10"
                 leverage_long="10"
                 simulation="1"
@@ -34,12 +34,12 @@
                 orders="market"
                 reset_account="True"
                 reset_account_orders="True"
-                loggers="console"
+                loggers="file=log"
         />
     </broker>
     <crag id="grid"
           interval="3600"
-          botId="ayato_sub3"
-          loggers="console"
+          botId="ayato"
+          loggers="file=log"
     />
 </configuration>
