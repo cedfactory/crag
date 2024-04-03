@@ -55,7 +55,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
         self.grid_high = 0
         self.grid_low = 0
         self.nb_grid = 0
-        self.grid_buying_size = 0
+        self.grid_buying_size = 10
         self.grid_margin = 0
         self.percent_per_grid = 0
 
