@@ -89,7 +89,7 @@ class Crag:
         self.lst_delta_leak = []
         self.lst_memory_used_bytes_leak_get_current_state = []
         self.lst_memory_used_bytes_leak_set_broker_current_state = []
-        self.df_memory_leak = pd.DataFrame(columns=["date", "broker", "broker_average", "rtstr", "rtstr_average", "memory"])
+        self.df_memory_leak = pd.DataFrame(columns=["mem_0", "mem_1", "mem_2", "mem_3", "mem_4", "mem_5", "diff_global", "diff_broker_pos", "diff_rstr_str", "diff_broker_exec", "global_mem", "exec"])
         self.cpt_df_memory_leak = 0
 
         if params:
@@ -1087,6 +1087,9 @@ class Crag:
 
     def udpate_strategy_with_broker_current_state_live(self):
         self.start_time_grid_strategy = time.time()
+
+        debug_start_time = time.time()
+
         if self.start_time_grid_strategy_init == None:
             self.start_time_grid_strategy_init = self.start_time_grid_strategy
             self.grid_iteration = 1
@@ -1101,22 +1104,13 @@ class Crag:
 
         self.cpt_df_memory_leak += 1
         lst_memory_leak = []
-        lst_memory_leak.append(int(self.cpt_df_memory_leak))
-
-        self.memory_used_bytes_leak_get_current_state = utils.get_memory_usage()
-
+        self.memory_0 = utils.get_memory_usage() / (1024 * 1024)
+        lst_memory_leak.append(self.memory_0)
         broker_current_state = self.broker.get_current_state(self.symbols)
 
-        self.memory_used_bytes_leak_get_current_state = utils.get_memory_usage() - self.memory_used_bytes_leak_get_current_state
-        self.memory_used_bytes_leak_get_current_state = self.memory_used_bytes_leak_get_current_state / (1024 * 1024)  # Convert bytes to megabytes
-        self.lst_memory_used_bytes_leak_get_current_state.append(self.memory_used_bytes_leak_get_current_state)
-        self.lst_memory_used_bytes_leak_get_current_state = self.lst_memory_used_bytes_leak_get_current_state[-100:]
-        self.memory_used_bytes_leak_get_current_state_average = sum(self.lst_memory_used_bytes_leak_get_current_state) / len(self.lst_memory_used_bytes_leak_get_current_state)
-        self.memory_used_bytes_leak_get_current_state_max = max(self.lst_memory_used_bytes_leak_get_current_state)
-        self.memory_used_bytes_leak_get_current_state_min = min(self.lst_memory_used_bytes_leak_get_current_state)
+        self.memory_1 = utils.get_memory_usage() / (1024 * 1024)
+        lst_memory_leak.append(self.memory_1)
 
-        lst_memory_leak.append(self.memory_used_bytes_leak_get_current_state)
-        lst_memory_leak.append(self.memory_used_bytes_leak_get_current_state_average)
 
         if self.init_grid_position:
             self.init_grid_position = False
@@ -1134,22 +1128,12 @@ class Crag:
             self.broker.reset_current_postion(broker_current_state)
             broker_current_state = self.broker.get_current_state(self.symbols)
 
-
-        self.memory_used_bytes_leak_set_broker_current_state = utils.get_memory_usage()
-
+        self.memory_2 = utils.get_memory_usage() / (1024 * 1024)
+        lst_memory_leak.append(self.memory_2)
         lst_orders_to_execute = self.rtstr.set_broker_current_state(broker_current_state)
 
-        self.memory_used_bytes_leak_set_broker_current_state = utils.get_memory_usage() - self.memory_used_bytes_leak_set_broker_current_state
-        self.memory_used_bytes_leak_set_broker_current_state = self.memory_used_bytes_leak_set_broker_current_state / (
-                    1024 * 1024)  # Convert bytes to megabytes
-        self.lst_memory_used_bytes_leak_set_broker_current_state.append(self.memory_used_bytes_leak_set_broker_current_state)
-        self.lst_memory_used_bytes_leak_set_broker_current_state = self.lst_memory_used_bytes_leak_set_broker_current_state[-100:]
-        self.memory_used_bytes_leak_set_broker_current_state_average = sum(self.lst_memory_used_bytes_leak_set_broker_current_state) / len(self.lst_memory_used_bytes_leak_set_broker_current_state)
-        self.memory_used_bytes_leak_set_broker_current_state_max = max(self.lst_memory_used_bytes_leak_set_broker_current_state)
-        self.memory_used_bytes_leak_set_broker_current_state_min = min(self.lst_memory_used_bytes_leak_set_broker_current_state)
-
-        lst_memory_leak.append(self.memory_used_bytes_leak_get_current_state)
-        lst_memory_leak.append(self.memory_used_bytes_leak_get_current_state_average)
+        self.memory_3 = utils.get_memory_usage() / (1024 * 1024)
+        lst_memory_leak.append(self.memory_3)
 
         memory_used_bytes = utils.get_memory_usage()
         if self.memory_used_mb == 0:
@@ -1157,23 +1141,6 @@ class Crag:
             self.memory_used_mb = self.init_memory_used_mb
         else:
             self.memory_used_mb = memory_used_bytes / (1024 * 1024)  # Convert bytes to megabytes
-
-        lst_memory_leak.append(self.memory_used_mb)
-        if len(lst_memory_leak) == len(self.df_memory_leak.columns):
-            self.df_memory_leak.loc[len(self.df_memory_leak)] = lst_memory_leak
-            lst_memory_leak = None
-        if len(self.df_memory_leak) > 300:
-            directoty = "./memory_leak/"
-            if not os.path.exists(directoty):
-                os.makedirs(directoty)
-            filename = "./memory_leak/memory_leak.csv"
-            if not os.path.exists(filename):
-                self.df_memory_leak.to_csv(filename, index=False)
-            else:
-                df = pd.read_csv(filename)
-                df = pd.concat([df, self.df_memory_leak], ignore_index=True)
-                df["date"] = df.index
-                df.to_csv(filename, index=False)
 
         msg = self.rtstr.get_info_msg_status()
         if msg != None:
@@ -1241,24 +1208,62 @@ class Crag:
                 msg += f"MEMORY: {self.memory_used_mb:.1f}MB" + " (-" + str(round(abs(delta_memory),1)) + ")\n"
             msg += "iter: " + str(self.grid_iteration) + "\n"
             msg += "byte/it: " + str(round(delta_memory/self.grid_iteration, 4)) + "\n"
-            msg += "broker.get_current_state delta: " + str(round(self.memory_used_bytes_leak_get_current_state, 4)) + "\n"
-            msg += "broker.get_current_state average: " + str(round(self.memory_used_bytes_leak_get_current_state_average, 4)) + "\n"
-            msg += "broker.get_current_state max: " + str(round(self.memory_used_bytes_leak_get_current_state_max, 4)) + "\n"
-            msg += "broker.get_current_state min: " + str(round(self.memory_used_bytes_leak_get_current_state_min, 4)) + "\n"
-            msg += "rtstr.set_broker_current_state delta: " + str(round(self.memory_used_bytes_leak_set_broker_current_state, 4)) + "\n"
-            msg += "rtstr.set_broker_current_state average: " + str(round(self.memory_used_bytes_leak_set_broker_current_state_average, 4)) + "\n"
-            msg += "rtstr.set_broker_current_state max: " + str(round(self.memory_used_bytes_leak_set_broker_current_state_max, 4)) + "\n"
-            msg += "rtstr.set_broker_current_state min: " + str(round(self.memory_used_bytes_leak_set_broker_current_state_min, 4)) + "\n"
 
             msg = msg.upper()
             self.log_discord(msg, "GRID STATUS")
 
         self.log("output lst_orders_to_execute: {}".format(lst_orders_to_execute))
 
+        self.memory_4 = utils.get_memory_usage() / (1024 * 1024)
+        lst_memory_leak.append(self.memory_4)
         self.broker.execute_orders(lst_orders_to_execute)
         lst_orders_to_execute = None
         lst_usdt_symbols = None
         msg = None
+
+        self.memory_5 = utils.get_memory_usage() / (1024 * 1024)
+        lst_memory_leak.append(self.memory_5)
+
+        self.diff_memory_global = self.memory_5 - self.memory_0
+        self.diff_memory_broker_pos = self.memory_1 - self.memory_0
+        self.diff_memory_rstr_strategy = self.memory_3 - self.memory_2
+        self.diff_memory_broker_exec = self.memory_5 - self.memory_4
+        lst_memory_leak.append(self.diff_memory_global)
+        lst_memory_leak.append(self.diff_memory_broker_pos)
+        lst_memory_leak.append(self.diff_memory_rstr_strategy)
+        lst_memory_leak.append(self.diff_memory_broker_exec)
+        debug_end_time = time.time()
+        lst_memory_leak.append(round(debug_end_time - debug_start_time, 4))
+
+        if False:
+            msg = "# MEMORY DEBUG:" + "\n"
+            msg += "diff_memory_global:" + str(round(self.diff_memory_global, 4)) + "\n"
+            msg += "diff_memory_broker_pos:" + str(round(self.diff_memory_broker_pos, 4)) + "\n"
+            msg += "diff_memory_rstr_strategy:" + str(round(self.diff_memory_rstr_strategy, 4)) + "\n"
+            msg += "diff_memory_broker_exec:" + str(round(self.diff_memory_broker_exec, 4)) + "\n"
+            msg += "exec_time:" + str(round(debug_end_time - debug_start_time, 4)) + "\n"
+            self.log_discord(msg, "DEBUG")
+
+
+        lst_memory_leak.append(self.memory_used_mb)
+        if len(lst_memory_leak) == len(self.df_memory_leak.columns):
+            self.df_memory_leak.loc[len(self.df_memory_leak)] = lst_memory_leak
+            lst_memory_leak = None
+        if len(self.df_memory_leak) > 10:
+            directoty = "./memory_leak/"
+            if not os.path.exists(directoty):
+                os.makedirs(directoty)
+            filename = "./memory_leak/memory_leak.csv"
+            if not os.path.exists(filename):
+                self.df_memory_leak.to_csv(filename, index=False)
+            else:
+                df = pd.read_csv(filename)
+                df = pd.concat([df, self.df_memory_leak], ignore_index=True)
+                # df["date"] = df.index
+                df.to_csv(filename, index=False)
+
+
+
 
         msg_broker_trade_info = self.broker.log_info_trade()
         if len(msg_broker_trade_info) != 0:
