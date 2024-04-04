@@ -274,6 +274,9 @@ class BrokerBitGet(broker.Broker):
 
     @authentication_required
     def execute_orders(self, lst_orders):
+        import time
+        start = time.time()
+
         for order in lst_orders:
             order = self.check_validity_order(order)
             trade = self.OrderToTradeConverter(order)
@@ -290,6 +293,11 @@ class BrokerBitGet(broker.Broker):
         del lst_orders
         locals().clear()
         gc.collect()
+            trade = None
+            
+        end = time.time()
+        print("execute_orders #{} : {}".format(len(lst_orders), end - start))
+        lst_orders = None
 
     def set_open_orders_gridId(self, df_open_orders):
         df_open_orders["gridId"] = None

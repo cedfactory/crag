@@ -265,6 +265,11 @@ class Crag:
                 if self.safety_run:
                     start_minus_one_sec = datetime.timestamp(datetime.fromtimestamp(start) - timedelta(seconds=1))
                     while time.time() < start_minus_one_sec:
+                        print("safety")
+
+                        import time
+                        start = time.time()
+
                         step_result = self.safety_step()
 
                         if not step_result:
@@ -274,6 +279,10 @@ class Crag:
                             msg = "duration: " + str(self.rtstr.high_volatility.high_volatility_get_duration()) + "seconds"
                             self.log_discord(msg, "PAUSE DUE HIGH VOLATILITY")
                             time.sleep(self.rtstr.high_volatility.high_volatility_get_duration())
+
+                        end = time.time()
+                        print("     " + str(end - start))
+
                     while time.time() < start:
                         pass
                 else:

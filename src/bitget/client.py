@@ -39,6 +39,11 @@ class Client(object):
             # print("sign:", sign)
             self.first = False
 
+
+
+        import time
+        start = time.time()
+
         # send request
         response = None
         if method == c.GET:
@@ -55,6 +60,11 @@ class Client(object):
                 pass
 
         response.close()
+        
+        end = time.time()
+        print(">> {}       ({})".format(end - start, url))
+
+        # MODIF CEDE  print("status:", response.status_code)
         # exception handle
         if not str(response.status_code).startswith('2'):
             print("url : ", url)
