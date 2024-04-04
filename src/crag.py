@@ -268,7 +268,6 @@ class Crag:
                     while time.time() < start_minus_one_sec:
                         print("safety")
 
-                        import time
                         start = time.time()
 
                         step_result = self.safety_step()
