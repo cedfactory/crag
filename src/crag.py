@@ -1107,8 +1107,10 @@ class Crag:
 
         self.cpt_df_memory_leak += 1
         lst_memory_leak = []
+        gc.collect()
         self.memory_0 = utils.get_memory_usage() / (1024 * 1024)
         lst_memory_leak.append(self.memory_0)
+
         broker_current_state = self.broker.get_current_state(self.symbols)
 
         self.memory_1 = utils.get_memory_usage() / (1024 * 1024)
