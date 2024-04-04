@@ -1,3 +1,4 @@
+import gc
 import os
 from pympler import asizeof
 import shutil
@@ -13,6 +14,8 @@ import pickle
 from pathlib import Path
 from datetime import datetime, timedelta
 from datetime import date
+
+import gc
 
 # to launch crag as a rabbitmq receiver :
 # > apt-get install rabbitmq-server
@@ -1221,20 +1224,7 @@ class Crag:
         lst_usdt_symbols = None
         msg = None
 
-        self.memory_5 = utils.get_memory_usage() / (1024 * 1024)
-        lst_memory_leak.append(self.memory_5)
-
-        self.diff_memory_global = self.memory_5 - self.memory_0
-        self.diff_memory_broker_pos = self.memory_1 - self.memory_0
-        self.diff_memory_rstr_strategy = self.memory_3 - self.memory_2
-        self.diff_memory_broker_exec = self.memory_5 - self.memory_4
-        lst_memory_leak.append(self.diff_memory_global)
-        lst_memory_leak.append(self.diff_memory_broker_pos)
-        lst_memory_leak.append(self.diff_memory_rstr_strategy)
-        lst_memory_leak.append(self.diff_memory_broker_exec)
-        debug_end_time = time.time()
-        lst_memory_leak.append(round(debug_end_time - debug_start_time, 4))
-
+        """
         if False:
             msg = "# MEMORY DEBUG:" + "\n"
             msg += "diff_memory_global:" + str(round(self.diff_memory_global, 4)) + "\n"
@@ -1243,7 +1233,33 @@ class Crag:
             msg += "diff_memory_broker_exec:" + str(round(self.diff_memory_broker_exec, 4)) + "\n"
             msg += "exec_time:" + str(round(debug_end_time - debug_start_time, 4)) + "\n"
             self.log_discord(msg, "DEBUG")
+        """
 
+        msg_broker_trade_info = self.broker.log_info_trade()
+        if len(msg_broker_trade_info) != 0:
+            self.log_discord(msg_broker_trade_info, "broker trade")
+            self.broker.clear_log_info_trade()
+        msg_broker_trade_info = None
+        broker_current_state["open_orders"] = None
+        broker_current_state["open_positions"] = None
+        broker_current_state["prices"] = None
+        broker_current_state = None
+
+        gc.collect()
+
+        self.memory_5 = utils.get_memory_usage() / (1024 * 1024)
+        lst_memory_leak.append(self.memory_5)
+
+        self.diff_memory_global = self.memory_5 - self.memory_0
+        self.diff_memory_broker_pos = self.memory_5 - self.memory_0
+        self.diff_memory_rstr_strategy = self.memory_5 - self.memory_2
+        self.diff_memory_broker_exec = self.memory_5 - self.memory_4
+        lst_memory_leak.append(self.diff_memory_global)
+        lst_memory_leak.append(self.diff_memory_broker_pos)
+        lst_memory_leak.append(self.diff_memory_rstr_strategy)
+        lst_memory_leak.append(self.diff_memory_broker_exec)
+        debug_end_time = time.time()
+        lst_memory_leak.append(round(debug_end_time - debug_start_time, 4))
 
         lst_memory_leak.append(self.memory_used_mb)
         if len(lst_memory_leak) == len(self.df_memory_leak.columns):
@@ -1262,18 +1278,6 @@ class Crag:
                 # df["date"] = df.index
                 df.to_csv(filename, index=False)
 
-
-
-
-        msg_broker_trade_info = self.broker.log_info_trade()
-        if len(msg_broker_trade_info) != 0:
-            self.log_discord(msg_broker_trade_info, "broker trade")
-            self.broker.clear_log_info_trade()
-        msg_broker_trade_info = None
-        broker_current_state["open_orders"] = None
-        broker_current_state["open_positions"] = None
-        broker_current_state["prices"] = None
-        broker_current_state = None
 
         end_time = time.time()
         self.iteration_times_grid_strategy.append(end_time - self.start_time_grid_strategy)
