@@ -281,7 +281,7 @@ class Crag:
                             time.sleep(self.rtstr.high_volatility.high_volatility_get_duration())
 
                         end = time.time()
-                        print("     " + str(end - start))
+                        print("SAFETY_RUN : " + str(end - start))
 
                     while time.time() < start:
                         pass
@@ -1224,6 +1224,9 @@ class Crag:
 
     def safety_step(self):
         gc.collect()
+        
+        start1 = time.time()
+
         usdt_equity = self.broker.get_usdt_equity()
         self.total_SL_TP = usdt_equity - self.original_portfolio_value
         if usdt_equity >= self.maximal_portfolio_value:
@@ -1245,12 +1248,20 @@ class Crag:
         else:
             self.actual_drawdown_percent = self.drawdown * 100 / self.maximal_portfolio_value
 
+        end1 = time.time()
+        print("step1 : {})".format(end1 - start1))
+
+        start2 = time.time()
+
         if self.rtstr.need_broker_current_state():
             # GRID TRADING STRATEGY
             self.udpate_strategy_with_broker_current_state()
         else:
             self.udpate_strategy_with_broker_current_state_memory_leak()
             # self.log_memory()
+
+        end2 = time.time()
+        print("step2 : {})".format(end2 - start2))
 
         if self.rtstr.condition_for_global_SLTP(self.total_SL_TP_percent) \
                 or self.rtstr.condition_for_global_trailer_TP(self.total_SL_TP_percent) \
@@ -1267,6 +1278,9 @@ class Crag:
             return False
 
         if not self.rtstr.need_broker_current_state():
+
+            start3 = time.time()
+
             # NOT AVAILABLE IN GRID TRADING STRATEGY
             lst_symbol_position = self.broker.get_lst_symbol_position()
             lst_symbol_for_closure = []
@@ -1282,6 +1296,11 @@ class Crag:
                         or self.rtstr.condition_trailer_SL(self.broker._get_coin(symbol), symbol_unrealizedPL_percent):
                     lst_symbol_for_closure.append(symbol)
 
+            end3 = time.time()
+            print("step3 : {})".format(end3 - start3))
+
+            start4 = time.time()
+
             if self.rtstr.trigger_high_volatility_protection():
                 BTC_price = self.broker.get_value('BTC')
                 current_datetime = datetime.now()
@@ -1294,6 +1313,11 @@ class Crag:
                     self.log("DUMP POSITIONS DUE TO HIGH VOLATILITY")
                     lst_symbol_for_closure = self.broker.get_lst_symbol_position()
                     self.maximal_portfolio_value
+
+            end4 = time.time()
+            print("step4 : {})".format(end4 - start4))
+
+            start5 = time.time()
 
             if len(lst_symbol_for_closure) > 0:
                 current_datetime = datetime.today().strftime("%Y/%m/%d %H:%M:%S")
@@ -1341,6 +1365,9 @@ class Crag:
                             self.sell_performed = False
 
             lst_symbol_for_closure = None
+
+            end5 = time.time()
+            print("step5 : {} ({}))".format(end5 - start5, len(self.current_trades)))
 
         usdt_equity = None
         return True
