@@ -15,6 +15,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 from datetime import date
 
+import pickle
 import gc
 
 # to launch crag as a rabbitmq receiver :
@@ -1081,6 +1082,10 @@ class Crag:
                 self.udpate_strategy_with_broker_current_state_live()
 
     def udpate_strategy_with_broker_current_state_memory_leak(self):
+        # Read the data back from the Pickle file
+        with open("lst_orders_to_execute.pkl", "rb") as pickle_file:
+            lst_orders_to_execute = pickle.load(pickle_file)
+
         gc.collect()
 
         if self.start_time_grid_strategy_init == None:
@@ -1089,12 +1094,18 @@ class Crag:
             self.memory_used_bytes_leak_sum = 0
 
         memory_usage = utils.get_memory_usage()
-        broker_current_state = self.broker.get_current_state(self.symbols)
+
+        # broker_current_state = self.broker.get_current_state(self.symbols)
+
+        self.broker.execute_orders(lst_orders_to_execute)
+        lst_orders_to_execute = None
 
         gc.collect()
         self.memory_used_bytes_leak = (utils.get_memory_usage() - memory_usage) / (1024 * 1024)
-        print(broker_current_state)
+
         self.log_memory()
+
+        self.broker.cancel_all_orders(["XRP"])
 
     def udpate_strategy_with_broker_current_state_live(self):
         self.start_time_grid_strategy = time.time()
@@ -1144,6 +1155,10 @@ class Crag:
         self.memory_2 = utils.get_memory_usage() / (1024 * 1024)
         lst_memory_leak.append(self.memory_2)
         lst_orders_to_execute = self.rtstr.set_broker_current_state(broker_current_state)
+
+        # Save the data to a Pickle file
+        with open("lst_orders_to_execute.pkl", "wb") as pickle_file:
+            pickle.dump(lst_orders_to_execute, pickle_file)
 
         self.memory_3 = utils.get_memory_usage() / (1024 * 1024)
         lst_memory_leak.append(self.memory_3)
@@ -1230,6 +1245,7 @@ class Crag:
         self.memory_4 = utils.get_memory_usage() / (1024 * 1024)
         lst_memory_leak.append(self.memory_4)
         self.broker.execute_orders(lst_orders_to_execute)
+        self.broker.cancel_all_orders(["XRP"])
         lst_orders_to_execute = None
         lst_usdt_symbols = None
         msg = None
