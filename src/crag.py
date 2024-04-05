@@ -1099,6 +1099,7 @@ class Crag:
 
         self.broker.execute_orders(lst_orders_to_execute)
         lst_orders_to_execute = None
+        pickle_file = None
 
         gc.collect()
         self.memory_used_bytes_leak = (utils.get_memory_usage() - memory_usage) / (1024 * 1024)
