@@ -1347,6 +1347,7 @@ class Crag:
                 self.init_debug_memory = True
 
     def safety_step(self):
+        gc.collect()
         usdt_equity = self.broker.get_usdt_equity()
         self.total_SL_TP = usdt_equity - self.original_portfolio_value
         if usdt_equity >= self.maximal_portfolio_value:
