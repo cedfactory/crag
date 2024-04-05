@@ -1082,10 +1082,6 @@ class Crag:
                 self.udpate_strategy_with_broker_current_state_live()
 
     def udpate_strategy_with_broker_current_state_memory_leak(self):
-        # Read the data back from the Pickle file
-        with open("lst_orders_to_execute.pkl", "rb") as pickle_file:
-            lst_orders_to_execute = pickle.load(pickle_file)
-
         gc.collect()
 
         if self.start_time_grid_strategy_init == None:
@@ -1094,6 +1090,10 @@ class Crag:
             self.memory_used_bytes_leak_sum = 0
 
         memory_usage = utils.get_memory_usage()
+
+        # Read the data back from the Pickle file
+        with open("lst_orders_to_execute.pkl", "rb") as pickle_file:
+            lst_orders_to_execute = pickle.load(pickle_file)
 
         # broker_current_state = self.broker.get_current_state(self.symbols)
 
