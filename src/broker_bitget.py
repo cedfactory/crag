@@ -230,9 +230,9 @@ class BrokerBitGet(broker.Broker):
         success = trade.success
 
         if success and orderId != None and gridId != -1:
-            # if gridId in self.df_grid_id_match["grid_id"].tolist():
+            if gridId in self.df_grid_id_match["grid_id"].tolist():
                 # drop the previous grid_id used
-            #    self.df_grid_id_match = self.df_grid_id_match.drop(self.df_grid_id_match[self.df_grid_id_match['grid_id'] == gridId].index)
+                self.df_grid_id_match = self.df_grid_id_match.drop(self.df_grid_id_match[self.df_grid_id_match['grid_id'] == gridId].index)
             self.df_grid_id_match.loc[len(self.df_grid_id_match)] = [orderId, gridId]
             self.df_grid_id_match = self.df_grid_id_match.drop_duplicates()
 
@@ -249,6 +249,7 @@ class BrokerBitGet(broker.Broker):
             self.execute_trade(trade)
             self.store_gridId_orderId(trade)
             trade = None
+            order = None
         lst_orders = None
 
     def set_open_orders_gridId(self, df_open_orders):
