@@ -5,5 +5,5 @@
     <broker name="bitget">
         <params exchange="bitget" fdp_url_id="gc1" account="subfortest2" leverage_short="10" leverage_long="10" simulation="1" intervals="1h" orders="market" reset_account="True" reset_account_orders="True"/>
     </broker>
-    <crag id="sltp4" interval="1" loggers="file=log_strategyempty" botId="ayato_sub3"/>
+    <crag id="sltp4" interval="1" loggers="console" botId="ayato_sub3"/>
 </configuration>

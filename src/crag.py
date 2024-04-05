@@ -1081,10 +1081,18 @@ class Crag:
                 self.udpate_strategy_with_broker_current_state_live()
 
     def udpate_strategy_with_broker_current_state_memory_leak(self):
-        self.start_time_grid_strategy = time.time()
-        self.symbols = ['XRP']
-        self.memory_used_bytes_leak = utils.get_memory_usage()
+        gc.collect()
+
+        if self.start_time_grid_strategy_init == None:
+            self.symbols = ['XRP']
+            self.start_time_grid_strategy = time.time()
+            self.memory_used_bytes_leak_sum = 0
+
+        memory_usage = utils.get_memory_usage()
         broker_current_state = self.broker.get_current_state(self.symbols)
+
+        gc.collect()
+        self.memory_used_bytes_leak = (utils.get_memory_usage() - memory_usage) / (1024 * 1024)
         print(broker_current_state)
         self.log_memory()
 
@@ -1348,7 +1356,8 @@ class Crag:
             # GRID TRADING STRATEGY
             self.udpate_strategy_with_broker_current_state()
         else:
-            self.log_memory()
+            self.udpate_strategy_with_broker_current_state_memory_leak()
+            # self.log_memory()
 
         if self.rtstr.condition_for_global_SLTP(self.total_SL_TP_percent) \
                 or self.rtstr.condition_for_global_trailer_TP(self.total_SL_TP_percent) \
@@ -1444,21 +1453,13 @@ class Crag:
         return True
 
     def log_memory(self):
+        gc.collect()
 
         if self.start_time_grid_strategy_init == None:
-            self.start_time_grid_strategy_init = self.start_time_grid_strategy
+            self.start_time_grid_strategy_init = time.time()
             self.grid_iteration = 1
         else:
             self.grid_iteration += 1
-
-        end_time = time.time()
-
-        self.iteration_times_grid_strategy.append(end_time - self.start_time_grid_strategy)
-        self.iteration_times_grid_strategy = self.iteration_times_grid_strategy[-10:]
-        self.average_time_grid_strategy = round(
-            sum(self.iteration_times_grid_strategy) / len(self.iteration_times_grid_strategy), 2)
-        self.average_time_grid_strategy_overall = round(
-            (end_time - self.start_time_grid_strategy_init) / self.grid_iteration, 2)
 
         memory_used_bytes = utils.get_memory_usage()
         if self.memory_used_mb == 0:
@@ -1475,20 +1476,18 @@ class Crag:
             msg += f"MEMORY: {self.memory_used_mb:.1f}MB" + " (-" + str(round(abs(delta_memory), 1)) + ")\n"
         msg += "delta/iter" + str(round(delta_memory / self.grid_iteration, 4)) + "\n"
 
-        msg += "# PERFORMANCE:" + "\n"
-        msg += "CRAG TIME: " + str(self.average_time_grid_strategy_overall) + "s\n"
-        msg += "GRID TIME: " + str(self.average_time_grid_strategy) + "s\n"
         end_time = time.time()
+        msg += "# PERFORMANCE:" + "\n"
+        msg += "CRAG TIME: " + str(round((end_time - self.start_time_grid_strategy_init) / self.grid_iteration, 2)) + "s\n"
         msg += "DURATION: " + utils.format_duration(round((end_time - self.start_time_grid_strategy_init), 2)) + "\n"
         delta_memory = self.memory_used_mb - self.init_memory_used_mb
         msg += "iter: " + str(self.grid_iteration) + " / " + str(round(delta_memory / self.grid_iteration, 4)) + " byte/it\n"
-        msg += "# DELTA ITER:" + "\n"
-        delta = memory_used_bytes - self.memory_used_bytes_leak
-        delta = delta / (1024 * 1024)
-        self.lst_delta_leak.append(delta)
-        msg += "DELTA: " + str(round(delta, 4)) + "\n"
-        msg += "SUM DELTA: " + str(round(sum(self.lst_delta_leak), 4)) + "\n"
-        msg += "SUM DELTA AVERAGE: " + str(round(sum(self.lst_delta_leak) / len(self.lst_delta_leak), 4)) + "\n"
+        msg += "MEM: " + str(round(self.memory_used_mb, 4)) + "\n"
+        msg += "DELTA: " + str(round(delta_memory, 4)) + "\n"
+        msg += "MEM LEAK: " + str(round(self.memory_used_bytes_leak, 4)) + "\n"
+        self.memory_used_bytes_leak_sum += self.memory_used_bytes_leak
+        msg += "MEM LEAK SUM: " + str(round(self.memory_used_bytes_leak_sum, 4)) + "\n"
+        msg += "MEM LEAK AVE: " + str(round(self.memory_used_bytes_leak_sum / self.grid_iteration, 4)) + "\n"
 
         self.log_discord(msg, "MEMORY STATUS")
 
