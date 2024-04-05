@@ -1121,6 +1121,8 @@ class Crag:
 
         lst_orders_to_execute = self.rtstr.set_broker_current_state(broker_current_state)
 
+        start_f = time.time()
+
         msg = self.rtstr.get_info_msg_status()
         if msg != None:
             current_datetime = datetime.today().strftime("%Y/%m/%d - %H:%M:%S")
@@ -1191,6 +1193,11 @@ class Crag:
             msg = msg.upper()
             self.log_discord(msg, "GRID STATUS")
 
+        end_f = time.time()
+        print(">>  step_f {}".format(end_f - start_f))
+
+        start_g = time.time()
+
         self.log("output lst_orders_to_execute: {}".format(lst_orders_to_execute))
         self.broker.execute_orders(lst_orders_to_execute)
         del lst_orders_to_execute
@@ -1211,6 +1218,11 @@ class Crag:
         self.average_time_grid_strategy = round(sum(self.iteration_times_grid_strategy) / len(self.iteration_times_grid_strategy), 2)
         self.average_time_grid_strategy_overall = round((end_time - self.start_time_grid_strategy_init) / self.grid_iteration, 2)
 
+        end_g = time.time()
+        print(">>  step_g {}".format(end_g - start_g))
+
+        start_h = time.time()
+
         if not self.zero_print:
             # CEDE MEASURE RUN TIME IN ORDER TO BENCHMARK PC VS RASPBERRY
             self.log("GRID ITERATION AVERAGE TIME:  " + str(self.average_time_grid_strategy) + " seconds")
@@ -1221,6 +1233,9 @@ class Crag:
 
         locals().clear()
         gc.collect()
+
+        end_h = time.time()
+        print(">>  step_h {}".format(end_h - start_h))
 
     def safety_step(self):
         gc.collect()
