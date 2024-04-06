@@ -20,7 +20,7 @@
                 percent_per_grid="0"
                 nb_grid="60"
                 grid_margin="490"
-                loggers="file=log"
+                loggers=""
         />
     </strategy>
     <broker name="bitget">
@@ -34,12 +34,12 @@
                 orders="market"
                 reset_account="True"
                 reset_account_orders="True"
-                loggers="file=log"
+                loggers=""
         />
     </broker>
     <crag id="grid"
           interval="3600"
           botId="ayato"
-          loggers="file=log"
+          loggers=""
     />
 </configuration>
