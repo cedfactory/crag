@@ -62,7 +62,7 @@ class Client(object):
         response.close()
         
         end = time.time()
-        print(">> {}       ({})".format(end - start, url))
+        print(">>>>>> {}       ({})".format(end - start, url))
 
         # MODIF CEDE  print("status:", response.status_code)
         # exception handle
