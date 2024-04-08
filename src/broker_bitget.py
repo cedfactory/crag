@@ -447,7 +447,7 @@ class BrokerBitGet(broker.Broker):
             return total, available, leverage, averageOpenPrice, marketPrice, unrealizedPL, liquidation, side
         else:
             df_positions = None
-            return 0, 0, 0, 0, 0, 0, 0, 0
+            return 0, 0, 0, 0, 0, 0, 0, ""
 
     @authentication_required
     def get_symbol_usdtEquity(self, symbol):
