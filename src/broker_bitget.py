@@ -231,7 +231,7 @@ class BrokerBitGet(broker.Broker):
             msg += " - " + str(trade.gross_size) + '\n'
             self.log('transaction success : ' + trade.symbol + " - type: " + trade.type + ' - gross_size: ' + str(trade.gross_size))
             self.log("!!!!!!! EXECUTE THE TRADE COMPLETED !!!!!!!")
-        # self.log_trade = self.log_trade + msg.upper()
+        self.log_trade = self.log_trade + msg.upper()
         del msg
         locals().clear()
         gc.collect()
