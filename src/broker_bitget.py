@@ -293,11 +293,6 @@ class BrokerBitGet(broker.Broker):
         del lst_orders
         locals().clear()
         gc.collect()
-            trade = None
-            
-        end = time.time()
-        print("execute_orders #{} : {}".format(len(lst_orders), end - start))
-        lst_orders = None
 
     def set_open_orders_gridId(self, df_open_orders):
         df_open_orders["gridId"] = None
