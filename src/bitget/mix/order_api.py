@@ -3,6 +3,7 @@
 from ..client import Client
 from ..consts import *
 
+import gc
 
 class OrderApi(Client):
     def __init__(self, api_key, api_secret_key, passphrase, use_server_time=False, first=False):
@@ -33,7 +34,13 @@ class OrderApi(Client):
             params["clientOid"] = clientOrderId
             params["presetTakeProfitPrice"] = presetTakeProfitPrice
             params["presetStopLossPrice"] = presetStopLossPrice
-            return self._request_with_params(POST, MIX_ORDER_V1_URL + '/placeOrder', params)
+            res = self._request_with_params(POST, MIX_ORDER_V1_URL + '/placeOrder', params)
+
+            params.clear()
+            del params
+            locals().clear()
+            gc.collect()
+            return res
         else:
             return "pls check args "
 
@@ -64,7 +71,11 @@ class OrderApi(Client):
             params["symbol"] = symbol
             params["marginCoin"] = marginCoin
             params["orderId"] = orderId
-            return self._request_with_params(POST, MIX_ORDER_V1_URL + '/cancel-order', params)
+            res = self._request_with_params(POST, MIX_ORDER_V1_URL + '/cancel-order', params)
+            for key in params:
+                params[key] = None
+            del params
+            return res
         else:
             return "pls check args "
 
@@ -76,7 +87,11 @@ class OrderApi(Client):
     def cancel_batch_orders(self, symbol, marginCoin, orderIds):
         if symbol and orderIds:
             params = {'symbol': symbol, 'marginCoin':marginCoin, 'orderIds': orderIds}
-            return self._request_with_params(POST, MIX_ORDER_V1_URL + '/cancel-batch-orders', params)
+            res = self._request_with_params(POST, MIX_ORDER_V1_URL + '/cancel-batch-orders', params)
+            for key in params:
+                params[key] = None
+            del params
+            return res
         else:
             return "pls check args "
 

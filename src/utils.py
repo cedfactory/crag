@@ -33,6 +33,7 @@ def modify_strategy_data_files(input_dir, str):
 def get_memory_usage():
     process = psutil.Process()
     mem_info = process.memory_info()
+    del process
     return mem_info.rss  # Return the Resident Set Size (RSS) in bytes
 
 def format_duration(timestamp):
@@ -94,7 +95,10 @@ def fdp_request_post(url, params, fdp_id):
     n_attempts = 3
     while n_attempts > 0:
         try:
-            response = requests.post(fdp_url+'/'+url, json=params)
+            # response = requests.post(fdp_url+'/'+url, json=params)
+            with requests.post(fdp_url+'/'+url, json=params) as response:
+                pass
+            response.close()
             if response.status_code == 200:
                 response_json = json.loads(response.text)
                 final_result["status"] = "ok"
@@ -106,7 +110,11 @@ def fdp_request_post(url, params, fdp_id):
             final_result = {"status":"ko", "info":reason}
             n_attempts = n_attempts - 1
             print('FDP ERROR : ', reason)
-
+            del reason
+    del params
+    del n_attempts
+    del fdp_url
+    del fdp_id
     return final_result
 
 def normalize(df):
@@ -188,12 +196,19 @@ def get_lst_files_start_n_end_with(path, str1, str2):
 class ClientOIdProvider():
     def __init__(self):
         self.iter = 0
+        self.id = []
 
     def get_name(self, symbol, side):
         underscore = "_"
         key = "#"
         ct = datetime.now()
         ts = ct.timestamp()
-        id = "".join([symbol, underscore, side, underscore, str(self.iter), key, str(ts)])
+        self.id = "".join([symbol, underscore, side, underscore, str(self.iter), key, str(ts)])
         self.iter += 1
-        return id
+        del underscore
+        del key
+        del ct
+        del ts
+        del symbol
+        del side
+        return self.id

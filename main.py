@@ -331,6 +331,7 @@ def check_fdp():
 
     url = fdp_url+"/history?exchange=bitget&symbol=BTC&start=2023-01-01&interval=1d"
     response = requests.get(url)
+    response.close()
     response_json = response.json()
     print(response_json)
 

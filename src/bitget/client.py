@@ -39,22 +39,22 @@ class Client(object):
             # print("sign:", sign)
             self.first = False
 
-
-
-
         # send request
         response = None
         if method == c.GET:
-            response = requests.get(url, headers=header)
-            # MODIF CEDE print("response : ",response.text)
+            # response = requests.get(url, headers=header)
+            with requests.get(url, headers=header) as response:
+                pass
         elif method == c.POST:
-            response = requests.post(url, data=body, headers=header)
-            # MODIF CEDE  print("response : ",response.text)
-            # response = requests.post(url, json=body, headers=header)
+            # response = requests.post(url, data=body, headers=header)
+            with requests.post(url, data=body, headers=header) as response:
+                pass
         elif method == c.DELETE:
-            response = requests.delete(url, headers=header)
+            # response = requests.delete(url, headers=header)
+            with requests.delete(url, headers=header) as response:
+                pass
 
-        # MODIF CEDE  print("status:", response.status_code)
+        response.close()
         # exception handle
         if not str(response.status_code).startswith('2'):
             print("url : ", url)
@@ -69,8 +69,18 @@ class Client(object):
                     r['after'] = res_header['AFTER']
                 except:
                     pass
+                locals().clear()
                 return response.json(), r
             else:
+                del body
+                del header
+                del method
+                del params
+                del request_path
+                del sign
+                del timestamp
+                del url
+                locals().clear()
                 return response.json()
 
         except ValueError:
@@ -85,6 +95,7 @@ class Client(object):
     def _get_timestamp(self):
         url = c.API_URL + c.SERVER_TIMESTAMP_URL
         response = requests.get(url)
+        response.close()
         if response.status_code == 200:
             return response.json()['data']
         else:

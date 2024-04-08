@@ -140,7 +140,10 @@ class LoggerDiscordBot(ILogger):
             files = {
                 'file': (attachments[0], open(attachments[0], 'rb')),
             }
-        result = requests.post(self.webhook, json = data, files = files)
+        # result = requests.post(self.webhook, json = data, files = files)
+        with requests.post(self.webhook, json = data, files = files) as result:
+            pass
+        result.close()
         try:
             result.raise_for_status()
         except requests.exceptions.HTTPError as err:
@@ -168,6 +171,7 @@ class LoggerDiscordBot(ILogger):
             content = content + "[{}] ".format(header)
         content = content + msg
         r = requests.post(SEND_URL.format(id=self.channel_id), headers=headers, json={"content": content})
+        r.close()
 
     def log(self, msg, header="", author="", attachments=[]):
         if self.webhook != "":

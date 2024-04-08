@@ -81,20 +81,9 @@ class Crag:
         self.rtstr_grid_size_init = 0
         self.memory_used_mb = 0
         self.init_memory_used_mb = 0
-        self.init_debug_memory = False
         self.init_market_price = 0
         self.market_price_max = 0
         self.market_price_min = 0
-
-        self.init_memory_usage = {}
-        self.previous_memory_usage = {}
-        self.memory_usage = {}
-        self.iteration_for_memory_leak = 0
-        self.lst_delta_leak = []
-        self.lst_memory_used_bytes_leak_get_current_state = []
-        self.lst_memory_used_bytes_leak_set_broker_current_state = []
-        self.df_memory_leak = pd.DataFrame(columns=["mem_0", "mem_1", "mem_2", "mem_3", "mem_4", "mem_5", "diff_global", "diff_broker_pos", "diff_rstr_str", "diff_broker_exec", "global_mem", "exec"])
-        self.cpt_df_memory_leak = 0
 
         if params:
             self.broker = params.get("broker", self.broker)
@@ -1081,95 +1070,47 @@ class Crag:
             else:
                 self.udpate_strategy_with_broker_current_state_live()
 
-    def udpate_strategy_with_broker_current_state_memory_leak(self):
-        gc.collect()
-
-        if self.start_time_grid_strategy_init == None:
-            self.symbols = ['XRP']
-            self.start_time_grid_strategy = time.time()
-            self.memory_used_bytes_leak_sum = 0
-
-        memory_usage = utils.get_memory_usage()
-
-        # Read the data back from the Pickle file
-        with open("lst_orders_to_execute.pkl", "rb") as pickle_file:
-            lst_orders_to_execute = pickle.load(pickle_file)
-
-        # broker_current_state = self.broker.get_current_state(self.symbols)
-
-        self.broker.execute_orders(lst_orders_to_execute)
-        lst_orders_to_execute = None
-        pickle_file = None
-
-        gc.collect()
-        self.memory_used_bytes_leak = (utils.get_memory_usage() - memory_usage) / (1024 * 1024)
-
-        self.log_memory()
-
-        self.broker.cancel_all_orders(["XRP"])
-
     def udpate_strategy_with_broker_current_state_live(self):
-        self.start_time_grid_strategy = time.time()
-
-        debug_start_time = time.time()
-
-        if self.start_time_grid_strategy_init == None:
-            self.start_time_grid_strategy_init = self.start_time_grid_strategy
-            self.grid_iteration = 1
-            filename = "./memory_leak/memory_leak.csv"
-            if os.path.exists(filename):
-                # Delete the file
-                os.remove(filename)
-        else:
-            self.grid_iteration += 1
-
-        self.symbols = self.rtstr.lst_symbols
-
-        self.cpt_df_memory_leak += 1
-        lst_memory_leak = []
         gc.collect()
-        self.memory_0 = utils.get_memory_usage() / (1024 * 1024)
-        lst_memory_leak.append(self.memory_0)
-
-        broker_current_state = self.broker.get_current_state(self.symbols)
-
-        self.memory_1 = utils.get_memory_usage() / (1024 * 1024)
-        lst_memory_leak.append(self.memory_1)
-
-
-        if self.init_grid_position:
-            self.init_grid_position = False
-            df_symbol_minsize = self.broker.get_df_minimum_size(self.symbols)
-            df_buying_size = self.rtstr.set_df_buying_size(df_symbol_minsize, self.broker.get_usdt_equity())
-            df_symbol_minsize = None
-            df_buying_size_normalise = self.broker.normalize_grid_df_buying_size_size(df_buying_size)
-            self.rtstr.set_df_normalize_buying_size(df_buying_size_normalise)
-            df_buying_size = None
-            df_buying_size_normalise = None
-            self.rtstr.set_normalized_grid_price(self.broker.get_price_place_endstep(self.symbols))
-            lst_orders_to_execute = self.rtstr.activate_grid(broker_current_state)
-            lst_orders_to_execute = []
-            self.broker.execute_orders(lst_orders_to_execute)
-            self.broker.reset_current_postion(broker_current_state)
-            broker_current_state = self.broker.get_current_state(self.symbols)
-
-        self.memory_2 = utils.get_memory_usage() / (1024 * 1024)
-        lst_memory_leak.append(self.memory_2)
-        lst_orders_to_execute = self.rtstr.set_broker_current_state(broker_current_state)
-
-        # Save the data to a Pickle file
-        with open("lst_orders_to_execute.pkl", "wb") as pickle_file:
-            pickle.dump(lst_orders_to_execute, pickle_file)
-
-        self.memory_3 = utils.get_memory_usage() / (1024 * 1024)
-        lst_memory_leak.append(self.memory_3)
-
         memory_used_bytes = utils.get_memory_usage()
         if self.memory_used_mb == 0:
             self.init_memory_used_mb = memory_used_bytes / (1024 * 1024)
             self.memory_used_mb = self.init_memory_used_mb
         else:
             self.memory_used_mb = memory_used_bytes / (1024 * 1024)  # Convert bytes to megabytes
+
+        self.start_time_grid_strategy = time.time()
+        debug_start_time = time.time()
+
+        if self.start_time_grid_strategy_init == None:
+            self.start_time_grid_strategy_init = self.start_time_grid_strategy
+            self.grid_iteration = 1
+        else:
+            self.grid_iteration += 1
+
+        self.symbols = self.rtstr.lst_symbols
+        gc.collect()
+
+        broker_current_state = self.broker.get_current_state(self.symbols)
+
+        if self.init_grid_position:
+            self.init_grid_position = False
+            df_symbol_minsize = self.broker.get_df_minimum_size(self.symbols)
+            df_buying_size = self.rtstr.set_df_buying_size(df_symbol_minsize, self.broker.get_usdt_equity())
+            del df_symbol_minsize
+            df_buying_size_normalise = self.broker.normalize_grid_df_buying_size_size(df_buying_size)
+            self.rtstr.set_df_normalize_buying_size(df_buying_size_normalise)
+            del df_buying_size
+            del df_buying_size_normalise
+            self.rtstr.set_normalized_grid_price(self.broker.get_price_place_endstep(self.symbols))
+            lst_orders_to_execute = self.rtstr.activate_grid(broker_current_state)
+            del lst_orders_to_execute
+            lst_orders_to_execute = []
+            self.broker.execute_orders(lst_orders_to_execute)
+            self.broker.reset_current_postion(broker_current_state)
+            broker_current_state = self.broker.get_current_state(self.symbols)
+
+        lst_orders_to_execute = self.rtstr.set_broker_current_state(broker_current_state)
 
         msg = self.rtstr.get_info_msg_status()
         if msg != None:
@@ -1242,69 +1183,18 @@ class Crag:
             self.log_discord(msg, "GRID STATUS")
 
         self.log("output lst_orders_to_execute: {}".format(lst_orders_to_execute))
-
-        self.memory_4 = utils.get_memory_usage() / (1024 * 1024)
-        lst_memory_leak.append(self.memory_4)
         self.broker.execute_orders(lst_orders_to_execute)
-        self.broker.cancel_all_orders(["XRP"])
-        lst_orders_to_execute = None
-        lst_usdt_symbols = None
-        msg = None
-
-        """
-        if False:
-            msg = "# MEMORY DEBUG:" + "\n"
-            msg += "diff_memory_global:" + str(round(self.diff_memory_global, 4)) + "\n"
-            msg += "diff_memory_broker_pos:" + str(round(self.diff_memory_broker_pos, 4)) + "\n"
-            msg += "diff_memory_rstr_strategy:" + str(round(self.diff_memory_rstr_strategy, 4)) + "\n"
-            msg += "diff_memory_broker_exec:" + str(round(self.diff_memory_broker_exec, 4)) + "\n"
-            msg += "exec_time:" + str(round(debug_end_time - debug_start_time, 4)) + "\n"
-            self.log_discord(msg, "DEBUG")
-        """
+        del lst_orders_to_execute
+        del msg
 
         msg_broker_trade_info = self.broker.log_info_trade()
         if len(msg_broker_trade_info) != 0:
             self.log_discord(msg_broker_trade_info, "broker trade")
             self.broker.clear_log_info_trade()
-        msg_broker_trade_info = None
-        broker_current_state["open_orders"] = None
-        broker_current_state["open_positions"] = None
-        broker_current_state["prices"] = None
-        broker_current_state = None
-
-        gc.collect()
-
-        self.memory_5 = utils.get_memory_usage() / (1024 * 1024)
-        lst_memory_leak.append(self.memory_5)
-
-        self.diff_memory_global = self.memory_5 - self.memory_0
-        self.diff_memory_broker_pos = self.memory_5 - self.memory_0
-        self.diff_memory_rstr_strategy = self.memory_5 - self.memory_2
-        self.diff_memory_broker_exec = self.memory_5 - self.memory_4
-        lst_memory_leak.append(self.diff_memory_global)
-        lst_memory_leak.append(self.diff_memory_broker_pos)
-        lst_memory_leak.append(self.diff_memory_rstr_strategy)
-        lst_memory_leak.append(self.diff_memory_broker_exec)
-        debug_end_time = time.time()
-        lst_memory_leak.append(round(debug_end_time - debug_start_time, 4))
-
-        lst_memory_leak.append(self.memory_used_mb)
-        if len(lst_memory_leak) == len(self.df_memory_leak.columns):
-            self.df_memory_leak.loc[len(self.df_memory_leak)] = lst_memory_leak
-            lst_memory_leak = None
-        if len(self.df_memory_leak) > 10:
-            directoty = "./memory_leak/"
-            if not os.path.exists(directoty):
-                os.makedirs(directoty)
-            filename = "./memory_leak/memory_leak.csv"
-            if not os.path.exists(filename):
-                self.df_memory_leak.to_csv(filename, index=False)
-            else:
-                df = pd.read_csv(filename)
-                df = pd.concat([df, self.df_memory_leak], ignore_index=True)
-                # df["date"] = df.index
-                df.to_csv(filename, index=False)
-
+            
+        del msg_broker_trade_info
+        broker_current_state.clear()
+        del broker_current_state
 
         end_time = time.time()
         self.iteration_times_grid_strategy.append(end_time - self.start_time_grid_strategy)
@@ -1320,32 +1210,8 @@ class Crag:
             self.log("ITERATIONS:                   {}".format(self.grid_iteration))
             self.log("MEMORY:                       " + str(round(self.memory_used_mb, 2)) + "MB - DELTA: " + str(round(self.memory_used_mb - self.init_memory_used_mb,2)) + " MB" + "\n")
 
-            if self.init_debug_memory:
-                self.crag_size_previous = self.crag_size
-                self.crag_size = self.get_memory_usage(self)
-                if self.crag_size_init == 0:
-                    self.crag_size_init = self.crag_size
-                self.print_memory_usage("CRAG", self.crag_size_init, self.crag_size_previous, self.crag_size)
-
-                self.rtstr_size_previous = self.rtstr_size
-                self.rtstr_size = self.get_memory_usage(self.rtstr)
-                if self.rtstr_size_init == 0:
-                    self.rtstr_size_init = self.rtstr_size
-                self.print_memory_usage("rtstr", self.rtstr_size_init, self.rtstr_size_previous, self.rtstr_size)
-
-                self.broker_size_previous = self.broker_size
-                self.broker_size = self.get_memory_usage(self.broker)
-                if self.broker_size_init == 0:
-                    self.broker_size_init = self.broker_size
-                self.print_memory_usage("broker", self.broker_size_init, self.broker_size_previous, self.broker_size)
-
-                self.rtstr_grid_size_previous = self.rtstr_grid_size
-                self.rtstr_grid_size = self.get_memory_usage(self.rtstr.grid)
-                if self.rtstr_grid_size_init == 0:
-                    self.rtstr_grid_size_init = self.rtstr_grid_size
-                self.print_memory_usage("rtstr_grid", self.rtstr_grid_size_init, self.rtstr_grid_size_previous, self.rtstr_grid_size)
-            else:
-                self.init_debug_memory = True
+        locals().clear()
+        gc.collect()
 
     def safety_step(self):
         gc.collect()

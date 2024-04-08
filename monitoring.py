@@ -279,6 +279,7 @@ def update_btc_values():
 
     url = fdp_url+"/history?exchange=bitget&symbol=BTC&start=2023-01-01&interval=1d"
     response = requests.get(url)
+    response.close()
     response_json = response.json()
     if response_json["result"]["BTC"]["status"] == "ok":
         df = pd.read_json(response_json["result"]["BTC"]["info"])

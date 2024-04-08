@@ -15,6 +15,7 @@ from datetime import datetime
 import time
 import os, shutil
 import pandas as pd
+import gc
 
 class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     def __init__(self, params = None):
@@ -37,6 +38,9 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         api_key = self.account.get("api_key", "")
         api_secret = self.account.get("api_secret", "")
         api_password = self.account.get("api_password", "")
+
+        self.df_normalize_price = pd.DataFrame(columns=["symbol", "pricePlace", "priceEndStep"])
+        self.df_normalize_size = pd.DataFrame(columns=["symbol", "volumePlace", "sizeMultiplier", "minsize"])
 
         if api_key != "" and api_secret != "" and api_password != "":
             self.marketApi = market.MarketApi(api_key, api_secret, api_password, use_server_time=False, first=False)
@@ -131,15 +135,16 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 all_positions = self.positionApi.all_position(productType='umcbl',marginCoin='USDT')
                 lst_all_positions = [data for data in all_positions["data"] if float(data["total"]) != 0.]
                 res = self._build_df_open_positions(lst_all_positions)
-                all_positions = None
-                lst_all_positions = None
+                del all_positions["data"]
+                del all_positions
+                del lst_all_positions
                 self.success += 1
                 break
             except:
                 self.log_api_failure("positionApi.all_position", n_attempts)
                 time.sleep(2)
                 n_attempts = n_attempts - 1
-
+        del n_attempts
         return res
 
     # @authentication_required
@@ -154,8 +159,8 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                     lst_all_orders = [data for data in all_orders["data"]]
                     current_res = self._build_df_open_orders(lst_all_orders)
                     res = pd.concat([res, current_res])
-                    lst_all_orders = None
-                    current_res = None
+                    del lst_all_orders
+                    del current_res
                     self.success += 1
                     break
                 except:
@@ -215,7 +220,10 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 self.log_api_failure("positionApi.account", n_attempts)
                 time.sleep(2)
                 n_attempts = n_attempts - 1
-        return account_equity['data']['usdtEquity']
+        usdtEquity = account_equity['data']['usdtEquity']
+        del account_equity['data']
+        del account_equity
+        return usdtEquity
 
     #@authentication_required
     def get_account_available(self):
@@ -249,7 +257,8 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 if float(data["total"]) != 0.:
                     upl = float(data["unrealizedPL"])
                 break
-        all_positions = None
+        del all_positions["data"]
+        del all_positions
         return upl
 
     '''
@@ -282,7 +291,8 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 self.log_api_failure("orderApi.place_order", n_attempts)
                 time.sleep(2)
                 n_attempts = n_attempts - 1
-        # order structure contains order['data']['orderId'], order['data']['clientOid'] & order['requestTime']
+        n_attempts = False
+        locals().clear()
         return result
 
     @authentication_required
@@ -571,7 +581,6 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     def _get_df_account(self):
         # update market
         not_usdt = False
-        df_account_assets = None
         if not_usdt:
             dct_account = self.accountApi.accounts('umcbl')
             df_account_umcbl = self._account_results_to_df(dct_account)
@@ -593,7 +602,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         self.df_account_open_position['equity'] = self.df_account_open_position['usdtEquity']
         self.df_account_assets = pd.concat([df_account_assets, self.df_account_open_position])
         self.df_account_assets.reset_index(inplace=True, drop=True)
-        df_account_assets = None
+        del df_account_assets
 
     def _get_df_spot_account(self, lst_symbols):
         df_spot_asset = pd.DataFrame(columns=["symbol", "size", "price", "equity"])
@@ -795,7 +804,19 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 time.sleep(2)
                 n_attempts = n_attempts - 1
         if dct_account:
-            return dct_account['data']['crossMarginLeverage'], dct_account['data']['longLeverage'], dct_account['data']['shortLeverage']
+            crossMarginLeverage = dct_account['data']['crossMarginLeverage']
+            longLeverage = dct_account['data']['longLeverage']
+            shortLeverage = dct_account['data']['shortLeverage']
+            dct_account['data'].clear()
+            del dct_account['data']
+            dct_account.clear()
+            del dct_account
+            gc.collect()
+            del n_attempts
+            del symbol
+            del leverage
+            del hold
+            return crossMarginLeverage, longLeverage, shortLeverage
         return None, None, None
 
     @authentication_required
@@ -810,7 +831,14 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 self.log_api_failure("accountApi.margin_mode", n_attempts)
                 time.sleep(2)
                 n_attempts = n_attempts - 1
-        return dct_account['data']['marginMode']
+        margin_mode = dct_account['data']['marginMode']
+        dct_account["data"].clear()
+        del dct_account['data']
+        dct_account.clear()
+        del dct_account
+        del symbol
+        del n_attempts
+        return margin_mode
 
     def get_min_order_amount(self, symbol):
         if "_" in symbol:
@@ -818,7 +846,11 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         else:
             symbol += "USDT_SPBL"
         product = self.publicApi.product(symbol)
-        return float(product["data"]["minTradeAmount"])
+        minTradeAmount = float(product["data"]["minTradeAmount"])
+        del product["data"]
+        del product
+        del symbol
+        return minTradeAmount
 
     def get_commission(self, symbol):
         if symbol in self.df_market['baseCoin'].tolist():
@@ -868,10 +900,16 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     def get_pricePlace(self, symbol):
         if symbol in self.df_market['baseCoin'].tolist():
             idx = self.df_market[  (self.df_market['baseCoin'] == symbol) & (self.df_market['quoteCoin'] == "USDT")  ].index
-            return self.df_market.at[idx[0], "pricePlace"]
+            pricePlace = self.df_market.at[idx[0], "pricePlace"]
+            del symbol
+            del idx
+            return pricePlace
         elif symbol in self.df_market['symbol'].tolist():
             idx = self.df_market[  (self.df_market['symbol'] == symbol) & (self.df_market['quoteCoin'] == "USDT")  ].index
-            return self.df_market.at[idx[0], "pricePlace"]
+            pricePlace = self.df_market.at[idx[0], "pricePlace"]
+            del idx
+            del symbol
+            return pricePlace
         else:
             return 0
 
@@ -897,6 +935,13 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 time.sleep(2)
                 n_attempts = n_attempts - 1
         self.log(symbol + ' long leverage: ' + str(longLeverage) + ' short leverage: ' + str(shortLeverage))
+        del crossMarginLeverage
+        del longLeverage
+        del shortLeverage
+        del n_attempts
+        del symbol
+        del leverage
+        del hold
 
     def set_symbol_margin(self, symbol, margin):
         n_attempts = 3
@@ -911,6 +956,9 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 self.log_api_failure("set_account_symbol_margin", n_attempts)
                 time.sleep(2)
                 n_attempts = n_attempts - 1
+        del n_attempts
+        del symbol
+        del margin
         return set_symbol_margin
 
     def clear_broker_reset_data(self):
@@ -948,8 +996,17 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         df.to_csv(self.broker_dir_path_filename)
 
     def normalize_price(self, symbol, amount):
-        pricePlace = int(self.get_pricePlace(symbol))
-        priceEndStep = self.get_priceEndStep(symbol)
+        if symbol in self.df_normalize_price["symbol"].tolist():
+            index_with_value = self.df_normalize_price.index[self.df_normalize_price['symbol'] == symbol][0]
+            pricePlace = int(self.df_normalize_price.at[index_with_value, 'pricePlace'])
+            priceEndStep = self.df_normalize_price.at[index_with_value, 'priceEndStep']
+            del index_with_value
+        else:
+            pricePlace = int(self.get_pricePlace(symbol))
+            priceEndStep = self.get_priceEndStep(symbol)
+            new_row_data = [symbol, pricePlace, priceEndStep]
+            self.df_normalize_price.loc[len(self.df_normalize_price)] = new_row_data
+            del new_row_data
 
         amount = amount * pow(10, pricePlace)
         amount = math.floor(amount)
@@ -963,13 +1020,27 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
         amount = amount - decimal
         amount = round(amount, pricePlace)
-
+        del pricePlace
+        del decimal
+        del decimal_multiplier
+        del priceEndStep
+        del symbol
         return amount
 
     def normalize_size(self, symbol, size):
-        volumePlace = self.get_volumePlace(symbol)
-        sizeMultiplier = self.get_sizeMultiplier(symbol)
-        minsize = self.get_minimum_size(symbol)
+        if symbol in self.df_normalize_size["symbol"].tolist():
+            index_with_value = self.df_normalize_size.index[self.df_normalize_size['symbol'] == symbol][0]
+            volumePlace = self.df_normalize_size.at[index_with_value, 'volumePlace']
+            sizeMultiplier = self.df_normalize_size.at[index_with_value, 'sizeMultiplier']
+            minsize = self.df_normalize_size.at[index_with_value, 'minsize']
+            del index_with_value
+        else:
+            volumePlace = self.get_volumePlace(symbol)
+            sizeMultiplier = self.get_sizeMultiplier(symbol)
+            minsize = self.get_minimum_size(symbol)
+            new_row_data = [symbol, volumePlace, sizeMultiplier, minsize]
+            self.df_normalize_size.loc[len(self.df_normalize_size)] = new_row_data
+            del new_row_data
 
         size = size * pow(10, volumePlace)
         size = math.floor(size)
@@ -980,6 +1051,11 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         size = round(size, volumePlace)
         if size < minsize:
             return 0
+        del decimal
+        del volumePlace
+        del sizeMultiplier
+        del minsize
+        del symbol
         return size
 
     def get_price_place_endstep(self, lst_symbol):
