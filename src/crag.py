@@ -1079,6 +1079,88 @@ class Crag:
             else:
                 self.udpate_strategy_with_broker_current_state_live()
 
+    def log_for_discord(self, msg, broker_current_state):
+        current_datetime = datetime.today().strftime("%Y/%m/%d - %H:%M:%S")
+        msg = current_datetime + "\n" + msg
+        usdt_equity = self.broker.get_usdt_equity()
+        # wallet_equity = self.broker.get_wallet_equity()
+        msg += "# STATUS EQUITY:" + "\n"
+        # msg += "WALLET EQUITY: " + str(round(wallet_equity, 2)) + " - PNL: " + str(round(self.broker.get_global_unrealizedPL(), 2)) + "\n"
+        msg += "**USDT: " + str(round(usdt_equity, 2)) + " %: " + str(
+            round(self.total_SL_TP * 100 / self.original_portfolio_value, 2)) + "**\n"
+        msg += "**INITIAL: " + str(round(self.original_portfolio_value, 2)) + " $: " + str(
+            round(self.total_SL_TP, 2)) + "**\n"
+        msg += "MAX: " + str(round(self.maximal_portfolio_value, 2)) \
+               + " $: " + str(round(self.maximal_portfolio_value - self.original_portfolio_value, 2)) \
+               + " %: " + str(
+            round((self.maximal_portfolio_value - self.original_portfolio_value) * 100 / self.original_portfolio_value,
+                  2)) + "\n"
+        msg += "MIN: " + str(round(self.minimal_portfolio_value, 2)) \
+               + " $: " + str(round(self.minimal_portfolio_value - self.original_portfolio_value, 2)) \
+               + " %: " + str(
+            round((self.minimal_portfolio_value - self.original_portfolio_value) * 100 / self.original_portfolio_value,
+                  2)) + "\n"
+        lst_usdt_symbols = self.broker.get_lst_symbol_position()
+        if len(self.symbols) == len(lst_usdt_symbols):
+            for symbol, usdt_symbol in zip(self.symbols, lst_usdt_symbols):
+                total, available, leverage, averageOpenPrice, marketPrice, unrealizedPL, liquidation, side = self.broker.get_symbol_data(
+                    usdt_symbol)
+                if self.init_market_price == 0:
+                    self.init_market_price = marketPrice
+                price_delta = (marketPrice - self.init_market_price) * 100 / self.init_market_price
+                msg += "# SYMBOL " + symbol + " :\n"
+                msg += "**market: " + str(round(marketPrice, 4)) + "**\n"
+                msg += "**init: " + str(round(self.init_market_price, 4)) + " %: " + str(round(price_delta, 2)) + "**\n"
+                if (self.market_price_max == 0) \
+                        and (self.market_price_min == 0):
+                    self.market_price_max = marketPrice
+                    self.market_price_min = marketPrice
+                else:
+                    self.market_price_max = max(self.market_price_max, marketPrice)
+                    market_price_max_percent = (
+                                                           self.market_price_max - self.init_market_price) * 100 / self.init_market_price
+                    self.market_price_min = min(self.market_price_min, marketPrice)
+                    market_price_min_percent = (
+                                                           self.market_price_min - self.init_market_price) * 100 / self.init_market_price
+                    msg += "max: " + str(round(self.market_price_max, 4)) + " %: " + str(
+                        round(market_price_max_percent, 2)) + "\n"
+                    msg += "min: " + str(round(self.market_price_min, 4)) + " %: " + str(
+                        round(market_price_min_percent, 2)) + "\n"
+                msg += "average: " + str(round(averageOpenPrice, 4)) + "\n"
+                msg += "EQUITY: " + str(round(total * averageOpenPrice, 2)) + " PNL: " + str(
+                    round(unrealizedPL, 2)) + "\n"
+                msg += "SIZE: " + str(round(total, 2)) + " leverage: " + str(round(leverage, 2)) + "\n"
+                msg += "side: " + side + " liquidation: " + str(round(liquidation, 2)) + "\n"
+        else:
+            if (len(self.symbols) != 0) and (len(lst_usdt_symbols) == 0):
+                for symbol in self.symbols:  # CEDE NOT WORKING FOR MULTI
+                    msg += "# SYMBOL " + symbol + " :\n"
+                    msg += "**no positions engaged" + "**\n"
+                    df_price = broker_current_state["prices"]
+                    price_for_symbol = df_price.loc[df_price['symbols'] == symbol, 'values'].values[0]
+                    msg += "**market price: " + str(round(price_for_symbol, 4)) + "**\n"
+            else:
+                self.log("ERROR LST SYMBOLS NOT MATCHING")
+                self.log("symbols {}".format(self.symbols))
+                self.log("lst_usdt_symbols {}".format(lst_usdt_symbols))
+                msg += "**ERROR LST SYMBOLS NOT MATCHING" + "**:\n"
+        msg += "# PERFORMANCE:" + "\n"
+        msg += "CRAG TIME: " + str(self.average_time_grid_strategy_overall) + "s\n"
+        msg += "GRID TIME: " + str(self.average_time_grid_strategy) + "s\n"
+        end_time = time.time()
+        msg += "DURATION: " + utils.format_duration(round((end_time - self.start_time_grid_strategy_init), 2)) + "\n"
+
+        delta_memory = self.memory_used_mb - self.init_memory_used_mb
+        if delta_memory >= 0:
+            msg += f"MEMORY: {self.memory_used_mb:.1f}MB" + " (+" + str(round(delta_memory, 1)) + ")\n"
+        else:
+            msg += f"MEMORY: {self.memory_used_mb:.1f}MB" + " (-" + str(round(abs(delta_memory), 1)) + ")\n"
+        msg += "iter: " + str(self.grid_iteration) + "\n"
+        msg += "byte/it: " + str(round(delta_memory / self.grid_iteration, 4)) + "\n"
+
+        msg = msg.upper()
+        self.log_discord(msg, "GRID STATUS")
+
     def udpate_strategy_with_broker_current_state_live(self):
         gc.collect()
 
@@ -1138,74 +1220,7 @@ class Crag:
 
         msg = self.rtstr.get_info_msg_status()
         if msg != None:
-            current_datetime = datetime.today().strftime("%Y/%m/%d - %H:%M:%S")
-            msg = current_datetime + "\n" + msg
-            usdt_equity = self.broker.get_usdt_equity()
-            # wallet_equity = self.broker.get_wallet_equity()
-            msg += "# STATUS EQUITY:" + "\n"
-            # msg += "WALLET EQUITY: " + str(round(wallet_equity, 2)) + " - PNL: " + str(round(self.broker.get_global_unrealizedPL(), 2)) + "\n"
-            msg += "**USDT: " + str(round(usdt_equity, 2)) + " %: " + str(round(self.total_SL_TP * 100 / self.original_portfolio_value, 2)) + "**\n"
-            msg += "**INITIAL: " + str(round(self.original_portfolio_value, 2)) + " $: " + str(round(self.total_SL_TP, 2)) + "**\n"
-            msg += "MAX: " + str(round(self.maximal_portfolio_value, 2)) \
-                   + " $: " + str(round(self.maximal_portfolio_value - self.original_portfolio_value, 2)) \
-                   + " %: " + str(round((self.maximal_portfolio_value - self.original_portfolio_value) * 100 / self.original_portfolio_value, 2)) + "\n"
-            msg += "MIN: " + str(round(self.minimal_portfolio_value, 2)) \
-                   + " $: " + str(round(self.minimal_portfolio_value - self.original_portfolio_value, 2)) \
-                   + " %: " + str(round((self.minimal_portfolio_value - self.original_portfolio_value) * 100 / self.original_portfolio_value, 2)) + "\n"
-            lst_usdt_symbols = self.broker.get_lst_symbol_position()
-            if len(self.symbols) == len(lst_usdt_symbols):
-                for symbol, usdt_symbol in zip(self.symbols, lst_usdt_symbols):
-                    total, available, leverage, averageOpenPrice, marketPrice, unrealizedPL, liquidation, side= self.broker.get_symbol_data(usdt_symbol)
-                    if self.init_market_price == 0:
-                        self.init_market_price = marketPrice
-                    price_delta = (marketPrice - self.init_market_price) * 100 / self.init_market_price
-                    msg += "# SYMBOL " + symbol + " :\n"
-                    msg += "**market: " + str(round(marketPrice, 4)) + "**\n"
-                    msg += "**init: " + str(round(self.init_market_price, 4)) + " %: " + str(round(price_delta, 2)) + "**\n"
-                    if (self.market_price_max == 0) \
-                            and (self.market_price_min == 0):
-                        self.market_price_max = marketPrice
-                        self.market_price_min = marketPrice
-                    else:
-                        self.market_price_max = max(self.market_price_max, marketPrice)
-                        market_price_max_percent = (self.market_price_max - self.init_market_price) * 100 / self.init_market_price
-                        self.market_price_min = min(self.market_price_min, marketPrice)
-                        market_price_min_percent = (self.market_price_min - self.init_market_price) * 100 / self.init_market_price
-                        msg += "max: " + str(round(self.market_price_max, 4)) + " %: " + str(round(market_price_max_percent, 2)) + "\n"
-                        msg += "min: " + str(round(self.market_price_min, 4)) + " %: " + str(round(market_price_min_percent, 2)) + "\n"
-                    msg += "average: " + str(round(averageOpenPrice, 4)) + "\n"
-                    msg += "EQUITY: " + str(round(total * averageOpenPrice, 2)) + " PNL: " + str(round(unrealizedPL, 2)) + "\n"
-                    msg += "SIZE: " + str(round(total, 2)) + " leverage: " + str(round(leverage, 2)) + "\n"
-                    msg += "side: " + side + " liquidation: " + str(round(liquidation, 2)) + "\n"
-            else:
-                if (len(self.symbols) != 0) and (len(lst_usdt_symbols) == 0):
-                    for symbol in self.symbols:   # CEDE NOT WORKING FOR MULTI
-                        msg += "# SYMBOL " + symbol + " :\n"
-                        msg += "**no positions engaged" + "**\n"
-                        df_price = broker_current_state["prices"]
-                        price_for_symbol = df_price.loc[df_price['symbols'] == symbol, 'values'].values[0]
-                        msg += "**market price: " + str(round(price_for_symbol, 4)) + "**\n"
-                else:
-                    self.log("ERROR LST SYMBOLS NOT MATCHING")
-                    self.log("symbols {}".format(self.symbols))
-                    self.log("lst_usdt_symbols {}".format(lst_usdt_symbols))
-                    msg += "**ERROR LST SYMBOLS NOT MATCHING" + "**:\n"
-            msg += "# PERFORMANCE:" + "\n"
-            msg += "CRAG TIME: " + str(self.average_time_grid_strategy_overall) + "s\n"
-            msg += "GRID TIME: " + str(self.average_time_grid_strategy) + "s\n"
-            end_time = time.time()
-            msg += "DURATION: " + utils.format_duration(round((end_time - self.start_time_grid_strategy_init), 2)) + "\n"
-
-            delta_memory = self.memory_used_mb - self.init_memory_used_mb
-            if delta_memory >= 0:
-                msg += f"MEMORY: {self.memory_used_mb:.1f}MB" + " (+" + str(round(delta_memory,1)) + ")\n"
-            else:
-                msg += f"MEMORY: {self.memory_used_mb:.1f}MB" + " (-" + str(round(abs(delta_memory),1)) + ")\n"
-            msg += "iter: " + str(self.grid_iteration) + "\n"
-            msg += "byte/it: " + str(round(delta_memory/self.grid_iteration, 4)) + "\n"
-
-            msg = msg.upper()
-            self.log_discord(msg, "GRID STATUS")
+            self.log_for_discord(msg, broker_current_state)
 
         end_f = time.time()
         print(">>  step_f {}".format(end_f - start_f))
