@@ -1081,6 +1081,9 @@ class Crag:
 
     def udpate_strategy_with_broker_current_state_live(self):
         gc.collect()
+
+        start_e = time.time()
+
         memory_used_bytes = utils.get_memory_usage()
         if self.memory_used_mb == 0:
             self.init_memory_used_mb = memory_used_bytes / (1024 * 1024)
@@ -1100,7 +1103,15 @@ class Crag:
         self.symbols = self.rtstr.lst_symbols
         gc.collect()
 
+        end_e = time.time()
+        print(">>  step_e {}".format(end_e - start_e))
+        start_d = time.time()
+
         broker_current_state = self.broker.get_current_state(self.symbols)
+
+        end_d = time.time()
+        print(">>  step_e {}".format(end_d - start_d))
+        start_e = time.time()
 
         if self.init_grid_position:
             self.init_grid_position = False
@@ -1121,6 +1132,8 @@ class Crag:
 
         lst_orders_to_execute = self.rtstr.set_broker_current_state(broker_current_state)
 
+        end_e = time.time()
+        print(">>  step_e {}".format(end_e - start_e))
         start_f = time.time()
 
         msg = self.rtstr.get_info_msg_status()
@@ -1182,7 +1195,7 @@ class Crag:
             msg += "GRID TIME: " + str(self.average_time_grid_strategy) + "s\n"
             end_time = time.time()
             msg += "DURATION: " + utils.format_duration(round((end_time - self.start_time_grid_strategy_init), 2)) + "\n"
-            '''
+
             delta_memory = self.memory_used_mb - self.init_memory_used_mb
             if delta_memory >= 0:
                 msg += f"MEMORY: {self.memory_used_mb:.1f}MB" + " (+" + str(round(delta_memory,1)) + ")\n"
