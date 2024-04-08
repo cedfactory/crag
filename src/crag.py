@@ -15,6 +15,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 from datetime import date
 import time
+from threading import Thread
 
 import pickle
 import gc
@@ -1220,7 +1221,9 @@ class Crag:
 
         msg = self.rtstr.get_info_msg_status()
         if msg != None:
-            self.log_for_discord(msg, broker_current_state)
+            #self.log_for_discord(msg, broker_current_state)
+            thread = Thread(target=self.log_for_discord, args=(msg, broker_current_state))
+            thread.start()
 
         end_f = time.time()
         print(">>  step_f {}".format(end_f - start_f))
