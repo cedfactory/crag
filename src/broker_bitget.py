@@ -169,8 +169,9 @@ class BrokerBitGet(broker.Broker):
             else:
                 self.log("Something went wrong inside execute_trade : " + str(transaction))
 
-            transaction["data"].clear()
-            del transaction["data"]
+            if "data" in transaction:
+                transaction["data"].clear()
+                del transaction["data"]
             transaction.clear()
             del transaction
 
