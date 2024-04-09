@@ -22,6 +22,7 @@ class Client(object):
         # Get local time
         timestamp = utils.get_timestamp()
 
+        self.use_server_time = True
         # sign & header
         if self.use_server_time:
             # Get server time interface
@@ -80,8 +81,10 @@ class Client(object):
                 del sign
                 del timestamp
                 del url
+                object_json = response.json()
+                del response
                 locals().clear()
-                return response.json()
+                return object_json
 
         except ValueError:
             raise exceptions.BitgetRequestException('Invalid Response: %s' % response.text)
@@ -96,7 +99,10 @@ class Client(object):
         url = c.API_URL + c.SERVER_TIMESTAMP_URL
         response = requests.get(url)
         response.close()
+        json_object_data = response.json()['data']
         if response.status_code == 200:
-            return response.json()['data']
+            del response
+            return json_object_data
         else:
+            del response
             return ""

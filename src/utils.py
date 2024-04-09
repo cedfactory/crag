@@ -115,6 +115,7 @@ def fdp_request_post(url, params, fdp_id):
     del n_attempts
     del fdp_url
     del fdp_id
+    del response
     return final_result
 
 def normalize(df):

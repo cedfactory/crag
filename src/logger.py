@@ -150,6 +150,10 @@ class LoggerDiscordBot(ILogger):
             print(err)
         else:
             print("Payload delivered successfully, code {}.".format(result.status_code))
+        del result
+        del files
+        del data
+        locals().clear()
 
     def log_post(self, msg, header="", author="", attachments=[]):
         # https://stackoverflow.com/questions/69160500/discord-py-send-messages-outside-of-events
@@ -172,6 +176,8 @@ class LoggerDiscordBot(ILogger):
         content = content + msg
         r = requests.post(SEND_URL.format(id=self.channel_id), headers=headers, json={"content": content})
         r.close()
+        del r
+        locals().clear()
 
     def log(self, msg, header="", author="", attachments=[]):
         if self.webhook != "":
