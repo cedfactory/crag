@@ -84,6 +84,7 @@ class Crag:
         self.init_market_price = 0
         self.market_price_max = 0
         self.market_price_min = 0
+        self.usdt_equity = 0
 
         if params:
             self.broker = params.get("broker", self.broker)
@@ -322,6 +323,7 @@ class Crag:
         self.export_history(self.export_filename)
 
     def step(self):
+        self.usdt_equity = self.get_usdt_equity()
         self.send_alive_notification()
         stop = self.monitoring.get_strategy_stop(self.rtstr.id)
         if stop:
@@ -364,9 +366,7 @@ class Crag:
 
         self.rtstr.set_current_data(current_data)
 
-        # portfolio_value = self.broker.get_portfolio_value()
-        # portfolio_value = self.broker.get_wallet_equity()
-        portfolio_value = self.broker.get_usdt_equity()
+        portfolio_value = self.usdt_equity
         current_date = self.broker.get_current_datetime("%Y/%m/%d %H:%M:%S")
         if portfolio_value < self.minimal_portfolio_value:
             self.minimal_portfolio_value = portfolio_value
@@ -445,7 +445,7 @@ class Crag:
         msg += "\nglobal unrealized PL = ${} / %{}\n".format(utils.KeepNDecimals(self.broker.get_global_unrealizedPL(), 2),
                                                              utils.KeepNDecimals(self.broker.get_global_unrealizedPL() * 100 / self.original_portfolio_value, 2) )
         msg += "current cash = ${}\n".format(utils.KeepNDecimals(self.broker.get_cash(), 2))
-        usdt_equity = self.broker.get_usdt_equity()
+        usdt_equity = self.usdt_equity
         variation_percent = utils.get_variation(self.original_portfolio_value, usdt_equity)
         msg += "account equity = ${} / %{}".format(utils.KeepNDecimals(usdt_equity, 2),
                                                    utils.KeepNDecimals(variation_percent, 2))
@@ -517,7 +517,7 @@ class Crag:
         msg += "global unrealized PL : ${} / %{}\n".format(utils.KeepNDecimals(self.broker.get_global_unrealizedPL(), 2),
                                                            utils.KeepNDecimals(self.broker.get_global_unrealizedPL() * 100 / self.original_portfolio_value, 2))
         msg += "current cash = {}\n".format(utils.KeepNDecimals(self.broker.get_cash(), 2))
-        usdt_equity = self.broker.get_usdt_equity()
+        usdt_equity = self.usdt_equity
         if self.previous_usdt_equity == 0:
             self.previous_usdt_equity = usdt_equity
         variation_percent = utils.get_variation(self.original_portfolio_value, usdt_equity)
@@ -1096,7 +1096,7 @@ class Crag:
         if self.init_grid_position:
             self.init_grid_position = False
             df_symbol_minsize = self.broker.get_df_minimum_size(self.symbols)
-            df_buying_size = self.rtstr.set_df_buying_size(df_symbol_minsize, self.broker.get_usdt_equity())
+            df_buying_size = self.rtstr.set_df_buying_size(df_symbol_minsize, self.usdt_equity)
             del df_symbol_minsize
             df_buying_size_normalise = self.broker.normalize_grid_df_buying_size_size(df_buying_size)
             self.rtstr.set_df_normalize_buying_size(df_buying_size_normalise)
@@ -1116,7 +1116,7 @@ class Crag:
         if msg != None:
             current_datetime = datetime.today().strftime("%Y/%m/%d - %H:%M:%S")
             msg = current_datetime + "\n" + msg
-            usdt_equity = self.broker.get_usdt_equity()
+            usdt_equity = self.usdt_equity
             # wallet_equity = self.broker.get_wallet_equity()
             msg += "# STATUS EQUITY:" + "\n"
             # msg += "WALLET EQUITY: " + str(round(wallet_equity, 2)) + " - PNL: " + str(round(self.broker.get_global_unrealizedPL(), 2)) + "\n"
@@ -1215,14 +1215,14 @@ class Crag:
 
     def safety_step(self):
         gc.collect()
-        usdt_equity = self.broker.get_usdt_equity()
-        self.total_SL_TP = usdt_equity - self.original_portfolio_value
-        if usdt_equity >= self.maximal_portfolio_value:
-            self.maximal_portfolio_value = usdt_equity
+        self.usdt_equity = self.broker.get_usdt_equity()
+        self.total_SL_TP = self.usdt_equity - self.original_portfolio_value
+        if self.usdt_equity >= self.maximal_portfolio_value:
+            self.maximal_portfolio_value = self.usdt_equity
             self.drawdown = 0
             self.actual_drawdown_percent = 0
         else:
-            self.drawdown = usdt_equity - self.maximal_portfolio_value
+            self.drawdown = self.usdt_equity - self.maximal_portfolio_value
             self.actual_drawdown_percent = self.drawdown * 100 / self.maximal_portfolio_value
 
         if self.original_portfolio_value == 0:
@@ -1231,7 +1231,7 @@ class Crag:
             self.total_SL_TP_percent = self.total_SL_TP * 100 / self.original_portfolio_value
 
         if self.maximal_portfolio_value == 0:
-            self.maximal_portfolio_value = max(usdt_equity, self.original_portfolio_value)
+            self.maximal_portfolio_value = max(self.usdt_equity, self.original_portfolio_value)
             self.actual_drawdown_percent = 0
         else:
             self.actual_drawdown_percent = self.drawdown * 100 / self.maximal_portfolio_value
@@ -1277,9 +1277,7 @@ class Crag:
                 BTC_price = self.broker.get_value('BTC')
                 current_datetime = datetime.now()
                 current_timestamp = datetime.timestamp(current_datetime)
-                equity = self.broker.get_usdt_equity()
-                # ['datetime', 'timestamp', 'symbol', 'pice', 'pct_BTC', 'equity', 'pct_equity']
-                lst_record_volatility = [current_datetime, current_timestamp, 'BTC', BTC_price, 0, equity, 0]
+                lst_record_volatility = [current_datetime, current_timestamp, 'BTC', BTC_price, 0, self.usdt_equity, 0]
                 self.rtstr.set_high_volatility_protection_data(lst_record_volatility)
                 if self.rtstr.high_volatility_protection_activation(self.actual_drawdown_percent):
                     self.log("DUMP POSITIONS DUE TO HIGH VOLATILITY")
@@ -1333,7 +1331,6 @@ class Crag:
 
             lst_symbol_for_closure = None
 
-        usdt_equity = None
         return True
 
     def log_memory(self):
