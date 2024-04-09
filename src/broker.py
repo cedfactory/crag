@@ -187,3 +187,21 @@ class Broker(metaclass = ABCMeta):
     @abstractmethod
     def _get_coin(self, symbol):
         pass
+
+    def requests_cache_clear(self):
+        pass
+
+    def requests_cache_set(self, key, value):
+        pass
+
+    def requests_cache_get(self, key):
+        return None
+
+    def enable_cache(self):
+        pass
+
+    def disable_cache(self):
+        pass
+
+    def get_cache_status(self):
+        return None

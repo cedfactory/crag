@@ -169,8 +169,9 @@ class BrokerBitGet(broker.Broker):
             else:
                 self.log("Something went wrong inside execute_trade : " + str(transaction))
 
-            transaction["data"].clear()
-            del transaction["data"]
+            if  "data" in transaction:
+                transaction["data"].clear()
+                del transaction["data"]
             transaction.clear()
             del transaction
 
@@ -190,8 +191,9 @@ class BrokerBitGet(broker.Broker):
                 if hasattr(trade, "bought_gross_price"):
                    # trade.roi = 100 * (trade.gross_price - trade.bought_gross_price - trade.selling_fee - trade.buying_fee) / trade.bought_gross_price
                    trade.roi = utils.get_variation(trade.bought_gross_price, trade.gross_price)
-            transaction["data"].clear()
-            del transaction["data"]
+            if "data" in transaction:
+                transaction["data"].clear()
+                del transaction["data"]
             transaction.clear()
             del transaction
 
@@ -210,8 +212,9 @@ class BrokerBitGet(broker.Broker):
                 if hasattr(trade, "bought_gross_price"):
                     # trade.roi = 100 * (-1) * (trade.gross_price - trade.bought_gross_price - trade.selling_fee - trade.buying_fee) / trade.bought_gross_price
                     trade.roi = (-1) * utils.get_variation(trade.bought_gross_price, trade.gross_price)
-            transaction["data"].clear()
-            del transaction["data"]
+            if "data" in transaction:
+                transaction["data"].clear()
+                del transaction["data"]
             transaction.clear()
             del transaction
 

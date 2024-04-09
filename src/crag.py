@@ -1215,6 +1215,8 @@ class Crag:
 
     def safety_step(self):
         gc.collect()
+        self.broker.enable_cache()
+
         self.usdt_equity = self.broker.get_usdt_equity()
         self.total_SL_TP = self.usdt_equity - self.original_portfolio_value
         if self.usdt_equity >= self.maximal_portfolio_value:
@@ -1331,6 +1333,7 @@ class Crag:
 
             lst_symbol_for_closure = None
 
+        self.broker.disable_cache()
         return True
 
     def log_memory(self):

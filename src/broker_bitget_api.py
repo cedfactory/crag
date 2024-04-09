@@ -34,6 +34,9 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         self.broker_dir_path = "./broker_data/"
         self.broker_dir_path_filename = os.path.join(self.broker_dir_path, "broker_init_data.csv")
 
+        self.enable_cache_data = False
+        self.requests_cache = {}
+
         # initialize the websocket client
         api_key = self.account.get("api_key", "")
         api_secret = self.account.get("api_secret", "")
@@ -128,6 +131,10 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     #@authentication_required
     def get_open_position(self):
+        if self.get_cache_status():
+            df_from_cache = self.requests_cache_get("get_open_position")
+            if isinstance(df_from_cache, pd.DataFrame):
+                return df_from_cache.copy()
         res = pd.DataFrame()
         n_attempts = 3
         while n_attempts > 0:
@@ -145,6 +152,8 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 time.sleep(2)
                 n_attempts = n_attempts - 1
         del n_attempts
+        if self.get_cache_status():
+            self.requests_cache_set("get_open_position", res.copy())
         return res
 
     # @authentication_required
@@ -1067,3 +1076,25 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             dct['priceEndStep'] = self.get_priceEndStep(symbol)
             lst.append(dct)
         return lst
+
+    def requests_cache_clear(self):
+        self.requests_cache.clear()
+        self.requests_cache = {}
+
+    def requests_cache_set(self, key, value):
+        self.requests_cache[key] = value
+
+    def requests_cache_get(self, key):
+        if key in self.requests_cache:
+            return self.requests_cache[key]
+        return None
+
+    def enable_cache(self):
+        self.enable_cache_data = True
+
+    def disable_cache(self):
+        self.requests_cache_clear()
+        self.enable_cache_data = False
+
+    def get_cache_status(self):
+        return self.enable_cache_data
