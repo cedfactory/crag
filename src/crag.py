@@ -323,7 +323,7 @@ class Crag:
         self.export_history(self.export_filename)
 
     def step(self):
-        self.usdt_equity = self.get_usdt_equity()
+        self.usdt_equity = self.broker.get_usdt_equity()
         self.send_alive_notification()
         stop = self.monitoring.get_strategy_stop(self.rtstr.id)
         if stop:
