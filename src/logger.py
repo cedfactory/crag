@@ -1,6 +1,8 @@
 from abc import ABCMeta, abstractmethod
 import pandas as pd
 from datetime import datetime
+import time
+from . import utils
 
 # for LoggerConsole
 from rich import print
@@ -17,15 +19,28 @@ import xml.etree.cElementTree as ET
 
 class ILogger(metaclass=ABCMeta):
     def __init__(self, params=None):
-        pass
+        self.timers = {}
 
     @abstractmethod
     def log(self, msg, header="", author="", attachments=[]):
         pass
 
+    def log_time_start(self, tag):
+        start = time.time()
+        self.timers[tag] = start
+
+    def log_time_stop(self, tag):
+        start = self.timers.get(tag, 0)
+        if start == 0:
+            self.log("!!! Tag {} unknown".format(tag), header="Timer")
+        else:
+            end = time.time()
+            elapsed_time = str(utils.KeepNDecimals(end - start, 3))
+            self.log("{} : {}s".format(tag, elapsed_time), header="Timer")
+
 class LoggerConsole(ILogger):
     def __init__(self, params=None):
-        pass
+        super().__init__(params)
 
     def log(self, msg, header="", author="", attachments=[]):
         content = ""
@@ -43,6 +58,7 @@ class LoggerConsole(ILogger):
 
 class LoggerFile(ILogger):
     def __init__(self, params=None):
+        super().__init__(params)
         self.filename_base = 'log'
         self.current_id = 0
         if params:
@@ -84,6 +100,7 @@ class LoggerFile(ILogger):
 
 class LoggerDiscordBot(ILogger):
     def __init__(self, params=None):
+        super().__init__(params)
         self.channel_id = None
         self.token = None
         self.webhook = None
