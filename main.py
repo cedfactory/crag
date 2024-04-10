@@ -1,6 +1,6 @@
 from src import rtdp,rtdp_simulation,broker_simulation,broker_bitget,broker_bitget_api
 from src import rtstr,rtstr_dummy_test,rtstr_envelope,rtstr_envelopestochrsi,rtstr_dummy_test_tp,rtstr_bollinger_trend,rtstr_grid_trading_long, rtstr_grid_protect_long,rtstr_grid_trading_short,rtstr_bollinger_trend_long,rtstr_tv_recommendation_mid,rtstr_super_reversal,rtstr_volatility_test_live,rtstr_trix,rtstr_cryptobot,rtstr_sltp_only,rtstr_bigwill,rtstr_VMC
-from src import crag,crag_helper,trade
+from src import crag,crag_helper,trade,logger
 from src.toolbox import settings_helper
 import requests
 import pandas as pd
@@ -321,7 +321,11 @@ def crag_broker():
 def check_broker():
     params = {"exchange": "bitget", "account": "bitget_ayato", "reset_account": False}
     my_broker = broker_bitget_api.BrokerBitGetApi(params)
+    my_logger = logger.LoggerConsole()
+
+    my_logger.log_time_start("get_coin")
     value = my_broker._get_coin("XRPUSDT_UMCBL")
+    my_logger.log_time_stop("get_coin")
     print(value)
 
 def check_fdp():
