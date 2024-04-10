@@ -14,6 +14,7 @@ import pickle
 from pathlib import Path
 from datetime import datetime, timedelta
 from datetime import date
+from threading import Thread
 
 import pickle
 import gc
@@ -1195,7 +1196,9 @@ class Crag:
 
         msg = self.rtstr.get_info_msg_status()
         if msg != None:
-            self.prepare_and_send_log_for_discord(msg, broker_current_state)
+            #self.prepare_and_send_log_for_discord(msg, broker_current_state)
+            thread = Thread(target=self.prepare_and_send_log_for_discord, args=(msg, broker_current_state))
+            thread.start()
 
         self.log("output lst_orders_to_execute: {}".format(lst_orders_to_execute))
         self.broker.execute_orders(lst_orders_to_execute)
