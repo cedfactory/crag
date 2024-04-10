@@ -365,7 +365,8 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 self.get_list_of_account_assets()
                 self.success += 1
                 break
-            except:
+            except exceptions.BitgetAPIException as e:
+                self.log(e)
                 self.log_api_failure("get_list_of_account_assets", n_attempts)
                 time.sleep(2)
                 n_attempts = n_attempts - 1
@@ -591,16 +592,24 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         # update market
         not_usdt = False
         if not_usdt:
-            dct_account = self.accountApi.accounts('umcbl')
-            df_account_umcbl = self._account_results_to_df(dct_account)
-            dct_account = self.accountApi.accounts('dmcbl')
-            df_account_dmcbl =  self._account_results_to_df(dct_account)
-            dct_account = self.accountApi.accounts('cmcbl')
-            df_account_cmcbl = self._account_results_to_df(dct_account)
-            df_account_assets = pd.concat([df_account_umcbl, df_account_dmcbl, df_account_cmcbl])
-            df_account_umcbl = None
-            df_account_dmcbl = None
-            df_account_cmcbl = None
+            n_attempts = 3
+            while n_attempts > 0:
+                try:
+                    dct_account = self.accountApi.accounts('umcbl')
+                    df_account_umcbl = self._account_results_to_df(dct_account)
+                    dct_account = self.accountApi.accounts('dmcbl')
+                    df_account_dmcbl =  self._account_results_to_df(dct_account)
+                    dct_account = self.accountApi.accounts('cmcbl')
+                    df_account_cmcbl = self._account_results_to_df(dct_account)
+                    df_account_assets = pd.concat([df_account_umcbl, df_account_dmcbl, df_account_cmcbl])
+                    df_account_umcbl = None
+                    df_account_dmcbl = None
+                    df_account_cmcbl = None
+                except exceptions.BitgetAPIException as e:
+                    self.log(e)
+                    self.log_api_failure("accountApi.accounts", n_attempts)
+                    time.sleep(2)
+                    n_attempts = n_attempts - 1
         else:
             dct_account = self.accountApi.accounts('umcbl')
             df_account_assets = self._account_results_to_df(dct_account)
