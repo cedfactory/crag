@@ -1,7 +1,7 @@
 import requests
 import json
 from . import consts as c, utils, exceptions
-
+import time
 
 class Client(object):
 
@@ -40,6 +40,8 @@ class Client(object):
             # print("sign:", sign)
             self.first = False
 
+        start = time.time()
+
         # send request
         response = None
         if method == c.GET:
@@ -56,6 +58,10 @@ class Client(object):
                 pass
 
         response.close()
+
+        end = time.time()
+        print("elapsed_time: ", response.elapsed, "   -   requests: {} {}".format(end - start, url))
+
         # exception handle
         if not str(response.status_code).startswith('2'):
             print("url : ", url)

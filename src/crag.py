@@ -4,7 +4,7 @@ from pympler import asizeof
 import shutil
 import time
 import pandas as pd
-from . import trade,rtstr,utils,traces
+from . import trade,rtstr,utils,traces,logger
 from .toolbox import monitoring_helper
 import pika
 import json
@@ -267,7 +267,10 @@ class Crag:
                 if self.safety_run:
                     start_minus_one_sec = datetime.timestamp(datetime.fromtimestamp(start) - timedelta(seconds=1))
                     while time.time() < start_minus_one_sec:
+                        log = logger.LoggerConsole() #TEMPORARY
+                        log.log_time_start("safety_step")
                         step_result = self.safety_step()
+                        log.log_time_stop("safety_step", "safety_step")
 
                         if not step_result:
                             print("safety_step result exit")
@@ -1195,10 +1198,11 @@ class Crag:
         lst_orders_to_execute = self.rtstr.set_broker_current_state(broker_current_state)
 
         msg = self.rtstr.get_info_msg_status()
-        if msg != None:
-            #self.prepare_and_send_log_for_discord(msg, broker_current_state)
-            thread = Thread(target=self.prepare_and_send_log_for_discord, args=(msg, broker_current_state))
-            thread.start()
+        # TEMPORARY
+        #if msg != None:
+        #    #self.prepare_and_send_log_for_discord(msg, broker_current_state)
+        #    thread = Thread(target=self.prepare_and_send_log_for_discord, args=(msg, broker_current_state))
+        #    thread.start()
 
         self.log("output lst_orders_to_execute: {}".format(lst_orders_to_execute))
         self.broker.execute_orders(lst_orders_to_execute)
