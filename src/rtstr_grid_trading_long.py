@@ -360,6 +360,7 @@ class GridPosition():
                     self.log("Elements in df_current_state['price'] that are not in df_grid['position']:")
                     self.log(different_prices)
                     exit(0)
+            del all_prices_in_grid
         return df_current_state
 
     def cross_check_with_current_state(self, symbol, df_current_state_all):
