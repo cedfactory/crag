@@ -271,6 +271,8 @@ class Crag:
                         log.log_time_start("safety_step")
                         step_result = self.safety_step()
                         log.log_time_stop("safety_step", "safety_step")
+                        current_memory = utils.get_memory_usage()
+                        print("MEMORY : {}".format(current_memory))
 
                         if not step_result:
                             print("safety_step result exit")
