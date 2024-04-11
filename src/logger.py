@@ -38,7 +38,7 @@ class ILogger(metaclass=ABCMeta):
             elapsed_time = str(utils.KeepNDecimals(end - start, 3))
             output = "{} : {} s ({})".format(tag, elapsed_time, msg)
             #self.log(output, header="Timer") # temporary
-            self.log_force(output)
+            print(output)
 
 class LoggerConsole(ILogger):
     def __init__(self, params=None):
