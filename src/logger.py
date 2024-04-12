@@ -29,14 +29,16 @@ class ILogger(metaclass=ABCMeta):
         start = time.time()
         self.timers[tag] = start
 
-    def log_time_stop(self, tag):
+    def log_time_stop(self, tag, msg=""):
         start = self.timers.get(tag, 0)
         if start == 0:
             self.log("!!! Tag {} unknown".format(tag), header="Timer")
         else:
             end = time.time()
             elapsed_time = str(utils.KeepNDecimals(end - start, 3))
-            self.log("{} : {}s".format(tag, elapsed_time), header="Timer")
+            output = "{} : {} s ({})".format(tag, elapsed_time, msg)
+            #self.log(output, header="Timer") # temporary
+            print(output)
 
 class LoggerConsole(ILogger):
     def __init__(self, params=None):
@@ -166,7 +168,8 @@ class LoggerDiscordBot(ILogger):
         except requests.exceptions.HTTPError as err:
             print(err)
         else:
-            print("Payload delivered successfully, code {}.".format(result.status_code))
+            msg = "Payload delivered successfully, code {}.".format(result.status_code)
+            #print(msg)
         del result
         del files
         del data
