@@ -51,7 +51,7 @@ if __name__ == '__main__':
                 result = my_broker.orderApi.cancel_orders('XRPUSDT_UMCBL', "USDT", orderId)
 
                 end = time.time()
-                print("cancel_long_orders {}".format(end - start))
+                print("cancel_open_ong_orders {}".format(end - start))
             else:
                 try:
                     print("===== ", transaction["msg"])
@@ -67,14 +67,14 @@ if __name__ == '__main__':
 
             if "msg" in transaction and transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
                 end = time.time()
-                print("open_long_order {}".format(end - start))
+                print("close_long_order {}".format(end - start))
 
                 start = time.time()
                 orderId = transaction["data"]["orderId"]
                 result = my_broker.orderApi.cancel_orders('XRPUSDT_UMCBL', "USDT", orderId)
 
                 end = time.time()
-                print("cancel_short_orders {}".format(end - start))
+                print("cancel_close_long_orders {}".format(end - start))
             else:
                 try:
                     print("===== ", transaction["msg"])
