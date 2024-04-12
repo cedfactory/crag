@@ -1349,7 +1349,7 @@ class Crag:
                             self.rtstr.set_symbol_trailer_tp_turned_off(coin)
                             self.sell_performed = False
 
-            lst_symbol_for_closure = None
+            del lst_symbol_for_closure
 
         self.broker.disable_cache()
         return True
