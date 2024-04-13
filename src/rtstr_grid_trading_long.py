@@ -15,7 +15,7 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
         self.rtctrl.set_list_open_position_type(self.get_lst_opening_type())
         self.rtctrl.set_list_close_position_type(self.get_lst_closing_type())
 
-        self.zero_print = False
+        self.zero_print = True
         self.grid = GridPosition(self.lst_symbols, self.grid_high, self.grid_low, self.nb_grid, self.percent_per_grid, self.zero_print, self.loggers)
         if self.percent_per_grid != 0:
             self.nb_grid = self.grid.get_grid_nb_grid()
@@ -97,13 +97,14 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
             df_sorted = df_current_state.sort_values(by='price')
             self.log("#############################################################################################")
             self.log("current_state: \n" + df_sorted.to_string(index=False))
+            del df_sorted
             self.log("open_positions: \n" + df_open_positions.to_string(index=False))
             self.log("price: \n" + df_price.to_string(index=False))
             lst_order_to_print = []
             for order in lst_order_to_execute:
                 lst_order_to_print.append((order["grid_id"], order["price"], order["type"]))
             self.log("order list: \n" + str(lst_order_to_print))
-            lst_order_to_print = None
+            del lst_order_to_print
             self.grid.print_grid()
             self.log("#############################################################################################")
 
@@ -551,12 +552,14 @@ class GridPosition():
                          & (df['side'] == 'close_long')
                          & (df['cross_checked'])]
         nb_close_position_already_open = len(df_filtered)
+        del df_filtered
         nb_close_selected_to_be_open = nb_open_positions - nb_close_position_already_open
 
         # nb of open limit order returned open by the broker
         nb_open_limit_already_open = self.get_nb_open_limit_orders(symbol)
         df_filtered = df[(df['side'] == 'open_long')]
         nb_open_limit_order = len(df_filtered)
+        del df_filtered
         nb_open_selected_to_be_open = nb_open_limit_order - nb_open_limit_already_open
 
         self.nb_open_selected_to_be_open = nb_open_selected_to_be_open
@@ -629,6 +632,8 @@ class GridPosition():
                          & (df['side'] == 'open_long')
                          & (df['cross_checked'])]
         lst_open_engaged = df_filtered['grid_id'].tolist()
+        del df_filtered
+
         if len(lst_open_engaged) > 1:
             self.max_grid_open_order = max(lst_open_engaged)
             self.min_grid_open_order = min(lst_open_engaged)
@@ -657,6 +662,8 @@ class GridPosition():
                          & (df['side'] == 'close_long')
                          & (df['cross_checked'])]
         lst_close_engaged = df_filtered['grid_id'].tolist()
+        del df_filtered
+
         if len(lst_close_engaged) > 1:
             self.max_grid_close_order = max(lst_close_engaged)
             self.min_grid_close_order = min(lst_close_engaged)
@@ -697,6 +704,7 @@ class GridPosition():
         resulted_lst = [element for element in lst_pending if element not in lst_filtered]
         for order in resulted_lst:
             self.set_on_hold_from_grid_id(order["symbol"], order["grid_id"])
+        del resulted_lst
 
     def normalize_grid_price(self, symbol, pricePlace, priceEndStep):
         df = self.grid[symbol]
