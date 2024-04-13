@@ -71,8 +71,7 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
         df_current_states = current_state["open_orders"].copy()
         df_open_positions = current_state["open_positions"].copy()
         df_price = current_state["prices"].copy()
-
-        current_state = None
+        del current_state
 
         lst_order_to_execute = []
 
@@ -112,24 +111,32 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
 
     def set_normalized_grid_price(self, lst_symbol_plc_endstp):
         for price_plc in lst_symbol_plc_endstp:
-            symbol = price_plc['symbol']
-            pricePlace = price_plc['pricePlace']
-            priceEndStep = price_plc['priceEndStep']
-            self.grid.normalize_grid_price(symbol, pricePlace, priceEndStep)
+            self.grid.normalize_grid_price(price_plc['symbol'], price_plc['pricePlace'], price_plc['priceEndStep'])
+        del lst_symbol_plc_endstp
+        price_plc.clear()
+        del price_plc
 
     def activate_grid(self, current_state):
-        if not current_state:
+        if not current_state or True:
             return []
-
+        # CEDE FOLLOWING CONE NOT ACTIVATED
         df_prices = current_state["prices"]
         lst_buying_market_order = []
         for symbol in self.lst_symbols:
             lst_buying_market_order = []
             buying_size = self.get_grid_buying_size(symbol)
-            if symbol in df_prices['symbols']:
+            if symbol in df_prices['symbols'].tolist():
                 price = df_prices.loc[df_prices['symbols'] == symbol, 'values'].values[0]
                 order = self.grid.get_buying_market_order(symbol, buying_size, price)
                 lst_buying_market_order.append(order)
+        del buying_size
+        del df_prices
+        del lst_buying_market_order
+        del current_state
+        if self.lst_symbols > 0:
+            del symbol
+            del price
+            del order
         return lst_buying_market_order
 
     def get_info_msg_status(self):
@@ -454,10 +461,21 @@ class GridPosition():
         return sorted_list
 
     def set_to_pending_execute_order(self, symbol, lst_order_to_execute):
+        """
         df = self.grid[symbol]
         for placed_order in lst_order_to_execute:
             df.loc[df['grid_id'] == placed_order["grid_id"], 'status'] = 'pending'
             df.loc[df['grid_id'] == placed_order["grid_id"], 'orderId'] = ''
+        """
+        df = self.grid[symbol]
+        for placed_order in lst_order_to_execute:
+            grid_id = placed_order["grid_id"]
+            mask = df['grid_id'] == grid_id
+            if mask.any():
+                df.at[mask.idxmax(), 'status'] = 'pending'
+                df.at[mask.idxmax(), 'orderId'] = ''
+            del mask
+
 
     def clear_orderId(self, symbol, grid_id):
         df = self.grid[symbol]
@@ -684,6 +702,9 @@ class GridPosition():
         df = self.grid[symbol]
         df['position'] = df['position'].apply(lambda x: self.normalize_price(x, pricePlace, priceEndStep))
         self.log("grid price normalized: " + str(df['position'].tolist()))
+        del df
+        del pricePlace
+        del priceEndStep
 
     def normalize_price(self, amount, pricePlace, priceEndStep):
         amount = amount * pow(10, pricePlace)
@@ -695,6 +716,9 @@ class GridPosition():
         decimal = amount - math.floor(round(amount / decimal_multiplier)) * decimal_multiplier
         amount = amount - decimal
         amount = round(amount, pricePlace)
+        del pricePlace
+        del decimal_multiplier
+        del decimal
         return amount
 
     def get_buying_market_order(self, symbol, size, price):

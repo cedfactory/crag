@@ -1193,11 +1193,6 @@ class Crag:
             del df_buying_size_normalise
             self.rtstr.set_normalized_grid_price(self.broker.get_price_place_endstep(self.symbols))
 
-            mylog.log_time_start("TIMER_activate_grid")
-            lst_orders_to_execute = self.rtstr.activate_grid(broker_current_state)
-            mylog.log_time_start("TIMER_activate_grid")
-
-            del lst_orders_to_execute
             lst_orders_to_execute = []
 
             mylog.log_time_start("TIMER_execute_orders")
