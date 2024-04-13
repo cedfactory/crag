@@ -305,6 +305,14 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         return result
 
     @authentication_required
+    def _batch_orders_api(self, symbol, marginCoin, batch_order):
+
+        result = self.orderApi.batch_orders(symbol, marginCoin, batch_order)
+
+        locals().clear()
+        return result
+
+    @authentication_required
     def get_portfolio_value(self):
         return self.get_usdt_equity()
 

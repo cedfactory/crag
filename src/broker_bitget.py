@@ -1,6 +1,8 @@
 from . import broker,trade,rtdp,utils
 import pandas as pd
 import gc
+import re
+import json
 
 class BrokerBitGet(broker.Broker):
     def __init__(self, params = None):
@@ -252,12 +254,16 @@ class BrokerBitGet(broker.Broker):
     def store_gridId_orderId(self, trade):
         orderId = trade.orderId
         gridId = trade.grid_id
-
         if trade.success and orderId != None and gridId != -1:
-            if gridId in self.df_grid_id_match["grid_id"].tolist():
-                self.df_grid_id_match.loc[self.df_grid_id_match[self.df_grid_id_match['grid_id'] == gridId].index] = [orderId, gridId]
-            else:
-                self.df_grid_id_match.loc[len(self.df_grid_id_match)] = [orderId, gridId]
+            self.add_gridId_orderId(gridId, orderId)
+        del orderId
+        del gridId
+
+    def add_gridId_orderId(self, gridId, orderId):
+        if gridId in self.df_grid_id_match["grid_id"].tolist():
+            self.df_grid_id_match.loc[self.df_grid_id_match[self.df_grid_id_match['grid_id'] == gridId].index] = [orderId, gridId]
+        else:
+            self.df_grid_id_match.loc[len(self.df_grid_id_match)] = [orderId, gridId]
 
         self.df_grid_id_match = self.df_grid_id_match.drop_duplicates()
         del orderId
@@ -276,20 +282,106 @@ class BrokerBitGet(broker.Broker):
         self.init_memory_usage = memory_usage
 
     @authentication_required
+    def execute_uniq_order(self, lst_orders):
+        if len(lst_orders) > 0:
+            order = lst_orders[0]
+            symbol = self.trade_symbol = self._get_symbol(order["symbol"])
+            order_side = lst_orders[0]["type"]
+            amount = str(order["gross_size"])
+            price = str(order["price"])
+            clientOid = self.clientOIdprovider.get_name(symbol, order_side + "__" + str(order["grid_id"]) + "__")
+
+            if "OPEN" in order_side and "LONG" in order_side:
+                side = "open_long"
+            elif "OPEN" in order_side and "SHORT" in order_side:
+                side = "open_short"
+            elif "CLOSE" in order_side and "LONG" in order_side:
+                side = "close_long"
+            elif "CLOSE" in order_side and "SHORT" in order_side:
+                side = "close_short"
+
+            self.log("!!!!! EXECUTE TRADE !!!!!")
+            self.log("{} size: {} price: {}".format(order_side, amount, price))
+
+            transaction = self._place_order_api(symbol, marginCoin="USDT", size=amount, side=side, orderType='limit', price=price, clientOId=clientOid)
+
+            if "msg" in transaction and transaction["msg"] == "success" and "data" in transaction:
+                orderId = transaction["data"]["orderId"]
+                gridId = [int(num) for num in re.findall(r'__(\d+)__', transaction["data"]["clientOid"])]
+                self.add_gridId_orderId(gridId[0], orderId)
+            else:
+                self.log("TRADE FAILED: {} size: {} price: {}".format(order_side, amount, price))
+
+    @authentication_required
+    def execute_batch_orders(self, lst_orders):
+        if len(lst_orders) > 0:
+            symbol = self._get_symbol(lst_orders[0]["symbol"])
+            order_side = lst_orders[0]["type"]
+            lst_orderList = []
+            for order in lst_orders:
+                if "OPEN" in order_side and "LONG" in order_side:
+                    side = "open_long"
+                elif "OPEN" in order_side and "SHORT" in order_side:
+                    side = "open_short"
+                elif "CLOSE" in order_side and "LONG" in order_side:
+                    side = "close_long"
+                elif "CLOSE" in order_side and "SHORT" in order_side:
+                    side = "close_short"
+
+                clientOid = self.clientOIdprovider.get_name(symbol, order_side + "__" + str(order["grid_id"]) + "__")
+                orderParam = {
+                    "size": str(order["gross_size"]),
+                    "price": str(order["price"]),
+                    "side": side,
+                    "orderType": "limit",
+                    "timeInForceValue": "normal",
+                    "clientOid": str(clientOid),
+                }
+                lst_orderList.append(orderParam)
+
+        self.log("!!!!! EXECUTE BATCH ORDER x" + str(len(lst_orderList)) + " !!!!!")
+        transaction = self._batch_orders_api(symbol, "USDT", lst_orderList)
+        # Convert each dictionary to a string with newline character and concatenate them
+        result_string = '\n'.join([json.dumps(orderParam) for orderParam in lst_orderList])
+        self.log(result_string)
+
+        if "msg" in transaction and transaction["msg"] == "success" and "data" in transaction and "orderInfo" in transaction["data"]:
+            for orderInfo in transaction["data"]["orderInfo"]:
+                orderId = orderInfo["orderId"]
+                gridId = [int(num) for num in re.findall(r'__(\d+)__', orderInfo["clientOid"])]
+                self.add_gridId_orderId(gridId[0], orderId)
+        else:
+            self.log("TRADE BATCH FAILED")
+
+    @authentication_required
     def execute_orders(self, lst_orders):
-        for order in lst_orders:
-            order = self.check_validity_order(order)
-            trade = self.OrderToTradeConverter(order)
-            self.execute_trade(trade)
-            self.store_gridId_orderId(trade)
-            for key in order:
-                order[key] = None
-            order.clear()
-            del order
-            trade.set_all_to_none()
-            del trade
-        for i in range(len(lst_orders)):
-            lst_orders[i] = None
+        if len(lst_orders) == 0:
+            return
+
+        max_batch_size = 49
+        if len(lst_orders) > max_batch_size:
+            sub_lst_orders = utils.split_list(lst_orders, max_batch_size)
+            print("orders bach over max_batch_size")
+            for lst in sub_lst_orders:
+                self.execute_batch_orders(lst)
+        elif len(lst_orders) > 1:
+            self.execute_batch_orders(lst_orders)
+        elif len(lst_orders) == 1:
+            self.execute_uniq_order(lst_orders)
+        else:
+            for order in lst_orders:
+                order = self.check_validity_order(order)
+                trade = self.OrderToTradeConverter(order)
+                self.execute_trade(trade)
+                self.store_gridId_orderId(trade)
+                for key in order:
+                    order[key] = None
+                order.clear()
+                del order
+                trade.set_all_to_none()
+                del trade
+            for i in range(len(lst_orders)):
+                lst_orders[i] = None
         del lst_orders
         locals().clear()
         gc.collect()

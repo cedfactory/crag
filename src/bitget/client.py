@@ -22,7 +22,7 @@ class Client(object):
         # Get local time
         timestamp = utils.get_timestamp()
 
-        self.use_server_time = True
+
         # sign & header
         if self.use_server_time:
             # Get server time interface
@@ -40,7 +40,7 @@ class Client(object):
             # print("sign:", sign)
             self.first = False
 
-        #start = time.time()
+        # start = time.time()
 
         # send request
         response = None
@@ -59,8 +59,8 @@ class Client(object):
 
         response.close()
 
-        #end = time.time()
-        #print("elapsed_time: ", response.elapsed, "   -   requests: {} {}".format(end - start, url))
+        # end = time.time()
+        # print("elapsed_time: ", response.elapsed, "   -   requests: {} {}".format(end - start, url))
 
         # exception handle
         if not str(response.status_code).startswith('2'):

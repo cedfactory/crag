@@ -10,6 +10,9 @@ from src.toolbox import settings_helper
 import psutil
 import pandas as pd
 
+def split_list(input_list, sublist_size):
+    return [input_list[i:i + sublist_size] for i in range(0, len(input_list), sublist_size)]
+
 def drop_smallest_items(lst, x):
     sorted_lst = sorted(lst)  # Sort the list
     return sorted_lst[x:]  # Slice the list to remove the smallest x items
