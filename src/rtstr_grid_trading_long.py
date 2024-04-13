@@ -117,9 +117,9 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
         del price_plc
 
     def activate_grid(self, current_state):
-        if not current_state or True:
+        if not current_state:
             return []
-        # CEDE FOLLOWING CONE NOT ACTIVATED
+
         df_prices = current_state["prices"]
         lst_buying_market_order = []
         for symbol in self.lst_symbols:
@@ -476,10 +476,10 @@ class GridPosition():
                 df.at[mask.idxmax(), 'orderId'] = ''
             del mask
 
-
     def clear_orderId(self, symbol, grid_id):
         df = self.grid[symbol]
         df.loc[df['orderId'] == grid_id, 'orderId'] = ""
+        del df
 
     def print_grid(self):
         if not self.zero_print:
