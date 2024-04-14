@@ -1222,8 +1222,6 @@ class Crag:
         if len(msg_broker_trade_info) != 0:
             self.log_discord(msg_broker_trade_info, "broker trade")
             self.broker.clear_log_info_trade()
-
-
         del msg_broker_trade_info
 
         end_time = time.time()

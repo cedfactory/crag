@@ -20,6 +20,7 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
         if self.percent_per_grid != 0:
             self.nb_grid = self.grid.get_grid_nb_grid()
         self.df_grid_buying_size = pd.DataFrame()
+        self.msg_grid_info = None
 
     def get_data_description(self):
         ds = rtdp.DataDescription()
@@ -71,6 +72,9 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
         df_current_states = current_state["open_orders"].copy()
         df_open_positions = current_state["open_positions"].copy()
         df_price = current_state["prices"].copy()
+        del current_state["open_orders"]
+        del current_state["open_positions"]
+        del current_state["prices"]
         del current_state
 
         lst_order_to_execute = []
@@ -84,9 +88,8 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
             self.grid.update_pending_status_from_current_state(symbol, df_current_state)
 
             if symbol in df_price['symbols'].tolist():
-                price_for_symbol = df_price.loc[df_price['symbols'] == symbol, 'values'].values[0]
                 self.grid.cross_check_with_current_state(symbol, df_current_state)
-                self.grid.update_grid_side(symbol, price_for_symbol)
+                self.grid.update_grid_side(symbol, df_price.loc[df_price['symbols'] == symbol, 'values'].values[0])
                 # self.grid.cross_check_with_current_state(symbol, df_current_state)
 
             lst_order_to_execute = self.grid.get_order_list(symbol, buying_size, df_current_state)
@@ -108,6 +111,9 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
             self.grid.print_grid()
             self.log("#############################################################################################")
 
+        del df_current_states
+        del df_open_positions
+        del df_price
         return lst_order_to_execute
 
     def set_normalized_grid_price(self, lst_symbol_plc_endstp):
@@ -143,13 +149,13 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
     def get_info_msg_status(self):
         # CEDE: MULTI SYMBOL TO BE IMPLEMENTED IF EVER ONE DAY.....
         for symbol in self.lst_symbols:
+            del self.msg_grid_info
+            self.msg_grid_info = None
             dct_info = self.grid.get_grid_info(symbol)
             if self.grid.dct_change_status(dct_info):
-                msg = self.grid.dct_status_info_to_txt(dct_info, symbol)
-            else:
-                msg = None
-            dct_info = None
-            return msg
+                self.msg_grid_info = self.grid.dct_status_info_to_txt(dct_info, symbol)
+            del dct_info
+            return self.msg_grid_info
 
     def get_grid(self, cpt):
         # CEDE: MULTI SYMBOL TO BE IMPLEMENTED IF EVER ONE DAY.....
@@ -201,6 +207,8 @@ class GridPosition():
         self.df_nb_open_positions['diff_position'] = 0
         self.df_nb_open_positions['previous_nb_open_positions'] = 0
         self.df_nb_open_positions['previous_nb_open_limit_order'] = 0
+
+        self.dct_status_info = {}
 
         self.max_grid_close_order = -1
         self.min_grid_close_order = -1
@@ -274,11 +282,12 @@ class GridPosition():
             else:
                 # CEDE: Executed when high volatility is triggering an limit order just after being raised
                 #       and before being recorded by the strategy in the grid process structure
-                missing_order = {}
-                missing_order['grid_id'] = grid_id
-                missing_order['side'] = df.loc[df['grid_id'] == grid_id, 'side'].values[0]
-                self.lst_limit_order_missing.append(missing_order)
-                self.log("GRID ERROR - limit order failed - grid_id missing: " + str(grid_id) + ' side: ' + missing_order['side'])
+                self.log("GRID ERROR - limit order failed - grid_id missing: " + str(grid_id) + ' side: ' + side)
+            del side
+        del df
+        del condition_pending
+        del df_filtered
+        del lst_grid_id
 
     def get_grid_nb_grid(self):
         return self.nb_grid
@@ -369,6 +378,7 @@ class GridPosition():
                     self.log(different_prices)
                     exit(0)
             del all_prices_in_grid
+            del df_grid
         return df_current_state
 
     def cross_check_with_current_state(self, symbol, df_current_state_all):
@@ -508,9 +518,14 @@ class GridPosition():
                 self.diff_close_position = self.nb_close_positions - self.previous_nb_close_positions
                 self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'diff_open_position'] = self.diff_open_position
                 self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'diff_close_position'] = self.diff_close_position
+                del sum_available_position
+                del leverage
+                del nb_open_positions
+                del previous_nb_open_positions
             else:
                 self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'positions_size'] = 0
                 self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_open_positions'] = 0
+            del filtered_df
         else:
             self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'positions_size'] = 0
             self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_open_positions'] = 0
@@ -522,6 +537,8 @@ class GridPosition():
             self.diff_close_position = self.nb_close_positions - self.previous_nb_close_positions
             self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'diff_open_position'] = self.diff_open_position
             self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'diff_close_position'] = self.diff_close_position
+            del previous_nb_open_positions
+            del nb_open_positions
 
     def get_nb_open_positions_from_state(self, symbol):
         row = self.df_nb_open_positions[self.df_nb_open_positions['symbol'] == symbol]
@@ -770,6 +787,8 @@ class GridPosition():
         self.nb_previous_close_positions = self.nb_close_positions
         self.nb_close_positions = len(df_current_states[(df_current_states['symbol'] == symbol) & (df_current_states['side'] == "close_long")])
         self.diff_nb_close_positions = self.nb_close_positions - self.nb_previous_close_positions
+        del previous_nb_open_limit_order
+        del nb_open_limit_order
 
     def update_control_multi_position(self, symbol, df_current_state, df_open_positions):
         self.control_multi_position['nb_current_limit_close'] = len(df_current_state[(df_current_state['side'] == 'close_long')])
@@ -839,6 +858,24 @@ class GridPosition():
             self.log('global lst_open_long_triggered: ' + str(self.control_multi_position['lst_open_long_triggered']))
             self.log('global lst_open_long: ' + str(self.control_multi_position['lst_open_long']))
 
+        del df
+        del condition_engaged
+        del condition_pending
+        del condition_open_long
+        del condition_close_long
+        del df_filtered_previous_open_long
+        del df_filtered_previous_close_long
+        del lst_previous_close_long
+        del condition_symbol
+        del df_filtered_new_open_long
+        del lst_new_open_long
+        del df_filtered_new_close_long
+        del lst_new_close_long
+        del lst_open_long_triggered
+        del lst_close_long_triggered
+        del df_current_state
+        del df_open_positions
+
     def filter_open_control_multi_position(self, open_grid_id):
         if (open_grid_id == self.grid_uniq_position) \
                 and (self.trend != "UP"):
@@ -856,26 +893,29 @@ class GridPosition():
 
     def get_grid_info(self, symbol):
         df = self.grid[symbol]
-        dct_status_info = {}
+        self.dct_status_info.clear()
+        del self.dct_status_info
+        self.dct_status_info = {}
 
         # Count of rows with side == 'close_long' and status == 'engaged'
-        dct_status_info['nb_limit_close'] = len(df[(df['side'] == 'close_long') & (df['status'] == 'engaged')])
+        self.dct_status_info['nb_limit_close'] = len(df[(df['side'] == 'close_long') & (df['status'] == 'engaged')])
 
         # Count of rows with side == 'open_long' and status == 'engaged'
-        dct_status_info['nb_limit_open'] = len(df[(df['side'] == 'open_long') & (df['status'] == 'engaged')])
+        self.dct_status_info['nb_limit_open'] = len(df[(df['side'] == 'open_long') & (df['status'] == 'engaged')])
 
-        dct_status_info['nb_current_limit_close'] = self.control_multi_position['nb_current_limit_close']
-        dct_status_info['nb_current_limit_open'] = self.control_multi_position['nb_current_limit_open']
+        self.dct_status_info['nb_current_limit_close'] = self.control_multi_position['nb_current_limit_close']
+        self.dct_status_info['nb_current_limit_open'] = self.control_multi_position['nb_current_limit_open']
 
-        dct_status_info['nb_position'] = self.get_nb_open_positions_from_state(symbol)
-        dct_status_info['price'] = self.current_price
-        dct_status_info['grid_position'] = self.grid_position
+        self.dct_status_info['nb_position'] = self.get_nb_open_positions_from_state(symbol)
+        self.dct_status_info['price'] = self.current_price
+        self.dct_status_info['grid_position'] = self.grid_position
 
-        dct_status_info['previous_grid_uniq_position'] = self.previous_grid_uniq_position
-        dct_status_info['grid_uniq_position'] = self.grid_uniq_position
-        dct_status_info['grid_move'] = self.grid_move
+        self.dct_status_info['previous_grid_uniq_position'] = self.previous_grid_uniq_position
+        self.dct_status_info['grid_uniq_position'] = self.grid_uniq_position
+        self.dct_status_info['grid_move'] = self.grid_move
 
-        return dct_status_info
+        del df
+        return self.dct_status_info
 
     def dct_change_status(self, dct_info):
         if self.dct_info == None:

@@ -67,6 +67,7 @@ class BrokerBitGet(broker.Broker):
         return self.log_trade
 
     def clear_log_info_trade(self):
+        del self.log_trade
         self.log_trade = ""
 
     @authentication_required
@@ -300,8 +301,8 @@ class BrokerBitGet(broker.Broker):
             elif "CLOSE" in order_side and "SHORT" in order_side:
                 side = "close_short"
 
-            self.log("!!!!! EXECUTE TRADE !!!!!")
-            self.log("{} size: {} price: {}".format(order_side, amount, price))
+            msg = "!!!!! EXECUTE TRADE !!!!!" + "\n"
+            msg += "{} size: {} price: {}".format(order_side, amount, price) + "\n"
 
             transaction = self._place_order_api(symbol, marginCoin="USDT", size=amount, side=side, orderType='limit', price=price, clientOId=clientOid)
 
@@ -310,7 +311,9 @@ class BrokerBitGet(broker.Broker):
                 gridId = [int(num) for num in re.findall(r'__(\d+)__', transaction["data"]["clientOid"])]
                 self.add_gridId_orderId(gridId[0], orderId)
             else:
-                self.log("TRADE FAILED: {} size: {} price: {}".format(order_side, amount, price))
+                msg += "TRADE FAILED: {} size: {} price: {}".format(order_side, amount, price) + "\n"
+            self.log_trade = self.log_trade + msg.upper()
+            del msg
 
     @authentication_required
     def execute_batch_orders(self, lst_orders):
@@ -339,11 +342,11 @@ class BrokerBitGet(broker.Broker):
                 }
                 lst_orderList.append(orderParam)
 
-        self.log("!!!!! EXECUTE BATCH ORDER x" + str(len(lst_orderList)) + " !!!!!")
+        msg = "!!!!! EXECUTE BATCH ORDER x" + str(len(lst_orderList)) + " !!!!!" + "\n"
         transaction = self._batch_orders_api(symbol, "USDT", lst_orderList)
         # Convert each dictionary to a string with newline character and concatenate them
         result_string = '\n'.join([json.dumps(orderParam) for orderParam in lst_orderList])
-        self.log(result_string)
+        msg += result_string + "\n"
 
         if "msg" in transaction and transaction["msg"] == "success" and "data" in transaction and "orderInfo" in transaction["data"]:
             for orderInfo in transaction["data"]["orderInfo"]:
@@ -351,7 +354,10 @@ class BrokerBitGet(broker.Broker):
                 gridId = [int(num) for num in re.findall(r'__(\d+)__', orderInfo["clientOid"])]
                 self.add_gridId_orderId(gridId[0], orderId)
         else:
-            self.log("TRADE BATCH FAILED")
+            msg += "TRADE BATCH FAILED" + "\n"
+
+        self.log_trade = self.log_trade + msg.upper()
+        del msg
 
     @authentication_required
     def execute_orders(self, lst_orders):
