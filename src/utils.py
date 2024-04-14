@@ -36,8 +36,10 @@ def modify_strategy_data_files(input_dir, str):
 def get_memory_usage():
     process = psutil.Process()
     mem_info = process.memory_info()
+    rss = mem_info.rss  # Return the Resident Set Size (RSS) in bytes
     del process
-    return mem_info.rss  # Return the Resident Set Size (RSS) in bytes
+    del mem_info
+    return rss
 
 def format_duration(timestamp):
     duration = timedelta(seconds=timestamp)

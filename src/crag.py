@@ -271,7 +271,7 @@ class Crag:
                         mylog.log_time_start("TIMER__________safety_step")
                         step_result = self.safety_step()
                         mylog.log_time_stop("TIMER__________safety_step")
-                        print("MEMORY : {}".format(utils.get_memory_usage() / (1024 * 1024)))
+                        mylog.log_memory_usage()
 
                         if not step_result:
                             print("safety_step result exit")
@@ -1245,8 +1245,8 @@ class Crag:
         gc.collect()
         self.broker.enable_cache()
 
-        print("MEMORY_step0 : {}".format(utils.get_memory_usage() / (1024 * 1024)))
         mylog = logger.LoggerConsole()  # TEMPORARY
+        mylog.log_memory_usage("MEMORY_step0")
         mylog.log_time_start("TIMER_step1")
 
         self.usdt_equity = self.broker.get_usdt_equity()
@@ -1278,7 +1278,7 @@ class Crag:
             # self.log_memory()
 
         mylog.log_time_stop("TIMER_step1")
-        print("MEMORY_step1 : {}".format(utils.get_memory_usage() / (1024 * 1024)))
+        mylog.log_memory_usage("MEMORY_step1")
         mylog.log_time_start("TIMER_step2")
 
         if self.rtstr.condition_for_global_SLTP(self.total_SL_TP_percent) \
@@ -1296,7 +1296,7 @@ class Crag:
             return False
 
         mylog.log_time_stop("TIMER_step2")
-        print("MEMORY_step2 : {}".format(utils.get_memory_usage() / (1024 * 1024)))
+        mylog.log_memory_usage("MEMORY_step2")
 
         if not self.rtstr.need_broker_current_state():
             mylog.log_time_start("TIMER_step3")
@@ -1316,7 +1316,7 @@ class Crag:
                     lst_symbol_for_closure.append(symbol)
 
             mylog.log_time_stop("TIMER_step3")
-            print("MEMORY_step3 : {}".format(utils.get_memory_usage() / (1024 * 1024)))
+            mylog.log_memory_usage("MEMORY_step3")
             mylog.log_time_start("TIMER_step4")
 
             if self.rtstr.trigger_high_volatility_protection():
@@ -1331,7 +1331,7 @@ class Crag:
                     self.maximal_portfolio_value
 
             mylog.log_time_stop("TIMER_step4")
-            print("MEMORY_step4 : {}".format(utils.get_memory_usage() / (1024 * 1024)))
+            mylog.log_memory_usage("MEMORY_step4")
             mylog.log_time_start("TIMER_step5")
 
             if len(lst_symbol_for_closure) > 0:
@@ -1382,7 +1382,7 @@ class Crag:
             del lst_symbol_for_closure
 
             mylog.log_time_stop("TIMER_step5")
-            print("MEMORY_step5 : {}".format(utils.get_memory_usage() / (1024 * 1024)))
+            mylog.log_memory_usage("MEMORY_step5")
 
         self.broker.disable_cache()
         return True

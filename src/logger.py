@@ -25,6 +25,11 @@ class ILogger(metaclass=ABCMeta):
     def log(self, msg, header="", author="", attachments=[]):
         pass
 
+    def log_memory_usage(self, tag="", header="", author=""):
+        rss = utils.get_memory_usage() / (1024 * 1024)
+        #self.log("memory usage @{} : {}".format(tag, rss), header=header, author=author) # TEMPORARY
+        print("MEMORY_USAGE @{} : {}".format(tag, rss))
+
     def log_time_start(self, tag):
         start = time.time()
         self.timers[tag] = start
@@ -37,7 +42,7 @@ class ILogger(metaclass=ABCMeta):
             end = time.time()
             elapsed_time = str(utils.KeepNDecimals(end - start, 3))
             output = "{} : {} s ({})".format(tag, elapsed_time, msg)
-            #self.log(output, header="Timer") # temporary
+            #self.log(output, header="Timer") # TEMPORARY
             print(output)
 
 class LoggerConsole(ILogger):
