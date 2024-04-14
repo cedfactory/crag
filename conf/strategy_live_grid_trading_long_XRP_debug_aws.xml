@@ -5,7 +5,7 @@
                 multi_param="False"
                 candle_stick="released"
                 max_position="1"
-                sl="0"
+                sl="-80"
                 tp="0"
                 global_sl="-50"
                 global_tp="20"
