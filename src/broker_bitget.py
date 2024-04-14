@@ -301,7 +301,7 @@ class BrokerBitGet(broker.Broker):
             elif "CLOSE" in order_side and "SHORT" in order_side:
                 side = "close_short"
 
-            msg = "!!!!! EXECUTE TRADE !!!!!" + "\n"
+            msg = "!!!!! EXECUTE TRADE LIMIT ORDER !!!!!" + "\n"
             msg += "{} size: {} price: {}".format(order_side, amount, price) + "\n"
 
             transaction = self._place_order_api(symbol, marginCoin="USDT", size=amount, side=side, orderType='limit', price=price, clientOId=clientOid)
@@ -342,10 +342,18 @@ class BrokerBitGet(broker.Broker):
                 }
                 lst_orderList.append(orderParam)
 
-        msg = "!!!!! EXECUTE BATCH ORDER x" + str(len(lst_orderList)) + " !!!!!" + "\n"
+        msg = "!!!!! EXECUTE BATCH LIMIT ORDER x" + str(len(lst_orderList)) + " !!!!!" + "\n"
         transaction = self._batch_orders_api(symbol, "USDT", lst_orderList)
         # Convert each dictionary to a string with newline character and concatenate them
-        result_string = '\n'.join([json.dumps(orderParam) for orderParam in lst_orderList])
+        keys_to_exclude = ['orderType', 'timeInForceValue', 'clientOid']  # List of keys you want to exclude
+        result_string = '\n'.join([
+            json.dumps({k: v for k, v in orderParam.items() if k not in keys_to_exclude}).replace('"', '')
+            # Remove all double quotes
+            for orderParam in lst_orderList
+        ])
+        result_string = result_string.replace("{", "")
+        result_string = result_string.replace("}", "")
+        result_string = result_string.replace(",", "")
         msg += result_string + "\n"
 
         if "msg" in transaction and transaction["msg"] == "success" and "data" in transaction and "orderInfo" in transaction["data"]:
