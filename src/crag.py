@@ -273,7 +273,7 @@ class Crag:
                         mylog.log_time_start("TIMER__________safety_step")
                         step_result = self.safety_step()
                         mylog.log_time_stop("TIMER__________safety_step")
-                        print("MEMORY : {}".format(utils.get_memory_usage() / (1024 * 1024)))
+                        mylog.log_memory_usage()
 
                         if not step_result:
                             print("safety_step result exit")
@@ -1246,12 +1246,13 @@ class Crag:
     def safety_step(self):
         gc.collect()
 
-        tracemalloc.start()
-
         self.broker.enable_cache()
 
-        print("MEMORY_step0 : {}".format(utils.get_memory_usage() / (1024 * 1024)))
         mylog = logger.LoggerConsole()  # TEMPORARY
+        print(self.grid_iteration)
+        if self.grid_iteration % 10 == 0:
+            mylog.log_memory_start(self.grid_iteration)
+        mylog.log_memory_usage("MEMORY_step0")
         mylog.log_time_start("TIMER_step1")
 
         self.usdt_equity = self.broker.get_usdt_equity()
@@ -1283,7 +1284,7 @@ class Crag:
             # self.log_memory()
 
         mylog.log_time_stop("TIMER_step1")
-        print("MEMORY_step1 : {}".format(utils.get_memory_usage() / (1024 * 1024)))
+        mylog.log_memory_usage("MEMORY_step1")
         mylog.log_time_start("TIMER_step2")
 
         if self.rtstr.condition_for_global_SLTP(self.total_SL_TP_percent) \
@@ -1301,7 +1302,7 @@ class Crag:
             return False
 
         mylog.log_time_stop("TIMER_step2")
-        print("MEMORY_step2 : {}".format(utils.get_memory_usage() / (1024 * 1024)))
+        mylog.log_memory_usage("MEMORY_step2")
 
         if not self.rtstr.need_broker_current_state():
             mylog.log_time_start("TIMER_step3")
@@ -1321,7 +1322,7 @@ class Crag:
                     lst_symbol_for_closure.append(symbol)
 
             mylog.log_time_stop("TIMER_step3")
-            print("MEMORY_step3 : {}".format(utils.get_memory_usage() / (1024 * 1024)))
+            mylog.log_memory_usage("MEMORY_step3")
             mylog.log_time_start("TIMER_step4")
 
             if self.rtstr.trigger_high_volatility_protection():
@@ -1336,7 +1337,7 @@ class Crag:
                     self.maximal_portfolio_value
 
             mylog.log_time_stop("TIMER_step4")
-            print("MEMORY_step4 : {}".format(utils.get_memory_usage() / (1024 * 1024)))
+            mylog.log_memory_usage("MEMORY_step4")
             mylog.log_time_start("TIMER_step5")
 
             if len(lst_symbol_for_closure) > 0:
@@ -1387,56 +1388,13 @@ class Crag:
             del lst_symbol_for_closure
 
             mylog.log_time_stop("TIMER_step5")
-            print("MEMORY_step5 : {}".format(utils.get_memory_usage() / (1024 * 1024)))
+            mylog.log_memory_usage("MEMORY_step5")
 
         self.broker.disable_cache()
 
-        # Take a snapshot of the current memory usage
-        snapshot = tracemalloc.take_snapshot()
+        if self.grid_iteration % 10 == 0:
+            mylog.log_memory_stop(self.grid_iteration)
 
-        # Stop tracing memory allocations
-        tracemalloc.stop()
-
-        parsed_stats = []
-
-        # Iterate over the statistics in the snapshot
-        for stat in snapshot.statistics('traceback'):
-            # Check if any frame in the traceback is from your code
-            if any('crag_sim_3' in frame.filename for frame in stat.traceback):
-                traceback_lines = stat.traceback.format()  # Get the traceback lines
-                # Parse the traceback lines
-                file_location, line_number = traceback_lines[0].split(', line ')
-                file_location = file_location.split('"')[1]
-                line_number = int(line_number.strip())
-                expression = traceback_lines[1].strip()
-                size = stat.size
-                count = stat.count
-                # Append the parsed information to the list
-                parsed_stats.append({
-                    # "Traceback": traceback_lines,
-                    "file location": file_location.replace("C:\\Users\\despo\\PycharmProjects\\crag_sim_3\\src\\", ""),
-                    "line": line_number,
-                    "expression": expression,
-                    "size": size,
-                    "count": count
-                })
-
-        # Create a DataFrame from the parsed statistics
-        df = pd.DataFrame(parsed_stats)
-
-        df["iter"] = self.grid_iteration
-        df["size"] = round(df["size"] / (1024 * 1024), 6)
-
-        # Get the column you want to move
-        column_to_move = df.pop('iter')
-
-        # Insert the column at the first position
-        df.insert(0, 'iter', column_to_move)
-        print("total Crag size: ", df["size"].sum())
-
-        if(df["size"].sum() > 0.2):
-            print(df.to_string(index=False))
-        del df
         return True
 
     def log_memory(self):

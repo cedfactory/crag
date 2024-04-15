@@ -2,6 +2,7 @@ from abc import ABCMeta, abstractmethod
 import pandas as pd
 from datetime import datetime
 import time
+import tracemalloc
 from . import utils
 
 # for LoggerConsole
@@ -37,8 +38,70 @@ class ILogger(metaclass=ABCMeta):
             end = time.time()
             elapsed_time = str(utils.KeepNDecimals(end - start, 3))
             output = "{} : {} s ({})".format(tag, elapsed_time, msg)
-            #self.log(output, header="Timer") # temporary
+            #self.log(output, header="Timer") # TEMPORARY
             print(output)
+
+    def log_memory_usage(self, tag="", header="", author=""):
+        rss = utils.get_memory_usage() / (1024 * 1024)
+        #self.log("memory usage @{} : {}".format(tag, rss), header=header, author=author) # TEMPORARY
+        print("MEMORY_USAGE @{} : {}".format(tag, rss))
+
+    def log_memory_start(self, tag="", header="", author=""):
+        tracemalloc.start()
+
+    def log_memory_stop(self, tag="", header="", author=""):
+        snapshot = tracemalloc.take_snapshot()
+
+        # Stop tracing memory allocations
+        tracemalloc.stop()
+
+        current_directory = os.getcwd()
+
+        parsed_stats = []
+
+        # Iterate over the statistics in the snapshot
+        for stat in snapshot.statistics('traceback'):
+            # Check if any frame in the traceback is from your code
+            #for frame in stat.traceback:
+            #    if frame.filename.startswith(current_directory) and not frame.filename.startswith(os.path.join(current_directory,"venv")):
+            #        print(frame.filename)
+            #if any('crag_sim_3' in frame.filename for frame in stat.traceback):
+            if any(frame.filename.startswith(current_directory) for frame in stat.traceback) and any(not frame.filename.startswith(os.path.join(current_directory, "venv")) for frame in stat.traceback):
+                traceback_lines = stat.traceback.format()  # Get the traceback lines
+                # Parse the traceback lines
+                file_location, line_number = traceback_lines[0].split(', line ')
+                file_location = file_location.split('"')[1]
+                line_number = int(line_number.strip())
+                expression = traceback_lines[1].strip()
+                size = stat.size
+                count = stat.count
+                # Append the parsed information to the list
+                parsed_stats.append({
+                    # "Traceback": traceback_lines,
+                    "file location": file_location.replace(current_directory, ""),
+                    "line": line_number,
+                    "expression": expression,
+                    "size": size,
+                    "count": count
+                })
+
+                # Create a DataFrame from the parsed statistics
+                df = pd.DataFrame(parsed_stats)
+
+                df["iter"] = tag
+                df["size"] = round(df["size"] / (1024 * 1024), 6)
+
+                # Get the column you want to move
+                column_to_move = df.pop('iter')
+
+                # Insert the column at the first position
+                df.insert(0, 'iter', column_to_move)
+                print("total size: ", df["size"].sum())
+
+                if (df["size"].sum() > 0.2):
+                    print(df.to_string(index=False))
+                del df
+        return True
 
 class LoggerConsole(ILogger):
     def __init__(self, params=None):
