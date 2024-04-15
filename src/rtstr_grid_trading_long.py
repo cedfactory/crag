@@ -288,6 +288,7 @@ class GridPosition():
         del condition_pending
         del df_filtered
         del lst_grid_id
+        del df_current_state
 
     def get_grid_nb_grid(self):
         return self.nb_grid
@@ -357,6 +358,9 @@ class GridPosition():
             self.grid_move = True
         else:
             self.grid_move = False
+        del position
+        del symbol
+        del df
 
     # Function to find the index of the closest value in an array
     def find_closest(self, value, array):
@@ -395,6 +399,9 @@ class GridPosition():
                     if row_grid['side'] == row_c_state['side'] \
                             and row_grid['orderId'] == row_c_state['orderId']:
                         df_grid.loc[index_grid, 'cross_checked'] = True
+        del df_current_state_all
+        del df_current_state
+        del df_grid
 
     def remove_open_short_order_from_list(self, symbol, order_list, x):
         df_grid = self.grid[symbol]
@@ -419,7 +426,7 @@ class GridPosition():
             "grid_id": grid_id
         }
         """
-        df_grid = self.grid[symbol].copy()
+        df_grid = self.grid[symbol]
 
         df_filtered_changes = df_grid[df_grid['changes']]
         df_filtered_checked = df_grid[~df_grid['cross_checked']]
@@ -465,9 +472,21 @@ class GridPosition():
                 order_to_execute["price"] = df_grid.loc[df_grid["grid_id"] == grid_id, 'position'].values[0]
                 order_to_execute["grid_id"] = grid_id
                 lst_order.append(order_to_execute)
+            del order_to_execute
 
         sorting_order = ['OPEN_LONG_ORDER', 'OPEN_SHORT_ORDER', 'CLOSE_LONG_ORDER', 'CLOSE_SHORT_ORDER']
         sorted_list = sorted(lst_order, key=lambda x: sorting_order.index(x['type']))
+
+        del df_grid
+        del df_filtered_changes
+        del df_filtered_checked
+        del df_filtered_pending
+        del lst_order_grid_id
+        del sorting_order
+        del top_grid_id
+        del lst_price_existing_orders
+        del lst_gridId_existing_orders
+        del lst_order
 
         return sorted_list
 
@@ -486,6 +505,7 @@ class GridPosition():
                 df.at[mask.idxmax(), 'status'] = 'pending'
                 df.at[mask.idxmax(), 'orderId'] = ''
             del mask
+        del df
 
     def clear_orderId(self, symbol, grid_id):
         df = self.grid[symbol]
@@ -643,7 +663,7 @@ class GridPosition():
             # filtered_orders.extend(close_orders[:nb_selected_to_be_open])
 
         self.log(grid_trend_msg)
-
+        del grid_trend_msg
 
         df_filtered = df[(df['status'] == 'engaged')
                          & (df['side'] == 'open_long')
@@ -710,8 +730,24 @@ class GridPosition():
                 self.nb_close_missing = -1
 
         self.set_grid_positions_to_on_hold(lst_order_to_execute, filtered_orders)
-
-        return filtered_orders
+        filtered_orders_to_execute = []
+        for order in filtered_orders:
+            filtered_orders_to_execute.append(order.copy())
+        lst_to_clear = [close_orders, lst_close_engaged, lst_open_engaged, lst_order_to_execute, filtered_orders]
+        for lst in lst_to_clear:
+            for order in lst:
+                if hasattr(order, 'clear') and callable(order.clear):
+                    order.clear()
+        del df
+        del close_orders
+        del lst_close_engaged
+        del lst_open_engaged
+        del lst_order_to_execute
+        del filtered_orders
+        del lst
+        del lst_to_clear
+        del order
+        return filtered_orders_to_execute
 
     def set_on_hold_from_grid_id(self, symbol, grid_id):
         df = self.grid[symbol]
