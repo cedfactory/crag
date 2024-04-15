@@ -411,7 +411,7 @@ class BrokerBitGet(broker.Broker):
 
     def get_gridId_from_orderId(self, orderId):
         condition = self.df_grid_id_match['orderId'] == orderId
-        if orderId == self.df_grid_id_match.at[condition.idxmax(), 'orderId']:
+        if condition.any() and orderId == self.df_grid_id_match.at[condition.idxmax(), 'orderId']:
             grid_id = self.df_grid_id_match.at[condition.idxmax(), 'grid_id']
             del condition
             return grid_id
