@@ -411,8 +411,13 @@ class BrokerBitGet(broker.Broker):
 
     def get_gridId_from_orderId(self, orderId):
         condition = self.df_grid_id_match['orderId'] == orderId
-        gridId = self.df_grid_id_match.loc[condition, 'grid_id'].values[0] if not self.df_grid_id_match.loc[condition].empty else None
-        return gridId
+        if orderId == self.df_grid_id_match.at[condition.idxmax(), 'orderId']:
+            grid_id = self.df_grid_id_match.at[condition.idxmax(), 'grid_id']
+            del condition
+            return grid_id
+        else:
+            del condition
+            return None
 
     def export_history(self, target):
         pass

@@ -151,10 +151,9 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
         for symbol in self.lst_symbols:
             del self.msg_grid_info
             self.msg_grid_info = None
-            dct_info = self.grid.get_grid_info(symbol)
-            if self.grid.dct_change_status(dct_info):
-                self.msg_grid_info = self.grid.dct_status_info_to_txt(dct_info, symbol)
-            del dct_info
+            self.grid.get_grid_info(symbol)
+            if self.grid.dct_change_status():
+                self.msg_grid_info = self.grid.dct_status_info_to_txt(symbol)
             return self.msg_grid_info
 
     def get_grid(self, cpt):
@@ -175,7 +174,7 @@ class GridPosition():
         self.loggers = loggers
         self.trend = "FLAT"
         self.grid_position = []
-        self.dct_info = None
+        self.dct_status_info = {}
         self.previous_grid_position = []
         self.current_price = None
         self.diff_position = 0
@@ -207,8 +206,6 @@ class GridPosition():
         self.df_nb_open_positions['diff_position'] = 0
         self.df_nb_open_positions['previous_nb_open_positions'] = 0
         self.df_nb_open_positions['previous_nb_open_limit_order'] = 0
-
-        self.dct_status_info = {}
 
         self.max_grid_close_order = -1
         self.min_grid_close_order = -1
@@ -364,14 +361,22 @@ class GridPosition():
 
     # Function to find the index of the closest value in an array
     def find_closest(self, value, array):
-        return np.abs(array - value).argmin()
+        closest = np.abs(array - value).argmin()
+        return closest
 
     def set_current_orders_price_to_grid(self, symbol, df_current_state):
         if len(df_current_state) > 0:
             df_current_state = df_current_state[df_current_state['symbol'] == symbol]
             df_grid = self.grid[symbol]
             # Replace values in df_current_state['price'] with the closest values from df_grid['position']
-            df_current_state['price'] = [df_grid['position'].iloc[self.find_closest(price, df_grid['position'])] for price in df_current_state['price']]
+            # lst_price = [df_grid['position'].iloc[self.find_closest(price, df_grid['position'])] for price in df_current_state['price']]
+            lst_price = []
+            for price in df_current_state['price']:
+                closest_index = self.find_closest(price, df_grid['position'])
+                closest_value = df_grid.at[closest_index, 'position']
+                lst_price.append(closest_value)
+            df_current_state['price'] = lst_price
+            del lst_price
             # Check if all elements in df_current_state['price'] are in df_grid['position']
             all_prices_in_grid = df_current_state['price'].isin(df_grid['position']).all()
             if not self.zero_print and not all_prices_in_grid:
@@ -402,19 +407,6 @@ class GridPosition():
         del df_current_state_all
         del df_current_state
         del df_grid
-
-    def remove_open_short_order_from_list(self, symbol, order_list, x):
-        df_grid = self.grid[symbol]
-        open_long_orders = [order for order in order_list if order["type"] == "OPEN_LONG_ORDER"]
-        open_long_orders.sort(key=lambda order: order["grid_id"], reverse=True)
-        indices_to_remove = [order_list.index(order) for order in open_long_orders[:x]]
-        lst_grid_id_dropped = []
-        for index in sorted(indices_to_remove, reverse=True):
-            lst_grid_id_dropped.append(order_list[index]["grid_id"])
-            del order_list[index]
-        for grid_id in lst_grid_id_dropped:
-            df_grid.loc[df_grid['grid_id'] == grid_id, 'status'] = 'on_hold'
-        return order_list
 
     def get_order_list(self, symbol, size, df_current_order):
         """
@@ -501,10 +493,14 @@ class GridPosition():
         for placed_order in lst_order_to_execute:
             grid_id = placed_order["grid_id"]
             mask = df['grid_id'] == grid_id
-            if mask.any():
-                df.at[mask.idxmax(), 'status'] = 'pending'
-                df.at[mask.idxmax(), 'orderId'] = ''
+            test_mask = mask.any()
+            if test_mask:
+                del test_mask
+                id = mask.idxmax()
+                df.at[id , 'status'] = 'pending'
+                df.at[id, 'orderId'] = ''
             del mask
+            del id
         del df
 
     def clear_orderId(self, symbol, grid_id):
@@ -517,6 +513,7 @@ class GridPosition():
             for symbol in self.lst_symbols:
                 df_grid = self.grid[symbol]
                 self.log("\n" + df_grid.to_string(index=False))
+                del df_grid
 
     def update_nb_open_positions(self, symbol, df_open_positions, buying_size):
         self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'size'] = buying_size
@@ -563,22 +560,31 @@ class GridPosition():
     def get_nb_open_positions_from_state(self, symbol):
         row = self.df_nb_open_positions[self.df_nb_open_positions['symbol'] == symbol]
         if not row.empty:
-            return row['nb_open_positions'].iloc[0]
+            res = row['nb_open_positions'].iloc[0]
+            del row
+            return res
         else:
+            del row
             return 0
 
     def get_nb_open_positions_from_positions(self, symbol):
         row = self.df_nb_open_positions[self.df_nb_open_positions['symbol'] == symbol]
         if not row.empty:
-            return row['nb_open_positions'].iloc[0]
+            res = row['nb_open_positions'].iloc[0]
+            del row
+            return res
         else:
+            del row
             return 0
 
     def get_nb_open_limit_orders(self, symbol):
         row = self.df_nb_open_positions[self.df_nb_open_positions['symbol'] == symbol]
         if not row.empty:
-            return row['nb_open_limit_order'].iloc[0]
+            res = row['nb_open_limit_order'].iloc[0]
+            del row
+            return res
         else:
+            del row
             return 0
 
     def filter_lst_close_execute_order(self, symbol, lst_order_to_execute):
@@ -622,10 +628,17 @@ class GridPosition():
                     and self.filter_open_control_multi_position(order["grid_id"]):
                 filtered_orders.append(order)
         # Filter CLOSE orders and sort them by price
-        close_orders = sorted(
-            (order for order in lst_order_to_execute if order["type"] in ["CLOSE_LONG_ORDER", "CLOSE_SHORT_ORDER"] and self.filter_close_limit_order(order["grid_id"])),
-            key=lambda x: x["price"]
-        )
+        # close_orders = sorted(
+        #     (order for order in lst_order_to_execute if order["type"] in ["CLOSE_LONG_ORDER", "CLOSE_SHORT_ORDER"] and self.filter_close_limit_order(order["grid_id"])),
+        #     key=lambda x: x["price"]
+        # )
+        close_orders = []
+        for order in lst_order_to_execute:
+            if order["type"] in ["CLOSE_LONG_ORDER", "CLOSE_SHORT_ORDER"] and self.filter_close_limit_order(
+                    order["grid_id"]):
+                close_orders.append(order)
+
+        close_orders.sort(key=lambda x: x["price"])
 
         if self.trend == "VOLATILITY":
             grid_trend_msg = "UP / DOWN HIGH VOLATILITY "
@@ -751,7 +764,11 @@ class GridPosition():
 
     def set_on_hold_from_grid_id(self, symbol, grid_id):
         df = self.grid[symbol]
-        df.loc[df['grid_id'] == grid_id, 'status'] = 'on_hold'
+        row_index = df.index[df['grid_id'] == grid_id].tolist()  # Get the index of rows where 'grid_id' equals grid_id
+        for index in row_index:
+            df.at[index, 'status'] = 'on_hold'  # Update the 'status' column for each matching row
+        del df
+        del row_index
 
     def set_grid_positions_to_on_hold(self, lst_pending, lst_filtered):
         resulted_lst = [element for element in lst_pending if element not in lst_filtered]
@@ -953,19 +970,14 @@ class GridPosition():
         del df
         return self.dct_status_info
 
-    def dct_change_status(self, dct_info):
-        if self.dct_info == None:
-            self.dct_info = dct_info
-            return False
-        self.dct_info = dct_info
-
+    def dct_change_status(self):
         if self.grid_move:
-            self.grid_move = False
-            return True
+           self.grid_move = False
+           return True
         else:
             return False
 
-    def dct_status_info_to_txt(self, dct_info, symbol):
+    def dct_status_info_to_txt(self, symbol):
         msg = "# GRID LONG: " + "\n"
         msg += "RANGE FROM: " + str(self.grid_high) + " TO " + str(self.grid_low) + "\n"
         msg += "NB_GRID: " + str(self.nb_grid) + "\n"
@@ -983,27 +995,27 @@ class GridPosition():
                 if isinstance(self.max_position, int) \
                         and isinstance(self.min_position, int):
                     msg += "**MAX/MIN POS: " + str(self.max_position) + "/" + str(self.min_position) + "**\n"
-        if ((dct_info['grid_position'][0] >= self.nb_grid)
-                and (dct_info['grid_position'][1] >= self.nb_grid)):
+        if ((self.dct_status_info['grid_position'][0] >= self.nb_grid)
+                and (self.dct_status_info['grid_position'][1] >= self.nb_grid)):
             msg += "**ABOVE GRID**\n"
-        elif ((dct_info['grid_position'][0] <= 0)
-              and (dct_info['grid_position'][1] <= 0)):
+        elif ((self.dct_status_info['grid_position'][0] <= 0)
+              and (self.dct_status_info['grid_position'][1] <= 0)):
             msg += "**BELOW GRID**\n"
         else:
-            msg += "**pos range: " + str(dct_info['grid_position'][0]) + " / " + str(dct_info['grid_position'][1]) + "**\n"
-        msg += "broker limit_close: " + str(dct_info['nb_current_limit_close']) + "\n"
-        msg += "broker limit_open: " + str(dct_info['nb_current_limit_open']) + "\n"
-        msg += "grid limit_close: " + str(dct_info['nb_limit_close']) + "\n"
-        msg += "grid limit_open: " + str(dct_info['nb_limit_open']) + "\n"
-        msg += "total open_position: " + str(dct_info['nb_position']) + "\n"
+            msg += "**pos range: " + str(self.dct_status_info['grid_position'][0]) + " / " + str(self.dct_status_info['grid_position'][1]) + "**\n"
+        msg += "broker limit_close: " + str(self.dct_status_info['nb_current_limit_close']) + "\n"
+        msg += "broker limit_open: " + str(self.dct_status_info['nb_current_limit_open']) + "\n"
+        msg += "grid limit_close: " + str(self.dct_status_info['nb_limit_close']) + "\n"
+        msg += "grid limit_open: " + str(self.dct_status_info['nb_limit_open']) + "\n"
+        msg += "total open_position: " + str(self.dct_status_info['nb_position']) + "\n"
 
         if len(self.previous_grid_position) == 2:
             msg += "# TREND:" + "\n"
-            if self.previous_grid_position[0] > dct_info['grid_position'][0] and self.previous_grid_position[1] > dct_info['grid_position'][1]:
+            if self.previous_grid_position[0] > self.dct_status_info['grid_position'][0] and self.previous_grid_position[1] > self.dct_status_info['grid_position'][1]:
                 msg += "DOWN" + "\n"
-            elif self.previous_grid_position[0] < dct_info['grid_position'][0] and self.previous_grid_position[1] < dct_info['grid_position'][1]:
+            elif self.previous_grid_position[0] < self.dct_status_info['grid_position'][0] and self.previous_grid_position[1] < self.dct_status_info['grid_position'][1]:
                 msg += "UP" + "\n"
-            elif self.previous_grid_position[0] == dct_info['grid_position'][0] and self.previous_grid_position[1] == dct_info['grid_position'][1]:
+            elif self.previous_grid_position[0] == self.dct_status_info['grid_position'][0] and self.previous_grid_position[1] == self.dct_status_info['grid_position'][1]:
                 msg += "FLAT / NO DIRECTION" + "\n"
             else:
                 msg += "**ERROR DIRECTION" + "**\n"
@@ -1046,7 +1058,7 @@ class GridPosition():
             else:
                 msg += "close range: " + str(self.min_grid_close_order) + " / " + str(self.max_grid_close_order) + "\n"
 
-        self.previous_grid_position = dct_info['grid_position']
+        self.previous_grid_position = self.dct_status_info['grid_position']
 
         return msg.upper()
 

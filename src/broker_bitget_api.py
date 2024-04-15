@@ -118,7 +118,9 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             return symbol
 
         if symbol in self.df_market['symbol'].tolist():
-            coin = self.df_market.loc[(self.df_market['symbol'] == symbol) & (self.df_market['quoteCoin'] == base), "baseCoin"].values[0]
+            row_index = self.df_market.index[(self.df_market['symbol'] == symbol) & (self.df_market['quoteCoin'] == base)].tolist()
+            coin = self.df_market.at[row_index[0], "baseCoin"] if row_index else None
+            del row_index
             return coin
         else:
             self.log("WARNING COIN NOT IN MARKET LIST")
@@ -182,6 +184,9 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     def get_current_state(self, lst_symbols):
         df_open_orders = self.get_open_orders(lst_symbols)
         df_open_orders['symbol'] = df_open_orders['symbol'].apply(lambda x: self._get_coin(x))
+        lst_tmp = [self._get_coin(x) for x in df_open_orders['symbol']]
+        df_open_orders['symbol'] = lst_tmp
+        del lst_tmp
         df_open_orders.drop(['marginCoin', 'clientOid'], axis=1, inplace=True)
         df_open_orders = self.set_open_orders_gridId(df_open_orders)
 
