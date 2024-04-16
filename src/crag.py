@@ -971,6 +971,11 @@ class Crag:
         df_scenario_results_global = None
         df_grid_global = None
         self.start_ut = True
+        broker_test = False
+
+        # Open the JSON file in read mode
+        with open("lst_orders_to_execute.json", "r") as file:
+            lst_orders_to_execute_for_broker_test = json.load(file)
 
         mylog = logger.LoggerConsole()  # TEMPORARY
         mylog.log_memory_start(cpt_ut)
@@ -989,6 +994,16 @@ class Crag:
                 del df_buying_size_normalise
                 del df_buying_size
 
+            if broker_test:
+                self.broker.execute_orders(lst_orders_to_execute_for_broker_test)
+
+                broker_current_state = self.broker.get_current_state(symbols)
+
+                lst_orderId = broker_current_state["open_orders"]["orderId"].to_list()
+                for orderId in lst_orderId:
+                    result = self.broker.orderApi.cancel_orders('XRPUSDT_UMCBL', "USDT", orderId)
+                del broker_current_state
+
             broker_current_state = self.get_current_state_from_csv(input_dir,
                                                                    cpt_ut,
                                                                    df_scenario_results_global,
@@ -1000,6 +1015,7 @@ class Crag:
             del lst_orders_to_execute
             del broker_current_state
             cpt_ut += 1
+        del lst_orders_to_execute_for_broker_test
         mylog.log_memory_stop(cpt_ut)
 
     def udpate_strategy_with_broker_current_state_scenario(self, scenario_id):
