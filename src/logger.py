@@ -98,7 +98,7 @@ class ILogger(metaclass=ABCMeta):
                 df.insert(0, 'iter', column_to_move)
                 print("total size: ", df["size"].sum())
 
-                if (df["size"].sum() > 0.2):
+                if True or (df["size"].sum() > 0.2):
                     print(df.to_string(index=False))
                     df.to_csv("df_"+str(tag)+".csv", index=False)
                 del df
