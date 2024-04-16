@@ -921,7 +921,8 @@ class Crag:
             self.log("SCENARIO COMPLETED AT ROUND {}".format(str_cpt))
             if df_orders == None and df_grids == None:
                 print("*********** EXIT UT ***********")
-                exit(0)
+                return None
+                # exit(0)
             full_path = os.path.join(input_dir, "results_scenario_grid_df_current_states.csv")
             df_orders.to_csv(full_path)
             full_path = os.path.join(input_dir, "baseline_" + "results_scenario_grid_df_current_states.csv")
@@ -971,7 +972,11 @@ class Crag:
         df_grid_global = None
         self.start_ut = True
 
-        while True:
+        mylog = logger.LoggerConsole()  # TEMPORARY
+        mylog.log_memory_start(cpt_ut)
+        loop = True
+
+        while loop:
             if self.start_ut:
                 symbols = ["XRP"]
                 self.start_ut = False
@@ -988,12 +993,14 @@ class Crag:
                                                                    cpt_ut,
                                                                    df_scenario_results_global,
                                                                    df_grid_global)
-
+            if broker_current_state == None:
+                loop = False
             lst_orders_to_execute = self.rtstr.set_broker_current_state(broker_current_state)
             print("lst_orders_to_execute: ", lst_orders_to_execute)
             del lst_orders_to_execute
             del broker_current_state
             cpt_ut += 1
+        mylog.log_memory_stop(cpt_ut)
 
     def udpate_strategy_with_broker_current_state_scenario(self, scenario_id):
         cpt = 0
@@ -1101,7 +1108,7 @@ class Crag:
     def udpate_strategy_with_broker_current_state(self):
         GRID_SCENARIO_ON = False
         SCENARIO_ID = 6
-        MEMORY_LEAK_UT = False
+        MEMORY_LEAK_UT = True
         if MEMORY_LEAK_UT:
             self.udpate_strategy_with_broker_current_state_memory_leak(SCENARIO_ID)
         else:
