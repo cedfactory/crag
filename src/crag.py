@@ -974,8 +974,9 @@ class Crag:
         broker_test = False
 
         # Open the JSON file in read mode
-        with open("lst_orders_to_execute.json", "r") as file:
-            lst_orders_to_execute_for_broker_test = json.load(file)
+        if broker_test:
+            with open("lst_orders_to_execute.json", "r") as file:
+                lst_orders_to_execute_for_broker_test = json.load(file)
 
         mylog = logger.LoggerConsole()  # TEMPORARY
         mylog.log_memory_start(cpt_ut)
@@ -1124,7 +1125,7 @@ class Crag:
     def udpate_strategy_with_broker_current_state(self):
         GRID_SCENARIO_ON = False
         SCENARIO_ID = 6
-        MEMORY_LEAK_UT = True
+        MEMORY_LEAK_UT = False
         if MEMORY_LEAK_UT:
             self.udpate_strategy_with_broker_current_state_memory_leak(SCENARIO_ID)
         else:

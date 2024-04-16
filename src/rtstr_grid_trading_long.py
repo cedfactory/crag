@@ -120,8 +120,6 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
         for price_plc in lst_symbol_plc_endstp:
             self.grid.normalize_grid_price(price_plc['symbol'], price_plc['pricePlace'], price_plc['priceEndStep'])
         del lst_symbol_plc_endstp
-        price_plc.clear()
-        del price_plc
 
     def activate_grid(self, current_state):
         if not current_state:
@@ -759,7 +757,6 @@ class GridPosition():
         del filtered_orders
         del lst
         del lst_to_clear
-        del order
         return filtered_orders_to_execute
 
     def set_on_hold_from_grid_id(self, symbol, grid_id):
