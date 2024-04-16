@@ -558,12 +558,13 @@ class GridPosition():
     def get_nb_open_positions_from_state(self, symbol):
         row = self.df_nb_open_positions[self.df_nb_open_positions['symbol'] == symbol]
         if not row.empty:
-            res = row['nb_open_positions'].iloc[0]
-            del row
-            return res
+            idx = row.index[0]
+            res = row.at[idx, 'nb_open_positions']
+            del idx
         else:
-            del row
-            return 0
+            res = 0
+        del row
+        return res
 
     def get_nb_open_positions_from_positions(self, symbol):
         row = self.df_nb_open_positions[self.df_nb_open_positions['symbol'] == symbol]
