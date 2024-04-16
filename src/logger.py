@@ -49,7 +49,12 @@ class ILogger(metaclass=ABCMeta):
     def log_memory_start(self, tag="", header="", author=""):
         tracemalloc.start()
 
-    def log_memory_stop(self, snapshot, tag="", header="", author=""):
+    def log_memory_stop(self, tag="", header="", author=""):
+        snapshot = tracemalloc.take_snapshot()
+
+        # Stop tracing memory allocations
+        tracemalloc.stop()
+
         current_directory = os.getcwd()
 
         parsed_stats = []

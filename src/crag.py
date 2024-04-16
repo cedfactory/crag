@@ -1306,8 +1306,9 @@ class Crag:
         self.broker.enable_cache()
 
         mylog = logger.LoggerConsole()  # TEMPORARY
-        print(self.grid_iteration)
-        tracemalloc.start()
+        mem_tag = self.grid_iteration
+        if mem_tag % 300 == 1:
+            mylog.log_memory_start(self.grid_iteration)
         mylog.log_memory_usage("MEMORY_step0")
         mylog.log_time_start("TIMER_step1")
 
@@ -1448,9 +1449,8 @@ class Crag:
 
         self.broker.disable_cache()
 
-        snapshot = tracemalloc.take_snapshot()
-        tracemalloc.stop()
-        mylog.log_memory_stop(snapshot, self.grid_iteration)
+        if mem_tag % 300 == 1:
+            mylog.log_memory_stop(self.grid_iteration)
 
         return True
 
