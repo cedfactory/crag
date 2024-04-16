@@ -66,7 +66,7 @@ class ILogger(metaclass=ABCMeta):
             #    if frame.filename.startswith(current_directory) and not frame.filename.startswith(os.path.join(current_directory,"venv")):
             #        print(frame.filename)
             #if any('crag_sim_3' in frame.filename for frame in stat.traceback):
-            if any(frame.filename.startswith(current_directory) for frame in stat.traceback) and any(not frame.filename.startswith(os.path.join(current_directory, "venv")) for frame in stat.traceback):
+            if any(frame.filename.startswith(current_directory) for frame in stat.traceback) and any(not frame.filename.startswith(os.path.join(current_directory, ".venv")) for frame in stat.traceback):
                 traceback_lines = stat.traceback.format()  # Get the traceback lines
                 # Parse the traceback lines
                 file_location, line_number = traceback_lines[0].split(', line ')
@@ -100,6 +100,7 @@ class ILogger(metaclass=ABCMeta):
 
                 if (df["size"].sum() > 0.2):
                     print(df.to_string(index=False))
+                    df.to_csv("df_"+str(tag)+".csv", index=False)
                 del df
         return True
 
