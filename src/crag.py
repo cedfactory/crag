@@ -919,6 +919,9 @@ class Crag:
 
         if exit_scenario:
             self.log("SCENARIO COMPLETED AT ROUND {}".format(str_cpt))
+            if df_orders == None and df_grids == None:
+                print("*********** EXIT UT ***********")
+                exit(0)
             full_path = os.path.join(input_dir, "results_scenario_grid_df_current_states.csv")
             df_orders.to_csv(full_path)
             full_path = os.path.join(input_dir, "baseline_" + "results_scenario_grid_df_current_states.csv")
@@ -961,6 +964,36 @@ class Crag:
         }
         return broker_current_state
 
+    def udpate_strategy_with_broker_current_state_memory_leak(self, scenario_id):
+        cpt_ut = 0
+        input_dir = "./grid_test/" + str(scenario_id) + "_scenario_test"
+        df_scenario_results_global = None
+        df_grid_global = None
+        self.start_ut = True
+
+        while True:
+            if self.start_ut:
+                symbols = ["XRP"]
+                self.start_ut = False
+                df_symbol_minsize = self.broker.get_df_minimum_size(symbols)
+                df_buying_size = self.rtstr.set_df_buying_size_scenario(df_symbol_minsize, self.broker.get_usdt_equity())
+                del df_symbol_minsize
+                df_buying_size_normalise = self.broker.normalize_grid_df_buying_size_size(df_buying_size)
+                self.rtstr.set_df_normalize_buying_size(df_buying_size_normalise)
+                self.rtstr.set_normalized_grid_price(self.broker.get_price_place_endstep(symbols))
+                del df_buying_size_normalise
+                del df_buying_size
+
+            broker_current_state = self.get_current_state_from_csv(input_dir,
+                                                                   cpt_ut,
+                                                                   df_scenario_results_global,
+                                                                   df_grid_global)
+
+            lst_orders_to_execute = self.rtstr.set_broker_current_state(broker_current_state)
+            print("lst_orders_to_execute: ", lst_orders_to_execute)
+            del lst_orders_to_execute
+            del broker_current_state
+            cpt_ut += 1
 
     def udpate_strategy_with_broker_current_state_scenario(self, scenario_id):
         cpt = 0
@@ -1068,9 +1101,9 @@ class Crag:
     def udpate_strategy_with_broker_current_state(self):
         GRID_SCENARIO_ON = False
         SCENARIO_ID = 6
-        MEMORY_LEAK_BROKER = False
-        if MEMORY_LEAK_BROKER:
-            self.udpate_strategy_with_broker_current_state_memory_leak()
+        MEMORY_LEAK_UT = False
+        if MEMORY_LEAK_UT:
+            self.udpate_strategy_with_broker_current_state_memory_leak(SCENARIO_ID)
         else:
             if GRID_SCENARIO_ON:
                 self.udpate_strategy_with_broker_current_state_scenario(SCENARIO_ID)
