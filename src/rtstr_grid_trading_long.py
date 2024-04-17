@@ -195,6 +195,8 @@ class GridPosition():
         self.grid_move = False
         self.msg = ""
         self.df_grid_string = ""
+        self.abs = None
+        self.closest = None
 
         self.df_nb_open_positions = pd.DataFrame(columns=['symbol', 'size', 'leverage', 'side', 'positions_size', 'nb_open_positions'])
         self.df_nb_open_positions['symbol'] = self.lst_symbols
@@ -367,12 +369,15 @@ class GridPosition():
 
     # Function to find the index of the closest value in an array
     def find_closest(self, value, array):
-        s_tmp = array - value
-        s_tmp = np.abs(s_tmp)
-        closest = s_tmp.argmin()
-        del s_tmp
+        if self.abs is not None:
+            del self.abs
+        if self.closest is not None:
+            del self.closest
+        self.abs = array - value
+        self.abs = np.abs(self.abs)
+        self.closest = self.abs.argmin()
         # closest = np.abs(array - value).argmin()
-        return closest
+        # return closest
 
     def set_current_orders_price_to_grid(self, symbol, df_current_state):
         if len(df_current_state) > 0:
@@ -382,23 +387,24 @@ class GridPosition():
             # lst_price = [df_grid['position'].iloc[self.find_closest(price, df_grid['position'])] for price in df_current_state['price']]
             lst_price = []
             for price in df_current_state['price']:
-                closest_index = self.find_closest(price, df_grid['position'])
+                self.find_closest(price, df_grid['position'])
+                closest_index = self.closest
                 closest_value = df_grid.at[closest_index, 'position']
                 lst_price.append(closest_value)
             df_current_state['price'] = lst_price
             del lst_price
             # Check if all elements in df_current_state['price'] are in df_grid['position']
-            s_bool = df_current_state['price'].isin(df_grid['position'])
-            all_prices_in_grid = s_bool.all()
-            del s_bool
-            if not self.zero_print and not all_prices_in_grid:
+            self.s_bool = df_current_state['price'].isin(df_grid['position'])
+            self.all_prices_in_grid = self.s_bool.all()
+            if not self.zero_print and not self.all_prices_in_grid:
                     # Print the elements that are different
                     different_prices = df_current_state.loc[~df_current_state['price'].isin(df_grid['position']), 'price']
                     self.log("################ WARNING PRICE DIFF WITH ORDER AND GRID ###############################")
                     self.log("Elements in df_current_state['price'] that are not in df_grid['position']:")
                     self.log(different_prices)
                     exit(0)
-            del all_prices_in_grid
+            del self.s_bool
+            del self.all_prices_in_grid
             del df_grid
         return df_current_state
 

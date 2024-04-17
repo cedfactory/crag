@@ -107,8 +107,10 @@ class ILogger(metaclass=ABCMeta):
                 if True or (df["size"].sum() > 0.2):
                     print(df.to_string(index=False))
                     df.to_csv("df_"+str(tag)+".csv", index=False)
-                del df
         del snapshot
+        del df
+        del column_to_move
+        del current_directory
         return True
 
 class LoggerConsole(ILogger):
