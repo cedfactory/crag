@@ -410,7 +410,6 @@ class BrokerBitGet(broker.Broker):
             df_open_orders.loc[condition, 'gridId'] = res
             del condition
             del res
-        del orderId
         return df_open_orders
 
     def get_gridId_from_orderId(self, orderId):
