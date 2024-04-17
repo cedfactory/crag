@@ -1016,7 +1016,9 @@ class Crag:
             del lst_orders_to_execute
             del broker_current_state
             cpt_ut += 1
-        del lst_orders_to_execute_for_broker_test
+
+        if 'lst_orders_to_execute_for_broker_test' in locals():
+            del lst_orders_to_execute_for_broker_test
         mylog.log_memory_stop(cpt_ut)
 
     def udpate_strategy_with_broker_current_state_scenario(self, scenario_id):

@@ -45,6 +45,9 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         self.df_normalize_price = pd.DataFrame(columns=["symbol", "pricePlace", "priceEndStep"])
         self.df_normalize_size = pd.DataFrame(columns=["symbol", "volumePlace", "sizeMultiplier", "minsize"])
 
+        self.current_state = {}
+        self.df_prices = pd.DataFrame()
+
         if api_key != "" and api_secret != "" and api_password != "":
             self.marketApi = market.MarketApi(api_key, api_secret, api_password, use_server_time=False, first=False)
             self.accountApi = account.AccountApi(api_key, api_secret, api_password, use_server_time=False, first=False)
@@ -182,11 +185,15 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     @authentication_required
     def get_current_state(self, lst_symbols):
+        del self.current_state
         df_open_orders = self.get_open_orders(lst_symbols)
         df_open_orders['symbol'] = df_open_orders['symbol'].apply(lambda x: self._get_coin(x))
-        lst_tmp = [self._get_coin(x) for x in df_open_orders['symbol']]
+        lst_tmp = []
+        for x in df_open_orders['symbol']:
+            coin = self._get_coin(x)
+            lst_tmp.append(coin)
+            del coin
         df_open_orders['symbol'] = lst_tmp
-        del lst_tmp
         df_open_orders.drop(['marginCoin', 'clientOid'], axis=1, inplace=True)
         df_open_orders = self.set_open_orders_gridId(df_open_orders)
 
@@ -198,12 +205,17 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             df_open_positions = df_open_positions_filtered
 
         df_prices = self.get_values(lst_symbols)
-        current_state = {
+        self.current_state = {
             "open_orders": df_open_orders,
             "open_positions": df_open_positions,
             "prices": df_prices
         }
-        return current_state
+        del df_open_orders
+        del df_open_positions
+        del df_prices
+        del lst_tmp
+        del df_open_positions_filtered
+        return self.current_state
 
     @authentication_required
     def reset_current_postion(self, current_state):
@@ -492,13 +504,18 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     @authentication_required
     def get_values(self, symbols):
         values = []
+        del self.df_prices
         for symbol in symbols:
-            values.append(self.get_value(symbol))
-        df_prices = pd.DataFrame({
+            val = self.get_value(symbol)
+            values.append(val)
+            del val
+        self.df_prices = pd.DataFrame({
             "symbols": symbols,
             "values": values
         })
-        return df_prices
+        del values
+        del symbols
+        return self.df_prices
 
     @authentication_required
     def get_asset_available(self, symbol):

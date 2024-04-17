@@ -29,6 +29,8 @@ class ILogger(metaclass=ABCMeta):
     def log_time_start(self, tag):
         start = time.time()
         self.timers[tag] = start
+        del start
+        del tag
 
     def log_time_stop(self, tag, msg=""):
         start = self.timers.get(tag, 0)
@@ -40,6 +42,10 @@ class ILogger(metaclass=ABCMeta):
             output = "{} : {} s ({})".format(tag, elapsed_time, msg)
             #self.log(output, header="Timer") # TEMPORARY
             print(output)
+            del end
+            del elapsed_time
+            del output
+        del start
 
     def log_memory_usage(self, tag="", header="", author=""):
         rss = utils.get_memory_usage() / (1024 * 1024)
@@ -102,6 +108,7 @@ class ILogger(metaclass=ABCMeta):
                     print(df.to_string(index=False))
                     df.to_csv("df_"+str(tag)+".csv", index=False)
                 del df
+        del snapshot
         return True
 
 class LoggerConsole(ILogger):

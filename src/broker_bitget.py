@@ -405,8 +405,12 @@ class BrokerBitGet(broker.Broker):
         for orderId in df_open_orders["orderId"].tolist():
             # Define a condition
             condition = df_open_orders['orderId'] == orderId
-            # Set a value in the 'City' column where the condition is true
-            df_open_orders.loc[condition, 'gridId'] = self.get_gridId_from_orderId(orderId)
+            # Set a value in the 'gridId' column where the condition is true
+            res = self.get_gridId_from_orderId(orderId)
+            df_open_orders.loc[condition, 'gridId'] = res
+            del condition
+            del res
+        del orderId
         return df_open_orders
 
     def get_gridId_from_orderId(self, orderId):

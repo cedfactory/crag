@@ -20,7 +20,7 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
         if self.percent_per_grid != 0:
             self.nb_grid = self.grid.get_grid_nb_grid()
         self.df_grid_buying_size = pd.DataFrame()
-        self.msg_grid_info = None
+        self.dct_info_to_txt = ""
 
     def get_data_description(self):
         ds = rtdp.DataDescription()
@@ -146,13 +146,16 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
 
     def get_info_msg_status(self):
         # CEDE: MULTI SYMBOL TO BE IMPLEMENTED IF EVER ONE DAY.....
+        del self.dct_info_to_txt
         for symbol in self.lst_symbols:
-            del self.msg_grid_info
-            self.msg_grid_info = None
-            self.grid.get_grid_info(symbol)
-            if self.grid.dct_change_status():
-                self.msg_grid_info = self.grid.dct_status_info_to_txt(symbol)
-            return self.msg_grid_info
+            dct_info = self.grid.get_grid_info(symbol)
+            if self.grid.dct_change_status(dct_info):
+                self.dct_info_to_txt = self.grid.dct_status_info_to_txt(dct_info, symbol)
+                del dct_info
+                return self.dct_info_to_txt
+            else:
+                del dct_info
+                return None
 
     def get_grid(self, cpt):
         # CEDE: MULTI SYMBOL TO BE IMPLEMENTED IF EVER ONE DAY.....
@@ -191,6 +194,8 @@ class GridPosition():
         self.min_position = 0
         self.on_edge = False
         self.grid_move = False
+        self.msg = ""
+        self.df_grid_string = ""
 
         self.df_nb_open_positions = pd.DataFrame(columns=['symbol', 'size', 'leverage', 'side', 'positions_size', 'nb_open_positions'])
         self.df_nb_open_positions['symbol'] = self.lst_symbols
@@ -342,7 +347,11 @@ class GridPosition():
             self.top_grid = False
             self.bottom_grid = False
 
-        self.grid_position = [higher_grid_id, lower_grid_id]
+        lst_high_low = [higher_grid_id, lower_grid_id]
+        self.grid_position = lst_high_low
+        del higher_grid_id
+        del lower_grid_id
+        del lst_high_low
 
         if (self.previous_grid_uniq_position != self.grid_uniq_position) \
                 or self.on_edge \
@@ -359,7 +368,11 @@ class GridPosition():
 
     # Function to find the index of the closest value in an array
     def find_closest(self, value, array):
-        closest = np.abs(array - value).argmin()
+        s_tmp = array - value
+        s_tmp = np.abs(s_tmp)
+        closest = s_tmp.argmin()
+        del s_tmp
+        # closest = np.abs(array - value).argmin()
         return closest
 
     def set_current_orders_price_to_grid(self, symbol, df_current_state):
@@ -376,7 +389,9 @@ class GridPosition():
             df_current_state['price'] = lst_price
             del lst_price
             # Check if all elements in df_current_state['price'] are in df_grid['position']
-            all_prices_in_grid = df_current_state['price'].isin(df_grid['position']).all()
+            s_bool = df_current_state['price'].isin(df_grid['position'])
+            all_prices_in_grid = s_bool.all()
+            del s_bool
             if not self.zero_print and not all_prices_in_grid:
                     # Print the elements that are different
                     different_prices = df_current_state.loc[~df_current_state['price'].isin(df_grid['position']), 'price']
@@ -402,6 +417,10 @@ class GridPosition():
                     if row_grid['side'] == row_c_state['side'] \
                             and row_grid['orderId'] == row_c_state['orderId']:
                         df_grid.loc[index_grid, 'cross_checked'] = True
+                del row_c_state
+                del index_c_state
+            del row_grid
+            del index_grid
         del df_current_state_all
         del df_current_state
         del df_grid
@@ -976,12 +995,13 @@ class GridPosition():
             return False
 
     def dct_status_info_to_txt(self, symbol):
-        msg = "# GRID LONG: " + "\n"
-        msg += "RANGE FROM: " + str(self.grid_high) + " TO " + str(self.grid_low) + "\n"
-        msg += "NB_GRID: " + str(self.nb_grid) + "\n"
-        # msg += "# GRID POSITION: " + "\n"
-        msg += "**POSITION: " + str(self.grid_uniq_position) + "**\n"
-        msg += "**PREV POS: " + str(self.previous_grid_uniq_position) + "**\n"
+        del self.msg
+        self.msg = "# GRID LONG: " + "\n"
+        self.msg += "RANGE FROM: " + str(self.grid_high) + " TO " + str(self.grid_low) + "\n"
+        self.msg += "NB_GRID: " + str(self.nb_grid) + "\n"
+        # self.msg += "# GRID POSITION: " + "\n"
+        self.msg += "**POSITION: " + str(self.grid_uniq_position) + "**\n"
+        self.msg += "**PREV POS: " + str(self.previous_grid_uniq_position) + "**\n"
         if self.grid_uniq_position is not None:
             if self.max_position == 0 \
                     and self.min_position == 0:
@@ -992,77 +1012,82 @@ class GridPosition():
                 self.min_position = min(self.min_position, self.grid_uniq_position)
                 if isinstance(self.max_position, int) \
                         and isinstance(self.min_position, int):
-                    msg += "**MAX/MIN POS: " + str(self.max_position) + "/" + str(self.min_position) + "**\n"
+                    self.msg += "**MAX/MIN POS: " + str(self.max_position) + "/" + str(self.min_position) + "**\n"
         if ((self.dct_status_info['grid_position'][0] >= self.nb_grid)
                 and (self.dct_status_info['grid_position'][1] >= self.nb_grid)):
-            msg += "**ABOVE GRID**\n"
+            self.msg += "**ABOVE GRID**\n"
         elif ((self.dct_status_info['grid_position'][0] <= 0)
               and (self.dct_status_info['grid_position'][1] <= 0)):
-            msg += "**BELOW GRID**\n"
+            self.msg += "**BELOW GRID**\n"
         else:
-            msg += "**pos range: " + str(self.dct_status_info['grid_position'][0]) + " / " + str(self.dct_status_info['grid_position'][1]) + "**\n"
-        msg += "broker limit_close: " + str(self.dct_status_info['nb_current_limit_close']) + "\n"
-        msg += "broker limit_open: " + str(self.dct_status_info['nb_current_limit_open']) + "\n"
-        msg += "grid limit_close: " + str(self.dct_status_info['nb_limit_close']) + "\n"
-        msg += "grid limit_open: " + str(self.dct_status_info['nb_limit_open']) + "\n"
-        msg += "total open_position: " + str(self.dct_status_info['nb_position']) + "\n"
+            self.msg += "**pos range: " + str(self.dct_status_info['grid_position'][0]) + " / " + str(self.dct_status_info['grid_position'][1]) + "**\n"
+        self.msg += "broker limit_close: " + str(self.dct_status_info['nb_current_limit_close']) + "\n"
+        self.msg += "broker limit_open: " + str(self.dct_status_info['nb_current_limit_open']) + "\n"
+        self.msg += "grid limit_close: " + str(self.dct_status_info['nb_limit_close']) + "\n"
+        self.msg += "grid limit_open: " + str(self.dct_status_info['nb_limit_open']) + "\n"
+        self.msg += "total open_position: " + str(self.dct_status_info['nb_position']) + "\n"
 
         if len(self.previous_grid_position) == 2:
-            msg += "# TREND:" + "\n"
+            self.msg += "# TREND:" + "\n"
             if self.previous_grid_position[0] > self.dct_status_info['grid_position'][0] and self.previous_grid_position[1] > self.dct_status_info['grid_position'][1]:
-                msg += "DOWN" + "\n"
+                self.msg += "DOWN" + "\n"
             elif self.previous_grid_position[0] < self.dct_status_info['grid_position'][0] and self.previous_grid_position[1] < self.dct_status_info['grid_position'][1]:
-                msg += "UP" + "\n"
+                self.msg += "UP" + "\n"
             elif self.previous_grid_position[0] == self.dct_status_info['grid_position'][0] and self.previous_grid_position[1] == self.dct_status_info['grid_position'][1]:
-                msg += "FLAT / NO DIRECTION" + "\n"
+                self.msg += "FLAT / NO DIRECTION" + "\n"
             else:
-                msg += "**ERROR DIRECTION" + "**\n"
+                self.msg += "**ERROR DIRECTION" + "**\n"
                 df = self.grid[symbol]
                 lst_filtered_on_edge = df[df['on_edge']]['grid_id'].tolist()
                 if (len(lst_filtered_on_edge) > 0) \
                         or self.on_edge:
-                    msg += "**PRICE ON EDGE" + "**\n"
-                    msg += "**VERIFIED" + "**\n"
-                    msg += "lst_filtered_on_edge: " + ' '.join(map(str, lst_filtered_on_edge)) + "\n"
+                    self.msg += "**PRICE ON EDGE" + "**\n"
+                    self.msg += "**VERIFIED" + "**\n"
+                    self.msg += "lst_filtered_on_edge: " + ' '.join(map(str, lst_filtered_on_edge)) + "\n"
                 else:
-                    msg += "**WARNING - PRICE ON EDGE" + "**\n"
-                    msg += "**NOT VERIFIED" + "**\n"
-                    msg += "lst_filtered_on_edge empty" + ' '.join(map(str, lst_filtered_on_edge)) + "\n"
+                    self.msg += "**WARNING - PRICE ON EDGE" + "**\n"
+                    self.msg += "**NOT VERIFIED" + "**\n"
+                    self.msg += "lst_filtered_on_edge empty" + ' '.join(map(str, lst_filtered_on_edge)) + "\n"
+                del df
+                del lst_filtered_on_edge
 
         if (self.nb_open_selected_to_be_open != 0) \
                 and (self.nb_close_selected_to_be_open != 0):
-            msg += "WARNING HIGH VOLATILITY:" + "\n"
+            self.msg += "WARNING HIGH VOLATILITY:" + "\n"
         if self.nb_open_selected_to_be_open != 0:
-            msg += "DIFF OPENED POSITION: " + str(self.nb_open_selected_to_be_open) + "\n"
+            self.msg += "DIFF OPENED POSITION: " + str(self.nb_open_selected_to_be_open) + "\n"
         if self.nb_close_selected_to_be_open != 0:
-            msg += "DIFF CLOSED POSITION: " + str(self.nb_close_selected_to_be_open) + "\n"
+            self.msg += "DIFF CLOSED POSITION: " + str(self.nb_close_selected_to_be_open) + "\n"
 
         if (self.max_grid_open_order == -1) \
             and (self.min_grid_open_order == -1):
-            msg += "no open position" + "\n"
+            self.msg += "no open position" + "\n"
         else:
             if self.nb_open_missing > 0:
-                msg += "open range: " + str(self.min_grid_open_order) + " / " + str(self.max_grid_open_order) + " gaps: " + str(self.nb_open_missing) + "\n"
+                self.msg += "open range: " + str(self.min_grid_open_order) + " / " + str(self.max_grid_open_order) + " gaps: " + str(self.nb_open_missing) + "\n"
             else:
-                msg += "open range: " + str(self.min_grid_open_order) + " / " + str(self.max_grid_open_order) + "\n"
+                self.msg += "open range: " + str(self.min_grid_open_order) + " / " + str(self.max_grid_open_order) + "\n"
 
         if (self.max_grid_close_order == -1) \
             and (self.min_grid_close_order == -1) \
             and (self.nb_close_missing == -1):
-            msg += "no close position" + "\n"
+            self.msg += "no close position" + "\n"
         else:
             if self.nb_close_missing > 0:
-                msg += "close range: " + str(self.min_grid_close_order) + " / " + str(self.max_grid_close_order) + " gaps: " + str(self.nb_close_missing) + "\n"
+                self.msg += "close range: " + str(self.min_grid_close_order) + " / " + str(self.max_grid_close_order) + " gaps: " + str(self.nb_close_missing) + "\n"
             else:
-                msg += "close range: " + str(self.min_grid_close_order) + " / " + str(self.max_grid_close_order) + "\n"
+                self.msg += "close range: " + str(self.min_grid_close_order) + " / " + str(self.max_grid_close_order) + "\n"
 
         self.previous_grid_position = self.dct_status_info['grid_position']
 
-        return msg.upper()
+        return self.msg.upper()
 
     def get_grid_as_str(self, symbol):
+        del self.df_grid_string
         df_grid = self.grid[symbol]
-        return df_grid.to_string(index=False)
+        self.df_grid_string = df_grid.to_string(index=False)
+        del df_grid
+        return self.df_grid_string
 
     def get_grid(self, symbol, round):
         df = self.grid[symbol].copy()
