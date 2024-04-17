@@ -148,13 +148,11 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
         # CEDE: MULTI SYMBOL TO BE IMPLEMENTED IF EVER ONE DAY.....
         del self.dct_info_to_txt
         for symbol in self.lst_symbols:
-            dct_info = self.grid.get_grid_info(symbol)
-            if self.grid.dct_change_status(dct_info):
-                self.dct_info_to_txt = self.grid.dct_status_info_to_txt(dct_info, symbol)
-                del dct_info
+            self.grid.get_grid_info(symbol)
+            if self.grid.dct_change_status():
+                self.dct_info_to_txt = self.grid.dct_status_info_to_txt(symbol)
                 return self.dct_info_to_txt
             else:
-                del dct_info
                 return None
 
     def get_grid(self, cpt):
