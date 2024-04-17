@@ -153,6 +153,7 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
                 self.dct_info_to_txt = self.grid.dct_status_info_to_txt(symbol)
                 return self.dct_info_to_txt
             else:
+                self.dct_info_to_txt = ""
                 return None
 
     def get_grid(self, cpt):
