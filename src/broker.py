@@ -3,6 +3,7 @@ from src.toolbox import settings_helper
 from src import logger
 import pandas as pd
 import ast
+from datetime import datetime
 
 def create_df_open_positions():
     df_open_positions = pd.DataFrame(columns=["symbol", "holdSide", "leverage", "marginCoin",
@@ -100,9 +101,10 @@ class Broker(metaclass = ABCMeta):
         return self.cash
 
     def get_current_datetime(self, format=None):
-        if self.rtdp:
-            return self.rtdp.get_current_datetime(format)
-        return None
+        current_datetime = datetime.now()
+        if isinstance(current_datetime, datetime) and format != None:
+            current_datetime = current_datetime.strftime(format)
+        return current_datetime
 
     def get_final_datetime(self):
         if self.rtdp:

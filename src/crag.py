@@ -30,7 +30,6 @@ import gc
 # reference : https://medium.com/analytics-vidhya/how-to-use-rabbitmq-with-python-e0ccfe7fa959
 class Crag:
     def __init__(self, params = None):
-        self.exit = False
         self.safety_run = True
         self.broker = None
         self.rtstr = None
@@ -88,6 +87,10 @@ class Crag:
         self.market_price_max = 0
         self.market_price_min = 0
         self.usdt_equity = 0
+
+        self.resume = False
+        self.safety_step_iterration = 0
+        self.sum_duration_safety_step = 0
 
         if params:
             self.broker = params.get("broker", self.broker)
@@ -232,13 +235,18 @@ class Crag:
             self.monitoring.send_alive_notification(current_timestamp, self.broker.account.get("id"), self.rtstr.id)
 
     def run(self):
-        self.start_date = self.broker.get_current_datetime("%Y/%m/%d %H:%M:%S")
+        if not self.resume:
+            self.start_date = self.broker.get_current_datetime("%Y/%m/%d %H:%M:%S")
+            self.minimal_portfolio_date = self.start_date
+            self.maximal_portfolio_date = self.start_date
 
-        self.minimal_portfolio_date = self.start_date
-        self.maximal_portfolio_date = self.start_date
-        msg_broker_info = self.broker.log_info()
-        self.log_discord(msg_broker_info, "run")
-        self.rtstr.log_info()
+            msg_broker_info = self.broker.log_info()
+            self.log_discord(msg_broker_info, "run")
+            del msg_broker_info
+        else:
+            msg = "REBOOT STARTEGY"
+            self.log_discord(msg, "born again")
+            del msg
 
         start = datetime.now()
         start = start.replace(second=0, microsecond=0)
@@ -256,11 +264,19 @@ class Crag:
             start = start.replace(second=0, microsecond=0)
             start += timedelta(seconds=1)
         self.log("start time: {}".format(start))
-        msg = "start time: " + start.strftime("%Y/%m/%d %H:%M:%S")
-        self.log_discord(msg, "start time")
+        if not self.resume:
+            msg = "start at: " + start.strftime("%Y/%m/%d %H:%M:%S")
+            self.log_discord(msg, "start time")
+        else:
+            msg = "resume at: " + start.strftime("%Y/%m/%d %H:%M:%S")
+            self.log_discord(msg, "resume start time")
+        del msg
         start = datetime.timestamp(start)
 
+        self.init_master_memory = utils.get_memory_usage()
+
         done = False
+        self.resume = True
         while not done:
             now = time.time()
             sleeping_time = start - now
@@ -272,6 +288,7 @@ class Crag:
                         mylog = logger.LoggerConsole() #TEMPORARY
                         mylog.log_time_start("TIMER__________safety_step")
                         step_result = self.safety_step()
+                        self.request_backup(start)
                         mylog.log_time_stop("TIMER__________safety_step")
                         mylog.log_memory_usage()
 
@@ -316,18 +333,16 @@ class Crag:
             self.strategy_start_time = start
             start = datetime.timestamp(start)
 
-            done = not self.step()
-            if done:
-                break
-
-            self.broker.tick() # increment
-            # self.backup() # backup for reboot
+            self.step()
 
             if self.interval == 1:  # 1m # CEDE: CL to find cleaner solution
                 start = datetime.now() + timedelta(seconds=2)
                 start = datetime.timestamp(start)
 
-        self.export_history(self.export_filename)
+            self.request_backup(start)
+
+        # self.export_history(self.export_filename)
+
 
     def step(self):
         self.usdt_equity = self.broker.get_usdt_equity()
@@ -543,8 +558,6 @@ class Crag:
 
         self.tradetraces.export()
 
-        return not self.exit
-
     def export_history(self, target=None):
         self.broker.export_history(target)
 
@@ -604,14 +617,9 @@ class Crag:
         # sell symbols
         lst_symbols = [current_trade.symbol for current_trade in self.current_trades if self.rtstr.is_open_type(current_trade.type)]
         lst_symbols = list(set(lst_symbols))
-        if (self.final_datetime and current_datetime >= self.final_datetime):
-            # final step - force all the symbols to be sold
-            df_selling_symbols = self.rtstr.get_df_forced_selling_symbols()
-            self.exit = True
-            self.flush_current_trade = True
-        else:
-            # identify symbols to sell
-            df_selling_symbols = self.rtstr.get_df_selling_symbols(lst_symbols, self.rtstr.rtctrl.get_rtctrl_df_roi_sl_tp())
+
+        # identify symbols to sell
+        df_selling_symbols = self.rtstr.get_df_selling_symbols(lst_symbols, self.rtstr.rtctrl.get_rtctrl_df_roi_sl_tp())
 
         list_symbols_to_sell = df_selling_symbols.symbol.to_list()
         df_selling_symbols.set_index("symbol", inplace=True)
@@ -766,10 +774,6 @@ class Crag:
         if self.temp_debug:
             self.debug_trace_current_trades('merge    ', self.current_trades)
 
-        if current_datetime == self.final_datetime or self.exit:
-            self.rtstr.rtctrl.display_summary_info(True)
-            self.exit = True
-
     def export_status(self):
         return self.broker.export_status()
 
@@ -777,6 +781,22 @@ class Crag:
         with open(self.backup_filename, 'wb') as file:
             print("[crah::backup]", self.backup_filename)
             pickle.dump(self, file)
+
+    def request_backup(self, start):
+        current_time = datetime.now()
+        current_time = datetime.timestamp(current_time)
+        delta_time = current_time - start
+
+        delta_memory_used = (utils.get_memory_usage() - self.init_master_memory) / (1024 * 1024)
+        if self.safety_step_iterration < 50:
+            self.sum_duration_safety_step += self.duration_time_safety_step
+            self.average_duration_safety_step = self.sum_duration_safety_step / self.safety_step_iterration
+
+        if (delta_memory_used > 10) \
+                or (self.duration_time_safety_step > (2 * self.average_duration_safety_step)) \
+                or (self.safety_step_iterration > 10):
+            self.backup()
+            exit(10)
 
     def merge_current_trades_from_symbol(self, current_trades, symbol, current_datetime, position_type):
         lst_trades = []
@@ -1267,17 +1287,17 @@ class Crag:
         broker_current_state.clear()
         del broker_current_state
 
-        msg = self.rtstr.get_info_msg_status()
+        self.msg_rtstr = self.rtstr.get_info_msg_status()
         # TEMPORARY
         #if msg != None:
-        #    #self.prepare_and_send_log_for_discord(msg, broker_current_state)
+        #    #self.prepare_and_send_log_for_discord(self.msg_rtstr, broker_current_state)
         #    thread = Thread(target=self.prepare_and_send_log_for_discord, args=(msg, broker_current_state))
         #    thread.start()
+        del self.msg_rtstr
 
         self.log("output lst_orders_to_execute: {}".format(lst_orders_to_execute))
         self.broker.execute_orders(lst_orders_to_execute)
         del lst_orders_to_execute
-        del msg
 
         msg_broker_trade_info = self.broker.log_info_trade()
         if len(msg_broker_trade_info) != 0:
@@ -1300,11 +1320,9 @@ class Crag:
             self.log("MEMORY:                       " + str(round(self.memory_used_mb, 2)) + "MB - DELTA: " + str(round(self.memory_used_mb - self.init_memory_used_mb,2)) + " MB" + "\n")
 
         locals().clear()
-        gc.collect()
 
     def safety_step(self):
-        gc.collect()
-
+        start_safety_step = time.time()
         self.broker.enable_cache()
 
         mylog = logger.LoggerConsole()  # TEMPORARY
@@ -1454,6 +1472,9 @@ class Crag:
         if mem_tag % 300 == 1:
             mylog.log_memory_stop(self.grid_iteration)
 
+        end_safety_step = time.time()
+        self.duration_time_safety_step = end_safety_step - start_safety_step
+        self.safety_step_iterration += 1
         return True
 
     def log_memory(self):
