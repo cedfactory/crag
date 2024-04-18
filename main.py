@@ -107,6 +107,16 @@ def crag_live(configuration_file, ForceDoNotResetAccount = False):
 
 def crag_reboot(picklefilename):
     bot = crag_helper.initialization_from_pickle(picklefilename)
+
+    directory_path = './output'  # Replace with the path to your directory
+    # List all files in the directory
+    files = os.listdir(directory_path)
+    # Iterate over the files and delete those with the .pickle extension
+    for file in files:
+        if file.endswith('.pickle'):
+            file_path = os.path.join(directory_path, file)
+            os.remove(file_path)
+
     bot.run()
     # bot.export_history("broker_history.csv")
     bot.export_status() # DEBUG CEDE

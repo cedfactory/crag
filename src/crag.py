@@ -794,7 +794,7 @@ class Crag:
             self.sum_duration_safety_step += self.duration_time_safety_step
             self.average_duration_safety_step = self.sum_duration_safety_step / self.safety_step_iterration
 
-        if (delta_memory_used > 10) \
+        if (delta_memory_used > 50) \
                 or (self.duration_time_safety_step > (2 * self.average_duration_safety_step)) \
                 or (self.safety_step_iterration > 10):
             print("****************** ", utils.get_memory_usage() / (1024 * 1024) ," ******************")
