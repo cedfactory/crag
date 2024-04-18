@@ -796,11 +796,12 @@ class Crag:
 
         if (delta_memory_used > 50) \
                 or (self.duration_time_safety_step > (2 * self.average_duration_safety_step)) \
-                or (self.safety_step_iterration > 10):
+                or (self.safety_step_iterration > 50):
             print("****************** ", utils.get_memory_usage() / (1024 * 1024) ," ******************")
             print("****************** ", sys.getsizeof(self) ," ******************")
             print("****************** duration: ", self.duration_time_safety_step ," ******************")
             print("****************** average: ", self.average_duration_safety_step," ******************")
+            print("****************** iter : ", self.safety_step_iterration," ******************")
             self.backup()
             exit(10)
 
