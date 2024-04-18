@@ -799,6 +799,8 @@ class Crag:
                 or (self.safety_step_iterration > 10):
             print("****************** ", utils.get_memory_usage() / (1024 * 1024) ," ******************")
             print("****************** ", sys.getsizeof(self) ," ******************")
+            print("****************** duration: ", self.duration_time_safety_step ," ******************")
+            print("****************** average: ", self.average_duration_safety_step," ******************")
             self.backup()
             exit(10)
 
