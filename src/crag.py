@@ -248,6 +248,7 @@ class Crag:
         else:
             msg = "REBOOT STARTEGY"
             self.log_discord(msg, "born again")
+            self.safety_step_iterration = 0
             del msg
 
         start = datetime.now()
