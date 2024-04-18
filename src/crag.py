@@ -249,6 +249,7 @@ class Crag:
             msg = "REBOOT STARTEGY"
             self.log_discord(msg, "born again")
             self.safety_step_iterration = 0
+            self.sum_duration_safety_step = 0
             del msg
 
         start = datetime.now()
@@ -1246,7 +1247,6 @@ class Crag:
         self.log_discord(msg, "GRID STATUS")
 
     def udpate_strategy_with_broker_current_state_live(self):
-        gc.collect()
         '''
         memory_used_bytes = utils.get_memory_usage()
         if self.memory_used_mb == 0:
@@ -1265,7 +1265,6 @@ class Crag:
             self.grid_iteration += 1
 
         self.symbols = self.rtstr.lst_symbols
-        gc.collect()
 
         mylog = logger.LoggerConsole()  # TEMPORARY
         mylog.log_time_start("TIMER_get_current_state")
@@ -1482,6 +1481,8 @@ class Crag:
 
         end_safety_step = time.time()
         self.duration_time_safety_step = end_safety_step - start_safety_step
+        del end_safety_step
+        del start_safety_step
         self.safety_step_iterration += 1
         return True
 

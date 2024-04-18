@@ -859,7 +859,6 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             del dct_account['data']
             dct_account.clear()
             del dct_account
-            gc.collect()
             del n_attempts
             del symbol
             del leverage

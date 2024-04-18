@@ -39,7 +39,6 @@ class OrderApi(Client):
             params.clear()
             del params
             locals().clear()
-            gc.collect()
             return res
         else:
             return "pls check args "

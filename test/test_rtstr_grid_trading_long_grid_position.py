@@ -23,7 +23,6 @@ class TestGridPosition:
 
         # action
         nb = grid.get_nb_open_positions_from_state("XRP")
-        gc.collect()
 
         my_logger.log_memory_stop("get_nb_open_positions_from_state")
 

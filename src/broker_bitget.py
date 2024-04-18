@@ -240,7 +240,6 @@ class BrokerBitGet(broker.Broker):
         self.log_trade = self.log_trade + msg.upper()
         del msg
         locals().clear()
-        gc.collect()
         return trade.success
 
     def check_validity_order(self, order):
