@@ -1,5 +1,7 @@
 import gc
 import os
+import sys
+
 from pympler import asizeof
 import shutil
 import time
@@ -795,6 +797,8 @@ class Crag:
         if (delta_memory_used > 10) \
                 or (self.duration_time_safety_step > (2 * self.average_duration_safety_step)) \
                 or (self.safety_step_iterration > 10):
+            print("****************** ", utils.get_memory_usage() / (1024 * 1024) ," ******************")
+            print("****************** ", sys.getsizeof(self) ," ******************")
             self.backup()
             exit(10)
 
