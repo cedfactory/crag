@@ -469,12 +469,6 @@ class RealTimeStrategy(metaclass=ABCMeta):
                 msg += "**amount buying > 5 usd: " + str(round(size * self.grid_low, 2)) + "**\n"
                 msg += "**buying size: " + str(size) + " - $" + str(size * (self.grid_high + self.grid_low )/2) + "**\n"
                 msg += "**min size: " + str(self.get_grid_buying_min_size(symbol)) + " - $" + str(self.get_grid_buying_min_size(symbol) * (self.grid_high + self.grid_low )/2) + "**\n"
-
-                print(symbol, " cash: ", cash)
-                print("grid_margin: ",self.grid_margin)
-                print("amount buying > 5 usd : ", round(size * self.grid_low, 2))
-                print("buying size", size)
-                print("min size: ", self.get_grid_buying_min_size(symbol))
                 msg += "**strategy verified" + "**\n"
                 self.log(msg, "GRID SETUP")
             else:
@@ -486,14 +480,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
                 msg += "**amount buying > 5 usd: " + str(round(size * self.grid_low, 2)) + "**\n"
                 msg += "**buying size: " + str(size) + " - $" + str(size * (self.grid_high + self.grid_low )/2) + "**\n"
                 msg += "**min size: " + str(self.get_grid_buying_min_size(symbol)) + " - $" + str(self.get_grid_buying_min_size(symbol) * (self.grid_high + self.grid_low )/2) + "**\n"
-                msg += "**strategy stopped" + "**\n"
-
-                print(symbol, " cash: ", cash)
-                print("grid_margin: ",self.grid_margin)
-                print("amount buying > 5 usd : ", round(size * self.grid_low, 2))
-                print("buying size", size)
-                print("min size: ", self.get_grid_buying_min_size(symbol))
-                print("ERROR NOT ENOUGH $ FOR GRID - INCREASE MARGIN OR REDUCE GRID SIZE")
+                msg += "**strategy stopped : ERROR NOT ENOUGH $ FOR GRID - INCREASE MARGIN OR REDUCE GRID SIZE **\n"
                 self.log(msg, "GRID SETUP FAILED")
                 exit(0)
         return self.df_grid_buying_size

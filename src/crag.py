@@ -293,7 +293,7 @@ class Crag:
                         self.request_backup(start)
 
                         if not step_result:
-                            print("safety_step result exit")
+                            self.log("safety_step result exit")
                             os._exit(0)
                         if self.rtstr.high_volatility.high_volatility_pause_status():
                             msg = "duration: " + str(self.rtstr.high_volatility.high_volatility_get_duration()) + "seconds"
@@ -779,7 +779,7 @@ class Crag:
 
     def backup(self):
         with open(self.backup_filename, 'wb') as file:
-            print("[crah::backup]", self.backup_filename)
+            self.log("[crag::backup]", self.backup_filename)
             pickle.dump(self, file)
 
     def request_backup(self, start):
