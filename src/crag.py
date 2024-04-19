@@ -812,7 +812,6 @@ class Crag:
             self.msg_backup += "duration " + str(self.duration_time_safety_step) + " average " + str(self.average_duration_safety_step) + "\n"
             self.msg_backup += "iter " + str(self.safety_step_iterration) + "\n"
             self.log_discord(self.msg_backup.upper(), "REBOOT STATUS")
-            del self.msg_backup
 
             self.backup()
             raise SystemExit(self.msg_backup)
