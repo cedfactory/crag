@@ -794,7 +794,7 @@ class Crag:
 
         if (delta_memory_used > 50) \
                 or (self.duration_time_safety_step > (2 * self.average_duration_safety_step)) \
-                or (self.safety_step_iterration > 50):
+                or (self.safety_step_iterration > 300):
             memory_usage = round(utils.get_memory_usage() / (1024 * 1024), 1)
             print("****************** memory: ", memory_usage, " ******************")
             print("****************** delta memory: ", delta_memory_used, " ******************")
@@ -810,7 +810,7 @@ class Crag:
                 self.msg_backup = "exit iterration condition" + "\n"
             self.msg_backup += "memory_usage " + str(memory_usage) + " delta " + str(delta_memory_used) + "\n"
             self.msg_backup += "duration " + str(self.duration_time_safety_step) + " average " + str(self.average_duration_safety_step) + "\n"
-            self.msg_backup += "iter " + str(self.safety_step_iterration) + " average " + str(self.average_duration_safety_step) + "\n"
+            self.msg_backup += "iter " + str(self.safety_step_iterration) + "\n"
             self.backup()
             raise SystemExit(self.msg_backup)
             # exit(10)
