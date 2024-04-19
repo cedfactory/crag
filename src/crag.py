@@ -289,12 +289,8 @@ class Crag:
                 if self.safety_run:
                     start_minus_one_sec = datetime.timestamp(datetime.fromtimestamp(start) - timedelta(seconds=1))
                     while time.time() < start_minus_one_sec:
-                        mylog = logger.LoggerConsole() #TEMPORARY
-                        mylog.log_time_start("TIMER__________safety_step")
                         step_result = self.safety_step()
                         self.request_backup(start)
-                        mylog.log_time_stop("TIMER__________safety_step")
-                        mylog.log_memory_usage()
 
                         if not step_result:
                             print("safety_step result exit")
@@ -1019,10 +1015,7 @@ class Crag:
             with open("lst_orders_to_execute.json", "r") as file:
                 lst_orders_to_execute_for_broker_test = json.load(file)
 
-        mylog = logger.LoggerConsole()  # TEMPORARY
-        mylog.log_memory_start(cpt_ut)
         loop = True
-
         while loop:
             if self.start_ut:
                 symbols = ["XRP"]
@@ -1060,7 +1053,6 @@ class Crag:
 
         if 'lst_orders_to_execute_for_broker_test' in locals():
             del lst_orders_to_execute_for_broker_test
-        mylog.log_memory_stop(cpt_ut)
 
     def udpate_strategy_with_broker_current_state_scenario(self, scenario_id):
         cpt = 0
@@ -1278,10 +1270,7 @@ class Crag:
 
         self.symbols = self.rtstr.lst_symbols
 
-        mylog = logger.LoggerConsole()  # TEMPORARY
-        mylog.log_time_start("TIMER_get_current_state")
         broker_current_state = self.broker.get_current_state(self.symbols)
-        mylog.log_time_stop("TIMER_get_current_state")
         if self.init_grid_position:
             self.init_grid_position = False
             df_symbol_minsize = self.broker.get_df_minimum_size(self.symbols)
@@ -1295,9 +1284,7 @@ class Crag:
 
             lst_orders_to_execute = []
 
-            mylog.log_time_start("TIMER_execute_orders")
             self.broker.execute_orders(lst_orders_to_execute)
-            mylog.log_time_start("TIMER_execute_orders")
 
             self.broker.reset_current_postion(broker_current_state)
             broker_current_state = self.broker.get_current_state(self.symbols)
@@ -1344,13 +1331,6 @@ class Crag:
         start_safety_step = time.time()
         self.broker.enable_cache()
 
-        mylog = logger.LoggerConsole()  # TEMPORARY
-        mem_tag = self.grid_iteration
-        if mem_tag % 300 == 1:
-            mylog.log_memory_start(self.grid_iteration)
-        mylog.log_memory_usage("MEMORY_step0")
-        mylog.log_time_start("TIMER_step1")
-
         self.usdt_equity = self.broker.get_usdt_equity()
         self.total_SL_TP = self.usdt_equity - self.original_portfolio_value
         if self.usdt_equity >= self.maximal_portfolio_value:
@@ -1379,10 +1359,6 @@ class Crag:
             self.udpate_strategy_with_broker_current_state_memory_leak()
             # self.log_memory()
 
-        mylog.log_time_stop("TIMER_step1")
-        mylog.log_memory_usage("MEMORY_step1")
-        mylog.log_time_start("TIMER_step2")
-
         if self.rtstr.condition_for_global_SLTP(self.total_SL_TP_percent) \
                 or self.rtstr.condition_for_global_trailer_TP(self.total_SL_TP_percent) \
                 or self.rtstr.condition_for_global_trailer_SL(self.total_SL_TP_percent) \
@@ -1397,11 +1373,7 @@ class Crag:
             self.broker.execute_reset_account()
             return False
 
-        mylog.log_time_stop("TIMER_step2")
-        mylog.log_memory_usage("MEMORY_step2")
-
         if not self.rtstr.need_broker_current_state():
-            mylog.log_time_start("TIMER_step3")
             # NOT AVAILABLE IN GRID TRADING STRATEGY
             lst_symbol_position = self.broker.get_lst_symbol_position()
             lst_symbol_for_closure = []
@@ -1417,10 +1389,6 @@ class Crag:
                         or self.rtstr.condition_trailer_SL(self.broker._get_coin(symbol), symbol_unrealizedPL_percent):
                     lst_symbol_for_closure.append(symbol)
 
-            mylog.log_time_stop("TIMER_step3")
-            mylog.log_memory_usage("MEMORY_step3")
-            mylog.log_time_start("TIMER_step4")
-
             if self.rtstr.trigger_high_volatility_protection():
                 BTC_price = self.broker.get_value('BTC')
                 current_datetime = datetime.now()
@@ -1431,10 +1399,6 @@ class Crag:
                     self.log("DUMP POSITIONS DUE TO HIGH VOLATILITY")
                     lst_symbol_for_closure = self.broker.get_lst_symbol_position()
                     self.maximal_portfolio_value
-
-            mylog.log_time_stop("TIMER_step4")
-            mylog.log_memory_usage("MEMORY_step4")
-            mylog.log_time_start("TIMER_step5")
 
             if len(lst_symbol_for_closure) > 0:
                 current_datetime = datetime.today().strftime("%Y/%m/%d %H:%M:%S")
@@ -1483,13 +1447,7 @@ class Crag:
 
             del lst_symbol_for_closure
 
-            mylog.log_time_stop("TIMER_step5")
-            mylog.log_memory_usage("MEMORY_step5")
-
         self.broker.disable_cache()
-
-        if mem_tag % 300 == 1:
-            mylog.log_memory_stop(self.grid_iteration)
 
         end_safety_step = time.time()
         self.duration_time_safety_step = end_safety_step - start_safety_step

@@ -40,8 +40,7 @@ class ILogger(metaclass=ABCMeta):
             end = time.time()
             elapsed_time = str(utils.KeepNDecimals(end - start, 3))
             output = "{} : {} s ({})".format(tag, elapsed_time, msg)
-            #self.log(output, header="Timer") # TEMPORARY
-            print(output)
+            self.log(output, header="Timer")
             del end
             del elapsed_time
             del output
@@ -49,8 +48,7 @@ class ILogger(metaclass=ABCMeta):
 
     def log_memory_usage(self, tag="", header="", author=""):
         rss = utils.get_memory_usage() / (1024 * 1024)
-        #self.log("memory usage @{} : {}".format(tag, rss), header=header, author=author) # TEMPORARY
-        print("MEMORY_USAGE @{} : {}".format(tag, rss))
+        self.log("memory usage @{} : {}".format(tag, rss), header=header, author=author)
 
     def log_memory_start(self, tag="", header="", author=""):
         tracemalloc.start()
