@@ -808,8 +808,8 @@ class Crag:
                 self.msg_backup = "exit duration safety_step condition" + "\n"
             else:
                 self.msg_backup = "exit iterration condition" + "\n"
-            self.msg_backup += "memory_usage " + str(memory_usage) + " delta " + str(delta_memory_used) + "\n"
-            self.msg_backup += "duration " + str(self.duration_time_safety_step) + " average " + str(self.average_duration_safety_step) + "\n"
+            self.msg_backup += "memory_usage " + str(round(memory_usage, 1)) + " delta " + str(round(delta_memory_used, 1)) + "\n"
+            self.msg_backup += "duration " + str(round(self.duration_time_safety_step, 2)) + " average " + str(round(self.average_duration_safety_step, 2)) + "\n"
             self.msg_backup += "iter " + str(self.safety_step_iterration) + "\n"
             self.log_discord(self.msg_backup.upper(), "REBOOT STATUS")
 
