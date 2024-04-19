@@ -791,7 +791,7 @@ class Crag:
         current_time = datetime.timestamp(current_time)
         delta_time = current_time - start
 
-        delta_memory_used = (utils.get_memory_usage() - self.init_master_memory) / (1024 * 1024)
+        delta_memory_used = round((utils.get_memory_usage() - self.init_master_memory) / (1024 * 1024), 2)
         if self.safety_step_iterration < 50:
             self.sum_duration_safety_step += self.duration_time_safety_step
             self.average_duration_safety_step = self.sum_duration_safety_step / self.safety_step_iterration
@@ -799,13 +799,25 @@ class Crag:
         if (delta_memory_used > 50) \
                 or (self.duration_time_safety_step > (2 * self.average_duration_safety_step)) \
                 or (self.safety_step_iterration > 50):
-            print("****************** ", utils.get_memory_usage() / (1024 * 1024) ," ******************")
-            print("****************** ", sys.getsizeof(self) ," ******************")
+            memory_usage = round(utils.get_memory_usage() / (1024 * 1024), 1)
+            print("****************** memory: ", memory_usage, " ******************")
+            print("****************** delta memory: ", delta_memory_used, " ******************")
+            print("****************** Crag size: ", sys.getsizeof(self), " ******************")
             print("****************** duration: ", self.duration_time_safety_step ," ******************")
             print("****************** average: ", self.average_duration_safety_step," ******************")
             print("****************** iter : ", self.safety_step_iterration," ******************")
+            if (delta_memory_used > 50):
+                self.msg_backup = "exit delta_memory_used condition" + "\n"
+            elif (self.duration_time_safety_step > (2 * self.average_duration_safety_step)):
+                self.msg_backup = "exit duration safety_step condition" + "\n"
+            else:
+                self.msg_backup = "exit iterration condition" + "\n"
+            self.msg_backup += "memory_usage " + str(memory_usage) + " delta " + str(delta_memory_used) + "\n"
+            self.msg_backup += "duration " + str(self.duration_time_safety_step) + " average " + str(self.average_duration_safety_step) + "\n"
+            self.msg_backup += "iter " + str(self.safety_step_iterration) + " average " + str(self.average_duration_safety_step) + "\n"
             self.backup()
-            exit(10)
+            raise SystemExit(self.msg_backup)
+            # exit(10)
 
     def merge_current_trades_from_symbol(self, current_trades, symbol, current_datetime, position_type):
         lst_trades = []
