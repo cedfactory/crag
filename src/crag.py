@@ -272,8 +272,10 @@ class Crag:
             msg = "start at: " + start.strftime("%Y/%m/%d %H:%M:%S")
             self.log_discord(msg, "start time")
         else:
-            msg = "resume at: " + start.strftime("%Y/%m/%d %H:%M:%S")
+            start_reboot = datetime.now()
+            msg = "resume at: " + start_reboot.strftime("%Y/%m/%d %H:%M:%S")
             self.log_discord(msg, "resume start time")
+            del start_reboot
         del msg
         start = datetime.timestamp(start)
 
@@ -782,6 +784,13 @@ class Crag:
             self.log("[crag::backup]", self.backup_filename)
             pickle.dump(self, file)
 
+    def backup_debug(self, duration):
+        dump_dir = "dump_crag"
+        self.create_directory(dump_dir)
+        filename_dump = dump_dir + "/" + "crag_" + str(self.grid_iteration) + "_" + str(duration) + ".pickle"
+        with open(filename_dump, 'wb') as file:
+            pickle.dump(self, file)
+
     def request_backup(self, start):
         current_time = datetime.now()
         current_time = datetime.timestamp(current_time)
@@ -813,6 +822,7 @@ class Crag:
             self.msg_backup += "iter " + str(self.safety_step_iterration) + "\n"
             self.log_discord(self.msg_backup.upper(), "REBOOT STATUS")
 
+            self.backup_debug(round(self.duration_time_safety_step, 2))
             self.backup()
             raise SystemExit(self.msg_backup)
             # exit(10)
