@@ -10,6 +10,23 @@ from src.toolbox import settings_helper
 import psutil
 import pandas as pd
 
+def format_integer(num):
+    return f"{num:08}"
+
+def empty_files(directory_path, pattern=".png"):
+    if os.path.exists(directory_path) and os.path.isdir(directory_path):
+        for file_name in os.listdir(directory_path):
+            if pattern is None or file_name.endswith(pattern):
+                file_path = os.path.join(directory_path, file_name)
+                os.remove(file_path)
+                print(f"Deleted: {file_path}")
+    else:
+        print(f"Directory does not exist: {directory_path}")
+
+def create_dir(directory_path):
+    if not os.path.exists(directory_path):
+        os.makedirs(directory_path)
+
 def split_list(input_list, sublist_size):
     return [input_list[i:i + sublist_size] for i in range(0, len(input_list), sublist_size)]
 

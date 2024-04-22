@@ -20,6 +20,8 @@ from threading import Thread
 
 import tracemalloc
 
+import execute_time_recoder
+
 import pickle
 import gc
 
@@ -93,6 +95,7 @@ class Crag:
         self.resume = False
         self.safety_step_iterration = 0
         self.sum_duration_safety_step = 0
+        self.reboot_iter = 0
 
         if params:
             self.broker = params.get("broker", self.broker)
@@ -281,17 +284,32 @@ class Crag:
 
         self.init_master_memory = utils.get_memory_usage()
 
+        self.main_cycle = 0
+
         done = False
         self.resume = True
         while not done:
+
+            self.main_cycle += 1
+            self.execute_timer = execute_time_recoder.ExecuteTimeRecorder()
+
+            self.reset_iteration_timers()
+
             now = time.time()
             sleeping_time = start - now
             # sleeping_time = 0 # CEDE DEBUG TO SKIP THE SLEEPING TIME
             if sleeping_time > 0:
                 if self.safety_run:
                     start_minus_one_sec = datetime.timestamp(datetime.fromtimestamp(start) - timedelta(seconds=1))
+
                     while time.time() < start_minus_one_sec:
+                        self.execute_timer.set_start_time("crag", "main_loop", "safety_step", self.main_cycle_safety_step)
+
                         step_result = self.safety_step()
+
+                        self.execute_timer.set_end_time("crag", "main_loop", "safety_step", self.main_cycle_safety_step)
+                        self.main_cycle_safety_step += 1
+
                         self.request_backup(start)
 
                         if not step_result:
@@ -335,7 +353,12 @@ class Crag:
             self.strategy_start_time = start
             start = datetime.timestamp(start)
 
+            self.execute_timer.set_start_time("crag", "main_loop", "step", self.main_cycle)
+
             self.step()
+
+            self.execute_timer.set_end_time("crag", "main_loop", "step", self.main_cycle)
+            self.main_cycle += 1
 
             if self.interval == 1:  # 1m # CEDE: CL to find cleaner solution
                 start = datetime.now() + timedelta(seconds=2)
@@ -791,19 +814,21 @@ class Crag:
         with open(filename_dump, 'wb') as file:
             pickle.dump(self, file)
 
+        self.execute_timer.close_timer()
+
     def request_backup(self, start):
         current_time = datetime.now()
         current_time = datetime.timestamp(current_time)
         delta_time = current_time - start
 
         delta_memory_used = round((utils.get_memory_usage() - self.init_master_memory) / (1024 * 1024), 2)
-        if self.safety_step_iterration < 50:
+        if self.safety_step_iterration < 10:
             self.sum_duration_safety_step += self.duration_time_safety_step
             self.average_duration_safety_step = self.sum_duration_safety_step / self.safety_step_iterration
 
         if (delta_memory_used > 50) \
                 or (self.duration_time_safety_step > (2 * self.average_duration_safety_step)) \
-                or (self.safety_step_iterration > 300):
+                or (self.safety_step_iterration > 10):
             memory_usage = round(utils.get_memory_usage() / (1024 * 1024), 1)
             print("****************** memory: ", memory_usage, " ******************")
             print("****************** delta memory: ", delta_memory_used, " ******************")
@@ -824,6 +849,7 @@ class Crag:
 
             self.backup_debug(round(self.duration_time_safety_step, 2))
             self.backup()
+            self.reboot_iter += 1
             raise SystemExit(self.msg_backup)
             # exit(10)
 
@@ -1179,7 +1205,14 @@ class Crag:
             if GRID_SCENARIO_ON:
                 self.udpate_strategy_with_broker_current_state_scenario(SCENARIO_ID)
             else:
+                self.execute_timer.set_start_time("crag", "udpate_strategy_with_broker", "current_state_live", self.state_live)
+
                 self.udpate_strategy_with_broker_current_state_live()
+
+                self.execute_timer.set_end_time("crag", "udpate_strategy_with_broker", "current_state_live", self.state_live)
+                self.state_live += 1
+
+
 
     def prepare_and_send_log_for_discord(self, msg, broker_current_state):
         current_datetime = datetime.today().strftime("%Y/%m/%d - %H:%M:%S")
@@ -1282,7 +1315,12 @@ class Crag:
 
         self.symbols = self.rtstr.lst_symbols
 
+        self.execute_timer.set_start_time("crag", "current_state_live", "get_current_state", self.current_state_live)
+
         broker_current_state = self.broker.get_current_state(self.symbols)
+
+        self.execute_timer.set_end_time("crag", "current_state_live", "get_current_state", self.current_state_live)
+
         if self.init_grid_position:
             self.init_grid_position = False
             df_symbol_minsize = self.broker.get_df_minimum_size(self.symbols)
@@ -1301,11 +1339,21 @@ class Crag:
             self.broker.reset_current_postion(broker_current_state)
             broker_current_state = self.broker.get_current_state(self.symbols)
 
+        self.execute_timer.set_start_time("crag", "current_state_live", "set_broker_current_state", self.current_state_live)
+
         lst_orders_to_execute = self.rtstr.set_broker_current_state(broker_current_state)
+
+        self.execute_timer.set_end_time("crag", "current_state_live", "set_broker_current_state", self.current_state_live)
+
         broker_current_state.clear()
         del broker_current_state
 
+        self.execute_timer.set_start_time("crag", "current_state_live", "get_info_msg_status", self.current_state_live)
+
         self.msg_rtstr = self.rtstr.get_info_msg_status()
+
+        self.execute_timer.set_end_time("crag", "current_state_live", "get_info_msg_status", self.current_state_live)
+
         # TEMPORARY
         #if msg != None:
         #    #self.prepare_and_send_log_for_discord(self.msg_rtstr, broker_current_state)
@@ -1314,7 +1362,13 @@ class Crag:
         del self.msg_rtstr
 
         self.log("output lst_orders_to_execute: {}".format(lst_orders_to_execute))
+
+        self.execute_timer.set_start_time("crag", "current_state_live", "execute_orders", self.current_state_live)
+
         self.broker.execute_orders(lst_orders_to_execute)
+
+        self.execute_timer.set_end_time("crag", "current_state_live", "execute_orders", self.current_state_live)
+
         del lst_orders_to_execute
 
         msg_broker_trade_info = self.broker.log_info_trade()
@@ -1338,6 +1392,7 @@ class Crag:
             self.log("MEMORY:                       " + str(round(self.memory_used_mb, 2)) + "MB - DELTA: " + str(round(self.memory_used_mb - self.init_memory_used_mb,2)) + " MB" + "\n")
 
         locals().clear()
+        self.current_state_live += 1
 
     def safety_step(self):
         start_safety_step = time.time()
@@ -1596,3 +1651,10 @@ class Crag:
 
     def get_reboot_data(self):
         return self.broker.get_broker_boot_data()
+
+    def reset_iteration_timers(self):
+        self.main_cycle_safety_step = 0
+        self.main_cycle = 0
+        self.state_live = 0
+        self.current_state_live = 0
+        self.execute_timer.set_master_cycle(self.reboot_iter)
