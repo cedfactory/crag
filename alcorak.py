@@ -16,8 +16,13 @@ def start_strategy(strategy_configuration_file):
         print("💥 A problem occurred while loading {}".format(strategy_configuration_file))
         return
 
-    #result = subprocess.run(['cmd.exe', '/c', 'dir'], capture_output=True, text=True)
-    result = subprocess.run([g_python_executable, "main.py", "--live", strategy_configuration_file], stdout=subprocess.PIPE)
+    command = []
+    if g_os_platform == "Windows":
+        command = ['cmd.exe', '/c', g_python_executable, "main.py", "--live", strategy_configuration_file]
+    elif g_os_platform == "Linux":
+        command = [g_python_executable, "main.py", "--live", strategy_configuration_file]
+
+    result = subprocess.run(command, stdout=subprocess.PIPE)
     print(result)
 
     backup_file = "./output/grid_crag_backup.pickle"
