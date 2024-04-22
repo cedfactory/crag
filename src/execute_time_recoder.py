@@ -1,7 +1,7 @@
 from datetime import datetime
 import pandas as pd
 import matplotlib.pyplot as plt
-import utils
+from . import utils
 
 class ExecuteTimeRecorder():
     def __init__(self, iter):
