@@ -6,7 +6,7 @@ from pympler import asizeof
 import shutil
 import time
 import pandas as pd
-from . import trade,rtstr,utils,traces,logger
+from . import trade,rtstr,utils,traces,logger,execute_time_recoder
 from .toolbox import monitoring_helper
 import pika
 import json
@@ -19,8 +19,6 @@ from datetime import date
 from threading import Thread
 
 import tracemalloc
-
-import execute_time_recoder
 
 import pickle
 import gc
