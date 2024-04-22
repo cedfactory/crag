@@ -828,7 +828,7 @@ class Crag:
 
         if (delta_memory_used > 50) \
                 or (self.duration_time_safety_step > (2 * self.average_duration_safety_step)) \
-                or (self.safety_step_iterration > 10):
+                or (self.safety_step_iterration > 300):
             memory_usage = round(utils.get_memory_usage() / (1024 * 1024), 1)
             print("****************** memory: ", memory_usage, " ******************")
             print("****************** delta memory: ", delta_memory_used, " ******************")
