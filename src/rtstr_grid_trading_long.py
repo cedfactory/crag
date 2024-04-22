@@ -21,6 +21,7 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
             self.nb_grid = self.grid.get_grid_nb_grid()
         self.df_grid_buying_size = pd.DataFrame()
         self.dct_info_to_txt = ""
+        self.execute_timer = None
 
     def get_data_description(self):
         ds = rtdp.DataDescription()
@@ -58,6 +59,12 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
     def need_broker_current_state(self):
         return True
 
+    def set_execute_time_recorder(self, execute_timer):
+        if self.execute_timer is not None:
+            del self.execute_timer
+        self.execute_timer = execute_timer
+        self.iter_set_broker_current_state = 0
+
     def set_broker_current_state(self, current_state):
         """
         current_state = {
@@ -80,21 +87,54 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
         lst_order_to_execute = []
 
         for symbol in self.lst_symbols:
+            self.execute_timer.set_start_time("rtstr", "set_broker_current_state", "set_current_orders_price_to_grid", self.iter_set_broker_current_state)
             df_current_state = self.grid.set_current_orders_price_to_grid(symbol, df_current_states)
+            self.execute_timer.set_end_time("rtstr", "set_broker_current_state", "set_current_orders_price_to_grid", self.iter_set_broker_current_state)
+
+            self.execute_timer.set_start_time("rtstr", "set_broker_current_state", "get_grid_buying_size", self.iter_set_broker_current_state)
             buying_size = self.get_grid_buying_size(symbol)
+            self.execute_timer.set_end_time("rtstr", "set_broker_current_state", "get_grid_buying_size", self.iter_set_broker_current_state)
+
+            self.execute_timer.set_start_time("rtstr", "set_broker_current_state", "update_control_multi_position", self.iter_set_broker_current_state)
             self.grid.update_control_multi_position(symbol, df_current_states, df_open_positions)
+            self.execute_timer.set_end_time("rtstr", "set_broker_current_state", "update_control_multi_position", self.iter_set_broker_current_state)
+
+            self.execute_timer.set_start_time("rtstr", "set_broker_current_state", "update_open_orders", self.iter_set_broker_current_state)
             self.grid.update_open_orders(symbol, df_current_states)
+            self.execute_timer.set_end_time("rtstr", "set_broker_current_state", "update_open_orders", self.iter_set_broker_current_state)
+
+            self.execute_timer.set_start_time("rtstr", "set_broker_current_state", "update_nb_open_positions", self.iter_set_broker_current_state)
             self.grid.update_nb_open_positions(symbol, df_open_positions, buying_size)
+            self.execute_timer.set_end_time("rtstr", "set_broker_current_state", "update_nb_open_positions", self.iter_set_broker_current_state)
+
+            self.execute_timer.set_start_time("rtstr", "set_broker_current_state", "update_pending_status_from_current_state", self.iter_set_broker_current_state)
             self.grid.update_pending_status_from_current_state(symbol, df_current_state)
+            self.execute_timer.set_end_time("rtstr", "set_broker_current_state", "update_pending_status_from_current_state", self.iter_set_broker_current_state)
 
             if symbol in df_price['symbols'].tolist():
+                self.execute_timer.set_start_time("rtstr", "set_broker_current_state", "cross_check_with_current_state", self.iter_set_broker_current_state)
                 self.grid.cross_check_with_current_state(symbol, df_current_state)
+                self.execute_timer.set_end_time("rtstr", "set_broker_current_state", "cross_check_with_current_state", self.iter_set_broker_current_state)
+
+                self.execute_timer.set_start_time("rtstr", "set_broker_current_state", "update_grid_side", self.iter_set_broker_current_state)
                 self.grid.update_grid_side(symbol, df_price.loc[df_price['symbols'] == symbol, 'values'].values[0])
                 # self.grid.cross_check_with_current_state(symbol, df_current_state)
+                self.execute_timer.set_end_time("rtstr", "set_broker_current_state", "update_grid_side", self.iter_set_broker_current_state)
+            else:
+                self.execute_timer.set_time_to_zero("rtstr", "set_broker_current_state", "cross_check_with_current_state", self.iter_set_broker_current_state)
+                self.execute_timer.set_time_to_zero("rtstr", "set_broker_current_state", "update_grid_side", self.iter_set_broker_current_state)
 
+            self.execute_timer.set_start_time("rtstr", "set_broker_current_state", "get_order_list", self.iter_set_broker_current_state)
             lst_order_to_execute = self.grid.get_order_list(symbol, buying_size, df_current_state)
+            self.execute_timer.set_end_time("rtstr", "set_broker_current_state", "get_order_list", self.iter_set_broker_current_state)
+
+            self.execute_timer.set_start_time("rtstr", "set_broker_current_state", "set_to_pending_execute_order", self.iter_set_broker_current_state)
             self.grid.set_to_pending_execute_order(symbol, lst_order_to_execute)
+            self.execute_timer.set_end_time("rtstr", "set_broker_current_state", "set_to_pending_execute_order", self.iter_set_broker_current_state)
+
+            self.execute_timer.set_start_time("rtstr", "set_broker_current_state", "filter_lst_close_execute_order", self.iter_set_broker_current_state)
             lst_order_to_execute = self.grid.filter_lst_close_execute_order(symbol, lst_order_to_execute)
+            self.execute_timer.set_end_time("rtstr", "set_broker_current_state", "filter_lst_close_execute_order", self.iter_set_broker_current_state)
 
         if not self.zero_print:
             df_sorted = df_current_state.sort_values(by='price')
@@ -114,6 +154,9 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
         del df_current_states
         del df_open_positions
         del df_price
+
+        self.iter_set_broker_current_state += 1
+
         return lst_order_to_execute
 
     def set_normalized_grid_price(self, lst_symbol_plc_endstp):

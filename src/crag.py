@@ -303,11 +303,12 @@ class Crag:
                     start_minus_one_sec = datetime.timestamp(datetime.fromtimestamp(start) - timedelta(seconds=1))
 
                     while time.time() < start_minus_one_sec:
-                        self.execute_timer.set_start_time("crag", "main_loop", "safety_step", self.main_cycle_safety_step)
+                        self.execute_timer.set_start_time("crag", "run", "safety_step", self.main_cycle_safety_step)
 
                         step_result = self.safety_step()
 
-                        self.execute_timer.set_end_time("crag", "main_loop", "safety_step", self.main_cycle_safety_step)
+                        self.execute_timer.set_end_time("crag", "run", "safety_step", self.main_cycle_safety_step)
+                        self.execute_timer.set_time_to_zero("crag", "run", "step", self.main_cycle_safety_step)
                         self.main_cycle_safety_step += 1
 
                         self.request_backup(start)
@@ -353,12 +354,13 @@ class Crag:
             self.strategy_start_time = start
             start = datetime.timestamp(start)
 
-            self.execute_timer.set_start_time("crag", "main_loop", "step", self.main_cycle)
+            self.execute_timer.set_start_time("crag", "run", "step", self.main_cycle_safety_step)
 
             self.step()
 
-            self.execute_timer.set_end_time("crag", "main_loop", "step", self.main_cycle)
-            self.main_cycle += 1
+            self.execute_timer.set_end_time("crag", "run", "step", self.main_cycle_safety_step)
+            self.execute_timer.set_time_to_zero("crag", "run", "safety_step", self.main_cycle_safety_step)
+            self.main_cycle_safety_step += 1
 
             if self.interval == 1:  # 1m # CEDE: CL to find cleaner solution
                 start = datetime.now() + timedelta(seconds=2)
@@ -1205,11 +1207,11 @@ class Crag:
             if GRID_SCENARIO_ON:
                 self.udpate_strategy_with_broker_current_state_scenario(SCENARIO_ID)
             else:
-                self.execute_timer.set_start_time("crag", "udpate_strategy_with_broker", "current_state_live", self.state_live)
+                self.execute_timer.set_start_time("crag", "udpate_strategy_with_broker", "udpate_strategy_with_broker_current_state_live", self.state_live)
 
                 self.udpate_strategy_with_broker_current_state_live()
 
-                self.execute_timer.set_end_time("crag", "udpate_strategy_with_broker", "current_state_live", self.state_live)
+                self.execute_timer.set_end_time("crag", "udpate_strategy_with_broker", "udpate_strategy_with_broker_current_state_live", self.state_live)
                 self.state_live += 1
 
 
@@ -1658,3 +1660,5 @@ class Crag:
         self.state_live = 0
         self.current_state_live = 0
         self.execute_timer.set_master_cycle(self.reboot_iter)
+        self.broker.set_execute_time_recorder(self.execute_timer)
+        self.rtstr.set_execute_time_recorder(self.execute_timer)

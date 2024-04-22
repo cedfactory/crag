@@ -34,6 +34,19 @@ class ExecuteTimeRecorder():
         del new_row
 
 
+    def set_time_to_zero(self, csci, section, position, cycle):
+        new_row = {
+            "csci": csci,
+            "section": section,
+            "cycle": cycle,
+            "position": position,
+            "start": 0,
+            "end": 0,
+            "duration": 0
+        }
+        self.df_time_recorder = pd.concat([self.df_time_recorder, pd.DataFrame([new_row])], ignore_index=True)
+        del new_row
+
     def set_end_time(self, csci, section, position, cycle):
         current_end_timestamp = datetime.now().timestamp()
         # Find the row to update based on csci, section, and cycle
@@ -46,7 +59,7 @@ class ExecuteTimeRecorder():
         self.df_time_recorder.loc[mask, "duration"] = self.df_time_recorder.loc[mask, "end"] - self.df_time_recorder.loc[mask, "start"]
 
     def close_timer(self):
-        self.df_time_recorder.to_csv(self.dump_directory + "/" + "df_time_recorder.csv")
+        self.df_time_recorder.to_csv(self.dump_directory + "/" + self.master_cycle + "df_time_recorder.csv")
         self.df_time_recorder.drop(columns=['start', 'end'], inplace=True)
         lst_csci = self.df_time_recorder["csci"].to_list()
         lst_csci = list(set(lst_csci))
@@ -65,12 +78,12 @@ class ExecuteTimeRecorder():
                     self.save_cycle_plot(df_filtered_position, csci, section, position)
 
     def save_cycle_plot(self, df_filtered_cycle, csci, section, position):
-        plt.figure(figsize=(10, 6))
+        plt.figure(figsize=(30, 10))
         plt.bar(df_filtered_cycle["cycle"], df_filtered_cycle["duration"])
         plt.xlabel("Cycle")
         plt.ylabel("Duration")
-        plt.title(f"Cycle Plot for CSCI: {csci}, Section: {section}, Position: {position}")
+        plt.title(f"{csci}   -   {section}   -   {position}")
         plt.grid(True)
-        plt.savefig(f"{self.dump_directory}/{self.master_cycle}-plot-{csci}-{section}-{position}.png")
+        plt.savefig(f"{self.dump_directory}/{self.master_cycle}-{csci}-{section}-{position}.png")
         plt.close()
 
