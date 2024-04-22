@@ -291,7 +291,7 @@ class Crag:
         while not done:
 
             self.main_cycle += 1
-            self.execute_timer = execute_time_recoder.ExecuteTimeRecorder()
+            self.execute_timer = execute_time_recoder.ExecuteTimeRecorder(self.main_cycle)
 
             self.reset_iteration_timers()
 
