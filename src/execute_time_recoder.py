@@ -1,16 +1,17 @@
 from datetime import datetime
 import pandas as pd
 import matplotlib.pyplot as plt
-import utils
+from . import utils
 
 class ExecuteTimeRecorder():
-    def __init__(self):
+    def __init__(self, iter):
         self.lst_recorder_columns = ["csci", "section", "cycle", "position", "start", "end", "duration"]
         self.df_time_recorder = pd.DataFrame(columns=self.lst_recorder_columns)
         self.dump_directory = "./dump_timer"
         utils.create_dir(self.dump_directory)
-        utils.empty_files(self.dump_directory, pattern=".png")
-        utils.empty_files(self.dump_directory, pattern=".csv")
+        if iter == 0:
+            utils.empty_files(self.dump_directory, pattern=".png")
+            utils.empty_files(self.dump_directory, pattern=".csv")
 
     def set_master_cycle(self, cycle):
         self.master_cycle = utils.format_integer(cycle)
@@ -59,7 +60,7 @@ class ExecuteTimeRecorder():
         self.df_time_recorder.loc[mask, "duration"] = self.df_time_recorder.loc[mask, "end"] - self.df_time_recorder.loc[mask, "start"]
 
     def close_timer(self):
-        self.df_time_recorder.to_csv(self.dump_directory + "/" + self.master_cycle + "df_time_recorder.csv")
+        self.df_time_recorder.to_csv(self.dump_directory + "/" + self.master_cycle + "_df_time_recorder.csv")
         self.df_time_recorder.drop(columns=['start', 'end'], inplace=True)
         lst_csci = self.df_time_recorder["csci"].to_list()
         lst_csci = list(set(lst_csci))

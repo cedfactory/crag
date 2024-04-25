@@ -6,7 +6,7 @@ from pympler import asizeof
 import shutil
 import time
 import pandas as pd
-from . import trade,rtstr,utils,traces,logger
+from . import trade,rtstr,utils,traces,logger,execute_time_recoder
 from .toolbox import monitoring_helper
 import pika
 import json
@@ -19,8 +19,6 @@ from datetime import date
 from threading import Thread
 
 import tracemalloc
-
-import execute_time_recoder
 
 import pickle
 import gc
@@ -254,6 +252,7 @@ class Crag:
             self.safety_step_iterration = 0
             self.sum_duration_safety_step = 0
             del msg
+            self.reboot_iter += 1
 
         start = datetime.now()
         start = start.replace(second=0, microsecond=0)
@@ -284,15 +283,11 @@ class Crag:
 
         self.init_master_memory = utils.get_memory_usage()
 
-        self.main_cycle = 0
-
         done = False
         self.resume = True
         while not done:
 
-            self.main_cycle += 1
-            self.execute_timer = execute_time_recoder.ExecuteTimeRecorder()
-
+            self.execute_timer = execute_time_recoder.ExecuteTimeRecorder(self.reboot_iter)
             self.reset_iteration_timers()
 
             now = time.time()
@@ -851,7 +846,6 @@ class Crag:
 
             self.backup_debug(round(self.duration_time_safety_step, 2))
             self.backup()
-            self.reboot_iter += 1
             raise SystemExit(self.msg_backup)
             # exit(10)
 
@@ -1653,7 +1647,6 @@ class Crag:
 
     def reset_iteration_timers(self):
         self.main_cycle_safety_step = 0
-        self.main_cycle = 0
         self.state_live = 0
         self.current_state_live = 0
         self.execute_timer.set_master_cycle(self.reboot_iter)
