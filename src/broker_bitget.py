@@ -368,12 +368,35 @@ class BrokerBitGet(broker.Broker):
         msg += result_string + "\n"
 
         if "msg" in transaction and transaction["msg"] == "success" and "data" in transaction and "orderInfo" in transaction["data"]:
+            if len(transaction["data"]["orderInfo"]) > 0:
+                if len(transaction["data"]["orderInfo"]) != len(lst_orderList):
+                    msg += "SUCCESS TRADE:" + str(len(transaction["data"]["orderInfo"])) + " / " + str(len(lst_orderList)) + "\n"
+                    failed_trade = len(lst_orderList) - len(transaction["data"]["orderInfo"])
+                else:
+                    failed_trade = 0
             for orderInfo in transaction["data"]["orderInfo"]:
                 orderId = orderInfo["orderId"]
                 gridId = [int(num) for num in re.findall(r'__(\d+)__', orderInfo["clientOid"])]
                 self.add_gridId_orderId(gridId[0], orderId)
+                if failed_trade != 0:
+                    msg += "success gridId: " + str(gridId[0]) + "\n"
+            if len(transaction["data"]["failure"]) > 0:
+                msg += "FAILED TRADE: " + str(len(transaction["data"]["failure"])) + "\n"
+                for failureInfo in transaction["data"]["failure"]:
+                    gridId = [int(num) for num in re.findall(r'__(\d+)__', failureInfo["clientOid"])]
+                    msg += "failure gridId: " + str(gridId[0]) + "\n"
+                    msg += "errorCode: " + failureInfo["errorCode"] + "\n"
+                    msg += "errorMsg" + failureInfo["errorMsg"] + "\n"
         else:
             msg += "TRADE BATCH FAILED" + "\n"
+            if "data" in transaction and "failure" in transaction["data"]:
+                if len(transaction["data"]["failure"]) > 0:
+                    msg += "FAILED TRADE: " + str(len(transaction["data"]["failure"])) + " / " + str(len(lst_orderList)) + "\n"
+                    for failureInfo in transaction["data"]["failure"]:
+                        gridId = [int(num) for num in re.findall(r'__(\d+)__', failureInfo["clientOid"])]
+                        msg += "failure gridId: " + str(gridId[0]) + "\n"
+                        msg += "errorCode: " + failureInfo["errorCode"] + "\n"
+                        msg += "errorMsg" + failureInfo["errorMsg"] + "\n"
 
         self.log_trade = self.log_trade + msg.upper()
         del msg
@@ -386,6 +409,9 @@ class BrokerBitGet(broker.Broker):
             self.execute_timer.set_time_to_zero("broker", "execute_orders", "execute_uniq_order", self.iter_execute_orders)
             self.iter_execute_orders += 1
             return
+
+        # lst_orders = [lst_orders[len(lst_orders) - 1]]   # CEDE TO BE REMOVED
+        # lst_orders[0]["type"] = "OPEN_LONG_ORDER"        # CEDE TO BE REMOVED
 
         max_batch_size = 49
         if len(lst_orders) > max_batch_size:
@@ -415,7 +441,8 @@ class BrokerBitGet(broker.Broker):
         elif len(lst_orders) == 1:
             self.execute_timer.set_start_time("broker", "execute_orders", "execute_uniq_order", self.iter_execute_orders)
 
-            self.execute_uniq_order(lst_orders)
+            self.execute_batch_orders(lst_orders)
+            # self.execute_uniq_order(lst_orders) # CEDE TO BE CONFIRMED AFTER TEST
 
             self.execute_timer.set_end_time("broker", "execute_orders", "execute_uniq_order", self.iter_execute_orders)
 

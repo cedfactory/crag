@@ -810,9 +810,10 @@ class Crag:
     def backup_debug(self, duration):
         dump_dir = "dump_crag"
         self.create_directory(dump_dir)
-        filename_dump = dump_dir + "/" + "crag_" + str(self.grid_iteration) + "_" + str(duration) + ".pickle"
-        with open(filename_dump, 'wb') as file:
-            pickle.dump(self, file)
+        if False:
+            filename_dump = dump_dir + "/" + "crag_" + str(self.grid_iteration) + "_" + str(duration) + ".pickle"
+            with open(filename_dump, 'wb') as file:
+                pickle.dump(self, file)
 
         self.execute_timer.close_timer()
 
