@@ -114,6 +114,7 @@ class Crag:
         self.traces_trade_total_opened = 0
         self.traces_trade_total_closed = 0
         self.traces_trade_total_remaining = 0
+        self.zero_print = False
         if self.broker and self.broker.resume_strategy():
             self.current_trades = self.get_current_trades_from_account()
         else:
@@ -126,7 +127,6 @@ class Crag:
         self.sell_performed = False
         self.epsilon_size_reduce = 0.1
 
-        self.zero_print = False
         self.flush_current_trade = False
 
         if self.rtstr:
@@ -996,9 +996,9 @@ class Crag:
 
         if exit_scenario:
             self.log("SCENARIO COMPLETED AT ROUND {}".format(str_cpt))
-            if df_orders == None and df_grids == None:
-                print("*********** EXIT UT ***********")
-                return None
+            # if df_orders is None and df_grids is None:
+            #     print("*********** EXIT UT ***********")
+            #     return None
                 # exit(0)
             full_path = os.path.join(input_dir, "results_scenario_grid_df_current_states.csv")
             df_orders.to_csv(full_path)
@@ -1119,9 +1119,6 @@ class Crag:
             if cpt == break_pt:
                 self.log("toto")
                 pass
-            if cpt == 60:
-                cpt = 0
-                self.log("restart")
             self.log("cpt start: {}".format(cpt))
             self.start_time_grid_strategy = time.time()
             broker_current_state = self.get_current_state_from_csv(input_dir, cpt, df_scenario_results_global, df_grid_global)
@@ -1175,7 +1172,7 @@ class Crag:
             self.log("MEMORY: " + str(round(self.memory_used_mb, 2)) + "MB DELTA: " + str(round(self.memory_used_mb - self.init_memory_used_mb,2)) + " MB" + "\n")
 
             if cpt == break_pt:
-                self.log(cpt)
+                # self.log(cpt)
                 pass
             self.log("cpt end: {}".format(cpt))
             cpt += 1

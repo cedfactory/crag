@@ -118,7 +118,6 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
 
                 self.execute_timer.set_start_time("rtstr", "set_broker_current_state", "update_grid_side", self.iter_set_broker_current_state)
                 self.grid.update_grid_side(symbol, df_price.loc[df_price['symbols'] == symbol, 'values'].values[0])
-                # self.grid.cross_check_with_current_state(symbol, df_current_state)
                 self.execute_timer.set_end_time("rtstr", "set_broker_current_state", "update_grid_side", self.iter_set_broker_current_state)
             else:
                 self.execute_timer.set_time_to_zero("rtstr", "set_broker_current_state", "cross_check_with_current_state", self.iter_set_broker_current_state)
@@ -455,23 +454,19 @@ class GridPosition():
         df_grid = self.grid[symbol]
         df_grid['cross_checked'] = False
         df_current_state = df_current_state_all[df_current_state_all["symbol"] == symbol]
+        lst_df_grid_columns = df_grid.columns.to_list()
 
-        # Iterate over every row using iterrows()
-        # Compare values from both DataFrames using iterrows
-        for index_grid, row_grid in df_grid.iterrows():
-            for index_c_state, row_c_state in df_current_state.iterrows():
-                if (row_grid['grid_id'] == row_c_state['gridId']) \
-                        or (row_grid['position'] == row_c_state['price']):
-                    if row_grid['side'] == row_c_state['side'] \
-                            and row_grid['orderId'] == row_c_state['orderId']:
-                        df_grid.loc[index_grid, 'cross_checked'] = True
-                del row_c_state
-                del index_c_state
-            del row_grid
-            del index_grid
-        del df_current_state_all
-        del df_current_state
-        del df_grid
+        df_current_state_for_merge = df_current_state.copy()
+        df_current_state_for_merge.rename(columns={'gridId': 'grid_id'}, inplace=True)
+        # df_current_state_for_merge.rename(columns={'price': 'position'}, inplace=True) # CEDE: Not cross check against price
+
+        df_merged = df_grid.merge(df_current_state_for_merge, how='left')
+        df_merged['cross_checked'] = df_merged['leverage'].notna()
+        df_merged = df_merged[lst_df_grid_columns]
+        self.grid[symbol]['cross_checked'] = df_merged['cross_checked']
+        del df_merged
+        del df_current_state_for_merge
+        del lst_df_grid_columns
 
     def get_order_list(self, symbol, size, df_current_order):
         """
