@@ -298,6 +298,9 @@ class Crag:
                     start_minus_one_sec = datetime.timestamp(datetime.fromtimestamp(start) - timedelta(seconds=1))
 
                     while time.time() < start_minus_one_sec:
+                        self.execute_timer.set_system_record(self.system_cycle)
+                        self.system_cycle += 1
+
                         self.execute_timer.set_start_time("crag", "run", "safety_step", self.main_cycle_safety_step)
 
                         step_result = self.safety_step()
@@ -1646,6 +1649,7 @@ class Crag:
         return self.broker.get_broker_boot_data()
 
     def reset_iteration_timers(self):
+        self.system_cycle = 0
         self.main_cycle_safety_step = 0
         self.state_live = 0
         self.current_state_live = 0
