@@ -84,11 +84,13 @@ class ExecuteTimeRecorder():
         del new_row
 
     def set_grid_infos(self, df_grid):
-        if(len(self.df_grid)) == 0:
+        if len(self.df_grid) == 0:
             self.df_grid = df_grid.copy()
+            self.df_grid.rename(columns={'values': '0'}, inplace=True)
         else:
-            self.df_grid = pd.concat([self.df_grid, df_grid])
-            self.df_grid = self.df_grid.reset_index(drop=True)
+            self.df_grid[str(len(self.df_grid.columns))] = df_grid["values"]
+
+        print(self.df_grid.to_string())
         del df_grid
 
     def set_end_time(self, csci, section, position, cycle):
@@ -152,7 +154,6 @@ class ExecuteTimeRecorder():
 
     def save_grid_cycle_plot(self):
         # Plotting
-
         color_map = {'close_long_on_hold': 'grey',
                      'close_long_pending': 'orange',
                      'close_long_engaged': 'red',
@@ -162,15 +163,14 @@ class ExecuteTimeRecorder():
                      }
 
         plt.figure(figsize=(30, 10))
-        for col in self.df_grid.columns:
-            colors = self.df_grid[col].map(color_map)
-            plt.scatter(self.df_grid.index, [col] * len(self.df_grid), c=colors, label=col)
+        for position, row in self.df_grid.iterrows():
+            for state, value in row.iteritems():
+                color = color_map[value]
+                plt.scatter(state, position, c=color)  # Switched state and position
 
-        plt.xlabel('X')
-        plt.ylabel('Y')
+        plt.xlabel('Y')  # Label switched to match the new axis
+        plt.ylabel('X')  # Label switched to match the new axis
         plt.title('Scatter Plot')
-        # plt.legend()
         plt.grid(True)
         plt.savefig(f"{self.dump_grid_directory}/{self.master_cycle}-grid.png")
-        # plt.show()
         plt.close()

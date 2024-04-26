@@ -213,8 +213,7 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
     def record_grid_status(self):
         if hasattr(self, 'df_price'):
             for symbol in self.lst_symbols:
-                price = self.df_price.loc[self.df_price['symbols'] == symbol, 'values'].values[0]
-                df_grid_values = self.grid.get_grid_for_record(symbol, price)
+                df_grid_values = self.grid.get_grid_for_record(symbol)
                 self.execute_timer.set_grid_infos(df_grid_values)
 
 class GridPosition():
@@ -1156,10 +1155,9 @@ class GridPosition():
             df.insert(0, column_to_move, first_column)
         return df
 
-    def get_grid_for_record(self, symbol, price):
+    def get_grid_for_record(self, symbol):
         df = self.grid[symbol].copy()
         df["values"] = df["side"] + "_" + df["status"]
         df.set_index('position', inplace=True)
-        df_transposed = pd.DataFrame([df["values"].to_list()], columns=df.index.to_list())
-        del df
-        return df_transposed
+        df = df[["values"]]
+        return df

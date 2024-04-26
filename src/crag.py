@@ -298,8 +298,9 @@ class Crag:
                     start_minus_one_sec = datetime.timestamp(datetime.fromtimestamp(start) - timedelta(seconds=1))
 
                     while time.time() < start_minus_one_sec:
-                        self.execute_timer.set_system_record(self.system_cycle)
-                        self.system_cycle += 1
+                        self.execute_timer.set_start_time("crag", "run", "set_system_record", self.main_cycle_safety_step)
+                        self.execute_timer.set_system_record(self.main_cycle_safety_step)
+                        self.execute_timer.set_end_time("crag", "run", "set_system_record", self.main_cycle_safety_step)
 
                         self.execute_timer.set_start_time("crag", "run", "safety_step", self.main_cycle_safety_step)
 
@@ -1316,9 +1317,7 @@ class Crag:
         self.symbols = self.rtstr.lst_symbols
 
         self.execute_timer.set_start_time("crag", "current_state_live", "get_current_state", self.current_state_live)
-
         broker_current_state = self.broker.get_current_state(self.symbols)
-
         self.execute_timer.set_end_time("crag", "current_state_live", "get_current_state", self.current_state_live)
 
         if self.init_grid_position:
@@ -1364,9 +1363,8 @@ class Crag:
         self.log("output lst_orders_to_execute: {}".format(lst_orders_to_execute))
 
         self.execute_timer.set_start_time("crag", "current_state_live", "execute_orders", self.current_state_live)
-
-        self.broker.execute_orders(lst_orders_to_execute)
-
+        if len(lst_orders_to_execute) > 0:
+            self.broker.execute_orders(lst_orders_to_execute)
         self.execute_timer.set_end_time("crag", "current_state_live", "execute_orders", self.current_state_live)
 
         del lst_orders_to_execute
@@ -1653,7 +1651,6 @@ class Crag:
         return self.broker.get_broker_boot_data()
 
     def reset_iteration_timers(self):
-        self.system_cycle = 0
         self.main_cycle_safety_step = 0
         self.state_live = 0
         self.current_state_live = 0
