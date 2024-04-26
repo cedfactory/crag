@@ -15,6 +15,7 @@ from datetime import datetime
 import time
 import os, shutil
 import pandas as pd
+from concurrent.futures import wait, ALL_COMPLETED, ThreadPoolExecutor
 import gc
 
 class BrokerBitGetApi(broker_bitget.BrokerBitGet):
@@ -186,35 +187,47 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     @authentication_required
     def get_current_state(self, lst_symbols):
         del self.current_state
-        df_open_orders = self.get_open_orders(lst_symbols)
-        df_open_orders['symbol'] = df_open_orders['symbol'].apply(lambda x: self._get_coin(x))
-        lst_tmp = []
-        for x in df_open_orders['symbol']:
-            coin = self._get_coin(x)
-            lst_tmp.append(coin)
-            del coin
-        df_open_orders['symbol'] = lst_tmp
-        df_open_orders.drop(['marginCoin', 'clientOid'], axis=1, inplace=True)
-        df_open_orders = self.set_open_orders_gridId(df_open_orders)
 
-        df_open_positions = self.get_open_position()
-        df_open_positions['symbol'] = df_open_positions['symbol'].apply(self._get_coin)
-        df_open_positions_filtered = df_open_positions[df_open_positions['symbol'].isin(lst_symbols)]
+        with ThreadPoolExecutor() as executor:
+            futures = []
+            futures.append(executor.submit(self.get_open_orders, lst_symbols))
+            futures.append(executor.submit(self.get_open_position))
+            futures.append(executor.submit(self.get_values, lst_symbols))
+            wait(futures, timeout=1000, return_when=ALL_COMPLETED)
 
-        if any(df_open_positions_filtered):
-            df_open_positions = df_open_positions_filtered
+            # orders
+            df_open_orders = futures[0].result()  # self.get_open_orders(lst_symbols)
+            df_open_orders['symbol'] = df_open_orders['symbol'].apply(lambda x: self._get_coin(x))
+            lst_tmp = []
+            for x in df_open_orders['symbol']:
+                coin = self._get_coin(x)
+                lst_tmp.append(coin)
+                del coin
+            df_open_orders['symbol'] = lst_tmp
+            df_open_orders.drop(['marginCoin', 'clientOid'], axis=1, inplace=True)
+            df_open_orders = self.set_open_orders_gridId(df_open_orders)
 
-        df_prices = self.get_values(lst_symbols)
-        self.current_state = {
-            "open_orders": df_open_orders,
-            "open_positions": df_open_positions,
-            "prices": df_prices
-        }
-        del df_open_orders
-        del df_open_positions
-        del df_prices
-        del lst_tmp
-        del df_open_positions_filtered
+            # positions
+            df_open_positions = futures[1].result()  # self.get_open_position()
+            df_open_positions['symbol'] = df_open_positions['symbol'].apply(self._get_coin)
+            df_open_positions_filtered = df_open_positions[df_open_positions['symbol'].isin(lst_symbols)]
+
+            if any(df_open_positions_filtered):
+                df_open_positions = df_open_positions_filtered
+
+            # prices
+            df_prices = futures[2].result()  # self.get_values(lst_symbols)
+            self.current_state = {
+                "open_orders": df_open_orders,
+                "open_positions": df_open_positions,
+                "prices": df_prices
+            }
+            del df_open_orders
+            del df_open_positions
+            del df_prices
+            del lst_tmp
+            del df_open_positions_filtered
+
         return self.current_state
 
     @authentication_required
