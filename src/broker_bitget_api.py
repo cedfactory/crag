@@ -6,6 +6,7 @@ from .bitget.mix import position_api as position
 from .bitget.mix import order_api as order
 from .bitget.spot import public_api as public
 from . bitget import exceptions
+from .bitget.mix_v2 import order_api as orderV2
 
 from .bitget_ws.bitget_ws import BitgetWsClient
 
@@ -27,6 +28,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         self.positionApi = None
         self.orderApi = None
         self.publicApi = None
+        self.orderV2Api = None
 
         self.failure = 0
         self.success = 0
@@ -54,6 +56,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             self.accountApi = account.AccountApi(api_key, api_secret, api_password, use_server_time=False, first=False)
             self.positionApi = position.PositionApi(api_key, api_secret, api_password, use_server_time=False, first=False)
             self.orderApi = order.OrderApi(api_key, api_secret, api_password, use_server_time=False, first=False)
+            self.orderV2Api = orderV2.OrderApi(api_key, api_secret, api_password, use_server_time=False, first=False)
 
         # initialize the public api
         self.publicApi = public.PublicApi(api_key, api_secret, api_password, use_server_time=False, first=False)
