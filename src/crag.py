@@ -298,9 +298,10 @@ class Crag:
                     start_minus_one_sec = datetime.timestamp(datetime.fromtimestamp(start) - timedelta(seconds=1))
 
                     while time.time() < start_minus_one_sec:
-                        self.execute_timer.set_start_time("crag", "run", "set_system_record", self.main_cycle_safety_step)
-                        self.execute_timer.set_system_record(self.main_cycle_safety_step)
-                        self.execute_timer.set_end_time("crag", "run", "set_system_record", self.main_cycle_safety_step)
+                        if False:
+                            self.execute_timer.set_start_time("crag", "run", "set_system_record", self.main_cycle_safety_step)
+                            self.execute_timer.set_system_record(self.main_cycle_safety_step)
+                            self.execute_timer.set_end_time("crag", "run", "set_system_record", self.main_cycle_safety_step)
 
                         self.execute_timer.set_start_time("crag", "run", "safety_step", self.main_cycle_safety_step)
 
