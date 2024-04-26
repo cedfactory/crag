@@ -825,7 +825,10 @@ class Crag:
         delta_memory_used = round((utils.get_memory_usage() - self.init_master_memory) / (1024 * 1024), 2)
         if self.safety_step_iterration < 10:
             self.sum_duration_safety_step += self.duration_time_safety_step
-            self.average_duration_safety_step = self.sum_duration_safety_step / self.safety_step_iterration
+            if self.safety_step_iterration > 0:
+                self.average_duration_safety_step = self.sum_duration_safety_step / self.safety_step_iterration
+            else:
+                self.average_duration_safety_step = self.sum_duration_safety_step
 
         if (delta_memory_used > 50) \
                 or (self.duration_time_safety_step > (2 * self.average_duration_safety_step)) \

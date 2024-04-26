@@ -22,6 +22,7 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
         self.df_grid_buying_size = pd.DataFrame()
         self.dct_info_to_txt = ""
         self.execute_timer = None
+        self.df_price = None
 
     def get_data_description(self):
         ds = rtdp.DataDescription()
@@ -84,6 +85,8 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
         del current_state["prices"]
         del current_state
 
+        del self.df_price
+        self.df_price = df_price
         lst_order_to_execute = []
 
         for symbol in self.lst_symbols:
@@ -166,18 +169,17 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
     def activate_grid(self, current_state):
         if not current_state:
             return []
-
-        df_prices = current_state["prices"]
+        del self.df_prices
+        self.df_prices = current_state["prices"]
         lst_buying_market_order = []
         for symbol in self.lst_symbols:
             lst_buying_market_order = []
             buying_size = self.get_grid_buying_size(symbol)
-            if symbol in df_prices['symbols'].tolist():
-                price = df_prices.loc[df_prices['symbols'] == symbol, 'values'].values[0]
+            if symbol in self.df_prices['symbols'].tolist():
+                price = self.df_prices.loc[self.df_prices['symbols'] == symbol, 'values'].values[0]
                 order = self.grid.get_buying_market_order(symbol, buying_size, price)
                 lst_buying_market_order.append(order)
         del buying_size
-        del df_prices
         del lst_buying_market_order
         del current_state
         if self.lst_symbols > 0:
@@ -188,6 +190,11 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
 
     def get_info_msg_status(self):
         # CEDE: MULTI SYMBOL TO BE IMPLEMENTED IF EVER ONE DAY.....
+
+        self.execute_timer.set_start_time("rtstr", "get_info_msg_status", "record_grid_status", self.iter_set_broker_current_state)
+        self.record_grid_status()
+        self.execute_timer.set_end_time("rtstr", "get_info_msg_status", "record_grid_status", self.iter_set_broker_current_state)
+
         del self.dct_info_to_txt
         for symbol in self.lst_symbols:
             self.grid.get_grid_info(symbol)
@@ -202,6 +209,13 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
         # CEDE: MULTI SYMBOL TO BE IMPLEMENTED IF EVER ONE DAY.....
         for symbol in self.lst_symbols:
             return self.grid.get_grid(symbol, cpt)
+
+    def record_grid_status(self):
+        if hasattr(self, 'df_price'):
+            for symbol in self.lst_symbols:
+                price = self.df_price.loc[self.df_price['symbols'] == symbol, 'values'].values[0]
+                df_grid_values = self.grid.get_grid_for_record(symbol, price)
+                self.execute_timer.set_grid_infos(df_grid_values)
 
 class GridPosition():
     def __init__(self, lst_symbols, grid_high, grid_low, nb_grid, percent_per_grid, debug_mode=True, loggers=[]):
@@ -1132,12 +1146,20 @@ class GridPosition():
         del df_grid
         return self.df_grid_string
 
-    def get_grid(self, symbol, round):
+    def get_grid(self, symbol, cycle):
         df = self.grid[symbol].copy()
-        df['round'] = round
+        if isinstance(cycle, int):
+            df['cycle'] = cycle
 
-        column_to_move = 'round'
-        first_column = df.pop(column_to_move)
-        df.insert(0, column_to_move, first_column)
-
+            column_to_move = 'cycle'
+            first_column = df.pop(column_to_move)
+            df.insert(0, column_to_move, first_column)
         return df
+
+    def get_grid_for_record(self, symbol, price):
+        df = self.grid[symbol].copy()
+        df["values"] = df["side"] + "_" + df["status"]
+        df.set_index('position', inplace=True)
+        df_transposed = pd.DataFrame([df["values"].to_list()], columns=df.index.to_list())
+        del df
+        return df_transposed

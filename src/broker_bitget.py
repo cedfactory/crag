@@ -405,50 +405,24 @@ class BrokerBitGet(broker.Broker):
     def execute_orders(self, lst_orders):
         if len(lst_orders) == 0:
             self.execute_timer.set_time_to_zero("broker", "execute_orders", "execute_batch_orders", self.iter_execute_orders)
-            self.execute_timer.set_time_to_zero("broker", "execute_orders", "execute_large_batch_orders", self.iter_execute_orders)
-            self.execute_timer.set_time_to_zero("broker", "execute_orders", "execute_uniq_order", self.iter_execute_orders)
             self.iter_execute_orders += 1
             return
 
         # lst_orders = [lst_orders[len(lst_orders) - 1]]   # CEDE TO BE REMOVED
         # lst_orders[0]["type"] = "OPEN_LONG_ORDER"        # CEDE TO BE REMOVED
 
+        self.execute_timer.set_start_time("broker", "execute_orders", "execute_batch_orders", self.iter_execute_orders)
         max_batch_size = 49
         if len(lst_orders) > max_batch_size:
-
-            self.execute_timer.set_start_time("broker", "execute_orders", "execute_large_batch_orders", self.iter_execute_orders)
-
             sub_lst_orders = utils.split_list(lst_orders, max_batch_size)
             print("orders bach over max_batch_size")
             for lst in sub_lst_orders:
                 self.execute_batch_orders(lst)
-
-            self.execute_timer.set_end_time("broker", "execute_orders", "execute_large_batch_orders", self.iter_execute_orders)
-
-            self.execute_timer.set_time_to_zero("broker", "execute_orders", "execute_batch_orders", self.iter_execute_orders)
-            self.execute_timer.set_time_to_zero("broker", "execute_orders", "execute_uniq_order", self.iter_execute_orders)
-
         elif len(lst_orders) > 1:
-            self.execute_timer.set_start_time("broker", "execute_orders", "execute_batch_orders", self.iter_execute_orders)
-
             self.execute_batch_orders(lst_orders)
-
-            self.execute_timer.set_end_time("broker", "execute_orders", "execute_batch_orders", self.iter_execute_orders)
-
-            self.execute_timer.set_time_to_zero("broker", "execute_orders", "execute_large_batch_orders", self.iter_execute_orders)
-            self.execute_timer.set_time_to_zero("broker", "execute_orders", "execute_uniq_order", self.iter_execute_orders)
-
         elif len(lst_orders) == 1:
-            self.execute_timer.set_start_time("broker", "execute_orders", "execute_uniq_order", self.iter_execute_orders)
-
             self.execute_batch_orders(lst_orders)
             # self.execute_uniq_order(lst_orders) # CEDE TO BE CONFIRMED AFTER TEST
-
-            self.execute_timer.set_end_time("broker", "execute_orders", "execute_uniq_order", self.iter_execute_orders)
-
-            self.execute_timer.set_time_to_zero("broker", "execute_orders", "execute_batch_orders", self.iter_execute_orders)
-            self.execute_timer.set_time_to_zero("broker", "execute_orders", "execute_large_batch_orders", self.iter_execute_orders)
-
         else:
             for order in lst_orders:
                 order = self.check_validity_order(order)
@@ -463,7 +437,10 @@ class BrokerBitGet(broker.Broker):
                 del trade
             for i in range(len(lst_orders)):
                 lst_orders[i] = None
+
+        self.execute_timer.set_end_time("broker", "execute_orders", "execute_batch_orders", self.iter_execute_orders)
         del lst_orders
+        del max_batch_size
         locals().clear()
         self.iter_execute_orders += 1
 
