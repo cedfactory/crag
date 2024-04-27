@@ -33,20 +33,20 @@ def concat_csv_files(directory, existing_df=None):
         new_df.set_index(result_df.index, inplace=True)
         result_df = pd.concat([new_df, result_df], axis=1)
 
+    result_df.columns = range(len(result_df.columns))
     lst_columns_to_drop = []
-    # Get the column names
     columns = result_df.columns
 
     # Iterate over pairs of adjacent columns
     for i in range(len(columns) - 1):
         col1 = result_df[columns[i]]
         col2 = result_df[columns[i + 1]]
-
         # Check if values in both columns are equal
         if col1.equals(col2):
             lst_columns_to_drop.append(columns[i])
-
-    result_df.drop(lst_columns_to_drop, axis=1, inplace=True)
+    if len(lst_columns_to_drop) > 0:
+        lst_columns_to_drop = list(set(lst_columns_to_drop))
+        result_df.drop(lst_columns_to_drop, axis=1, inplace=True)
 
     column_name = 'position'
     # Check if the column exists in the DataFrame

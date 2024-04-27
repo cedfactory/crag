@@ -175,10 +175,10 @@ class ExecuteTimeRecorder():
         self.df_grid.to_csv(self.dump_grid_directory + "/" + self.master_cycle + "_df_grid_recorder.csv")
 
         # Plotting
-        color_map = {'close_long_on_hold': 'grey',
-                     'close_long_pending': 'pink',
+        color_map = {'close_long_on_hold': 'silver',
+                     'close_long_pending': 'gold',
                      'close_long_engaged': 'red',
-                     'open_long_on_hold': 'silver',
+                     'open_long_on_hold': 'grey',
                      'open_long_pending': 'green',
                      'open_long_engaged': 'blue'
                      }
