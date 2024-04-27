@@ -98,9 +98,11 @@ class ExecuteTimeRecorder():
             self.df_grid = df_grid.copy()
             self.df_grid.rename(columns={'values': '0'}, inplace=True)
         else:
-            # self.df_grid[str(len(self.df_grid.columns))] = df_grid["values"]
-            new_columns = df_grid["values"]
-            self.df_grid = pd.concat([self.df_grid, new_columns], axis=1)
+            # Check if the new column is different from the last column
+            if (self.df_grid.iloc[:, -1] != df_grid["values"]).any():
+                # Join all columns at once using pd.concat(axis=1)
+                new_columns = df_grid["values"]
+                self.df_grid = pd.concat([self.df_grid, new_columns], axis=1)
 
         # print(self.df_grid.to_string())
         del df_grid
@@ -174,7 +176,7 @@ class ExecuteTimeRecorder():
                      'open_long_engaged': 'blue'
                      }
 
-        plt.figure(figsize=(30, 10))
+        plt.figure(figsize=(15, 15))
         for position, row in self.df_grid.iterrows():
             for state, value in row.items():  # Use items() instead of iteritems()
                 color = color_map[value]

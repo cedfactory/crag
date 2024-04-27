@@ -841,7 +841,7 @@ class Crag:
 
         if reboot \
                 or (delta_memory_used > 50) \
-                or (self.safety_step_iterration > 100):
+                or (self.safety_step_iterration > 300):
             memory_usage = round(utils.get_memory_usage() / (1024 * 1024), 1)
             print("****************** memory: ", memory_usage, " ******************")
             print("****************** delta memory: ", delta_memory_used, " ******************")
