@@ -10,6 +10,42 @@ from src.toolbox import settings_helper
 import psutil
 import pandas as pd
 
+
+def delete_files_by_pattern(directory, pattern):
+    # Get a list of all files in the directory
+    files = os.listdir(directory)
+
+    # Iterate over each file
+    for file in files:
+        # Check if the file matches the pattern
+        if fnmatch.fnmatch(file, pattern):
+            # Construct the file path
+            file_path = os.path.join(directory, file)
+            # Delete the file
+            os.remove(file_path)
+
+# Function to read CSV files from a directory and concatenate them
+def concat_csv_files(directory, existing_df=None):
+    # Get a list of all CSV files in the directory
+    csv_files = [file for file in os.listdir(directory) if file.endswith('.csv')]
+
+    # If no existing DataFrame is provided, create a new one
+    if existing_df is None:
+        result_df = pd.DataFrame()
+    else:
+        result_df = existing_df.copy()
+
+    # Read each CSV file and concatenate it as a new column
+    for file in csv_files:
+        file_path = os.path.join(directory, file)
+        # Read CSV file into a DataFrame
+        new_df = pd.read_csv(file_path, header=None, names=[file])
+        # Concatenate the new DataFrame if it's different from the existing columns
+        if result_df.empty or not new_df.equals(result_df.iloc[:, -1]):
+            result_df = pd.concat([new_df, result_df], axis=1)
+
+    return result_df
+
 def format_integer(num):
     return f"{num:08}"
 

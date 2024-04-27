@@ -167,6 +167,11 @@ class ExecuteTimeRecorder():
         plt.close()
 
     def save_grid_cycle_plot(self):
+        self.df_grid = utils.concat_csv_files(self.dump_system_directory, existing_df=None)
+        utils.delete_files_by_pattern(self.dump_system_directory, '.csv')
+        # utils.delete_files_by_pattern(self.dump_system_directory, '.png')
+        self.df_grid.to_csv(self.dump_system_directory + "/" + self.df_grid + "_df_grid_recorder.csv")
+
         # Plotting
         color_map = {'close_long_on_hold': 'grey',
                      'close_long_pending': 'orange',
@@ -176,7 +181,7 @@ class ExecuteTimeRecorder():
                      'open_long_engaged': 'blue'
                      }
 
-        plt.figure(figsize=(15, 15))
+        plt.figure(figsize=(30, 15))
         for position, row in self.df_grid.iterrows():
             for state, value in row.items():  # Use items() instead of iteritems()
                 color = color_map[value]
