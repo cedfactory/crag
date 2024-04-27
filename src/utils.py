@@ -33,6 +33,7 @@ def concat_csv_files(directory, existing_df=None):
         new_df.set_index(result_df.index, inplace=True)
         result_df = pd.concat([new_df, result_df], axis=1)
 
+    lst_colomn_to_drop = []
     # Get the column names
     columns = result_df.columns
 
@@ -43,9 +44,9 @@ def concat_csv_files(directory, existing_df=None):
 
         # Check if values in both columns are equal
         if col1.equals(col2):
-            # Drop one of the columns
-            result_df.drop(columns[i], axis=1, inplace=True)
-            break  # Exit the loop after dropping one column
+            lst_colomn_to_drop.append(columns[i])
+
+    result_df.drop(lst_columns_to_drop, axis=1, inplace=True)
 
     column_name = 'position'
     # Check if the column exists in the DataFrame
