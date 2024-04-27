@@ -164,7 +164,7 @@ class ExecuteTimeRecorder():
 
         plt.figure(figsize=(30, 10))
         for position, row in self.df_grid.iterrows():
-            for state, value in row.iteritems():
+            for state, value in row.items():  # Use items() instead of iteritems()
                 color = color_map[value]
                 plt.scatter(state, position, c=color)  # Switched state and position
 
