@@ -90,7 +90,7 @@ class ExecuteTimeRecorder():
         else:
             self.df_grid[str(len(self.df_grid.columns))] = df_grid["values"]
 
-        print(self.df_grid.to_string())
+        # print(self.df_grid.to_string())
         del df_grid
 
     def set_end_time(self, csci, section, position, cycle):
