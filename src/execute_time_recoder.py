@@ -167,10 +167,10 @@ class ExecuteTimeRecorder():
         plt.close()
 
     def save_grid_cycle_plot(self):
-        self.df_grid = utils.concat_csv_files(self.dump_system_directory, self.df_grid)
-        utils.delete_files_by_pattern(self.dump_system_directory, '.csv')
-        utils.delete_files_by_pattern(self.dump_system_directory, '.png')
-        self.df_grid.to_csv(self.dump_system_directory + "/" + self.df_grid + "_df_grid_recorder.csv")
+        self.df_grid = utils.concat_csv_files(self.dump_grid_directory, self.df_grid)
+        utils.delete_files_by_pattern(self.dump_grid_directory, '.csv')
+        utils.delete_files_by_pattern(self.dump_grid_directory, '.png')
+        self.df_grid.to_csv(self.dump_grid_directory + "/" + self.df_grid + "_df_grid_recorder.csv")
 
         # Plotting
         color_map = {'close_long_on_hold': 'grey',
