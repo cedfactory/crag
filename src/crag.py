@@ -298,11 +298,6 @@ class Crag:
                     start_minus_one_sec = datetime.timestamp(datetime.fromtimestamp(start) - timedelta(seconds=1))
 
                     while time.time() < start_minus_one_sec:
-                        if False:
-                            self.execute_timer.set_start_time("crag", "run", "set_system_record", self.main_cycle_safety_step)
-                            self.execute_timer.set_system_record(self.main_cycle_safety_step)
-                            self.execute_timer.set_end_time("crag", "run", "set_system_record", self.main_cycle_safety_step)
-
                         self.execute_timer.set_start_time("crag", "run", "safety_step", self.main_cycle_safety_step)
 
                         step_result = self.safety_step()
@@ -812,6 +807,7 @@ class Crag:
     def backup_debug(self, duration):
         dump_dir = "dump_crag"
         self.create_directory(dump_dir)
+
         if False:
             filename_dump = dump_dir + "/" + "crag_" + str(self.grid_iteration) + "_" + str(duration) + ".pickle"
             with open(filename_dump, 'wb') as file:
@@ -825,16 +821,27 @@ class Crag:
         delta_time = current_time - start
 
         delta_memory_used = round((utils.get_memory_usage() - self.init_master_memory) / (1024 * 1024), 2)
-        if self.safety_step_iterration < 10:
+        if self.safety_step_iterration < 20:
             self.sum_duration_safety_step += self.duration_time_safety_step
             if self.safety_step_iterration > 0:
                 self.average_duration_safety_step = self.sum_duration_safety_step / self.safety_step_iterration
             else:
                 self.average_duration_safety_step = self.sum_duration_safety_step
 
-        if (delta_memory_used > 50) \
-                or (self.duration_time_safety_step > (2 * self.average_duration_safety_step)) \
-                or (self.safety_step_iterration > 300):
+        reboot = False
+        if self.duration_time_safety_step > (1.5 * self.average_duration_safety_step):
+            self.execute_timer.set_start_time("crag", "request_backup", "set_system_record", self.safety_step_iterration)
+            self.execute_timer.set_system_record(self.safety_step_iterration)
+            self.execute_timer.set_end_time("crag", "request_backup", "set_system_record", self.safety_step_iterration)
+            if self.duration_time_safety_step > (3 * self.average_duration_safety_step):
+                reboot = True
+        else:
+            self.execute_timer.set_system_record_to_zero(self.safety_step_iterration)
+            self.execute_timer.set_time_to_zero("crag", "request_backup", "set_system_record", self.safety_step_iterration)
+
+        if reboot \
+                or (delta_memory_used > 50) \
+                or (self.safety_step_iterration > 100):
             memory_usage = round(utils.get_memory_usage() / (1024 * 1024), 1)
             print("****************** memory: ", memory_usage, " ******************")
             print("****************** delta memory: ", delta_memory_used, " ******************")
@@ -843,11 +850,11 @@ class Crag:
             print("****************** average: ", self.average_duration_safety_step," ******************")
             print("****************** iter : ", self.safety_step_iterration," ******************")
             if (delta_memory_used > 50):
-                self.msg_backup = "exit delta_memory_used condition" + "\n"
-            elif (self.duration_time_safety_step > (2 * self.average_duration_safety_step)):
-                self.msg_backup = "exit duration safety_step condition" + "\n"
+                self.msg_backup = "exit condition: delta_memory_used" + "\n"
+            elif reboot:
+                self.msg_backup = "exit condition: safety_step duration" + "\n"
             else:
-                self.msg_backup = "exit iterration condition" + "\n"
+                self.msg_backup = "exit condition: iterration" + "\n"
             self.msg_backup += "memory_usage " + str(round(memory_usage, 1)) + " delta " + str(round(delta_memory_used, 1)) + "\n"
             self.msg_backup += "duration " + str(round(self.duration_time_safety_step, 2)) + " average " + str(round(self.average_duration_safety_step, 2)) + "\n"
             self.msg_backup += "iter " + str(self.safety_step_iterration) + "\n"

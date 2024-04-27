@@ -83,12 +83,24 @@ class ExecuteTimeRecorder():
         self.df_time_recorder = pd.concat([self.df_time_recorder, pd.DataFrame([new_row])], ignore_index=True)
         del new_row
 
+    def set_system_record_to_zero(self, cycle):
+        new_row = {
+            "cycle": cycle,
+            "RAM_used_percent": 0,
+            "RAM_used_GB": 0,
+            "CPU_usage_percent": 0
+        }
+        self.df_time_recorder = pd.concat([self.df_time_recorder, pd.DataFrame([new_row])], ignore_index=True)
+        del new_row
+
     def set_grid_infos(self, df_grid):
         if len(self.df_grid) == 0:
             self.df_grid = df_grid.copy()
             self.df_grid.rename(columns={'values': '0'}, inplace=True)
         else:
-            self.df_grid[str(len(self.df_grid.columns))] = df_grid["values"]
+            # self.df_grid[str(len(self.df_grid.columns))] = df_grid["values"]
+            new_columns = df_grid["values"]
+            self.df_grid = pd.concat([self.df_grid, new_columns], axis=1)
 
         # print(self.df_grid.to_string())
         del df_grid
