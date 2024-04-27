@@ -176,10 +176,10 @@ class ExecuteTimeRecorder():
 
         # Plotting
         color_map = {'close_long_on_hold': 'grey',
-                     'close_long_pending': 'orange',
+                     'close_long_pending': 'pink',
                      'close_long_engaged': 'red',
-                     'open_long_on_hold': 'grey',
-                     'open_long_pending': 'yellow',
+                     'open_long_on_hold': 'silver',
+                     'open_long_pending': 'green',
                      'open_long_engaged': 'blue'
                      }
 
