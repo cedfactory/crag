@@ -11,19 +11,6 @@ import psutil
 import pandas as pd
 
 
-def delete_files_by_pattern(directory, pattern):
-    # Get a list of all files in the directory
-    files = os.listdir(directory)
-
-    # Iterate over each file
-    for file in files:
-        # Check if the file matches the pattern
-        if fnmatch.fnmatch(file, pattern):
-            # Construct the file path
-            file_path = os.path.join(directory, file)
-            # Delete the file
-            os.remove(file_path)
-
 # Function to read CSV files from a directory and concatenate them
 def concat_csv_files(directory, existing_df=None):
     # Get a list of all CSV files in the directory
@@ -39,11 +26,41 @@ def concat_csv_files(directory, existing_df=None):
     for file in csv_files:
         file_path = os.path.join(directory, file)
         # Read CSV file into a DataFrame
-        new_df = pd.read_csv(file_path, header=None, names=[file])
-        # Concatenate the new DataFrame if it's different from the existing columns
-        if result_df.empty or not new_df.equals(result_df.iloc[:, -1]):
-            result_df = pd.concat([new_df, result_df], axis=1)
+        new_df = pd.read_csv(file_path)
+        if "position" in new_df.columns:
+            new_df.drop("position", axis=1, inplace=True)
+        # new_df = new_df.drop(new_df.index[0])
+        new_df.set_index(result_df.index, inplace=True)
+        result_df = pd.concat([new_df, result_df], axis=1)
 
+    # Get the column names
+    columns = result_df.columns
+
+    # Iterate over pairs of adjacent columns
+    for i in range(len(columns) - 1):
+        col1 = result_df[columns[i]]
+        col2 = result_df[columns[i + 1]]
+
+        # Check if values in both columns are equal
+        if col1.equals(col2):
+            # Drop one of the columns
+            result_df.drop(columns[i], axis=1, inplace=True)
+            break  # Exit the loop after dropping one column
+
+    column_name = 'position'
+    # Check if the column exists in the DataFrame
+    if column_name in result_df.columns:
+        column_values = result_df[column_name]
+
+        # Check if the column values are equal to the DataFrame's index
+        if column_values.equals(result_df.index):
+            # Drop the column if its values are equal to the index
+            result_df.drop(column_name, axis=1, inplace=True)
+        else:
+            # Set the column values as the DataFrame's index
+            result_df.set_index(column_name, inplace=True)
+
+    result_df.columns = range(len(result_df.columns))
     return result_df
 
 def format_integer(num):

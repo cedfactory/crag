@@ -101,7 +101,9 @@ class ExecuteTimeRecorder():
             # Check if the new column is different from the last column
             if (self.df_grid.iloc[:, -1] != df_grid["values"]).any():
                 # Join all columns at once using pd.concat(axis=1)
-                new_columns = df_grid["values"]
+                last_column_name = str(int(self.df_grid.columns[-1]) + 1)
+                df_grid.rename(columns={'values': last_column_name}, inplace=True)
+                new_columns = df_grid[last_column_name]
                 self.df_grid = pd.concat([self.df_grid, new_columns], axis=1)
 
         # print(self.df_grid.to_string())
@@ -168,9 +170,9 @@ class ExecuteTimeRecorder():
 
     def save_grid_cycle_plot(self):
         self.df_grid = utils.concat_csv_files(self.dump_grid_directory, self.df_grid)
-        utils.delete_files_by_pattern(self.dump_grid_directory, '.csv')
-        utils.delete_files_by_pattern(self.dump_grid_directory, '.png')
-        self.df_grid.to_csv(self.dump_grid_directory + "/" + self.df_grid + "_df_grid_recorder.csv")
+        utils.empty_files(self.dump_grid_directory, pattern=".png")
+        utils.empty_files(self.dump_grid_directory, pattern=".csv")
+        self.df_grid.to_csv(self.dump_grid_directory + "/" + self.master_cycle + "_df_grid_recorder.csv")
 
         # Plotting
         color_map = {'close_long_on_hold': 'grey',
