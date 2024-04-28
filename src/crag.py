@@ -1,4 +1,3 @@
-import gc
 import os
 import sys
 
@@ -10,7 +9,7 @@ from . import trade,rtstr,utils,traces,logger,execute_time_recoder
 from .toolbox import monitoring_helper
 import pika
 import json
-import ast
+# import ast
 import threading
 import pickle
 from pathlib import Path
@@ -18,9 +17,9 @@ from datetime import datetime, timedelta
 from datetime import date
 from threading import Thread
 from concurrent.futures import ThreadPoolExecutor
-import tracemalloc
+import multiprocessing
+# import tracemalloc
 
-import pickle
 import gc
 
 # to launch crag as a rabbitmq receiver :
@@ -815,11 +814,8 @@ class Crag:
             with open(filename_dump, 'wb') as file:
                 pickle.dump(self, file)
 
-        self.execute_timer.close_timer_thread()
-        # with ThreadPoolExecutor() as executor:
-        #     future = executor.submit(self.execute_timer.close_timer())
-        #     futures.append(future)
-            # futures.append(executor.submit(self.execute_timer.close_timer()))
+        process = multiprocessing.Process(target=self.execute_timer.close_timer_thread)
+        process.start()
         # self.execute_timer.close_timer()
 
     def request_backup(self, start):
