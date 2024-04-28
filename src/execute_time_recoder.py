@@ -138,27 +138,43 @@ class ExecuteTimeRecorder():
                     future.result()
         else:
             self.close_timer()
+            print("....self.close_timer() ending")
             self.close_system()
+            print("....self.close_system() ending")
             self.close_grid()
+            print("....self.close_grid() ending")
 
     def close_timer(self):
+        # Save DataFrame to CSV
         self.df_time_recorder.to_csv(self.dump_time_directory + "/" + self.master_cycle + "_df_time_recorder.csv")
+
+        # Drop columns
         self.df_time_recorder.drop(columns=['start', 'end'], inplace=True)
-        lst_csci = self.df_time_recorder["csci"].to_list()
-        lst_csci = list(set(lst_csci))
-        for csci in lst_csci:
-            mask = (self.df_time_recorder["csci"] == csci)
-            df_filtered_csci = self.df_time_recorder[mask].copy()
-            lst_section = list(set(self.df_time_recorder["section"].to_list()))
-            for section in lst_section:
-                mask = (self.df_time_recorder["section"] == section)
-                df_filtered_section = df_filtered_csci[mask].copy()
-                lst_position = list(set(df_filtered_section["position"].to_list()))
-                for position in lst_position:
-                    mask = (self.df_time_recorder["position"] == position)
-                    df_filtered_position = df_filtered_section[mask].copy()
+
+        # Get unique CSCI values
+        unique_csci = self.df_time_recorder["csci"].unique()
+
+        for csci in unique_csci:
+            csci_mask = (self.df_time_recorder["csci"] == csci)
+            df_filtered_csci = self.df_time_recorder.loc[csci_mask].copy()
+
+            # Get unique section values
+            unique_section = df_filtered_csci["section"].unique()
+
+            for section in unique_section:
+                section_mask = (df_filtered_csci["section"] == section)
+                df_filtered_section = df_filtered_csci.loc[section_mask].copy()
+
+                # Get unique position values
+                unique_position = df_filtered_section["position"].unique()
+
+                for position in unique_position:
+                    position_mask = (df_filtered_section["position"] == position)
+                    df_filtered_position = df_filtered_section.loc[position_mask].copy()
+
                     # Save the plot for this cycle
                     self.save_cycle_plot(df_filtered_position, csci, section, position)
+
 
     def close_system(self):
         self.df_system_recorder.to_csv(self.dump_system_directory + "/" + self.master_cycle + "_df_system_recorder.csv")
@@ -169,6 +185,7 @@ class ExecuteTimeRecorder():
 
     def close_grid(self):
         self.df_grid = utils.concat_csv_files(self.dump_grid_directory, self.df_grid)
+        # self.df_grid = utils.concat_csv_files_optimized(self.dump_grid_directory, self.df_grid)
         utils.empty_files(self.dump_grid_directory, pattern=".png")
         utils.empty_files(self.dump_grid_directory, pattern=".csv")
         self.df_grid.to_csv(self.dump_grid_directory + "/" + self.master_cycle + "_df_grid_recorder.csv")

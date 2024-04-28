@@ -246,7 +246,9 @@ class Crag:
             self.log_discord(msg_broker_info, "run")
             del msg_broker_info
         else:
-            msg = "REBOOT STARTEGY"
+            msg = "REBOOT STARTEGY" + "\n"
+            start_reboot = datetime.now()
+            msg += "at: " + start_reboot.strftime("%Y/%m/%d %H:%M:%S")
             self.log_discord(msg, "born again")
             self.safety_step_iterration = 0
             self.sum_duration_safety_step = 0
@@ -803,8 +805,6 @@ class Crag:
             self.log("[crag::backup]", self.backup_filename)
             pickle.dump(self, file)
 
-
-
     def backup_debug(self, duration):
         dump_dir = "dump_crag"
         self.create_directory(dump_dir)
@@ -814,9 +814,12 @@ class Crag:
             with open(filename_dump, 'wb') as file:
                 pickle.dump(self, file)
 
-        process = multiprocessing.Process(target=self.execute_timer.close_timer_thread)
-        process.start()
-        # self.execute_timer.close_timer()
+        if True:
+            process = multiprocessing.Process(target=self.execute_timer.close_timer_thread)
+            process.start()
+            print("go......")
+        else:
+            self.execute_timer.close_timer_thread()
 
     def request_backup(self, start):
         current_time = datetime.now()
@@ -861,6 +864,8 @@ class Crag:
             self.msg_backup += "memory_usage " + str(round(memory_usage, 1)) + " delta " + str(round(delta_memory_used, 1)) + "\n"
             self.msg_backup += "duration " + str(round(self.duration_time_safety_step, 2)) + " average " + str(round(self.average_duration_safety_step, 2)) + "\n"
             self.msg_backup += "iter " + str(self.safety_step_iterration) + "\n"
+            start_reboot = datetime.now()
+            self.msg_backup += "at: " + start_reboot.strftime("%Y/%m/%d %H:%M:%S") + "\n"
             self.log_discord(self.msg_backup.upper(), "REBOOT STATUS")
 
             self.backup_debug(round(self.duration_time_safety_step, 2))

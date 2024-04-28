@@ -10,6 +10,35 @@ from src.toolbox import settings_helper
 import psutil
 import pandas as pd
 
+def concat_csv_files_optimized(directory, existing_df=None):
+    # Get a list of all CSV files in the directory
+    csv_files = [file for file in os.listdir(directory) if file.endswith('.csv')]
+
+    # Concatenate all CSV files into a single DataFrame
+    dfs = []
+    for file in csv_files:
+        file_path = os.path.join(directory, file)
+        new_df = pd.read_csv(file_path)
+        if "position" in new_df.columns:
+            new_df.drop("position", axis=1, inplace=True)
+        dfs.append(new_df)
+
+    result_df = pd.concat(dfs, axis=1)
+
+    # Drop duplicate columns
+    result_df = result_df.loc[:, ~result_df.columns.duplicated()]
+
+    # Drop 'position' column if it exists and is equal to the index
+    if existing_df is not None and 'position' in result_df.columns:
+        if result_df['position'].equals(existing_df.index):
+            result_df.drop(columns=['position'], inplace=True)
+        else:
+            result_df.set_index('position', inplace=True)
+
+    # Reset column names to sequential integers
+    result_df.columns = range(len(result_df.columns))
+
+    return result_df
 
 # Function to read CSV files from a directory and concatenate them
 def concat_csv_files(directory, existing_df=None):
