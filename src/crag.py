@@ -17,7 +17,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 from datetime import date
 from threading import Thread
-
+from concurrent.futures import ThreadPoolExecutor
 import tracemalloc
 
 import pickle
@@ -804,6 +804,8 @@ class Crag:
             self.log("[crag::backup]", self.backup_filename)
             pickle.dump(self, file)
 
+
+
     def backup_debug(self, duration):
         dump_dir = "dump_crag"
         self.create_directory(dump_dir)
@@ -813,7 +815,12 @@ class Crag:
             with open(filename_dump, 'wb') as file:
                 pickle.dump(self, file)
 
-        self.execute_timer.close_timer()
+        self.execute_timer.close_timer_thread()
+        # with ThreadPoolExecutor() as executor:
+        #     future = executor.submit(self.execute_timer.close_timer())
+        #     futures.append(future)
+            # futures.append(executor.submit(self.execute_timer.close_timer()))
+        # self.execute_timer.close_timer()
 
     def request_backup(self, start):
         current_time = datetime.now()

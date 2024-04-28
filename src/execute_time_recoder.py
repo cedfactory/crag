@@ -5,6 +5,8 @@ from . import utils
 import os
 import psutil
 
+from concurrent.futures import ThreadPoolExecutor
+
 class ExecuteTimeRecorder():
     def __init__(self, iter):
         self.lst_recorder_columns = ["csci", "section", "cycle", "position", "start", "end", "duration"]
@@ -23,6 +25,8 @@ class ExecuteTimeRecorder():
                 utils.empty_files(dir, pattern=".png")
                 utils.empty_files(dir, pattern=".csv")
         del lst_dir
+
+        self.plot_grid = False
 
 
     def set_master_cycle(self, cycle):
@@ -120,6 +124,11 @@ class ExecuteTimeRecorder():
         self.df_time_recorder.loc[mask, "end"] = current_end_timestamp
         self.df_time_recorder.loc[mask, "duration"] = self.df_time_recorder.loc[mask, "end"] - self.df_time_recorder.loc[mask, "start"]
 
+    def close_timer_thread(self):
+        with ThreadPoolExecutor() as executor:
+            futures = []
+            futures.append(executor.submit(self.close_timer()))
+
     def close_timer(self):
         self.df_time_recorder.to_csv(self.dump_time_directory + "/" + self.master_cycle + "_df_time_recorder.csv")
         self.df_time_recorder.drop(columns=['start', 'end'], inplace=True)
@@ -139,6 +148,7 @@ class ExecuteTimeRecorder():
                     # Save the plot for this cycle
                     self.save_cycle_plot(df_filtered_position, csci, section, position)
         self.close_system()
+        self.save_grid_cycle_plot()
 
     def close_system(self):
         self.df_system_recorder.to_csv(self.dump_system_directory + "/" + self.master_cycle + "_df_system_recorder.csv")
@@ -146,7 +156,6 @@ class ExecuteTimeRecorder():
         lst_section.remove("cycle")
         for section in lst_section:
             self.save_system_cycle_plot(self.df_system_recorder, section)
-        self.save_grid_cycle_plot()
 
     def save_cycle_plot(self, df_filtered_cycle, csci, section, position):
         plt.figure(figsize=(30, 10))
@@ -174,24 +183,25 @@ class ExecuteTimeRecorder():
         utils.empty_files(self.dump_grid_directory, pattern=".csv")
         self.df_grid.to_csv(self.dump_grid_directory + "/" + self.master_cycle + "_df_grid_recorder.csv")
 
-        # Plotting
-        color_map = {'close_long_on_hold': 'silver',
-                     'close_long_pending': 'gold',
-                     'close_long_engaged': 'red',
-                     'open_long_on_hold': 'grey',
-                     'open_long_pending': 'green',
-                     'open_long_engaged': 'blue'
-                     }
+        if self.plot_grid:
+            # Plotting
+            color_map = {'close_long_on_hold': 'silver',
+                         'close_long_pending': 'gold',
+                         'close_long_engaged': 'red',
+                         'open_long_on_hold': 'grey',
+                         'open_long_pending': 'green',
+                         'open_long_engaged': 'blue'
+                         }
 
-        plt.figure(figsize=(30, 15))
-        for position, row in self.df_grid.iterrows():
-            for state, value in row.items():  # Use items() instead of iteritems()
-                color = color_map[value]
-                plt.scatter(state, position, c=color)  # Switched state and position
+            plt.figure(figsize=(30, 15))
+            for position, row in self.df_grid.iterrows():
+                for state, value in row.items():  # Use items() instead of iteritems()
+                    color = color_map[value]
+                    plt.scatter(state, position, c=color)  # Switched state and position
 
-        plt.xlabel('Y')  # Label switched to match the new axis
-        plt.ylabel('X')  # Label switched to match the new axis
-        plt.title('Scatter Plot')
-        plt.grid(True)
-        plt.savefig(f"{self.dump_grid_directory}/{self.master_cycle}-grid.png")
-        plt.close()
+            plt.xlabel('Y')  # Label switched to match the new axis
+            plt.ylabel('X')  # Label switched to match the new axis
+            plt.title('Scatter Plot')
+            plt.grid(True)
+            plt.savefig(f"{self.dump_grid_directory}/{self.master_cycle}-grid.png")
+            plt.close()
