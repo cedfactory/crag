@@ -203,23 +203,21 @@ class ExecuteTimeRecorder():
             self.save_system_cycle_plot(self.df_system_recorder, section)
 
     def close_grid(self):
-        self.df_grid = utils.concat_csv_files_with_df(self.dump_grid_directory, self.df_grid)
-        utils.empty_files(self.dump_grid_directory, pattern=".png")
-        utils.empty_files(self.dump_grid_directory, pattern=".csv")
+        # self.df_grid = utils.concat_csv_files_with_df(self.dump_grid_directory, self.df_grid)
+        # utils.empty_files(self.dump_grid_directory, pattern=".png")
+        # utils.empty_files(self.dump_grid_directory, pattern=".csv")
         self.df_grid.to_csv(self.dump_grid_directory + "/" + self.master_cycle + "_df_grid_recorder.csv")
 
         if self.plot_df_grid:
             self.trigger_plot_df_grid()
 
     def plot_all_close_grid(self):
-        csv_files = [file for file in os.listdir(self.dump_grid_directory) if file.endswith('.csv')]
-        for filename in csv_files:
-            self.df_grid = pd.read_csv(os.path.join(self.dump_grid_directory, filename))
-            self.master_cycle = filename.split("-")[0]
-            self.trigger_plot_df_grid()
+        self.df_grid = utils.concat_csv_files_with_df(self.dump_grid_directory)
+        self.trigger_plot_df_grid()
 
     def trigger_plot_df_grid(self):
         self.df_grid = utils.drop_duplicate_grid_columns(self.df_grid)
+        self.master_cycle = "000000"
         self.save_grid_cycle_plot()
 
     def save_cycle_plot(self, df_filtered_cycle, csci, section, position):

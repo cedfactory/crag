@@ -10,6 +10,25 @@ from src.toolbox import settings_helper
 import psutil
 import pandas as pd
 
+def concat_csv_files(directory):
+    csv_files = [file for file in os.listdir(directory) if file.endswith('.csv')]
+    if len(csv_files) == 0:
+        return None
+    else:
+        dfs = []
+        # Iterate over CSV files in the directory
+        for filename in csv_files:
+            # Read the CSV file into a DataFrame
+            df = pd.read_csv(os.path.join(directory, filename))
+            if "position" in df.columns:
+                df.set_index('position', inplace=True, drop=True)
+            # Append the DataFrame to the list
+            dfs.append(df)
+        df_new = pd.concat(dfs, axis=1)
+
+    df_new.columns = range(len(df_new.columns))
+    return df_new
+
 def concat_csv_files_with_df(directory, existing_df=None):
     csv_files = [file for file in os.listdir(directory) if file.endswith('.csv')]
     if len(csv_files) == 0:
