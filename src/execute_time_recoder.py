@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import utils
 import os
 import psutil
+import numpy as np
 
 from concurrent.futures import ThreadPoolExecutor
 
@@ -251,11 +252,13 @@ class ExecuteTimeRecorder():
                      'open_long_engaged': 'blue'
                      }
 
+        positions = self.df_grid.index.values  # Get positions
+        states = self.df_grid.columns.values  # Get states
+        colors = np.vectorize(color_map.get)(self.df_grid.values)  # Map values to colors
+
         plt.figure(figsize=(50, 15))
-        for position, row in self.df_grid.iterrows():
-            for state, value in row.items():  # Use items() instead of iteritems()
-                color = color_map[value]
-                plt.scatter(state, position, c=color)  # Switched state and position
+        for i in range(len(positions)):
+            plt.scatter(states, np.full(len(states), positions[i]), c=colors[i])
 
         plt.xlabel('Y')  # Label switched to match the new axis
         plt.ylabel('X')  # Label switched to match the new axis
