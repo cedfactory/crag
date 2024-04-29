@@ -10,88 +10,57 @@ from src.toolbox import settings_helper
 import psutil
 import pandas as pd
 
-def concat_csv_files_optimized(directory, existing_df=None):
-    # Get a list of all CSV files in the directory
+def concat_csv_files_with_df(directory, existing_df=None):
     csv_files = [file for file in os.listdir(directory) if file.endswith('.csv')]
-
-    # Concatenate all CSV files into a single DataFrame
-    dfs = []
-    for file in csv_files:
-        file_path = os.path.join(directory, file)
-        new_df = pd.read_csv(file_path)
-        if "position" in new_df.columns:
-            new_df.drop("position", axis=1, inplace=True)
-        dfs.append(new_df)
-
-    result_df = pd.concat(dfs, axis=1)
-
-    # Drop duplicate columns
-    result_df = result_df.loc[:, ~result_df.columns.duplicated()]
-
-    # Drop 'position' column if it exists and is equal to the index
-    if existing_df is not None and 'position' in result_df.columns:
-        if result_df['position'].equals(existing_df.index):
-            result_df.drop(columns=['position'], inplace=True)
-        else:
-            result_df.set_index('position', inplace=True)
-
-    # Reset column names to sequential integers
-    result_df.columns = range(len(result_df.columns))
-
-    return result_df
-
-# Function to read CSV files from a directory and concatenate them
-def concat_csv_files(directory, existing_df=None):
-    # Get a list of all CSV files in the directory
-    csv_files = [file for file in os.listdir(directory) if file.endswith('.csv')]
+    if len(csv_files) == 0:
+        return existing_df
+    elif len(csv_files) > 1:
+        dfs = []
+        # Iterate over CSV files in the directory
+        for filename in csv_files:
+            # Read the CSV file into a DataFrame
+            df = pd.read_csv(os.path.join(directory, filename))
+            if "position" in df.columns:
+                df.set_index('position', inplace=True, drop=True)
+            # Append the DataFrame to the list
+            dfs.append(df)
+        df_new = pd.concat(dfs, axis=1)
+    elif len(csv_files) == 1:
+        df_new = pd.read_csv(os.path.join(directory, csv_files[0]))
+        if "position" in df_new.columns:
+            df_new.set_index('position', inplace=True, drop=True)
 
     # If no existing DataFrame is provided, create a new one
     if existing_df is None:
-        result_df = pd.DataFrame()
+        df_new.columns = range(len(df_new.columns))
+        return df_new
     else:
-        result_df = existing_df.copy()
+        df_new.set_index(existing_df.index, inplace=True)
+        result_df = pd.concat([df_new, existing_df], axis=1)
+        result_df.columns = range(len(result_df.columns))
+        return result_df
 
-    # Read each CSV file and concatenate it as a new column
-    for file in csv_files:
-        file_path = os.path.join(directory, file)
-        # Read CSV file into a DataFrame
-        new_df = pd.read_csv(file_path)
-        if "position" in new_df.columns:
-            new_df.drop("position", axis=1, inplace=True)
-        # new_df = new_df.drop(new_df.index[0])
-        new_df.set_index(result_df.index, inplace=True)
-        result_df = pd.concat([new_df, result_df], axis=1)
+# Function to read CSV files from a directory and concatenate them
+def drop_duplicate_grid_columns(df):
+    if "position" in df.columns:
+        df.set_index('position', inplace=True, drop=True)
 
-    result_df.columns = range(len(result_df.columns))
+    df.columns = range(len(df.columns))
     lst_columns_to_drop = []
-    columns = result_df.columns
+    columns = df.columns
 
     # Iterate over pairs of adjacent columns
     for i in range(len(columns) - 1):
-        col1 = result_df[columns[i]]
-        col2 = result_df[columns[i + 1]]
+        col1 = df[columns[i]]
+        col2 = df[columns[i + 1]]
         # Check if values in both columns are equal
         if col1.equals(col2):
             lst_columns_to_drop.append(columns[i])
     if len(lst_columns_to_drop) > 0:
         lst_columns_to_drop = list(set(lst_columns_to_drop))
-        result_df.drop(lst_columns_to_drop, axis=1, inplace=True)
+        df.drop(lst_columns_to_drop, axis=1, inplace=True)
 
-    column_name = 'position'
-    # Check if the column exists in the DataFrame
-    if column_name in result_df.columns:
-        column_values = result_df[column_name]
-
-        # Check if the column values are equal to the DataFrame's index
-        if column_values.equals(result_df.index):
-            # Drop the column if its values are equal to the index
-            result_df.drop(column_name, axis=1, inplace=True)
-        else:
-            # Set the column values as the DataFrame's index
-            result_df.set_index(column_name, inplace=True)
-
-    result_df.columns = range(len(result_df.columns))
-    return result_df
+    return df
 
 def format_integer(num):
     return f"{num:08}"
