@@ -39,7 +39,7 @@
     </broker>
     <crag id="grid"
           interval="3600"
-          botId="ayato_sub1"
+          botId="subfortest1"
           loggers="file=log"
     />
 </configuration>
