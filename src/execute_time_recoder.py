@@ -9,13 +9,21 @@ import numpy as np
 from concurrent.futures import ThreadPoolExecutor
 
 class ExecuteTimeRecorder():
-    def __init__(self, iter):
+    def __init__(self, iter, directory="./dump_timer"):
         self.lst_recorder_columns = ["csci", "section", "cycle", "position", "start", "end", "duration"]
         self.df_time_recorder = pd.DataFrame(columns=self.lst_recorder_columns)
         self.lst_system_recorder_columns = ["cycle", "RAM_used_percent", "RAM_used_GB", "CPU_usage_percent"]
         self.df_system_recorder = pd.DataFrame(columns=self.lst_system_recorder_columns)
         self.df_grid = pd.DataFrame()
-        self.dump_directory = "./dump_timer"
+
+        self.set_input_dir(iter, directory)
+
+        self.plot_df_timer = False
+        self.plot_df_system = False
+        self.plot_df_grid = False
+
+    def set_input_dir(self, iter, directory="./dump_timer"):
+        self.dump_directory = directory
         self.dump_time_directory = self.dump_directory + "/timer"
         self.dump_system_directory = self.dump_directory + "/system"
         self.dump_grid_directory = self.dump_directory + "/grid"
@@ -28,11 +36,6 @@ class ExecuteTimeRecorder():
             elif iter == -1:
                 utils.empty_files(dir, pattern=".png")
         del lst_dir
-
-        self.plot_df_timer = False
-        self.plot_df_system = False
-        self.plot_df_grid = False
-
 
 
     def set_master_cycle(self, cycle):
@@ -217,8 +220,19 @@ class ExecuteTimeRecorder():
 
     def trigger_plot_df_grid(self):
         self.df_grid = utils.drop_duplicate_grid_columns(self.df_grid)
-        self.master_cycle = "000000"
-        self.save_grid_cycle_plot()
+        chunk_size = 200
+        num_columns = len(self.df_grid.columns)
+        if num_columns <= chunk_size:
+            lst_df = [self.df_grid]
+        else:
+            num_chunks = num_columns // chunk_size + (1 if num_columns % chunk_size != 0 else 0)
+            lst_df = [self.df_grid.iloc[:, i * chunk_size:(i + 1) * chunk_size] for i in range(num_chunks)]
+        cpt = 0
+        for df in lst_df:
+            self.df_grid = df
+            self.master_cycle = "000000" + str(cpt)
+            self.save_grid_cycle_plot()
+            cpt += 1
 
     def save_cycle_plot(self, df_filtered_cycle, csci, section, position):
         plt.figure(figsize=(30, 10))
@@ -246,7 +260,7 @@ class ExecuteTimeRecorder():
                      'close_long_pending': 'gold',
                      'close_long_engaged': 'red',
                      'open_long_on_hold': 'grey',
-                     'open_long_pending': 'green',
+                     'open_long_pending': 'orange',
                      'open_long_engaged': 'blue'
                      }
 
@@ -254,7 +268,7 @@ class ExecuteTimeRecorder():
         states = self.df_grid.columns.values  # Get states
         colors = np.vectorize(color_map.get)(self.df_grid.values)  # Map values to colors
 
-        plt.figure(figsize=(50, 15))
+        plt.figure(figsize=(30, 15))
         for i in range(len(positions)):
             plt.scatter(states, np.full(len(states), positions[i]), c=colors[i])
 
