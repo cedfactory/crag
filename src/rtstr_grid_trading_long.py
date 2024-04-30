@@ -556,12 +556,6 @@ class GridPosition():
         return sorted_list
 
     def set_to_pending_execute_order(self, symbol, lst_order_to_execute):
-        """
-        df = self.grid[symbol]
-        for placed_order in lst_order_to_execute:
-            df.loc[df['grid_id'] == placed_order["grid_id"], 'status'] = 'pending'
-            df.loc[df['grid_id'] == placed_order["grid_id"], 'orderId'] = ''
-        """
         df = self.grid[symbol]
         for placed_order in lst_order_to_execute:
             grid_id = placed_order["grid_id"]
