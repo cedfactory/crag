@@ -4,6 +4,7 @@ from .bitget.mix import market_api as market
 from .bitget.mix import account_api as account
 from .bitget.mix import position_api as position
 from .bitget.mix import order_api as order
+from .bitget.mix import plan_api as plan
 from .bitget.spot import public_api as public
 from . bitget import exceptions
 from .bitget.mix_v2 import order_api as orderV2
@@ -28,6 +29,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         self.positionApi = None
         self.orderApi = None
         self.publicApi = None
+        self.planApi = None
         self.orderV2Api = None
 
         self.failure = 0
@@ -56,6 +58,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             self.accountApi = account.AccountApi(api_key, api_secret, api_password, use_server_time=False, first=False)
             self.positionApi = position.PositionApi(api_key, api_secret, api_password, use_server_time=False, first=False)
             self.orderApi = order.OrderApi(api_key, api_secret, api_password, use_server_time=False, first=False)
+            self.planApi = plan.PlanApi(api_key, api_secret, api_password, use_server_time=False, first=False)
             self.orderV2Api = orderV2.OrderApi(api_key, api_secret, api_password, use_server_time=False, first=False)
 
         # initialize the public api
@@ -185,6 +188,40 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                     self.log_api_failure("orderApi.current", n_attempts)
                     time.sleep(2)
                     n_attempts = n_attempts - 1
+        return res
+
+    # @authentication_required
+    def get_triggers(self):
+        params = {
+            "planType": "normal_plan",
+            "productType": "USDT-FUTURES"
+        }
+
+        if self.get_cache_status():
+            df_from_cache = self.requests_cache_get("get_triggers")
+            if isinstance(df_from_cache, pd.DataFrame):
+                return df_from_cache.copy()
+
+        res = pd.DataFrame()
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                response = self.orderV2Api.ordersPlanPending(params)
+                lst_triggers = [data for data in response["data"]["entrustedList"]]
+                res = self._build_df_triggers(lst_triggers)
+                del lst_triggers
+                del response
+                self.success += 1
+                break
+            except:
+                self.log_api_failure("orderV2Api.ordersPlanPending", n_attempts)
+                time.sleep(2)
+                n_attempts = n_attempts - 1
+        del n_attempts
+
+        if self.get_cache_status():
+            self.requests_cache_set("get_triggers", res.copy())
+
         return res
 
     @authentication_required
@@ -337,6 +374,52 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         locals().clear()
         return result
 
+    # reference : https://www.bitget.com/api-doc/contract/plan/Place-Plan-Order
+    @authentication_required
+    def _place_trigger_order(self, symbol, margin_coin, size, side, order_type, client_oid, trigger_params, price=''):
+        params = {}
+        params["planType"] = "normal_plan"
+        params["symbol"] = symbol
+        params["productType"] = "USDT-FUTURES"
+        params["marginMode"] = "isolated"
+        params["marginCoin"] = margin_coin
+        params["size"] = size
+        if price != "":
+            params["price"] = price  # optional
+        #params["callbackRatio"] =  # optional
+        params["triggerPrice"] = trigger_params["trigger_price"]
+        params["triggerType"] = "fill_price"
+        params["side"] = side
+        #params["tradeSide"] =  # optional
+        params["orderType"] = order_type
+        params["clienOid"] = client_oid
+        #params["reduceOnly"] =  # optional
+        #params["stopSurplusTriggerPrice"] =  # optional
+        #params["stopSurplusExecutePrice"] =  # optional
+        #params["stopSurplusTriggerType"] =  # optional
+        #params["stopLossTriggerPrice"] =  # optional
+        #params["stopLossExecutePrice"] =  # optional
+        #params["stopLossTriggerType"] = # optional
+        result = {}
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                #result = self.orderV2Api.placePlanOrder(params)
+                result = self.planApi.place_plan(symbol, margin_coin, size, side, order_type, trigger_params["trigger_price"], "market_price", price, client_oid)
+
+                self.success += 1
+                break
+            except Exception as inst:
+                self.log(str(inst))
+                if hasattr(inst, "message"):
+                    self.log(inst.message)
+                self.log_api_failure("orderV2Api._place_trigger_order", n_attempts)
+                time.sleep(2)
+                n_attempts = n_attempts - 1
+        n_attempts = False
+        locals().clear()
+        return result
+
     @authentication_required
     def _batch_orders_api(self, symbol, marginCoin, batch_order):
 
@@ -369,20 +452,43 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         return self._place_order_api(symbol, marginCoin="USDT", size=amount, side='close_short', orderType='market', clientOId=clientoid)
 
     @authentication_required
-    def _open_long_order(self, symbol, amount, clientoid, price):
-        return self._place_order_api(symbol, marginCoin="USDT", size=amount, side='open_long', orderType='limit', price=price, clientOId=clientoid)
+    def _open_long_order(self, symbol, amount, client_oid, price, trigger_params=None):
+        if trigger_params:
+            #symbol = "XRPUSDT"  # TOREMOVE
+            return self._place_trigger_order(symbol, margin_coin="USDT", size=amount, side='open_long',
+                                             order_type='limit', price=price, client_oid=client_oid, trigger_params=trigger_params)
+        else:
+            return self._place_order_api(symbol, marginCoin="USDT", size=amount, side='open_long',
+                                         orderType='limit', price=price, clientOId=client_oid)
 
     @authentication_required
-    def _close_long_order(self, symbol, amount, clientoid, price):
-        return self._place_order_api(symbol, marginCoin="USDT", size=amount, side='close_long', orderType='limit', price=price, clientOId=clientoid)
+    def _close_long_order(self, symbol, amount, client_oid, price, trigger_params=None):
+        if trigger_params:
+            return self._place_trigger_order(symbol, margin_coin="USDT", size=amount, side='Sell',
+                                             order_type='limit', price=price, client_oid=client_oid, trigger_params=trigger_params)
+        else:
+            return self._place_order_api(symbol, marginCoin="USDT", size=amount, side='close_long',
+                                         orderType='limit', price=price, clientOId=client_oid)
 
     @authentication_required
-    def _open_short_order(self, symbol, amount, clientoid, price):
-        return self._place_order_api(symbol, marginCoin="USDT", size=amount, side='open_short', orderType='limit', price=price, clientOId=clientoid)
+    def _open_short_order(self, symbol, amount, client_oid, price, trigger_params=None):
+        if trigger_params:
+            return self._place_trigger_order(symbol, margin_coin="USDT", size=amount, side='Sell',
+                                             order_type='limit', price=price, client_oid=client_oid,
+                                             trigger_params=trigger_params)
+        else:
+            return self._place_order_api(symbol, marginCoin="USDT", size=amount, side='open_short',
+                                         orderType='limit', price=price, clientOId=client_oid)
 
     @authentication_required
-    def _close_short_order(self, symbol, amount, clientoid, price):
-        return self._place_order_api(symbol, marginCoin="USDT", size=amount, side='close_short', orderType='limit', price=price, clientOId=clientoid)
+    def _close_short_order(self, symbol, amount, client_oid, price, trigger_params=None):
+        if trigger_params:
+            return self._place_trigger_order(symbol, margin_coin="USDT", size=amount, side='Buy',
+                                             order_type='limit', price=price, client_oid=client_oid,
+                                             trigger_params=trigger_params)
+        else:
+            return self._place_order_api(symbol, marginCoin="USDT", size=amount, side='close_short',
+                                         orderType='limit', price=price, clientOId=client_oid)
 
     @authentication_required
     def get_wallet_equity(self):

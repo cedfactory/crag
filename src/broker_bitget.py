@@ -142,6 +142,10 @@ class BrokerBitGet(broker.Broker):
         if trade.gross_size == 0:
             self.log('transaction failed ", trade.type, " : ' + self.trade_symbol + ' - gross_size: ' + str(trade.gross_size))
 
+        trigger_params = None
+        if hasattr(trade, "trigger") and trade.trigger and hasattr(trade, "trigger_price"):
+            trigger_params = {}
+            trigger_params["trigger_price"] = trade.trigger_price
         if trade.type in ["OPEN_LONG", "OPEN_SHORT", "OPEN_LONG_ORDER", "OPEN_SHORT_ORDER", "CLOSE_LONG_ORDER", "CLOSE_SHORT_ORDER"]:
             if trade.type == "OPEN_LONG":
                 self.log("{} size: {}".format(trade.type, trade.gross_size))
@@ -151,16 +155,16 @@ class BrokerBitGet(broker.Broker):
                 transaction = self._open_short_position(self.trade_symbol, trade.gross_size, self.clientOid)
             elif trade.type == "OPEN_LONG_ORDER":
                 self.log("{} size: {} price: {}".format(trade.type, trade.gross_size, trade.price))
-                transaction = self._open_long_order(self.trade_symbol, trade.gross_size, self.clientOid, trade.price)
+                transaction = self._open_long_order(self.trade_symbol, trade.gross_size, self.clientOid, trade.price, trigger_params)
             elif trade.type == "OPEN_SHORT_ORDER":
                 self.log("{} size: {} price: {}".format(trade.type, trade.gross_size, trade.price))
-                transaction = self._open_short_order(self.trade_symbol, trade.gross_size, self.clientOid, trade.price)
+                transaction = self._open_short_order(self.trade_symbol, trade.gross_size, self.clientOid, trade.price, trigger_params)
             elif trade.type == "CLOSE_LONG_ORDER":
                 self.log("{} size: {} price: {}".format(trade.type, trade.gross_size, trade.price))
-                transaction = self._close_long_order(self.trade_symbol, trade.gross_size, self.clientOid, trade.price)
+                transaction = self._close_long_order(self.trade_symbol, trade.gross_size, self.clientOid, trade.price, trigger_params)
             elif trade.type == "CLOSE_SHORT_ORDER":
                 self.log("{} size: {} price: {}".format(trade.type, trade.gross_size, trade.price))
-                transaction = self._close_short_order(self.trade_symbol, trade.gross_size, self.clientOid, trade.price)
+                transaction = self._close_short_order(self.trade_symbol, trade.gross_size, self.clientOid, trade.price, trigger_params)
             else:
                 transaction = {"msg": "failure"}
 
@@ -495,6 +499,25 @@ class BrokerBitGet(broker.Broker):
             data = open_orders[i]
             df_open_orders.loc[i] = pd.Series({"symbol": data["symbol"], "price": data["price"], "side": data["side"], "size": data["size"], "leverage": data["leverage"], "marginCoin": data["marginCoin"], "clientOid": data["clientOid"], "orderId": data["orderId"]})
         return df_open_orders
+
+    def _build_df_triggers(self, triggers):
+        df_triggers = pd.DataFrame(columns=["planType", "symbol", "size", "side", "orderId", "orderType", "clientOid", "price", "triggerPrice", "triggerType", "marginMode"])
+        for i in range(len(triggers)):
+            data = triggers[i]
+            df_triggers.loc[i] = pd.Series({
+                "planType": data["planType"],
+                "symbol": data["symbol"],
+                "size": data["size"],
+                "side": data["side"],
+                "orderId": data["orderId"],
+                "orderType": data["orderType"],
+                "clientOid": data["clientOid"],
+                "price": data["price"],
+                "triggerPrice": data["triggerPrice"],
+                "triggerType": data["triggerType"],
+                "marginMode": data["marginMode"]
+            })
+        return df_triggers
 
     @authentication_required
     def execute_reset_account(self):
