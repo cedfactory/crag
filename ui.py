@@ -140,6 +140,41 @@ class PanelOrders(wx.Panel):
         main_sizer.Add(hsizer, 0, wx.ALL | wx.LEFT, 5)
 
 
+class PanelTriggers(wx.Panel):
+    def __init__(self, parent, main):
+        wx.Panel.__init__(self, parent)
+        main_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.SetSizer(main_sizer)
+
+        self.main = main
+
+        self.triggers = wx.ListCtrl(
+            self, size=(570, 200),
+            style=wx.LC_REPORT | wx.BORDER_SUNKEN
+        )
+        self.triggers.InsertColumn(0, 'PlanType', width=70)
+        self.triggers.InsertColumn(1, 'Symbol', width=70)
+        self.triggers.InsertColumn(2, 'Size', width=40)
+        self.triggers.InsertColumn(3, 'Side', width=40)
+        self.triggers.InsertColumn(4, 'OderType', width=60)
+        self.triggers.InsertColumn(5, 'Price', width=40)
+        self.triggers.InsertColumn(6, 'TriggerPrice', width=70)
+        self.triggers.InsertColumn(7, 'TriggerType', width=70)
+        self.triggers.InsertColumn(8, 'MarginMode', width=90)
+        self.triggers.InsertColumn(9, 'ClientOid', width=120)
+        main_sizer.Add(self.triggers, 0, wx.ALL | wx.EXPAND, 5)
+
+        hsizer = wx.BoxSizer(wx.HORIZONTAL)
+        cancel_trigger_button = wx.Button(self, label='Cancel selected trigger')
+        cancel_trigger_button.Bind(wx.EVT_BUTTON, self.main.on_cancel_trigger)
+        hsizer.Add(cancel_trigger_button, 0, wx.ALL | wx.EXPAND, 5)
+
+        cancel_all_triggers_button = wx.Button(self, label='Cancel all triggers')
+        cancel_all_triggers_button.Bind(wx.EVT_BUTTON, self.main.on_cancel_all_triggers)
+        hsizer.Add(cancel_all_triggers_button, 0, wx.ALL | wx.EXPAND, 5)
+        main_sizer.Add(hsizer, 0, wx.ALL | wx.CENTER, 5)
+
+
 #
 class MainPanel(wx.Panel):
 
@@ -181,6 +216,8 @@ class MainPanel(wx.Panel):
         self.notebook_broker_state.AddPage(self.panel_positions, "Positions")
         self.panel_orders = PanelOrders(self.notebook_broker_state, self)
         self.notebook_broker_state.AddPage(self.panel_orders, "Orders")
+        self.panel_triggers = PanelTriggers(self.notebook_broker_state, self)
+        self.notebook_broker_state.AddPage(self.panel_triggers, "Triggers")
         main_sizer.Add(self.notebook_broker_state, 0, wx.ALL | wx.EXPAND, 5)
 
         sl3 = wx.StaticLine(self, size=(200, 1))
@@ -258,12 +295,25 @@ class MainPanel(wx.Panel):
             for index, row in orders.iterrows():
                 self.panel_orders.orders.Append([row["symbol"], row["side"], row["price"], row["size"], row["leverage"], row["marginCoin"], row["clientOid"], row["orderId"]])
 
+    def update_triggers(self, my_broker):
+        triggers = []
+        if my_broker:
+            triggers = my_broker.get_triggers()
+
+        # update orders
+        print("triggers : ", triggers)
+        self.panel_triggers.triggers.DeleteAllItems()
+        if isinstance(triggers, pd.DataFrame):
+            for index, row in triggers.iterrows():
+                self.panel_triggers.triggers.Append([row["planType"], row["symbol"], row["size"], row["side"], row["orderType"], row["price"], row["triggerPrice"], row["triggerType"], row["marginMode"], row["clientOid"]])
+
     def on_account(self, event):
         my_broker = self.get_broker_from_selected_account()
         if my_broker:
             self.update_usdt_equity(my_broker)
             self.update_positions(my_broker)
             self.update_orders(my_broker)
+            self.update_triggers(my_broker)
 
     def on_all_accounts(self, event):
         df = broker_helper.get_usdt_equity_all_accounts()
@@ -363,6 +413,22 @@ class MainPanel(wx.Panel):
             print("open limit order : ", mytrade.symbol, " / ", mytrade.gross_size, " / ", mytrade.price)
             my_broker.execute_trade(mytrade)
             self.update_orders(my_broker)
+
+
+
+    def on_cancel_trigger(self, event):
+        index = self.panel_triggers.triggers.GetFirstSelected()
+        if index == -1:
+            return
+        symbol = self.panel_triggers.triggers.GetItem(index, col=1).GetText()
+
+        my_broker = self.get_broker_from_selected_account()
+        #my_broker.cancel_order(symbol, marginCoin, orderId)
+        self.update_triggers(my_broker)
+
+    def on_cancel_all_triggers(self, event):
+        my_broker = self.get_broker_from_selected_account()
+        self.update_triggers(my_broker)
 
 #
 class CragFrame(wx.Frame):
