@@ -178,13 +178,15 @@ class BrokerBitGet(broker.Broker):
                     trade.tradeId = trade.orderId
                 else:
                     trade.tradeId, trade.symbol_price, trade.gross_price, trade.gross_size, trade.buying_fee = self.get_order_fill_detail(self.trade_symbol, trade.orderId)
+                    trade.net_price = trade.gross_price
+                    trade.bought_gross_price = trade.gross_price
                 trade.net_size = trade.gross_size
-                trade.net_price = trade.gross_price
-                trade.bought_gross_price = trade.gross_price
                 trade.buying_price = trade.symbol_price
 
                 self.log("request " + trade.type + ": " + self.trade_symbol + " gross_size: " + str(trade.gross_size))
-                self.log(trade.type + ": " + self.trade_symbol + " gross_size: " + str(trade.gross_size) + " price: " + str(trade.gross_price) + " fee: " + str(trade.buying_fee))
+                self.log(trade.type + ": " + self.trade_symbol + " gross_size: " + str(trade.gross_size))
+                if hasattr(trade, 'gross_price') and hasattr(trade, 'buying_fee'):
+                    self.log(" price: " + str(trade.gross_price) + " fee: " + str(trade.buying_fee))
             else:
                 self.log("Something went wrong inside execute_trade : " + str(transaction))
 

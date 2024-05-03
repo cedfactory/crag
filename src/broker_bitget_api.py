@@ -411,7 +411,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         while n_attempts > 0:
             try:
                 #result = self.orderV2Api.placePlanOrder(params)
-                result = self.planApi.place_plan(symbol, margin_coin, size, side, order_type, trigger_params["trigger_price"], "market_price", price, client_oid)
+                result = self.planApi.place_plan(symbol, margin_coin, str(size), side, order_type, str(trigger_params["trigger_price"]), "market_price", str(price), client_oid)
 
                 self.success += 1
                 break
@@ -458,7 +458,6 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     @authentication_required
     def _open_long_order(self, symbol, amount, client_oid, price, trigger_params=None):
         if trigger_params:
-            #symbol = "XRPUSDT"  # TOREMOVE
             return self._place_trigger_order(symbol, margin_coin="USDT", size=amount, side='open_long',
                                              order_type='limit', price=price, client_oid=client_oid, trigger_params=trigger_params)
         else:

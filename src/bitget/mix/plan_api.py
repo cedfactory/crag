@@ -33,10 +33,10 @@ class PlanApi(Client):
             params["size"] = size
             params["side"] = side
             params["orderType"] = orderType
-            params["timeInForceValue"] = timeInForceValue
+            #params["timeInForceValue"] = timeInForceValue
             params["clientOrderId"] = clientOrderId
-            params["presetTakeProfitPrice"] = presetTakeProfitPrice
-            params["presetStopLossPrice"] = presetStopLossPrice
+            #params["presetTakeProfitPrice"] = presetTakeProfitPrice
+            #params["presetStopLossPrice"] = presetStopLossPrice
             return self._request_with_params(POST, MIX_PLAN_V1_URL + '/placePlan', params)
         else:
             return "pls check args "
