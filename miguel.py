@@ -434,7 +434,7 @@ class MainPanel(wx.Panel):
 class CragFrame(wx.Frame):
 
     def __init__(self):
-        wx.Frame.__init__(self, parent=None, title='Crag UI',pos=wx.DefaultPosition,size=(700, 700), style= wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX)
+        wx.Frame.__init__(self, parent=None, title='Miguel',pos=wx.DefaultPosition,size=(700, 700), style= wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX)
         self.panel = MainPanel(self)
         self.create_menu()
         self.Show()
