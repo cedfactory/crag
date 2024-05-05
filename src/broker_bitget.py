@@ -33,13 +33,7 @@ class BrokerBitGet(broker.Broker):
         #    print("[BrokerBitGet] : Problem encountered during authentification")
 
         self.clientOIdprovider = utils.ClientOIdProvider()
-        # leverages management
-        self.leveraged_symbols = []
-        self.leverage_short = 1
-        self.leverage_long = 1
-        if params:
-            self.leverage_short = int(params.get("leverage_short", self.leverage_short))
-            self.leverage_long = int(params.get("leverage_long", self.leverage_long))
+
         self.df_grid_id_match = pd.DataFrame(columns=["orderId", "grid_id"])
 
         self.execute_timer = None
@@ -99,14 +93,14 @@ class BrokerBitGet(broker.Broker):
         self.iter_set_open_orders_gridId = 0
 
     @authentication_required
-    def set_margin_and_leverage(self, symbol):
-        if symbol not in self.leveraged_symbols:
-            self.set_symbol_margin(symbol, "fixed")
-            self.set_symbol_leverage(symbol, self.leverage_long, "long")
-            self.set_symbol_leverage(symbol, self.leverage_short, "short")
-            self.leveraged_symbols.append(symbol)
+    def set_margin_and_leverages(self, df_leverages):
+        for index, row in df_leverages.iterrows():
+            self.set_symbol_margin(row["symbol"], "fixed")
+            self.set_symbol_leverage(row["symbol"], row["leverage_long"], "long")
+            self.set_symbol_leverage(row["symbol"], row["leverage_short"], "short")
+            self.leveraged_symbols.append(row["symbol"])
             self.leveraged_symbols = list(set(self.leveraged_symbols))
-        del symbol
+        del df_leverages
 
     def normalize_grid_df_buying_size_size(self, df_buying_size):
         if not isinstance(df_buying_size, pd.DataFrame) \

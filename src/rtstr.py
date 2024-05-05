@@ -11,6 +11,7 @@ from src import logger
 class RealTimeStrategy(metaclass=ABCMeta):
 
     def __init__(self, params=None):
+        self.df_symbols = None
         self.lst_symbols = []
         self.SL = 0              # Stop Loss %
         self.TP = 0              # Take Profit %
@@ -73,7 +74,8 @@ class RealTimeStrategy(metaclass=ABCMeta):
                     and len(self.multi_param) > 0:
                 self.multi_param = ast.literal_eval(self.multi_param)
             if symbols != "" and path.exists("./symbols/"+symbols):
-                self.lst_symbols = pd.read_csv("./symbols/"+symbols)['symbol'].tolist()
+                self.df_symbols = pd.read_csv("./symbols/"+symbols)
+                self.lst_symbols = self.df_symbols['symbol'].tolist()
                 if self.multi_param:
                     self.df_symbol_param = pd.read_csv("./symbols/"+symbols)
                     self.df_symbol_param.set_index('symbol', drop=True, inplace=True)
@@ -214,6 +216,17 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
     def get_rtctrl(self):
         return self.rtctrl
+
+    def get_leverages(self):
+        if not isinstance(self.df_symbols, pd.DataFrame):
+            return None
+
+        columns = self.df_symbols.columns.values
+        if "leverage_long" not in columns or "leverage_short" not in columns:
+            return None
+
+        df_leverages = self.df_symbols[["symbol", "leverage_long", "leverage_short"]]
+        return df_leverages
 
     @abstractmethod
     def get_data_description(self):
