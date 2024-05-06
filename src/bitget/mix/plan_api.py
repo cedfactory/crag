@@ -148,6 +148,21 @@ class PlanApi(Client):
             return "pls check args "
 
     '''
+    Cancel All trigger Order (TPSL): https://bitgetlimited.github.io/apidoc/en/mix/#cancel-all-trigger-order-tpsl
+    Required: productType, planType
+    Limit rule: 10 times/1s (uid)
+    
+    WARNING : method not present in the original sdk and added.
+    be careful about productType ( https://bitgetlimited.github.io/apidoc/en/mix/#producttype )
+    '''
+    def cancel_all_plans(self, productType="umcbl", planType="normal_plan"):
+        params = {
+            "productType": productType,
+            "planType": planType
+        }
+        return self._request_with_params(POST, MIX_PLAN_V1_URL + '/cancelAllPlan', params)
+
+    '''
     Get the current plan delegation
     isPlan: Query plan delegation plan delegation profile_ Loss Stop Profit Stop Loss
     :return:

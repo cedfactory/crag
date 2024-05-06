@@ -428,6 +428,7 @@ class MainPanel(wx.Panel):
 
     def on_cancel_all_triggers(self, event):
         my_broker = self.get_broker_from_selected_account()
+        my_broker.cancel_all_triggers()
         self.update_triggers(my_broker)
 
 #

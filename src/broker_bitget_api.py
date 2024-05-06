@@ -417,12 +417,32 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 break
             except exceptions.BitgetAPIException as e:
                 msg = getattr(e, "message", "")
-                self.log_api_failure("orderV2Api._place_trigger_order", msg, n_attempts)
+                self.log_api_failure("planApi.place_plan", msg, n_attempts)
                 time.sleep(2)
                 n_attempts = n_attempts - 1
         n_attempts = False
         locals().clear()
         return result
+
+    @authentication_required
+    def cancel_all_triggers(self, product_type="umcbl", plan_type="normal_plan"):
+        result = {}
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                result = self.planApi.cancel_all_plans(product_type, plan_type)
+
+                self.success += 1
+                break
+            except exceptions.BitgetAPIException as e:
+                msg = getattr(e, "message", "")
+                self.log_api_failure("planApi.cancel_all_plans", msg, n_attempts)
+                time.sleep(2)
+                n_attempts = n_attempts - 1
+        n_attempts = False
+        locals().clear()
+        return result
+
 
     @authentication_required
     def _batch_orders_api(self, symbol, marginCoin, batch_order):
