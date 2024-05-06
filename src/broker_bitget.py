@@ -294,37 +294,47 @@ class BrokerBitGet(broker.Broker):
         self.init_memory_usage = memory_usage
 
     @authentication_required
-    def execute_uniq_order(self, lst_orders):
-        if len(lst_orders) > 0:
-            order = lst_orders[0]
-            symbol = self.trade_symbol = self._get_symbol(order["symbol"])
-            order_side = lst_orders[0]["type"]
-            amount = str(order["gross_size"])
-            price = str(order["price"])
-            clientOid = self.clientOIdprovider.get_name(symbol, order_side + "__" + str(order["grid_id"]) + "__")
+    def execute_trigger(self, trigger):
+        symbol = self.trade_symbol = self._get_symbol(trigger["symbol"])
+        order_side = trigger["type"]
+        amount = str(trigger["gross_size"])
+        price = str(trigger["price"])
+        trigger_price = trigger.get("trigger_price", None)
+        grid_id = str(trigger.get("grid_id", ""))  # well... too specific...
 
-            if "OPEN" in order_side and "LONG" in order_side:
-                side = "open_long"
-            elif "OPEN" in order_side and "SHORT" in order_side:
-                side = "open_short"
-            elif "CLOSE" in order_side and "LONG" in order_side:
-                side = "close_long"
-            elif "CLOSE" in order_side and "SHORT" in order_side:
-                side = "close_short"
+        clientOid = self.clientOIdprovider.get_name(symbol, order_side + "__" + grid_id + "__")
 
-            msg = "!!!!! EXECUTE TRADE LIMIT ORDER !!!!!" + "\n"
-            msg += "{} size: {} price: {}".format(order_side, amount, price) + "\n"
+        if "OPEN" in order_side and "LONG" in order_side:
+            side = "open_long"
+        elif "OPEN" in order_side and "SHORT" in order_side:
+            side = "open_short"
+        elif "CLOSE" in order_side and "LONG" in order_side:
+            side = "close_long"
+        elif "CLOSE" in order_side and "SHORT" in order_side:
+            side = "close_short"
 
+        msg = "!!!!! EXECUTE TRADE LIMIT ORDER !!!!!" + "\n"
+        msg += "{} size: {} price: {}".format(order_side, amount, price) + "\n"
+
+        if trigger_price:
+            transaction = self._place_trigger_order(symbol, margin_coin="USDT", size=amount, side=side,
+                                             order_type='limit', price=price, client_oid=clientOid,
+                                             trigger_params={ "trigger_price": trigger_price})
+        else:
             transaction = self._place_order_api(symbol, marginCoin="USDT", size=amount, side=side, orderType='limit', price=price, clientOId=clientOid)
 
-            if "msg" in transaction and transaction["msg"] == "success" and "data" in transaction:
-                orderId = transaction["data"]["orderId"]
-                gridId = [int(num) for num in re.findall(r'__(\d+)__', transaction["data"]["clientOid"])]
-                self.add_gridId_orderId(gridId[0], orderId)
-            else:
-                msg += "TRADE FAILED: {} size: {} price: {}".format(order_side, amount, price) + "\n"
-            self.log_trade = self.log_trade + msg.upper()
-            del msg
+        if "msg" in transaction and transaction["msg"] == "success" and "data" in transaction:
+            orderId = transaction["data"]["orderId"]
+            #gridId = [int(num) for num in re.findall(r'__(\d+)__', transaction["data"]["clientOid"])]
+            self.add_gridId_orderId(grid_id, orderId)
+        else:
+            msg += "TRADE FAILED: {} size: {} price: {}".format(order_side, amount, price) + "\n"
+        self.log_trade = self.log_trade + msg.upper()
+        del msg
+
+    def execute_lst_triggers(self, lst_triggers):
+        for trigger in lst_triggers:
+            self.execute_trigger(trigger)
 
     @authentication_required
     def execute_batch_orders(self, lst_orders):
@@ -408,10 +418,20 @@ class BrokerBitGet(broker.Broker):
             self.iter_execute_orders += 1
             return
 
+        self.execute_timer.set_start_time("broker", "execute_orders", "execute_batch_orders", self.iter_execute_orders)
+
+        # extract triggers...
+        lst_triggers = [order for order in lst_orders if "trigger_price" in order]
+
+        # ...and execute them
+        self.execute_lst_triggers(lst_triggers)
+
+        # extract orders
+        lst_orders = [order for order in lst_orders if "trigger_price" not in order]
+
         # lst_orders = [lst_orders[len(lst_orders) - 1]]   # CEDE TO BE REMOVED
         # lst_orders[0]["type"] = "OPEN_LONG_ORDER"        # CEDE TO BE REMOVED
 
-        self.execute_timer.set_start_time("broker", "execute_orders", "execute_batch_orders", self.iter_execute_orders)
         max_batch_size = 49
         if len(lst_orders) > max_batch_size:
             sub_lst_orders = utils.split_list(lst_orders, max_batch_size)
@@ -439,6 +459,7 @@ class BrokerBitGet(broker.Broker):
                 lst_orders[i] = None
 
         self.execute_timer.set_end_time("broker", "execute_orders", "execute_batch_orders", self.iter_execute_orders)
+        del lst_triggers
         del lst_orders
         del max_batch_size
         locals().clear()
