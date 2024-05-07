@@ -33,13 +33,7 @@ class BrokerBitGet(broker.Broker):
         #    print("[BrokerBitGet] : Problem encountered during authentification")
 
         self.clientOIdprovider = utils.ClientOIdProvider()
-        # leverages management
-        self.leveraged_symbols = []
-        self.leverage_short = 1
-        self.leverage_long = 1
-        if params:
-            self.leverage_short = int(params.get("leverage_short", self.leverage_short))
-            self.leverage_long = int(params.get("leverage_long", self.leverage_long))
+
         self.df_grid_id_match = pd.DataFrame(columns=["orderId", "grid_id"])
 
         self.execute_timer = None
@@ -99,14 +93,14 @@ class BrokerBitGet(broker.Broker):
         self.iter_set_open_orders_gridId = 0
 
     @authentication_required
-    def set_margin_and_leverage(self, symbol):
-        if symbol not in self.leveraged_symbols:
-            self.set_symbol_margin(symbol, "fixed")
-            self.set_symbol_leverage(symbol, self.leverage_long, "long")
-            self.set_symbol_leverage(symbol, self.leverage_short, "short")
-            self.leveraged_symbols.append(symbol)
+    def set_margin_and_leverages(self, df_leverages):
+        for index, row in df_leverages.iterrows():
+            self.set_symbol_margin(row["symbol"], "fixed")
+            self.set_symbol_leverage(row["symbol"], row["leverage_long"], "long")
+            self.set_symbol_leverage(row["symbol"], row["leverage_short"], "short")
+            self.leveraged_symbols.append(row["symbol"])
             self.leveraged_symbols = list(set(self.leveraged_symbols))
-        del symbol
+        del df_leverages
 
     def normalize_grid_df_buying_size_size(self, df_buying_size):
         if not isinstance(df_buying_size, pd.DataFrame) \
@@ -142,6 +136,10 @@ class BrokerBitGet(broker.Broker):
         if trade.gross_size == 0:
             self.log('transaction failed ", trade.type, " : ' + self.trade_symbol + ' - gross_size: ' + str(trade.gross_size))
 
+        trigger_params = None
+        if hasattr(trade, "trigger") and trade.trigger and hasattr(trade, "trigger_price"):
+            trigger_params = {}
+            trigger_params["trigger_price"] = trade.trigger_price
         if trade.type in ["OPEN_LONG", "OPEN_SHORT", "OPEN_LONG_ORDER", "OPEN_SHORT_ORDER", "CLOSE_LONG_ORDER", "CLOSE_SHORT_ORDER"]:
             if trade.type == "OPEN_LONG":
                 self.log("{} size: {}".format(trade.type, trade.gross_size))
@@ -151,16 +149,16 @@ class BrokerBitGet(broker.Broker):
                 transaction = self._open_short_position(self.trade_symbol, trade.gross_size, self.clientOid)
             elif trade.type == "OPEN_LONG_ORDER":
                 self.log("{} size: {} price: {}".format(trade.type, trade.gross_size, trade.price))
-                transaction = self._open_long_order(self.trade_symbol, trade.gross_size, self.clientOid, trade.price)
+                transaction = self._open_long_order(self.trade_symbol, trade.gross_size, self.clientOid, trade.price, trigger_params)
             elif trade.type == "OPEN_SHORT_ORDER":
                 self.log("{} size: {} price: {}".format(trade.type, trade.gross_size, trade.price))
-                transaction = self._open_short_order(self.trade_symbol, trade.gross_size, self.clientOid, trade.price)
+                transaction = self._open_short_order(self.trade_symbol, trade.gross_size, self.clientOid, trade.price, trigger_params)
             elif trade.type == "CLOSE_LONG_ORDER":
                 self.log("{} size: {} price: {}".format(trade.type, trade.gross_size, trade.price))
-                transaction = self._close_long_order(self.trade_symbol, trade.gross_size, self.clientOid, trade.price)
+                transaction = self._close_long_order(self.trade_symbol, trade.gross_size, self.clientOid, trade.price, trigger_params)
             elif trade.type == "CLOSE_SHORT_ORDER":
                 self.log("{} size: {} price: {}".format(trade.type, trade.gross_size, trade.price))
-                transaction = self._close_short_order(self.trade_symbol, trade.gross_size, self.clientOid, trade.price)
+                transaction = self._close_short_order(self.trade_symbol, trade.gross_size, self.clientOid, trade.price, trigger_params)
             else:
                 transaction = {"msg": "failure"}
 
@@ -174,13 +172,15 @@ class BrokerBitGet(broker.Broker):
                     trade.tradeId = trade.orderId
                 else:
                     trade.tradeId, trade.symbol_price, trade.gross_price, trade.gross_size, trade.buying_fee = self.get_order_fill_detail(self.trade_symbol, trade.orderId)
+                    trade.net_price = trade.gross_price
+                    trade.bought_gross_price = trade.gross_price
                 trade.net_size = trade.gross_size
-                trade.net_price = trade.gross_price
-                trade.bought_gross_price = trade.gross_price
                 trade.buying_price = trade.symbol_price
 
                 self.log("request " + trade.type + ": " + self.trade_symbol + " gross_size: " + str(trade.gross_size))
-                self.log(trade.type + ": " + self.trade_symbol + " gross_size: " + str(trade.gross_size) + " price: " + str(trade.gross_price) + " fee: " + str(trade.buying_fee))
+                self.log(trade.type + ": " + self.trade_symbol + " gross_size: " + str(trade.gross_size))
+                if hasattr(trade, 'gross_price') and hasattr(trade, 'buying_fee'):
+                    self.log(" price: " + str(trade.gross_price) + " fee: " + str(trade.buying_fee))
             else:
                 self.log("Something went wrong inside execute_trade : " + str(transaction))
 
@@ -294,37 +294,47 @@ class BrokerBitGet(broker.Broker):
         self.init_memory_usage = memory_usage
 
     @authentication_required
-    def execute_uniq_order(self, lst_orders):
-        if len(lst_orders) > 0:
-            order = lst_orders[0]
-            symbol = self.trade_symbol = self._get_symbol(order["symbol"])
-            order_side = lst_orders[0]["type"]
-            amount = str(order["gross_size"])
-            price = str(order["price"])
-            clientOid = self.clientOIdprovider.get_name(symbol, order_side + "__" + str(order["grid_id"]) + "__")
+    def execute_trigger(self, trigger):
+        symbol = self.trade_symbol = self._get_symbol(trigger["symbol"])
+        order_side = trigger["type"]
+        amount = str(trigger["gross_size"])
+        price = str(trigger["price"])
+        trigger_price = trigger.get("trigger_price", None)
+        grid_id = str(trigger.get("grid_id", ""))  # well... too specific...
 
-            if "OPEN" in order_side and "LONG" in order_side:
-                side = "open_long"
-            elif "OPEN" in order_side and "SHORT" in order_side:
-                side = "open_short"
-            elif "CLOSE" in order_side and "LONG" in order_side:
-                side = "close_long"
-            elif "CLOSE" in order_side and "SHORT" in order_side:
-                side = "close_short"
+        clientOid = self.clientOIdprovider.get_name(symbol, order_side + "__" + grid_id + "__")
 
-            msg = "!!!!! EXECUTE TRADE LIMIT ORDER !!!!!" + "\n"
-            msg += "{} size: {} price: {}".format(order_side, amount, price) + "\n"
+        if "OPEN" in order_side and "LONG" in order_side:
+            side = "open_long"
+        elif "OPEN" in order_side and "SHORT" in order_side:
+            side = "open_short"
+        elif "CLOSE" in order_side and "LONG" in order_side:
+            side = "close_long"
+        elif "CLOSE" in order_side and "SHORT" in order_side:
+            side = "close_short"
 
+        msg = "!!!!! EXECUTE TRADE LIMIT ORDER !!!!!" + "\n"
+        msg += "{} size: {} price: {}".format(order_side, amount, price) + "\n"
+
+        if trigger_price:
+            transaction = self._place_trigger_order(symbol, margin_coin="USDT", size=amount, side=side,
+                                             order_type='limit', price=price, client_oid=clientOid,
+                                             trigger_params={ "trigger_price": trigger_price})
+        else:
             transaction = self._place_order_api(symbol, marginCoin="USDT", size=amount, side=side, orderType='limit', price=price, clientOId=clientOid)
 
-            if "msg" in transaction and transaction["msg"] == "success" and "data" in transaction:
-                orderId = transaction["data"]["orderId"]
-                gridId = [int(num) for num in re.findall(r'__(\d+)__', transaction["data"]["clientOid"])]
-                self.add_gridId_orderId(gridId[0], orderId)
-            else:
-                msg += "TRADE FAILED: {} size: {} price: {}".format(order_side, amount, price) + "\n"
-            self.log_trade = self.log_trade + msg.upper()
-            del msg
+        if "msg" in transaction and transaction["msg"] == "success" and "data" in transaction:
+            orderId = transaction["data"]["orderId"]
+            #gridId = [int(num) for num in re.findall(r'__(\d+)__', transaction["data"]["clientOid"])]
+            self.add_gridId_orderId(grid_id, orderId)
+        else:
+            msg += "TRADE FAILED: {} size: {} price: {}".format(order_side, amount, price) + "\n"
+        self.log_trade = self.log_trade + msg.upper()
+        del msg
+
+    def execute_lst_triggers(self, lst_triggers):
+        for trigger in lst_triggers:
+            self.execute_trigger(trigger)
 
     @authentication_required
     def execute_batch_orders(self, lst_orders):
@@ -408,10 +418,20 @@ class BrokerBitGet(broker.Broker):
             self.iter_execute_orders += 1
             return
 
+        self.execute_timer.set_start_time("broker", "execute_orders", "execute_batch_orders", self.iter_execute_orders)
+
+        # extract triggers...
+        lst_triggers = [order for order in lst_orders if "trigger_price" in order]
+
+        # ...and execute them
+        self.execute_lst_triggers(lst_triggers)
+
+        # extract orders
+        lst_orders = [order for order in lst_orders if "trigger_price" not in order]
+
         # lst_orders = [lst_orders[len(lst_orders) - 1]]   # CEDE TO BE REMOVED
         # lst_orders[0]["type"] = "OPEN_LONG_ORDER"        # CEDE TO BE REMOVED
 
-        self.execute_timer.set_start_time("broker", "execute_orders", "execute_batch_orders", self.iter_execute_orders)
         max_batch_size = 49
         if len(lst_orders) > max_batch_size:
             sub_lst_orders = utils.split_list(lst_orders, max_batch_size)
@@ -439,6 +459,7 @@ class BrokerBitGet(broker.Broker):
                 lst_orders[i] = None
 
         self.execute_timer.set_end_time("broker", "execute_orders", "execute_batch_orders", self.iter_execute_orders)
+        del lst_triggers
         del lst_orders
         del max_batch_size
         locals().clear()
@@ -495,6 +516,25 @@ class BrokerBitGet(broker.Broker):
             data = open_orders[i]
             df_open_orders.loc[i] = pd.Series({"symbol": data["symbol"], "price": data["price"], "side": data["side"], "size": data["size"], "leverage": data["leverage"], "marginCoin": data["marginCoin"], "clientOid": data["clientOid"], "orderId": data["orderId"]})
         return df_open_orders
+
+    def _build_df_triggers(self, triggers):
+        df_triggers = pd.DataFrame(columns=["planType", "symbol", "size", "side", "orderId", "orderType", "clientOid", "price", "triggerPrice", "triggerType", "marginMode"])
+        for i in range(len(triggers)):
+            data = triggers[i]
+            df_triggers.loc[i] = pd.Series({
+                "planType": data["planType"],
+                "symbol": data["symbol"],
+                "size": data["size"],
+                "side": data["side"],
+                "orderId": data["orderId"],
+                "orderType": data["orderType"],
+                "clientOid": data["clientOid"],
+                "price": data["price"],
+                "triggerPrice": data["triggerPrice"],
+                "triggerType": data["triggerType"],
+                "marginMode": data["marginMode"]
+            })
+        return df_triggers
 
     @authentication_required
     def execute_reset_account(self):

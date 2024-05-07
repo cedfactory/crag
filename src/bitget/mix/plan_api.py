@@ -33,10 +33,10 @@ class PlanApi(Client):
             params["size"] = size
             params["side"] = side
             params["orderType"] = orderType
-            params["timeInForceValue"] = timeInForceValue
+            #params["timeInForceValue"] = timeInForceValue
             params["clientOrderId"] = clientOrderId
-            params["presetTakeProfitPrice"] = presetTakeProfitPrice
-            params["presetStopLossPrice"] = presetStopLossPrice
+            #params["presetTakeProfitPrice"] = presetTakeProfitPrice
+            #params["presetStopLossPrice"] = presetStopLossPrice
             return self._request_with_params(POST, MIX_PLAN_V1_URL + '/placePlan', params)
         else:
             return "pls check args "
@@ -146,6 +146,21 @@ class PlanApi(Client):
             return self._request_with_params(POST, MIX_PLAN_V1_URL + '/cancelPlan', params)
         else:
             return "pls check args "
+
+    '''
+    Cancel All trigger Order (TPSL): https://bitgetlimited.github.io/apidoc/en/mix/#cancel-all-trigger-order-tpsl
+    Required: productType, planType
+    Limit rule: 10 times/1s (uid)
+    
+    WARNING : method not present in the original sdk and added.
+    be careful about productType ( https://bitgetlimited.github.io/apidoc/en/mix/#producttype )
+    '''
+    def cancel_all_plans(self, productType="umcbl", planType="normal_plan"):
+        params = {
+            "productType": productType,
+            "planType": planType
+        }
+        return self._request_with_params(POST, MIX_PLAN_V1_URL + '/cancelAllPlan', params)
 
     '''
     Get the current plan delegation

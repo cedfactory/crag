@@ -7,7 +7,7 @@
                 grid_margin="1000"/>
     </strategy>
     <broker name="bitget">
-        <params exchange="bitget" fdp_url_id="gc1" account="subfortest2" leverage_short="10" leverage_long="10"
+        <params exchange="bitget" fdp_url_id="gc1" account="subfortest2"
                 simulation="1" intervals="1h" orders="market" reset_account="True" reset_account_orders="False"/>
     </broker>
     <crag id="grid" interval="3600" botId="ayato_sub3"/>
