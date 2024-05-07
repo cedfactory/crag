@@ -95,11 +95,10 @@ class BrokerBitGet(broker.Broker):
     @authentication_required
     def set_margin_and_leverages(self, df_leverages):
         for index, row in df_leverages.iterrows():
-            self.set_symbol_margin(row["symbol"], "fixed")
-            self.set_symbol_leverage(row["symbol"], row["leverage_long"], "long")
-            self.set_symbol_leverage(row["symbol"], row["leverage_short"], "short")
-            self.leveraged_symbols.append(row["symbol"])
-            self.leveraged_symbols = list(set(self.leveraged_symbols))
+            symbol = self._get_symbol(row["symbol"])
+            self.set_symbol_margin(symbol, "fixed")
+            self.set_symbol_leverage(symbol, row["leverage_long"], "long")
+            self.set_symbol_leverage(symbol, row["leverage_short"], "short")
         del df_leverages
 
     def normalize_grid_df_buying_size_size(self, df_buying_size):
@@ -121,7 +120,7 @@ class BrokerBitGet(broker.Broker):
         trade.success = False
         self.trade_symbol = self._get_symbol(trade.symbol)
 
-        self.set_margin_and_leverage(self.trade_symbol)
+        #self.set_margin_and_leverage(self.trade_symbol)
         self.clientOid = self.clientOIdprovider.get_name(self.trade_symbol, trade.type)
 
         self.log("TRADE GROSS SIZE: {}".format(trade.gross_size))
