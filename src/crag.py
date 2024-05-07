@@ -1051,6 +1051,8 @@ class Crag:
                     self.log("GRIDS NOT MATCHING")
             else:
                 self.log("NO GRID BASELINE AVAILABLE FOR THIS SCENARIO")
+            self.execute_timer.close_grid()
+            self.execute_timer.plot_all_close_grid()
             exit(0)
 
         broker_current_state = {
@@ -1060,59 +1062,10 @@ class Crag:
         }
         return broker_current_state
 
-    def udpate_strategy_with_broker_current_state_memory_leak(self, scenario_id):
-        cpt_ut = 0
-        input_dir = "./grid_test/" + str(scenario_id) + "_scenario_test"
-        df_scenario_results_global = None
-        df_grid_global = None
-        self.start_ut = True
-        broker_test = False
-
-        # Open the JSON file in read mode
-        if broker_test:
-            with open("lst_orders_to_execute.json", "r") as file:
-                lst_orders_to_execute_for_broker_test = json.load(file)
-
-        loop = True
-        while loop:
-            if self.start_ut:
-                symbols = ["XRP"]
-                self.start_ut = False
-                df_symbol_minsize = self.broker.get_df_minimum_size(symbols)
-                df_buying_size = self.rtstr.set_df_buying_size_scenario(df_symbol_minsize, self.broker.get_usdt_equity())
-                del df_symbol_minsize
-                df_buying_size_normalise = self.broker.normalize_grid_df_buying_size_size(df_buying_size)
-                self.rtstr.set_df_normalize_buying_size(df_buying_size_normalise)
-                self.rtstr.set_normalized_grid_price(self.broker.get_price_place_endstep(symbols))
-                del df_buying_size_normalise
-                del df_buying_size
-
-            if broker_test:
-                self.broker.execute_orders(lst_orders_to_execute_for_broker_test)
-
-                broker_current_state = self.broker.get_current_state(symbols)
-
-                lst_orderId = broker_current_state["open_orders"]["orderId"].to_list()
-                for orderId in lst_orderId:
-                    result = self.broker.orderApi.cancel_orders('XRPUSDT_UMCBL', "USDT", orderId)
-                del broker_current_state
-
-            broker_current_state = self.get_current_state_from_csv(input_dir,
-                                                                   cpt_ut,
-                                                                   df_scenario_results_global,
-                                                                   df_grid_global)
-            if broker_current_state == None:
-                loop = False
-            lst_orders_to_execute = self.rtstr.set_broker_current_state(broker_current_state)
-            print("lst_orders_to_execute: ", lst_orders_to_execute)
-            del lst_orders_to_execute
-            del broker_current_state
-            cpt_ut += 1
-
-        if 'lst_orders_to_execute_for_broker_test' in locals():
-            del lst_orders_to_execute_for_broker_test
-
     def udpate_strategy_with_broker_current_state_scenario(self, scenario_id):
+        self.reboot_iter = 0
+        self.execute_timer = execute_time_recoder.ExecuteTimeRecorder(self.reboot_iter)
+        self.reset_iteration_timers()
         cpt = 0
         input_dir = "./grid_test/" + str(scenario_id) + "_scenario_test"
         df_scenario_results_global = pd.DataFrame()
@@ -1133,7 +1086,7 @@ class Crag:
             else:
                 self.grid_iteration += 1
 
-            break_pt = 4
+            break_pt = 40
             if cpt == break_pt:
                 self.log("toto")
                 pass
@@ -1213,8 +1166,10 @@ class Crag:
                     self.log("MEMORY " + id + " - " + key1 + " VALUE: " + str(value3) + " PREV DIFF: " +  str(value3 - value2) + " INIT DIFF: " + str(value3 - value1))
 
     def udpate_strategy_with_broker_current_state(self):
-        GRID_SCENARIO_ON = False
-        SCENARIO_ID = 6
+        GRID_SCENARIO_ON = True
+        if GRID_SCENARIO_ON:
+            self.rtstr.set_scenario_mode()
+        SCENARIO_ID = 7
         MEMORY_LEAK_UT = False
         if MEMORY_LEAK_UT:
             self.udpate_strategy_with_broker_current_state_memory_leak(SCENARIO_ID)

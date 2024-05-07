@@ -1,7 +1,7 @@
 from datetime import datetime
 import pandas as pd
 import matplotlib.pyplot as plt
-from . import utils
+import utils
 import os
 import psutil
 import numpy as np
@@ -256,13 +256,22 @@ class ExecuteTimeRecorder():
 
     def save_grid_cycle_plot(self):
         # Plotting
-        color_map = {'close_long_on_hold': 'silver',
-                     'close_long_pending': 'gold',
-                     'close_long_engaged': 'red',
-                     'open_long_on_hold': 'grey',
-                     'open_long_pending': 'orange',
-                     'open_long_engaged': 'blue'
-                     }
+        if self.df_grid.apply(lambda x: x.str.contains('_long_')).any().any():
+            color_map = {'close_long_on_hold': 'silver',
+                         'close_long_pending': 'gold',
+                         'close_long_engaged': 'red',
+                         'open_long_on_hold': 'grey',
+                         'open_long_pending': 'orange',
+                         'open_long_engaged': 'blue'
+                         }
+        else:
+            color_map = {'close_short_on_hold': 'silver',
+                         'close_short_pending': 'gold',
+                         'close_short_engaged': 'red',
+                         'open_short_on_hold': 'grey',
+                         'open_short_pending': 'orange',
+                         'open_short_engaged': 'blue'
+                         }
 
         positions = self.df_grid.index.values  # Get positions
         states = self.df_grid.columns.values  # Get states
@@ -270,7 +279,10 @@ class ExecuteTimeRecorder():
 
         plt.figure(figsize=(30, 15))
         for i in range(len(positions)):
-            plt.scatter(states, np.full(len(states), positions[i]), c=colors[i])
+            try:
+                plt.scatter(states, np.full(len(states), positions[i]), c=colors[i])
+            except:
+                print("toto")
 
         plt.xlabel('Y')  # Label switched to match the new axis
         plt.ylabel('X')  # Label switched to match the new axis

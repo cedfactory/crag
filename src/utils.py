@@ -105,6 +105,10 @@ def drop_smallest_items(lst, x):
     sorted_lst = sorted(lst)  # Sort the list
     return sorted_lst[x:]  # Slice the list to remove the smallest x items
 
+def drop_largest_items(lst, x):
+    sorted_lst = sorted(lst, reverse=True)  # Sort the list in reverse order
+    return sorted_lst[x:]  # Slice the list to remove the largest x items
+
 def modify_strategy_data_files(input_dir, str):
     # Get list of all files in the directory
     files = os.listdir(input_dir)

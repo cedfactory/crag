@@ -25,9 +25,9 @@
 23,XRP,0.585,open_short,2,order_id_23,17
 24,XRP,0.580,open_short,2,order_id_24,16
 25,XRP,0.575,open_short,2,order_id_25,15
-26,XRP,0.525,close_short,2,order_id_26,5
-27,XRP,0.530,close_short,2,order_id_27,6
-28,XRP,0.535,close_short,2,order_id_28,7
-29,XRP,0.540,close_short,2,order_id_33,8
-30,XRP,0.545,close_short,2,order_id_34,9
-31,XRP,0.550,close_short,2,order_id_35,10
+26,XRP,0.530,close_short,2,order_id_27,6
+27,XRP,0.535,close_short,2,order_id_28,7
+28,XRP,0.54,close_short,2,order_id_29,8
+29,XRP,0.525,close_short,2,order_id_30,5
+30,XRP,0.54499,close_short,2,order_id_31,9
+31,XRP,0.55000,close_short,2,order_id_32,10

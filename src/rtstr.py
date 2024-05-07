@@ -58,6 +58,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
         self.grid_buying_size = 10
         self.grid_margin = 0
         self.percent_per_grid = 0
+        self.scenario_mode = False
 
         if params:
             self.strategy_interval = params.get("strategy_interval", self.strategy_interval)
@@ -436,11 +437,17 @@ class RealTimeStrategy(metaclass=ABCMeta):
         del row_index
         return min_buying_size
 
+    def set_scenario_mode(self):
+        self.scenario_mode = True
+
     def get_grid_buying_size(self, symbol):
-        row_index = self.df_grid_buying_size.index[self.df_grid_buying_size['symbol'] == symbol].tolist()
-        buying_size = self.df_grid_buying_size.at[row_index[0], "buyingSize"] if row_index else None
-        del row_index
-        return buying_size
+        if not self.scenario_mode:
+            row_index = self.df_grid_buying_size.index[self.df_grid_buying_size['symbol'] == symbol].tolist()
+            buying_size = self.df_grid_buying_size.at[row_index[0], "buyingSize"] if row_index else None
+            del row_index
+            return buying_size
+        else:
+            return 10
 
     def set_df_buying_size_scenario(self, df_symbol_size, cash):
         self.df_grid_buying_size = df_symbol_size
