@@ -210,9 +210,12 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         while n_attempts > 0:
             try:
                 response = self.orderV2Api.ordersPlanPending(params)
-                if "data" in response and "entrustedList" in response["data"] and response["data"]["entrustedList"]:
-                    lst_triggers = [data for data in response["data"]["entrustedList"]]
-                    res = self._build_df_triggers(lst_triggers)
+                if "data" in response and "entrustedList" in response["data"]:
+                    lst_triggers = []
+                    if response["data"]["entrustedList"]:
+                        lst_triggers = [data for data in response["data"]["entrustedList"]]
+                    current_res = self._build_df_triggers(lst_triggers)
+                    res = pd.concat([res, current_res])
                     del lst_triggers
                 del response
                 self.success += 1
@@ -237,6 +240,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             futures = []
             futures.append(executor.submit(self.get_open_orders, lst_symbols))
             futures.append(executor.submit(self.get_open_position))
+            futures.append(executor.submit(self.get_triggers))
             futures.append(executor.submit(self.get_values, lst_symbols))
             wait(futures, timeout=1000, return_when=ALL_COMPLETED)
 
@@ -260,13 +264,20 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             if any(df_open_positions_filtered):
                 df_open_positions = df_open_positions_filtered
 
+            # triggers
+            df_triggers = futures[2].result()
+            df_triggers['symbol'] = df_triggers['symbol'].apply(self._get_coin)
+
             # prices
-            df_prices = futures[2].result()  # self.get_values(lst_symbols)
+            df_prices = futures[3].result()  # self.get_values(lst_symbols)
             self.current_state = {
                 "open_orders": df_open_orders,
                 "open_positions": df_open_positions,
+                "triggers": df_triggers,
                 "prices": df_prices
             }
+
+            del df_triggers
             del df_open_orders
             del df_open_positions
             del df_prices
