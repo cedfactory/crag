@@ -1173,23 +1173,19 @@ class Crag:
                     self.log("MEMORY " + id + " - " + key1 + " VALUE: " + str(value3) + " PREV DIFF: " +  str(value3 - value2) + " INIT DIFF: " + str(value3 - value1))
 
     def udpate_strategy_with_broker_current_state(self):
-        GRID_SCENARIO_ON = True
+        GRID_SCENARIO_ON = False
         if GRID_SCENARIO_ON:
             self.rtstr.set_scenario_mode()
-        SCENARIO_ID = 7
-        MEMORY_LEAK_UT = False
-        if MEMORY_LEAK_UT:
-            self.udpate_strategy_with_broker_current_state_memory_leak(SCENARIO_ID)
+        SCENARIO_ID = 6
+        if GRID_SCENARIO_ON:
+            self.udpate_strategy_with_broker_current_state_scenario(SCENARIO_ID)
         else:
-            if GRID_SCENARIO_ON:
-                self.udpate_strategy_with_broker_current_state_scenario(SCENARIO_ID)
-            else:
-                self.execute_timer.set_start_time("crag", "udpate_strategy_with_broker", "udpate_strategy_with_broker_current_state_live", self.state_live)
+            self.execute_timer.set_start_time("crag", "udpate_strategy_with_broker", "udpate_strategy_with_broker_current_state_live", self.state_live)
 
-                self.udpate_strategy_with_broker_current_state_live()
+            self.udpate_strategy_with_broker_current_state_live()
 
-                self.execute_timer.set_end_time("crag", "udpate_strategy_with_broker", "udpate_strategy_with_broker_current_state_live", self.state_live)
-                self.state_live += 1
+            self.execute_timer.set_end_time("crag", "udpate_strategy_with_broker", "udpate_strategy_with_broker_current_state_live", self.state_live)
+            self.state_live += 1
 
 
 
@@ -1398,9 +1394,6 @@ class Crag:
         if self.rtstr.need_broker_current_state():
             # GRID TRADING STRATEGY
             self.udpate_strategy_with_broker_current_state()
-        else:
-            self.udpate_strategy_with_broker_current_state_memory_leak()
-            # self.log_memory()
 
         if self.rtstr.condition_for_global_SLTP(self.total_SL_TP_percent) \
                 or self.rtstr.condition_for_global_trailer_TP(self.total_SL_TP_percent) \

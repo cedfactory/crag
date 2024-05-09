@@ -831,6 +831,17 @@ class GridPosition():
         del lst_to_clear
         return filtered_orders_to_execute
 
+    def cross_check_order_with_price(self, lst_orders):
+        lst_filtered = []
+        for order in lst_orders:
+            if order["type"] in ["OPEN_SHORT_ORDER"]:
+                if order["price"] > self.current_price:
+                    lst_filtered.append(order)
+            elif order["type"] in ["CLOSE_SHORT_ORDER"]:
+                if order["price"] < self.current_price:
+                    lst_filtered.append(order)
+        return lst_filtered
+
     def set_on_hold_from_grid_id(self, symbol, grid_id):
         df = self.grid[symbol]
         row_index = df.index[df['grid_id'] == grid_id].tolist()  # Get the index of rows where 'grid_id' equals grid_id

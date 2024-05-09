@@ -1014,6 +1014,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         dct_account = None
         while n_attempts > 0:
             try:
+                symbol = self._get_symbol(symbol, "USDT")
                 dct_account = self.accountApi.leverage(symbol, "USDT", leverage, hold)
                 self.success += 1
                 break
@@ -1042,6 +1043,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         n_attempts = 3
         while n_attempts > 0:
             try:
+                symbol = self._get_symbol(symbol, "USDT")
                 dct_account = self.accountApi.margin_mode(symbol, "USDT", marginMode)
                 self.success += 1
                 break

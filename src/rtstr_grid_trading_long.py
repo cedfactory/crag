@@ -692,7 +692,8 @@ class GridPosition():
                 filtered_orders.append(order)
         # Filter CLOSE orders and sort them by price
         close_orders = sorted(
-            (order for order in lst_order_to_execute if order["type"] in ["CLOSE_LONG_ORDER", "CLOSE_SHORT_ORDER"] and self.filter_close_limit_order(order["grid_id"])),
+            (order for order in lst_order_to_execute if order["type"] in ["CLOSE_LONG_ORDER", "CLOSE_SHORT_ORDER"]
+             and self.filter_close_limit_order(order["grid_id"])),
             key=lambda x: x["price"]
         )
         close_orders.sort(key=lambda x: x["price"])
@@ -822,6 +823,7 @@ class GridPosition():
         if self.remaining_close_to_be_open < 0:
             self.remaining_close_to_be_open = 0
 
+        filtered_orders_to_execute = self.cross_check_order_with_price(filtered_orders_to_execute)
         del df
         del close_orders
         del lst_close_engaged
@@ -831,6 +833,17 @@ class GridPosition():
         del lst
         del lst_to_clear
         return filtered_orders_to_execute
+
+    def cross_check_order_with_price(self, lst_orders):
+        lst_filtered = []
+        for order in lst_orders:
+            if order["type"] in ["OPEN_LONG_ORDER"]:
+                if order["price"] < self.current_price:
+                    lst_filtered.append(order)
+            elif order["type"] in ["CLOSE_LONG_ORDER"]:
+                if order["price"] > self.current_price:
+                    lst_filtered.append(order)
+        return lst_filtered
 
     def set_on_hold_from_grid_id(self, symbol, grid_id):
         df = self.grid[symbol]
