@@ -93,6 +93,13 @@ class Crag:
         self.safety_step_iterration = 0
         self.sum_duration_safety_step = 0
         self.reboot_iter = 0
+        self.previous_start_reboot = datetime.now()
+        self.init_start_date = self.previous_start_reboot
+        self.total_duration_reboot = 0
+        self.cpt_reboot = 0
+        self.average_duration_reboot = 0
+        self.max_duration_reboot = 0
+        self.min_duration_reboot = 0
 
         self.dump_perf_dir = "./dump_timer"
 
@@ -258,7 +265,8 @@ class Crag:
         else:
             msg = "REBOOT STARTEGY" + "\n"
             start_reboot = datetime.now()
-            msg += "at: " + start_reboot.strftime("%Y/%m/%d %H:%M:%S")
+            self.previous_start_reboot = start_reboot
+            msg += "AT: " + start_reboot.strftime("%Y/%m/%d %H:%M:%S")
             self.log_discord(msg, "born again")
             self.safety_step_iterration = 0
             self.sum_duration_safety_step = 0
@@ -871,11 +879,32 @@ class Crag:
                 self.msg_backup = "exit condition: safety_step duration" + "\n"
             else:
                 self.msg_backup = "exit condition: iterration" + "\n"
-            self.msg_backup += "memory_usage " + str(round(memory_usage, 1)) + " delta " + str(round(delta_memory_used, 1)) + "\n"
-            self.msg_backup += "duration " + str(round(self.duration_time_safety_step, 2)) + " average " + str(round(self.average_duration_safety_step, 2)) + "\n"
-            self.msg_backup += "iter " + str(self.safety_step_iterration) + "\n"
+            self.msg_backup += "memory_usage: " + str(round(memory_usage, 1)) + " delta " + str(round(delta_memory_used, 1)) + "\n"
+            self.msg_backup += "duration: " + str(round(self.duration_time_safety_step, 2)) + " average " + str(round(self.average_duration_safety_step, 2)) + "\n"
+            self.msg_backup += "iter: " + str(self.safety_step_iterration) + "\n"
             start_reboot = datetime.now()
             self.msg_backup += "at: " + start_reboot.strftime("%Y/%m/%d %H:%M:%S") + "\n"
+            duration_minutes = (start_reboot - self.previous_start_reboot).total_seconds() / 60
+            self.msg_backup += "previous restart: " + str(round(duration_minutes, 2)) + " min" + "\n"
+            self.total_duration_reboot += duration_minutes
+            self.cpt_reboot += 1
+            self.average_duration_reboot = self.total_duration_reboot / self.cpt_reboot
+            self.max_duration_reboot = max(self.max_duration_reboot, duration_minutes)
+            if self.min_duration_reboot == 0:
+                self.min_duration_reboot = duration_minutes
+            else:
+                self.min_duration_reboot = min(self.min_duration_reboot, duration_minutes)
+            self.msg_backup += "max: " + str(round(self.max_duration_reboot, 2)) + " min" + "\n"
+            self.msg_backup += "min: " + str(round(self.min_duration_reboot, 2)) + " min" + "\n"
+            self.msg_backup += "average: " + str(round(self.average_duration_reboot, 2)) + " min" + "\n"
+            self.msg_backup += "reboots: " + str(int(self.cpt_reboot)) + "\n"
+
+            duration = datetime.now() - self.init_start_date
+            days = duration.days
+            hours, remainder = divmod(duration.seconds, 3600)
+            minutes, _ = divmod(remainder, 60)
+            self.msg_backup += "total duration: {} d {} h {}m".format(days, hours, minutes) + "\n"
+
             self.log_discord(self.msg_backup.upper(), "REBOOT STATUS")
 
             self.backup_debug(round(self.duration_time_safety_step, 2))
