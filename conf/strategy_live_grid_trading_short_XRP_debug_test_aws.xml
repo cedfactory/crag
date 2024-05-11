@@ -1,5 +1,5 @@
 <configuration>
-    <strategy id="strategygridtradinglong" name="StrategyGridTradingLong">
+    <strategy id="strategygridtradingshort" name="StrategyGridTradingShort">
         <params symbols="./symbols_df_sltp_XRP_usdt.csv"
                 strategy_interval="3600"
                 multi_param="False"
@@ -19,7 +19,7 @@
                 grid_low="0.45"
                 percent_per_grid="0"
                 nb_grid="60"
-                grid_margin="500"
+                grid_margin="490"
                 loggers="file=log"
         />
     </strategy>
@@ -35,7 +35,7 @@
                 loggers="file=log"
         />
     </broker>
-    <crag id="grid_long_aws"
+    <crag id="grid_short_aws"
           interval="3600"
           botId="ayato"
           loggers="file=log"

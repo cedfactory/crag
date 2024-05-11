@@ -9,7 +9,7 @@ import numpy as np
 from concurrent.futures import ThreadPoolExecutor
 
 class ExecuteTimeRecorder():
-    def __init__(self, iter, directory="./dump_timer"):
+    def __init__(self, iter, directory):
         self.lst_recorder_columns = ["csci", "section", "cycle", "position", "start", "end", "duration"]
         self.df_time_recorder = pd.DataFrame(columns=self.lst_recorder_columns)
         self.lst_system_recorder_columns = ["cycle", "RAM_used_percent", "RAM_used_GB", "CPU_usage_percent"]
@@ -22,7 +22,7 @@ class ExecuteTimeRecorder():
         self.plot_df_system = False
         self.plot_df_grid = False
 
-    def set_input_dir(self, iter, directory="./dump_timer"):
+    def set_input_dir(self, iter, directory):
         self.dump_directory = directory
         self.dump_time_directory = self.dump_directory + "/timer"
         self.dump_system_directory = self.dump_directory + "/system"

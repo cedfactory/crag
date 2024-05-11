@@ -94,6 +94,8 @@ class Crag:
         self.sum_duration_safety_step = 0
         self.reboot_iter = 0
 
+        self.dump_perf_dir = "./dump_timer"
+
         if params:
             self.broker = params.get("broker", self.broker)
             if self.broker:
@@ -107,6 +109,7 @@ class Crag:
             self.working_directory = params.get("working_directory", self.working_directory)
             self.id = params.get("id", self.id)
             self.working_directory = params.get("working_directory", self.working_directory)
+            self.dump_perf_dir = self.dump_perf_dir + "_" + self.id
 
         self.traces_trade_total_opened = 0
         self.traces_trade_total_closed = 0
@@ -295,7 +298,7 @@ class Crag:
         self.resume = True
         while not done:
 
-            self.execute_timer = execute_time_recoder.ExecuteTimeRecorder(self.reboot_iter)
+            self.execute_timer = execute_time_recoder.ExecuteTimeRecorder(self.reboot_iter, self.dump_perf_dir)
             self.reset_iteration_timers()
 
             now = time.time()
@@ -1071,7 +1074,7 @@ class Crag:
 
     def udpate_strategy_with_broker_current_state_scenario(self, scenario_id):
         self.reboot_iter = 0
-        self.execute_timer = execute_time_recoder.ExecuteTimeRecorder(self.reboot_iter)
+        self.execute_timer = execute_time_recoder.ExecuteTimeRecorder(self.reboot_iter, self.dump_perf_dir)
         self.reset_iteration_timers()
         cpt = 0
         input_dir = "./grid_test/" + str(scenario_id) + "_scenario_test"
