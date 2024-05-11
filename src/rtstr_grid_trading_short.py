@@ -467,6 +467,7 @@ class GridPosition():
         df_grid = self.grid[symbol]
         df_grid['cross_checked'] = False
         df_current_state = df_current_state_all[df_current_state_all["symbol"] == symbol]
+        df_current_state = df_current_state[~df_current_state['side'].str.contains("_long")]
         lst_df_grid_columns = df_grid.columns.to_list()
 
         df_current_state_for_merge = df_current_state.copy()

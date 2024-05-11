@@ -1341,7 +1341,7 @@ class Crag:
 
             self.broker.execute_orders(lst_orders_to_execute)
 
-            self.broker.reset_current_postion(broker_current_state)
+            # self.broker.reset_current_postion(broker_current_state)
             broker_current_state = self.broker.get_current_state(self.symbols)
 
         self.execute_timer.set_start_time("crag", "current_state_live", "set_broker_current_state", self.current_state_live)
