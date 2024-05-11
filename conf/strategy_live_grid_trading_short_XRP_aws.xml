@@ -5,10 +5,10 @@
                 multi_param="False"
                 candle_stick="released"
                 max_position="1"
-                sl="-80"
+                sl="0"
                 tp="0"
                 global_sl="-50"
-                global_tp="20"
+                global_tp="50"
                 trailer_tp="0"
                 trailer_delta_tp="0"
                 trailer_global_tp="0"
@@ -19,7 +19,7 @@
                 grid_low="0.48"
                 percent_per_grid="0"
                 nb_grid="60"
-                grid_margin="490"
+                grid_margin="500"
                 loggers="file=log"
         />
     </strategy>
