@@ -16,6 +16,10 @@ def start_strategy(strategy_configuration_file):
         print("💥 A problem occurred while loading {}".format(strategy_configuration_file))
         return
 
+    if "crag" not in configuration and "id" not in configuration["crag"]:
+        print("Can't find id for crag")
+        return
+
     command = []
     if g_os_platform == "Windows":
         command = ['cmd.exe', '/c', g_python_executable, "main.py", "--live", strategy_configuration_file]
@@ -25,7 +29,7 @@ def start_strategy(strategy_configuration_file):
     result = subprocess.run(command, stdout=subprocess.PIPE)
     print(result)
 
-    backup_file = "./output/grid_crag_backup.pickle"
+    backup_file = "./output/" + configuration['crag']['id'] + "_crag_backup.pickle"
     while result.returncode == 1 and os.path.exists(backup_file):
         print("size of {} : {} bytes".format(backup_file, os.path.getsize(backup_file)))
         result = subprocess.run(
