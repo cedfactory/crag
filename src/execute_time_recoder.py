@@ -15,6 +15,10 @@ class ExecuteTimeRecorder():
         self.lst_system_recorder_columns = ["cycle", "RAM_used_percent", "RAM_used_GB", "CPU_usage_percent"]
         self.df_system_recorder = pd.DataFrame(columns=self.lst_system_recorder_columns)
         self.df_grid = pd.DataFrame()
+        self.dct_grid = {
+            "long": None,
+            "short": None
+        }
 
         self.set_input_dir(iter, directory)
 
@@ -106,7 +110,7 @@ class ExecuteTimeRecorder():
         self.df_time_recorder = pd.concat([self.df_time_recorder, pd.DataFrame([new_row])], ignore_index=True)
         del new_row
 
-    def set_grid_infos(self, df_grid):
+    def set_grid_infos(self, df_grid, side):
         if len(self.df_grid) == 0:
             self.df_grid = df_grid.copy()
             self.df_grid.rename(columns={'values': '0'}, inplace=True)
@@ -118,6 +122,8 @@ class ExecuteTimeRecorder():
                 df_grid.rename(columns={'values': last_column_name}, inplace=True)
                 new_columns = df_grid[last_column_name]
                 self.df_grid = pd.concat([self.df_grid, new_columns], axis=1)
+
+        self.dct_grid[side] = self.df_grid
 
         # print(self.df_grid.to_string())
         del df_grid
@@ -209,7 +215,10 @@ class ExecuteTimeRecorder():
         # self.df_grid = utils.concat_csv_files_with_df(self.dump_grid_directory, self.df_grid)
         # utils.empty_files(self.dump_grid_directory, pattern=".png")
         # utils.empty_files(self.dump_grid_directory, pattern=".csv")
-        self.df_grid.to_csv(self.dump_grid_directory + "/" + self.master_cycle + "_df_grid_recorder.csv")
+        keys_list = list(self.dct_grid.keys())
+        for side in keys_list:
+            if not (self.dct_grid[side] is None):
+                self.dct_grid[side].to_csv(self.dump_grid_directory + "/" + self.master_cycle + "_" + side + "_df_grid_recorder.csv")
 
         if self.plot_df_grid:
             self.trigger_plot_df_grid()

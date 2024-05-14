@@ -910,7 +910,6 @@ class Crag:
             self.backup_debug(round(self.duration_time_safety_step, 2))
             self.backup()
             raise SystemExit(self.msg_backup)
-            # exit(10)
 
     def merge_current_trades_from_symbol(self, current_trades, symbol, current_datetime, position_type):
         lst_trades = []

@@ -100,7 +100,6 @@ class StrategyGridTradingProtectLong(rtstr.RealTimeStrategy):
                 lst_order_to_print.append((order["grid_id"], order["price"], order["type"]))
             print("order list: \n", lst_order_to_print)
             self.grid.print_grid()
-            print("#############################################################################################")
 
         return lst_order_to_execute
 

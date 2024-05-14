@@ -23,13 +23,14 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
         self.dct_info_to_txt = ""
         self.execute_timer = None
         self.df_price = None
+        self.mutiple_strategy = False
+        self.side = "long"
 
     def get_data_description(self):
         ds = rtdp.DataDescription()
         ds.symbols = self.lst_symbols
 
         ds.fdp_features = {
-            "ema10" : {"indicator": "ema", "id": "10", "window_size": 10}
         }
 
         ds.features = self.get_feature_from_fdp_features(ds.fdp_features)
@@ -60,11 +61,18 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
     def need_broker_current_state(self):
         return True
 
+    def set_multiple_strategy(self):
+        self.mutiple_strategy = True
+
     def set_execute_time_recorder(self, execute_timer):
         if self.execute_timer is not None:
             del self.execute_timer
         self.execute_timer = execute_timer
         self.iter_set_broker_current_state = 0
+
+    def set_df_grid_buying_size(self, df_grid_buying_size):
+        self.df_grid_buying_size = df_grid_buying_size
+        del df_grid_buying_size
 
     def set_broker_current_state(self, current_state):
         """
@@ -80,10 +88,12 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
         df_current_states = current_state["open_orders"].copy()
         df_open_positions = current_state["open_positions"].copy()
         df_price = current_state["prices"].copy()
-        del current_state["open_orders"]
-        del current_state["open_positions"]
-        del current_state["prices"]
-        del current_state
+
+        if not self.mutiple_strategy:
+            del current_state["open_orders"]
+            del current_state["open_positions"]
+            del current_state["prices"]
+            del current_state
 
         del self.df_price
         self.df_price = df_price
@@ -151,7 +161,6 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
             self.log("order list: \n" + str(lst_order_to_print))
             del lst_order_to_print
             self.grid.print_grid()
-            self.log("#############################################################################################")
 
         del df_current_states
         del df_open_positions
@@ -214,7 +223,7 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
         if hasattr(self, 'df_price'):
             for symbol in self.lst_symbols:
                 df_grid_values = self.grid.get_grid_for_record(symbol)
-                self.execute_timer.set_grid_infos(df_grid_values)
+                self.execute_timer.set_grid_infos(df_grid_values, self.side)
 
 class GridPosition():
     def __init__(self, lst_symbols, grid_high, grid_low, nb_grid, percent_per_grid, debug_mode=True, loggers=[]):
