@@ -298,7 +298,7 @@ class MainPanel(wx.Panel):
     def update_triggers(self, my_broker):
         triggers = []
         if my_broker:
-            triggers = my_broker.get_triggers()
+            triggers = my_broker.get_all_triggers()
 
         # update orders
         print("triggers : ", triggers)
