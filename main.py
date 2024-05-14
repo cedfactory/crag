@@ -107,6 +107,9 @@ def crag_live(configuration_file, ForceDoNotResetAccount = False):
 
 def crag_reboot(picklefilename):
     bot = crag_helper.initialization_from_pickle(picklefilename)
+    if not bot:
+        print("[crag_reboot] Couldn't reboot from ", picklefilename)
+        return
 
     directory_path = './output'  # Replace with the path to your directory
     # List all files in the directory

@@ -178,7 +178,9 @@ def get_crag_params_from_configuration(configuration):
     return {"broker": my_broker, "rtstr": my_strategy, "id": crag_id, "interval": crag_interval, "logger": crag_discord_bot, "loggers": loggers}
 
 def initialization_from_pickle(picklefilename):
-    with open(picklefilename, 'rb') as file:
-        bot = pickle.load(file)
+    bot = None
+    if os.path.exists(picklefilename):
+        with open(picklefilename, 'rb') as file:
+            bot = pickle.load(file)
     return bot
 

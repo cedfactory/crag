@@ -39,6 +39,9 @@ def start_strategy(strategy_configuration_file):
 
         # filtrer le slogs de ced
 
+    print("[alcorak] result.returncode : ", result.returncode)
+    print("[alcorak] backup_file : ", backup_file)
+    print("[alcorak] backup exists : ", os.path.exists(backup_file))
 
     params_broker = configuration["broker"]
     my_broker = broker_bitget_api.BrokerBitGetApi(params_broker)
