@@ -883,24 +883,25 @@ class Crag:
             self.msg_backup += "at: " + start_reboot.strftime("%Y/%m/%d %H:%M:%S") + "\n"
             self.msg_backup += "memory_usage: " + str(round(memory_usage, 1)) + " delta " + str(round(delta_memory_used, 1)) + "\n"
             self.msg_backup += "duration: " + str(round(self.duration_time_safety_step, 2)) + " average " + str(round(self.average_duration_safety_step, 2)) + "\n"
+            # self.msg_backup += "duration: " + utils.format_duration(self.average_duration_safety_step) + " average " + utils.format_duration(self.average_duration_safety_step) + "\n"
             self.msg_backup += "iter: " + str(self.safety_step_iterration) + "\n"
-            duration_minutes = (start_reboot - self.previous_start_reboot).total_seconds() / 60
-            self.msg_backup += "previous restart: " + str(round(duration_minutes, 2)) + " min" + "\n"
-            self.total_duration_reboot += duration_minutes
+            duration_sec = (start_reboot - self.previous_start_reboot).total_seconds()
+            self.msg_backup += "previous restart: " + utils.format_duration(duration_sec) + "\n"
+            self.total_duration_reboot += duration_sec
             self.cpt_reboot += 1
             self.average_duration_reboot = self.total_duration_reboot / self.cpt_reboot
-            self.max_duration_reboot = max(self.max_duration_reboot, duration_minutes)
+            self.max_duration_reboot = max(self.max_duration_reboot, duration_sec)
             if self.min_duration_reboot == 0:
-                self.min_duration_reboot = duration_minutes
+                self.min_duration_reboot = duration_sec
             else:
-                self.min_duration_reboot = min(self.min_duration_reboot, duration_minutes)
-            self.msg_backup += "max: " + str(round(self.max_duration_reboot, 2)) + " min" + "\n"
-            self.msg_backup += "min: " + str(round(self.min_duration_reboot, 2)) + " min" + "\n"
-            self.msg_backup += "average: " + str(round(self.average_duration_reboot, 2)) + " min" + "\n"
+                self.min_duration_reboot = min(self.min_duration_reboot, duration_sec)
+            self.msg_backup += "max: " + utils.format_duration(self.max_duration_reboot) + "\n"
+            self.msg_backup += "min: " + utils.format_duration(self.min_duration_reboot) + "\n"
+            self.msg_backup += "average: " + utils.format_duration(self.average_duration_reboot) + "\n"
             self.msg_backup += "reboots: " + str(int(self.cpt_reboot)) + "\n"
 
             duration = int(time.time()) - self.init_start_date
-            self.msg_backup += "DURATION: " + utils.format_duration(duration)
+            self.msg_backup += "DURATION: " + utils.format_duration(duration) + "\n"
             del duration
 
             self.log_discord(self.msg_backup.upper(), "REBOOT STATUS")
