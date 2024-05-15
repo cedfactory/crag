@@ -271,14 +271,22 @@ class BrokerBitGet(broker.Broker):
         del gridId
 
     def add_gridId_orderId(self, gridId, orderId):
+        # CEDE TO BE REMOVED AFTER TESTS
+        """
         if gridId in self.df_grid_id_match["grid_id"].tolist():
             self.df_grid_id_match.loc[self.df_grid_id_match[self.df_grid_id_match['grid_id'] == gridId].index] = [orderId, gridId]
         else:
             self.df_grid_id_match.loc[len(self.df_grid_id_match)] = [orderId, gridId]
+        """
 
+        self.df_grid_id_match.loc[len(self.df_grid_id_match)] = [orderId, gridId]
         self.df_grid_id_match = self.df_grid_id_match.drop_duplicates()
         del orderId
         del gridId
+
+    def clear_gridId_orderId(self, lst_orderId):
+        if len(self.df_grid_id_match) > len(lst_orderId):
+            self.df_grid_id_match = self.df_grid_id_match[self.df_grid_id_match['orderId'].isin(lst_orderId)]
 
     class OrderToTradeConverter:
         def __init__(self, order):
@@ -339,19 +347,18 @@ class BrokerBitGet(broker.Broker):
     def execute_batch_orders(self, lst_orders):
         if len(lst_orders) > 0:
             symbol = self._get_symbol(lst_orders[0]["symbol"])
-            order_side = lst_orders[0]["type"]
             lst_orderList = []
             for order in lst_orders:
-                if "OPEN" in order_side and "LONG" in order_side:
+                if order["type"] == 'OPEN_LONG_ORDER':
                     side = "open_long"
-                elif "OPEN" in order_side and "SHORT" in order_side:
+                elif order["type"] == 'OPEN_SHORT_ORDER':
                     side = "open_short"
-                elif "CLOSE" in order_side and "LONG" in order_side:
+                elif order["type"] == 'CLOSE_LONG_ORDER':
                     side = "close_long"
-                elif "CLOSE" in order_side and "SHORT" in order_side:
+                elif order["type"] == 'CLOSE_SHORT_ORDER':
                     side = "close_short"
 
-                clientOid = self.clientOIdprovider.get_name(symbol, order_side + "__" + str(order["grid_id"]) + "__")
+                clientOid = self.clientOIdprovider.get_name(symbol, order["type"] + "__" + str(order["grid_id"]) + "__")
                 orderParam = {
                     "size": str(order["gross_size"]),
                     "price": str(order["price"]),
@@ -428,9 +435,6 @@ class BrokerBitGet(broker.Broker):
         # extract orders
         lst_orders = [order for order in lst_orders if "trigger_price" not in order]
 
-        # lst_orders = [lst_orders[len(lst_orders) - 1]]   # CEDE TO BE REMOVED
-        # lst_orders[0]["type"] = "OPEN_LONG_ORDER"        # CEDE TO BE REMOVED
-
         max_batch_size = 49
         if len(lst_orders) > max_batch_size:
             sub_lst_orders = utils.split_list(lst_orders, max_batch_size)
@@ -442,20 +446,6 @@ class BrokerBitGet(broker.Broker):
         elif len(lst_orders) == 1:
             self.execute_batch_orders(lst_orders)
             # self.execute_uniq_order(lst_orders) # CEDE TO BE CONFIRMED AFTER TEST
-        else:
-            for order in lst_orders:
-                order = self.check_validity_order(order)
-                trade = self.OrderToTradeConverter(order)
-                self.execute_trade(trade)
-                self.store_gridId_orderId(trade)
-                for key in order:
-                    order[key] = None
-                order.clear()
-                del order
-                trade.set_all_to_none()
-                del trade
-            for i in range(len(lst_orders)):
-                lst_orders[i] = None
 
         self.execute_timer.set_end_time("broker", "execute_orders", "execute_batch_orders", self.iter_execute_orders)
         del lst_triggers
@@ -489,6 +479,10 @@ class BrokerBitGet(broker.Broker):
             del condition
             return grid_id
         else:
+            msg = "ERROR: BROKER ID NOT FOUND" + "\n"
+            msg += "ORDER ID: " + str(orderId) + "\n"
+            self.log_trade = self.log_trade + msg.upper()
+            del msg
             del condition
             return None
 

@@ -255,6 +255,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             df_open_orders['symbol'] = lst_tmp
             df_open_orders.drop(['marginCoin', 'clientOid'], axis=1, inplace=True)
             df_open_orders = self.set_open_orders_gridId(df_open_orders)
+            self.clear_gridId_orderId(df_open_orders["orderId"].to_list())
 
             # positions
             df_open_positions = futures[1].result()  # self.get_open_position()

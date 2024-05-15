@@ -74,8 +74,18 @@ class StrategyGridTradingLongShort(rtstr.RealTimeStrategy):
         self.execute_timer = execute_timer
 
     def set_broker_current_state(self, current_state):
-        lst_long = self.strategy_long.set_broker_current_state(current_state)
-        lst_short = self.strategy_short.set_broker_current_state(current_state)
+        current_state_filtered = self.filter_position(current_state, "short")
+        lst_long = self.strategy_long.set_broker_current_state(current_state_filtered)
+        del current_state_filtered["open_orders"]
+        del current_state_filtered["open_positions"]
+        del current_state_filtered["prices"]
+        del current_state_filtered
+        current_state_filtered = self.filter_position(current_state, "long")
+        lst_short = self.strategy_short.set_broker_current_state(current_state_filtered)
+        del current_state_filtered["open_orders"]
+        del current_state_filtered["open_positions"]
+        del current_state_filtered["prices"]
+        del current_state_filtered
         del current_state["open_orders"]
         del current_state["open_positions"]
         del current_state["prices"]
@@ -125,4 +135,16 @@ class StrategyGridTradingLongShort(rtstr.RealTimeStrategy):
     def record_grid_status(self):
         self.strategy_long.record_grid_status()
         self.strategy_short.record_grid_status()
+
+    def filter_position(self, current_state, side):
+        current_state_filtred = current_state.copy()
+        if side == "long":
+            lst_patterns = ["open_short", "close_short"]
+            filter_side = 'short'
+        elif side == "short":
+            lst_patterns = ["open_long", "close_long"]
+            filter_side = 'long'
+        current_state_filtred["open_orders"] = current_state_filtred["open_orders"][current_state_filtred["open_orders"]['side'].isin(lst_patterns)]
+        current_state_filtred["open_positions"] = current_state_filtred["open_positions"][current_state_filtred["open_positions"]['holdSide'] == filter_side]
+        return current_state_filtred
 

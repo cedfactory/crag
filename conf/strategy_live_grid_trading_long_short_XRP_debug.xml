@@ -15,7 +15,7 @@
                 trailer_global_delta_tp="0"
                 trailer_sl="0"
                 high_volatility="False"
-                grid_high="0.60"
+                grid_high="0.55"
                 grid_low="0.45"
                 percent_per_grid="0"
                 nb_grid="60"
@@ -37,7 +37,7 @@
     </broker>
     <crag id="grid"
           interval="3600"
-          botId="ayato_sub3"
+          botId="subfortest2"
           loggers="console"
     />
 </configuration>
