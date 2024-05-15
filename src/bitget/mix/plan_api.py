@@ -162,6 +162,36 @@ class PlanApi(Client):
         }
         return self._request_with_params(POST, MIX_PLAN_V1_URL + '/cancelAllPlan', params)
 
+    """
+    Place Trailing Stop Order: https://bitgetlimited.github.io/apidoc/en/mix/#place-trailing-stop-order
+    Limit rule: 10 times/1s (uid)
+
+    Required: symbol, marginCoin, triggerPrice, side
+    :return:
+
+    WARNING : method not present in the original sdk and added.
+    be careful about productType ( https://bitgetlimited.github.io/apidoc/en/mix/#producttype )
+    """
+    def mix_place_trailing_stop_order(self, symbol, marginCoin, triggerPrice, side,
+                                      triggerType=None, size=None, rangeRate=None):
+
+        params = {}
+        if symbol and marginCoin and side and triggerPrice:
+            params["symbol"] = symbol
+            params["marginCoin"] = marginCoin
+            params["side"] = side
+            params["triggerPrice"] = triggerPrice
+            if triggerType is not None:
+                params["triggerType"] = triggerType
+            if size is not None:
+                params["size"] = size
+            if rangeRate is not None:
+                params["rangeRate"] = rangeRate
+            return self._request_with_params(POST, MIX_PLAN_V1_URL + '/placeTrailStop', params)
+
+        return False
+
+
     '''
     Get the current plan delegation
     isPlan: Query plan delegation plan delegation profile_ Loss Stop Profit Stop Loss

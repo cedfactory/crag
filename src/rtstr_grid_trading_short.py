@@ -999,10 +999,10 @@ class GridPosition():
         self.control_multi_position['lst_open_short'] = list(set(self.control_multi_position['lst_open_short']))
 
         if not self.zero_print:
-            print('global lst_close_short_triggered: ', self.control_multi_position['lst_close_short_triggered'])
-            print('global nb_close_short_triggered: ', self.control_multi_position['nb_close_short_triggered'])
-            print('global lst_open_short_triggered: ', self.control_multi_position['lst_open_short_triggered'])
-            print('global lst_open_short: ', self.control_multi_position['lst_open_short'])
+            self.log("global lst_close_short_triggered: " + str(self.control_multi_position['lst_close_short_triggered']))
+            self.log("global nb_close_short_triggered: " + str(self.control_multi_position['nb_close_short_triggered']))
+            self.log("global lst_open_short_triggered: " + str(self.control_multi_position['lst_open_short_triggered']))
+            self.log("global lst_open_short: " + str(self.control_multi_position['lst_open_short']))
 
         del df
         del condition_engaged

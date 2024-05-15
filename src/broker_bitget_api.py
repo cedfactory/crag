@@ -194,14 +194,14 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         return res
 
     # @authentication_required
-    def get_triggers(self):
+    def get_triggers(self, plan_type="normal_plan"):
         params = {
-            "planType": "normal_plan",
+            "planType": plan_type,
             "productType": "USDT-FUTURES"
         }
 
         if self.get_cache_status():
-            df_from_cache = self.requests_cache_get("get_triggers")
+            df_from_cache = self.requests_cache_get("get_triggers_"+plan_type)
             if isinstance(df_from_cache, pd.DataFrame):
                 return df_from_cache.copy()
 
@@ -228,9 +228,15 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         del n_attempts
 
         if self.get_cache_status():
-            self.requests_cache_set("get_triggers", res.copy())
+            self.requests_cache_set("get_triggers_"+plan_type, res.copy())
 
         return res
+
+    @authentication_required
+    def get_all_triggers(self):
+        df_triggers_normal_plan = self.get_triggers("normal_plan")
+        df_triggers_track_plan = self.get_triggers("track_plan")
+        return pd.concat([df_triggers_normal_plan, df_triggers_track_plan]).reset_index(drop=True)
 
     @authentication_required
     def get_current_state(self, lst_symbols):
@@ -240,7 +246,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             futures = []
             futures.append(executor.submit(self.get_open_orders, lst_symbols))
             futures.append(executor.submit(self.get_open_position))
-            futures.append(executor.submit(self.get_triggers))
+            futures.append(executor.submit(self.get_all_triggers))
             futures.append(executor.submit(self.get_values, lst_symbols))
             wait(futures, timeout=1000, return_when=ALL_COMPLETED)
 
@@ -392,6 +398,26 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         locals().clear()
         return result
 
+    @authentication_required
+    def place_trail_order(self, symbol, marginCoin, triggerPrice, side, triggerType=None, size=None, rangeRate=1):
+        result = {}
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                result = self.planApi.mix_place_trailing_stop_order(symbol, marginCoin, triggerPrice, side, triggerType,
+                                                                    size, rangeRate)
+                self.success += 1
+                break
+            except Exception as e:
+                msg = getattr(e, "message", "")
+                self.log_api_failure("planApi.place_trail_order", msg, n_attempts)
+                time.sleep(2)
+                n_attempts = n_attempts - 1
+        n_attempts = False
+        locals().clear()
+        return result
+
+
     # reference : https://www.bitget.com/api-doc/contract/plan/Place-Plan-Order
     @authentication_required
     def _place_trigger_order(self, symbol, margin_coin, size, side, order_type, client_oid, trigger_params, price=''):
@@ -437,7 +463,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         return result
 
     @authentication_required
-    def cancel_all_triggers(self, product_type="umcbl", plan_type="normal_plan"):
+    def cancel_all_triggers_with_plan_type(self, plan_type, product_type="umcbl"):
         result = {}
         n_attempts = 3
         while n_attempts > 0:
@@ -455,6 +481,9 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         locals().clear()
         return result
 
+    def cancel_all_triggers(self, product_type="umcbl"):
+        self.cancel_all_triggers_with_plan_type("normal_plan", product_type)
+        self.cancel_all_triggers_with_plan_type("track_plan", product_type)
 
     @authentication_required
     def _batch_orders_api(self, symbol, marginCoin, batch_order):
