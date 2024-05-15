@@ -285,7 +285,8 @@ class BrokerBitGet(broker.Broker):
         del gridId
 
     def clear_gridId_orderId(self, lst_orderId):
-        if len(self.df_grid_id_match) > len(lst_orderId):
+        if False \
+                and (len(self.df_grid_id_match) > len(lst_orderId)):
             self.df_grid_id_match = self.df_grid_id_match[self.df_grid_id_match['orderId'].isin(lst_orderId)]
 
     class OrderToTradeConverter:

@@ -881,12 +881,12 @@ class Crag:
                 self.msg_backup = "exit condition: iterration" + "\n"
             start_reboot = datetime.now()
             self.msg_backup += "at: " + start_reboot.strftime("%Y/%m/%d %H:%M:%S") + "\n"
-            self.msg_backup += "memory_usage: " + str(round(memory_usage, 1)) + " delta " + str(round(delta_memory_used, 1)) + "\n"
+            self.msg_backup += "memory: " + str(round(memory_usage, 1)) + " delta " + str(round(delta_memory_used, 1)) + "\n"
             self.msg_backup += "duration: " + str(round(self.duration_time_safety_step, 2)) + " average " + str(round(self.average_duration_safety_step, 2)) + "\n"
             # self.msg_backup += "duration: " + utils.format_duration(self.average_duration_safety_step) + " average " + utils.format_duration(self.average_duration_safety_step) + "\n"
             self.msg_backup += "iter: " + str(self.safety_step_iterration) + "\n"
             duration_sec = (start_reboot - self.previous_start_reboot).total_seconds()
-            self.msg_backup += "previous restart: " + utils.format_duration(duration_sec) + "\n"
+            self.msg_backup += "since reboot: " + utils.format_duration(duration_sec) + "\n"
             self.total_duration_reboot += duration_sec
             self.cpt_reboot += 1
             self.average_duration_reboot = self.total_duration_reboot / self.cpt_reboot
