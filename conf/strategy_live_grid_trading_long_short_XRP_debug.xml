@@ -35,7 +35,7 @@
                 loggers="console"
         />
     </broker>
-    <crag id="grid"
+    <crag id="grid_long_short"
           interval="3600"
           botId="subfortest2"
           loggers="console"

@@ -31,6 +31,7 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
         ds.symbols = self.lst_symbols
 
         ds.fdp_features = {
+            "ema10": {"indicator": "ema", "id": "10", "window_size": 10}
         }
 
         ds.features = self.get_feature_from_fdp_features(ds.fdp_features)
