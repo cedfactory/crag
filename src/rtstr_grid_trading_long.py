@@ -781,6 +781,7 @@ class GridPosition():
                          & (df['side'] == 'close_long')
                          & (df['cross_checked'])]
         lst_close_engaged = df_filtered['grid_id'].tolist()
+        count_lst_close_engaged = len(lst_close_engaged)
         del df_filtered
 
         if len(lst_close_engaged) > 1:
@@ -833,6 +834,28 @@ class GridPosition():
             self.remaining_close_to_be_open = self.remaining_close_to_be_open - (nb_close_in_order_list - self.control_multi_position['nb_open_long_triggered'])
         if self.remaining_close_to_be_open < 0:
             self.remaining_close_to_be_open = 0
+
+        count_close_order_in_lst = sum(1 for d in filtered_orders_to_execute if d.get("type") in ["CLOSE_LONG_ORDER", "CLOSE_SHORT_ORDER"])
+        if count_close_order_in_lst > 0 \
+                and (count_lst_close_engaged + count_close_order_in_lst) > self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_open_positions']:
+            nb_close_to_drop_from_list = self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_open_positions'] - (count_lst_close_engaged + count_close_order_in_lst)
+            if nb_close_to_drop_from_list > count_close_order_in_lst:
+                nb_close_to_drop_from_list = count_close_order_in_lst
+
+            max_drop = nb_close_to_drop_from_list
+            dropped_count = 0
+            sorted_list = sorted(filtered_orders_to_execute, key=lambda x: x["price"], reverse=True)
+            filtered_list = []
+            for d in sorted_list:
+                if dropped_count < max_drop and d.get("type") in ["CLOSE_LONG_ORDER", "CLOSE_SHORT_ORDER"]:
+                    dropped_count += 1
+                else:
+                    filtered_list.append(d)
+            filtered_orders_to_execute = filtered_list
+            print("discrepancy between list of CLOSE and nb_open_positions")
+            print("nb_open_positions: ", str(self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_open_positions'] ))
+            print("count_close_order_in_lst: ", count_close_order_in_lst)
+            print("nb_to_close: ", nb_close_to_drop_from_list)
 
         filtered_orders_to_execute = self.cross_check_order_with_price(filtered_orders_to_execute)
         del df
