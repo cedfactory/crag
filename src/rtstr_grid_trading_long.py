@@ -852,10 +852,10 @@ class GridPosition():
                 else:
                     filtered_list.append(d)
             filtered_orders_to_execute = filtered_list
-            print("discrepancy between list of CLOSE and nb_open_positions")
-            print("nb_open_positions: ", str(self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_open_positions'] ))
-            print("count_close_order_in_lst: ", count_close_order_in_lst)
-            print("nb_to_close: ", nb_close_to_drop_from_list)
+            self.log("************** discrepancy between list of CLOSE and nb_open_positions ******************")
+            self.log("nb_open_positions: " + str(self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_open_positions']))
+            self.log("count_close_order_in_lst: " + str(count_close_order_in_lst))
+            self.log("nb_to_close: " + str(nb_close_to_drop_from_list))
 
         filtered_orders_to_execute = self.cross_check_order_with_price(filtered_orders_to_execute)
         del df
