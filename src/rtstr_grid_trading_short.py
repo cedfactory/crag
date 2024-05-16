@@ -835,8 +835,8 @@ class GridPosition():
 
         count_close_order_in_lst = sum(1 for d in filtered_orders_to_execute if d.get("type") in ["CLOSE_LONG_ORDER", "CLOSE_SHORT_ORDER"])
         if count_close_order_in_lst > 0 \
-                and (count_lst_close_engaged + count_close_order_in_lst) > self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_open_positions']:
-            nb_close_to_drop_from_list = self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_open_positions'] - (count_lst_close_engaged + count_close_order_in_lst)
+                and (count_lst_close_engaged + count_close_order_in_lst) > self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_open_positions'].values[0]:
+            nb_close_to_drop_from_list = self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_open_positions'].values[0] - (count_lst_close_engaged + count_close_order_in_lst)
             if nb_close_to_drop_from_list > count_close_order_in_lst:
                 nb_close_to_drop_from_list = count_close_order_in_lst
 
@@ -851,7 +851,7 @@ class GridPosition():
                     filtered_list.append(d)
             filtered_orders_to_execute = filtered_list
             self.log("************** discrepancy between list of CLOSE and nb_open_positions ******************")
-            self.log("nb_open_positions: " + str(self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_open_positions']))
+            self.log("nb_open_positions: " + str(self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_open_positions'].values[0]))
             self.log("count_close_order_in_lst: " + str(count_close_order_in_lst))
             self.log("nb_to_close: " + str(nb_close_to_drop_from_list))
 
