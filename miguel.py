@@ -95,8 +95,10 @@ class PanelOrders(wx.Panel):
         self.orders.InsertColumn(3, 'Size', width=70)
         self.orders.InsertColumn(4, 'Leverage', width=70)
         self.orders.InsertColumn(5, 'MarginCoin', width=70)
-        self.orders.InsertColumn(6, 'ClientOid', width=130)
-        self.orders.InsertColumn(7, 'OrderId', width=130)
+        self.orders.InsertColumn(6, 'MarginMode', width=70)
+        self.orders.InsertColumn(7, 'ReduceOnly', width=70)
+        self.orders.InsertColumn(8, 'ClientOid', width=130)
+        self.orders.InsertColumn(9, 'OrderId', width=130)
         main_sizer.Add(self.orders, 0, wx.ALL | wx.EXPAND, 5)
 
         hsizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -293,7 +295,7 @@ class MainPanel(wx.Panel):
         self.panel_orders.orders.DeleteAllItems()
         if isinstance(orders, pd.DataFrame):
             for index, row in orders.iterrows():
-                self.panel_orders.orders.Append([row["symbol"], row["side"], row["price"], row["size"], row["leverage"], row["marginCoin"], row["clientOid"], row["orderId"]])
+                self.panel_orders.orders.Append([row["symbol"], row["side"], row["price"], row["size"], row["leverage"], row["marginCoin"], row["marginMode"], row["reduceOnly"], row["clientOid"], row["orderId"]])
 
     def update_triggers(self, my_broker):
         triggers = []
@@ -377,7 +379,7 @@ class MainPanel(wx.Panel):
             return
         symbol = self.panel_orders.orders.GetItem(index, col=0).GetText()
         marginCoin = self.panel_orders.orders.GetItem(index, col=5).GetText()
-        orderId = self.panel_orders.orders.GetItem(index, col=7).GetText()
+        orderId = self.panel_orders.orders.GetItem(index, col=9).GetText()
         print("cancel open order : ", orderId)
         my_broker = self.get_broker_from_selected_account()
         my_broker.cancel_order(symbol, marginCoin, orderId)

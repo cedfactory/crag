@@ -505,10 +505,10 @@ class BrokerBitGet(broker.Broker):
         return df_open_positions
 
     def _build_df_open_orders(self, open_orders):
-        df_open_orders = pd.DataFrame(columns=["symbol", "price", "side", "size", "leverage", "marginCoin", "clientOid", "orderId"])
+        df_open_orders = pd.DataFrame(columns=["symbol", "price", "side", "size", "leverage", "marginCoin", "marginMode", "reduceOnly", "clientOid", "orderId"])
         for i in range(len(open_orders)):
             data = open_orders[i]
-            df_open_orders.loc[i] = pd.Series({"symbol": data["symbol"], "price": data["price"], "side": data["side"], "size": data["size"], "leverage": data["leverage"], "marginCoin": data["marginCoin"], "clientOid": data["clientOid"], "orderId": data["orderId"]})
+            df_open_orders.loc[i] = pd.Series({"symbol": data["symbol"], "price": data["price"], "side": data["side"], "size": data["size"], "leverage": data["leverage"], "marginCoin": data["marginCoin"], "marginMode": data["marginMode"], "reduceOnly": data["reduceOnly"], "clientOid": data["clientOid"], "orderId": data["orderId"]})
         return df_open_orders
 
     def _build_df_triggers(self, triggers):
