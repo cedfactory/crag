@@ -93,13 +93,13 @@ class BrokerBitGet(broker.Broker):
         self.iter_set_open_orders_gridId = 0
 
     @authentication_required
-    def set_margin_and_leverages(self, df_leverages):
-        for index, row in df_leverages.iterrows():
+    def set_margin_mode_and_leverages(self, df_margin_mode_leverages):
+        for index, row in df_margin_mode_leverages.iterrows():
             symbol = self._get_symbol(row["symbol"])
-            self.set_symbol_margin(symbol, "fixed")
+            self.set_symbol_margin(symbol, row["margin_mode"])
             self.set_symbol_leverage(symbol, row["leverage_long"], "long")
             self.set_symbol_leverage(symbol, row["leverage_short"], "short")
-        del df_leverages
+        del df_margin_mode_leverages
 
     def normalize_grid_df_buying_size_size(self, df_buying_size):
         if not isinstance(df_buying_size, pd.DataFrame) \

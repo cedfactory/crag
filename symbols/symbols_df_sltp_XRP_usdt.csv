@@ -1,2 +1,2 @@
-symbol,leverage_long,leverage_short
-XRP,10,10
+symbol,leverage_long,leverage_short,margin_mode
+XRP,10,10,crossed
