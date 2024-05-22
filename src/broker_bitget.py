@@ -93,13 +93,13 @@ class BrokerBitGet(broker.Broker):
         self.iter_set_open_orders_gridId = 0
 
     @authentication_required
-    def set_margin_and_leverages(self, df_leverages):
-        for index, row in df_leverages.iterrows():
+    def set_margin_mode_and_leverages(self, df_margin_mode_leverages):
+        for index, row in df_margin_mode_leverages.iterrows():
             symbol = self._get_symbol(row["symbol"])
-            self.set_symbol_margin(symbol, "fixed")
+            self.set_symbol_margin(symbol, row["margin_mode"])
             self.set_symbol_leverage(symbol, row["leverage_long"], "long")
             self.set_symbol_leverage(symbol, row["leverage_short"], "short")
-        del df_leverages
+        del df_margin_mode_leverages
 
     def normalize_grid_df_buying_size_size(self, df_buying_size):
         if not isinstance(df_buying_size, pd.DataFrame) \
@@ -505,10 +505,10 @@ class BrokerBitGet(broker.Broker):
         return df_open_positions
 
     def _build_df_open_orders(self, open_orders):
-        df_open_orders = pd.DataFrame(columns=["symbol", "price", "side", "size", "leverage", "marginCoin", "clientOid", "orderId"])
+        df_open_orders = pd.DataFrame(columns=["symbol", "price", "side", "size", "leverage", "marginCoin", "marginMode", "reduceOnly", "clientOid", "orderId"])
         for i in range(len(open_orders)):
             data = open_orders[i]
-            df_open_orders.loc[i] = pd.Series({"symbol": data["symbol"], "price": data["price"], "side": data["side"], "size": data["size"], "leverage": data["leverage"], "marginCoin": data["marginCoin"], "clientOid": data["clientOid"], "orderId": data["orderId"]})
+            df_open_orders.loc[i] = pd.Series({"symbol": data["symbol"], "price": data["price"], "side": data["side"], "size": data["size"], "leverage": data["leverage"], "marginCoin": data["marginCoin"], "marginMode": data["marginMode"], "reduceOnly": data["reduceOnly"], "clientOid": data["clientOid"], "orderId": data["orderId"]})
         return df_open_orders
 
     def _build_df_triggers(self, triggers):

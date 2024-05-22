@@ -169,7 +169,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 del lst_all_positions
                 self.success += 1
                 break
-            except exceptions.BitgetAPIException as e:
+            except (exceptions.BitgetAPIException, Exception) as e:
                 msg = getattr(e, "message", "")
                 self.log_api_failure("positionApi.all_position", msg, n_attempts)
                 time.sleep(2)
@@ -195,7 +195,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                     del current_res
                     self.success += 1
                     break
-                except exceptions.BitgetAPIException as e:
+                except (exceptions.BitgetAPIException, Exception) as e:
                     msg = getattr(e, "message", "")
                     self.log_api_failure("orderApi.current", msg, n_attempts)
                     time.sleep(2)
@@ -229,7 +229,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 del response
                 self.success += 1
                 break
-            except exceptions.BitgetAPIException as e:
+            except (exceptions.BitgetAPIException, Exception) as e:
                 msg = getattr(e, "message", "")
                 self.log_api_failure("orderV2Api.ordersPlanPending", msg, n_attempts)
                 time.sleep(2)
@@ -327,7 +327,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 account_equity = self.positionApi.account(symbol='BTCUSDT_UMCBL',marginCoin='USDT')
                 self.success += 1
                 break
-            except exceptions.BitgetAPIException as e:
+            except (exceptions.BitgetAPIException, Exception) as e:
                 msg = getattr(e, "message", "")
                 self.log_api_failure("positionApi.account", msg, n_attempts)
                 time.sleep(2)
@@ -345,7 +345,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 account_equity = self.positionApi.account(symbol='BTCUSDT_UMCBL',marginCoin='USDT')
                 self.success += 1
                 break
-            except exceptions.BitgetAPIException as e:
+            except (exceptions.BitgetAPIException, Exception) as e:
                 msg = getattr(e, "message", "")
                 self.log_api_failure("positionApi.account", msg, n_attempts)
                 time.sleep(2)
@@ -360,7 +360,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 all_positions = self.positionApi.all_position(productType='umcbl',marginCoin='USDT')
                 self.success += 1
                 break
-            except exceptions.BitgetAPIException as e:
+            except (exceptions.BitgetAPIException, Exception) as e:
                 msg = getattr(e, "message", "")
                 self.log_api_failure("positionApi.all_position", msg, n_attempts)
                 time.sleep(2)
@@ -398,7 +398,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                                                  presetTakeProfitPrice='', presetStopLossPrice='')
                 self.success += 1
                 break
-            except Exception as e:
+            except (exceptions.BitgetAPIException, Exception) as e:
                 msg = getattr(e, "message", "")
                 self.log_api_failure("orderApi.place_order", msg, n_attempts)
                 time.sleep(2)
@@ -417,7 +417,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                                                                     size, rangeRate)
                 self.success += 1
                 break
-            except Exception as e:
+            except (exceptions.BitgetAPIException, Exception) as e:
                 msg = getattr(e, "message", "")
                 self.log_api_failure("planApi.place_trail_order", msg, n_attempts)
                 time.sleep(2)
@@ -462,7 +462,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
                 self.success += 1
                 break
-            except exceptions.BitgetAPIException as e:
+            except (exceptions.BitgetAPIException, Exception) as e:
                 msg = getattr(e, "message", "")
                 self.log_api_failure("planApi.place_plan", msg, n_attempts)
                 time.sleep(2)
@@ -481,7 +481,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
                 self.success += 1
                 break
-            except exceptions.BitgetAPIException as e:
+            except (exceptions.BitgetAPIException, Exception) as e:
                 msg = getattr(e, "message", "")
                 self.log_api_failure("planApi.cancel_all_plans", msg, n_attempts)
                 time.sleep(2)
@@ -571,7 +571,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 self.get_list_of_account_assets()
                 self.success += 1
                 break
-            except exceptions.BitgetAPIException as e:
+            except (exceptions.BitgetAPIException, Exception) as e:
                 msg = getattr(e, "message", "")
                 self.log_api_failure("get_list_of_account_assets", msg, n_attempts)
                 time.sleep(2)
@@ -586,7 +586,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 self.get_list_of_account_assets()
                 self.success += 1
                 break
-            except exceptions.BitgetAPIException as e:
+            except (exceptions.BitgetAPIException, Exception) as e:
                 msg = getattr(e, "message", "")
                 self.log_api_failure("get_list_of_account_assets", msg, n_attempts)
                 time.sleep(2)
@@ -604,7 +604,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 df_spot_usdt_equity = self._get_df_spot_account(lst_symbols)
                 self.success += 1
                 break
-            except exceptions.BitgetAPIException as e:
+            except (exceptions.BitgetAPIException, Exception) as e:
                 msg = getattr(e, "message", "")
                 self.log_api_failure("_get_df_spot_account", msg, n_attempts)
                 time.sleep(2)
@@ -626,7 +626,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 self.get_list_of_account_assets()
                 self.success += 1
                 break
-            except exceptions.BitgetAPIException as e:
+            except (exceptions.BitgetAPIException, Exception) as e:
                 msg = getattr(e, "message", "")
                 self.log_api_failure("get_list_of_account_assets", msg, n_attempts)
                 time.sleep(2)
@@ -656,7 +656,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 self.get_list_of_account_assets()
                 self.success += 1
                 break
-            except exceptions.BitgetAPIException as e:
+            except (exceptions.BitgetAPIException, Exception) as e:
                 msg = getattr(e, "message", "")
                 self.log_api_failure("get_list_of_account_assets", msg, n_attempts)
                 time.sleep(2)
@@ -671,7 +671,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 history = self.orderApi.history(symbol, startTime, endTime, pageSize, lastEndId='', isPre=False)
                 self.success += 1
                 break
-            except exceptions.BitgetAPIException as e:
+            except (exceptions.BitgetAPIException, Exception) as e:
                 msg = getattr(e, "message", "")
                 self.log_api_failure("orderApi.history", msg, n_attempts)
                 time.sleep(2)
@@ -695,7 +695,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 value = float(self.marketApi.ticker(symbol)["data"]["last"])
                 self.success += 1
                 break
-            except exceptions.BitgetAPIException as e:
+            except (exceptions.BitgetAPIException, Exception) as e:
                 msg = getattr(e, "message", "")
                 self.log_api_failure("marketApi.ticker", msg, n_attempts)
                 time.sleep(2)
@@ -728,7 +728,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 value = float(self.marketApi.market_price(symbol)["data"]["total"])
                 self.success += 1
                 break
-            except exceptions.BitgetAPIException as e:
+            except (exceptions.BitgetAPIException, Exception) as e:
                 msg = getattr(e, "message", "")
                 self.log_api_failure("marketApi.market_price", msg, n_attempts)
                 time.sleep(2)
@@ -745,7 +745,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 value = float(self.marketApi.market_price(symbol)["data"]["usdtEquity"])
                 self.success += 1
                 break
-            except exceptions.BitgetAPIException as e:
+            except (exceptions.BitgetAPIException, Exception) as e:
                 msg = getattr(e, "message", "")
                 self.log_api_failure("marketApi.market_price", msg, n_attempts)
                 time.sleep(2)
@@ -838,7 +838,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                     df_account_umcbl = None
                     df_account_dmcbl = None
                     df_account_cmcbl = None
-                except exceptions.BitgetAPIException as e:
+                except (exceptions.BitgetAPIException, Exception) as e:
                     msg = getattr(e, "message", "")
                     self.log_api_failure("accountApi.accounts", msg, n_attempts)
                     time.sleep(2)
@@ -922,7 +922,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         while n_attempts > 0:
             try:
                 result = self.accountApi.accountAssets(productType='umcbl')
-            except exceptions.BitgetAPIException as e:
+            except (exceptions.BitgetAPIException, Exception) as e:
                 msg = getattr(e, "message", "")
                 self.log_api_failure("accountApi.accountAssets", msg, n_attempts)
                 time.sleep(2)
@@ -937,7 +937,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 current = self.orderApi.current(symbol)
                 self.success += 1
                 break
-            except exceptions.BitgetAPIException as e:
+            except (exceptions.BitgetAPIException, Exception) as e:
                 msg = getattr(e, "message", "")
                 self.log_api_failure("orderApi.current", msg, n_attempts)
                 time.sleep(2)
@@ -954,7 +954,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 result = self.orderApi.cancel_orders(symbol, marginCoin, orderId)
                 self.success += 1
                 break
-            except exceptions.BitgetAPIException as e:
+            except (exceptions.BitgetAPIException, Exception) as e:
                 msg = getattr(e, "message", "")
                 self.log_api_failure("orderApi.cancel_orders", msg, n_attempts)
                 if e.code == '40768':
@@ -983,7 +983,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 response = self.orderApi.fills(symbol, order_id)
                 self.success += 1
                 break
-            except exceptions.BitgetAPIException as e:
+            except (exceptions.BitgetAPIException, Exception) as e:
                 msg = getattr(e, "message", "")
                 self.log_api_failure("orderApi.fills", msg, n_attempts)
                 time.sleep(2)
@@ -1024,7 +1024,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 leverage = self.marketApi.get_symbol_leverage(symbol)
                 self.success += 1
                 break
-            except exceptions.BitgetAPIException as e:
+            except (exceptions.BitgetAPIException, Exception) as e:
                 msg = getattr(e, "message", "")
                 self.log_api_failure("marketApi.get_symbol_leverage", msg, n_attempts)
                 time.sleep(2)
@@ -1040,7 +1040,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 dct_account = self.accountApi.account(symbol, marginCoin)
                 self.success += 1
                 break
-            except exceptions.BitgetAPIException as e:
+            except (exceptions.BitgetAPIException, Exception) as e:
                 msg = getattr(e, "message", "")
                 self.log_api_failure("accountApi.account", msg, n_attempts)
                 time.sleep(2)
@@ -1057,7 +1057,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 dct_account = self.accountApi.leverage(symbol, "USDT", leverage, hold)
                 self.success += 1
                 break
-            except exceptions.BitgetAPIException as e:
+            except (exceptions.BitgetAPIException, Exception) as e:
                 msg = getattr(e, "message", "")
                 self.log_api_failure("accountApi.leverage", msg, n_attempts)
                 time.sleep(2)
@@ -1086,7 +1086,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 dct_account = self.accountApi.margin_mode(symbol, "USDT", marginMode)
                 self.success += 1
                 break
-            except exceptions.BitgetAPIException as e:
+            except (exceptions.BitgetAPIException, Exception) as e:
                 msg = getattr(e, "message", "")
                 self.log_api_failure("accountApi.margin_mode", msg, n_attempts)
                 time.sleep(2)
@@ -1190,7 +1190,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 crossMarginLeverage, longLeverage, shortLeverage = self.set_account_symbol_leverage(symbol, leverage, hold)
                 self.success += 1
                 break
-            except exceptions.BitgetAPIException as e:
+            except (exceptions.BitgetAPIException, Exception) as e:
                 msg = getattr(e, "message", "")
                 self.log_api_failure("set_account_symbol_leverage", msg, n_attempts)
                 time.sleep(2)
@@ -1213,7 +1213,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 self.log(symbol + ' margin set to ' + margin + " " + set_symbol_margin)
                 self.success += 1
                 break
-            except exceptions.BitgetAPIException as e:
+            except (exceptions.BitgetAPIException, Exception) as e:
                 msg = getattr(e, "message", "")
                 self.log_api_failure("set_account_symbol_margin", msg, n_attempts)
                 time.sleep(2)

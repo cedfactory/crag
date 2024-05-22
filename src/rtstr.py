@@ -218,16 +218,16 @@ class RealTimeStrategy(metaclass=ABCMeta):
     def get_rtctrl(self):
         return self.rtctrl
 
-    def get_leverages(self):
+    def get_margin_mode_and_leverages(self):
         if not isinstance(self.df_symbols, pd.DataFrame):
             return None
 
         columns = self.df_symbols.columns.values
-        if "leverage_long" not in columns or "leverage_short" not in columns:
+        if "margin_mode" not in columns or "leverage_long" not in columns or "leverage_short" not in columns:
             return None
 
-        df_leverages = self.df_symbols[["symbol", "leverage_long", "leverage_short"]]
-        return df_leverages
+        df_symbols = self.df_symbols[["symbol", "leverage_long", "leverage_short", "margin_mode"]]
+        return df_symbols
 
     @abstractmethod
     def get_data_description(self):
