@@ -91,7 +91,7 @@ class BrokerBitGet(broker.Broker):
     @authentication_required
     def set_margin_mode_and_leverages(self, df_margin_mode_leverages):
         for index, row in df_margin_mode_leverages.iterrows():
-            symbol = self._get_symbol(row["symbol"])
+            symbol = row["symbol"]
             self.set_symbol_margin(symbol, row["margin_mode"])
             self.set_symbol_leverage(symbol, row["leverage_long"], "long")
             self.set_symbol_leverage(symbol, row["leverage_short"], "short")
@@ -345,19 +345,25 @@ class BrokerBitGet(broker.Broker):
         if len(lst_orders) > 0:
             symbol = self._get_symbol(lst_orders[0]["symbol"])
             lst_orderList = []
+            leverage_short = self.get_leverage_short(symbol)
+            leverage_long = self.get_leverage_long(symbol)
             for order in lst_orders:
                 if order["type"] == 'OPEN_LONG_ORDER':
                     side = "open_long"
+                    leverage = leverage_long
                 elif order["type"] == 'OPEN_SHORT_ORDER':
                     side = "open_short"
+                    leverage = leverage_short
                 elif order["type"] == 'CLOSE_LONG_ORDER':
                     side = "close_long"
+                    leverage = leverage_long
                 elif order["type"] == 'CLOSE_SHORT_ORDER':
                     side = "close_short"
+                    leverage = leverage_short
 
                 clientOid = self.clientOIdprovider.get_name(symbol, order["type"] + "__" + str(order["grid_id"]) + "__")
                 orderParam = {
-                    "size": str(order["gross_size"]),
+                    "size": str(order["gross_size"] * leverage),
                     "price": str(order["price"]),
                     "side": side,
                     "orderType": "limit",

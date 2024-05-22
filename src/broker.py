@@ -73,6 +73,16 @@ class Broker(metaclass = ABCMeta):
     def ready(self):
         return False
 
+    def get_leverage_long(self, symbol):
+        if symbol in self.df_symbols["symbol"].values:
+            return self.df_symbols.loc[self.df_symbols["symbol"] == symbol, "leverage_long"][0]
+        return None
+
+    def get_leverage_short(self, symbol):
+        if symbol in self.df_symbols["symbol"].values:
+            return self.df_symbols.loc[self.df_symbols["symbol"] == symbol, "leverage_short"][0]
+        return None
+
     def log(self, msg, header="", attachments=[]):
         if self.zero_print:
             return
