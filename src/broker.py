@@ -2,6 +2,7 @@ from abc import ABCMeta, abstractmethod
 from src.toolbox import settings_helper
 from src import logger
 import pandas as pd
+from os import path
 import ast
 from datetime import datetime
 
@@ -27,6 +28,7 @@ class Broker(metaclass = ABCMeta):
     def __init__(self, params = None):
         self.zero_print = False
         self.loggers = [ logger.LoggerConsole() ]
+        self.df_symbols = None
         self.cash = 10
         self.fdp_url_id = "localhost:5000"
         self.reset_account = True  # Reset account default behavior
@@ -47,6 +49,12 @@ class Broker(metaclass = ABCMeta):
                     self.reset_account_orders = ast.literal_eval(self.reset_account_orders)
                 except BaseException as err:
                     self.reset_account_orders = True
+
+            str_symbols = params.get("symbols", None)
+            if str_symbols and path.exists("./symbols/"+str_symbols):
+                self.df_symbols = pd.read_csv("./symbols/"+str_symbols)
+                #self.lst_symbols = self.df_symbols['symbol'].tolist()
+
         self.cash_borrowed = 10
         self.rtdp = None
         self.account = None

@@ -252,13 +252,6 @@ class Crag:
             self.minimal_portfolio_date = self.start_date
             self.maximal_portfolio_date = self.start_date
 
-            # margin mode & leverages management
-            df_symbols = self.rtstr.get_margin_mode_and_leverages()
-            if not isinstance(df_symbols, pd.DataFrame):
-                self.log("💥 No leverages specified")
-                exit(0)
-            self.broker.set_margin_mode_and_leverages(df_symbols)
-
             msg_broker_info = self.broker.log_info()
             self.log_discord(msg_broker_info, "run")
             del msg_broker_info

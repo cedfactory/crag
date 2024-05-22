@@ -9,7 +9,6 @@ class BrokerBitGet(broker.Broker):
         super().__init__(params)
         self.rtdp = rtdp.RealTimeDataProvider(params)
         self.simulation = False
-        self.leverage = 0
         self.name = ""
         self.exchange_name = "bitget"
         self.chase_limit = False
@@ -26,9 +25,7 @@ class BrokerBitGet(broker.Broker):
                 self.simulation = False
             if self.simulation == 1 or self.simulation == "1":
                 self.simulation = True
-            self.leverage = params.get("leverage", self.leverage)
-            if isinstance(self.leverage, str):
-                self.leverage = int(self.leverage)
+
         #if not self._authentification():
         #    print("[BrokerBitGet] : Problem encountered during authentification")
 
@@ -58,7 +55,6 @@ class BrokerBitGet(broker.Broker):
         info += "{}".format(type(self).__name__)
         cash, _, _ = self.get_available_cash()
         info += "\nCash : $ {}".format(utils.KeepNDecimals(cash, 2))
-        # info += "\nLeverage : {}".format(self.leverage)
         return info
 
     def log_info_trade(self):

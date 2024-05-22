@@ -27,6 +27,7 @@
         <params exchange="bitget"
                 fdp_url_id="gc1"
                 account="subfortest1"
+                symbols="./symbols_df_sltp_XRP_usdt.csv"
                 simulation="1"
                 intervals="1h"
                 orders="market"
@@ -35,7 +36,7 @@
                 loggers="file=log"
         />
     </broker>
-    <crag id="grid_long_aws"
+    <crag id="grid_long_short_aws"
           interval="3600"
           botId="subfortest1"
           loggers="file=log"

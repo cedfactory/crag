@@ -92,6 +92,12 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             self.log('resume strategy')
             self.set_boot_status_to_resumed()
 
+        # marginMode & leverages management
+        if not isinstance(self.df_symbols, pd.DataFrame):
+            self.log("💥 No leverages specified")
+            exit(0)
+        self.set_margin_mode_and_leverages(self.df_symbols)
+
         return
         # initialize the websocket client
         def handle_error(message):
