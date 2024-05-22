@@ -604,8 +604,8 @@ class GridPosition():
                 self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'positions_size'] = sum_available_position
                 leverage = filtered_df['leverage'].iloc[0]
                 self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'leverage'] = leverage
-                # nb_open_positions = int(sum_available_position / buying_size / leverage)
-                nb_open_positions = int(sum_available_position / buying_size)
+                nb_open_positions = int(sum_available_position / buying_size / leverage)
+                # nb_open_positions = int(sum_available_position / buying_size)
                 self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_open_positions'] = nb_open_positions
                 previous_nb_open_positions = self.df_nb_open_positions.loc[self.df_nb_open_positions['symbol'] == symbol, 'nb_previous_open_positions'].values[0]
                 self.df_nb_open_positions['previous_nb_open_positions'] = previous_nb_open_positions
