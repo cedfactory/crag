@@ -111,7 +111,8 @@ class ExecuteTimeRecorder():
         del new_row
 
     def set_grid_infos(self, df_grid, side):
-        if len(self.df_grid) == 0:
+        self.df_grid = self.dct_grid[side]
+        if self.df_grid is None:
             self.df_grid = df_grid.copy()
             self.df_grid.rename(columns={'values': '0'}, inplace=True)
         else:
