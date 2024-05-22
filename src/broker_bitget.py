@@ -421,11 +421,11 @@ class BrokerBitGet(broker.Broker):
     @authentication_required
     def execute_orders(self, lst_orders):
         if len(lst_orders) == 0:
-            self.execute_timer.set_time_to_zero("broker", "execute_orders", "execute_batch_orders", self.iter_execute_orders)
+            # self.execute_timer.set_time_to_zero("broker", "execute_orders", "execute_batch_orders", self.iter_execute_orders)
             self.iter_execute_orders += 1
             return
 
-        self.execute_timer.set_start_time("broker", "execute_orders", "execute_batch_orders", self.iter_execute_orders)
+        # self.execute_timer.set_start_time("broker", "execute_orders", "execute_batch_orders", self.iter_execute_orders)
 
         # extract triggers...
         lst_triggers = [order for order in lst_orders if "trigger_price" in order]
@@ -448,7 +448,7 @@ class BrokerBitGet(broker.Broker):
             self.execute_batch_orders(lst_orders)
             # self.execute_uniq_order(lst_orders) # CEDE TO BE CONFIRMED AFTER TEST
 
-        self.execute_timer.set_end_time("broker", "execute_orders", "execute_batch_orders", self.iter_execute_orders)
+        # self.execute_timer.set_start_time("broker", "execute_orders", "execute_batch_orders", self.iter_execute_orders)
         del lst_triggers
         del lst_orders
         del max_batch_size
@@ -456,7 +456,7 @@ class BrokerBitGet(broker.Broker):
         self.iter_execute_orders += 1
 
     def set_open_orders_gridId(self, df_open_orders):
-        self.execute_timer.set_start_time("broker", "set_open_orders_gridId", "set_open_orders_gridId", self.iter_set_open_orders_gridId)
+        # self.execute_timer.set_start_time("broker", "set_open_orders_gridId", "set_open_orders_gridId", self.iter_set_open_orders_gridId)
 
         df_open_orders["gridId"] = None
         for orderId in df_open_orders["orderId"].tolist():
@@ -468,7 +468,7 @@ class BrokerBitGet(broker.Broker):
             del condition
             del res
 
-        self.execute_timer.set_end_time("broker", "set_open_orders_gridId", "set_open_orders_gridId", self.iter_set_open_orders_gridId)
+        # self.execute_timer.set_start_time("broker", "set_open_orders_gridId", "set_open_orders_gridId", self.iter_set_open_orders_gridId)
         self.iter_set_open_orders_gridId += 1
 
         return df_open_orders
