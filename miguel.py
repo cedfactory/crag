@@ -109,6 +109,10 @@ class PanelOrders(wx.Panel):
         cancel_all_limit_orders_button = wx.Button(self, label='Cancel all open orders')
         cancel_all_limit_orders_button.Bind(wx.EVT_BUTTON, self.main.on_cancel_all_limit_orders)
         hsizer.Add(cancel_all_limit_orders_button, 0, wx.ALL | wx.EXPAND, 5)
+
+        export_all_limit_orders_button = wx.Button(self, label='Export')
+        export_all_limit_orders_button.Bind(wx.EVT_BUTTON, self.main.on_export_all_limit_orders)
+        hsizer.Add(export_all_limit_orders_button, 0, wx.ALL | wx.EXPAND, 5)
         main_sizer.Add(hsizer, 0, wx.ALL | wx.CENTER, 5)
 
         # open limit order
@@ -243,6 +247,10 @@ class MainPanel(wx.Panel):
         self.accounts.Clear()
         self.accounts.Append(accounts)
 
+    def get_broker_account(self):
+        if self.accounts.GetSelection() < 0:
+            return ""
+        return self.accounts.GetString(self.accounts.GetSelection())
 
     def get_broker_from_selected_account(self):
         if self.accounts.GetSelection() < 0:
@@ -389,6 +397,30 @@ class MainPanel(wx.Panel):
         my_broker = self.get_broker_from_selected_account()
         my_broker.cancel_all_orders(["XRP", "BTC", "ETH", "SOL"])
         self.update_orders(my_broker)
+
+    def on_export_all_limit_orders(self, event):
+        with wx.FileDialog(self, "Open csv file", wildcard="csv files (*.csv)|*.csv", style=wx.FD_OPEN) as fileDialog:
+            if fileDialog.ShowModal() == wx.ID_CANCEL:
+                return
+            pathname = fileDialog.GetPath()
+            try:
+                with open(pathname, "w") as file:
+                    file.write("Symbol,Side,Price,Size,Leverage,MarginCoin,MarginMode,ReduceOnly,ClientOid,OrderId\n")
+                    for row in range(self.panel_orders.orders.GetItemCount()):
+                        line = ",".join([self.panel_orders.orders.GetItem(row, col).GetText() for col in
+                                         range(self.panel_orders.orders.GetColumnCount())])
+                        file.write(line+"\n")
+            except IOError:
+                wx.LogError("Cannot open file '%s'." % pathname)
+
+        '''
+        selected_account = self.get_broker_account()
+        with open("miguel_" + selected_account + "_limit_orders.csv", "w") as file:
+            for row in range(self.panel_orders.orders.GetItemCount()):
+                line = ",".join([self.panel_orders.orders.GetItem(row, col).GetText() for col in
+                                 range(self.panel_orders.orders.GetColumnCount())])
+                file.write(line)
+        '''
 
     def on_open_limit_order(self, event):
         my_broker = self.get_broker_from_selected_account()
