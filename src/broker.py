@@ -225,3 +225,6 @@ class Broker(metaclass = ABCMeta):
 
     def get_cache_status(self):
         return None
+
+    def set_execute_time_recorder(self, execute_timer):
+        pass
