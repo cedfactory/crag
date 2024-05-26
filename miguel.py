@@ -399,17 +399,26 @@ class MainPanel(wx.Panel):
         self.update_orders(my_broker)
 
     def on_export_all_limit_orders(self, event):
-        with wx.FileDialog(self, "Open csv file", wildcard="csv files (*.csv)|*.csv", style=wx.FD_OPEN) as fileDialog:
+        selected_account = self.get_broker_account()
+        default_name = selected_account + "_limit_orders.csv"
+        with wx.FileDialog(self,
+                           "Open csv file",
+                           defaultFile=default_name,
+                           wildcard="csv files (*.csv)|*.csv",
+                           style=wx.FD_OPEN) as fileDialog:
             if fileDialog.ShowModal() == wx.ID_CANCEL:
                 return
             pathname = fileDialog.GetPath()
             try:
                 with open(pathname, "w") as file:
-                    file.write("Symbol,Side,Price,Size,Leverage,MarginCoin,MarginMode,ReduceOnly,ClientOid,OrderId\n")
+                    header = ",".join([self.panel_orders.orders.GetColumn(col).GetText() for col in
+                                       range(self.panel_orders.orders.GetColumnCount())])
+                    file.write(header+"\n")
                     for row in range(self.panel_orders.orders.GetItemCount()):
                         line = ",".join([self.panel_orders.orders.GetItem(row, col).GetText() for col in
                                          range(self.panel_orders.orders.GetColumnCount())])
                         file.write(line+"\n")
+                    print(pathname+" saved")
             except IOError:
                 wx.LogError("Cannot open file '%s'." % pathname)
 
