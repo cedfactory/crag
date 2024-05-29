@@ -147,7 +147,7 @@ class LoggerFile(ILogger):
             pathlib.Path(self.filename).touch()
 
     def _get_current_filename(self):
-        return "{}{:03d}.log".format(self.filename_base, self.current_id)
+        return "{}{:04d}.log".format(self.filename_base, self.current_id)
 
     def _get_current_filesize(self):
         if self.filename != "" and os.path.isfile(self.filename):
