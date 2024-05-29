@@ -3,6 +3,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import utils
 import os
+from pathlib import Path
+import shutil
 import psutil
 import numpy as np
 
@@ -21,10 +23,23 @@ class ExecuteTimeRecorder():
         }
 
         self.set_input_dir(iter, directory)
+        self.archive_id = 0
 
         self.plot_df_timer = False
         self.plot_df_system = False
         self.plot_df_grid = False
+
+    def check_log(self):
+        dump_time_path = Path(self.dump_time_directory)
+        size = sum(f.stat().st_size for f in dump_time_path.glob('**/*') if f.is_file())
+        if size > 100000000:  # 100Mo
+            files = [f for f in os.listdir(self.dump_time_directory) if
+                     os.path.isfile(os.path.join(self.dump_time_directory, f))]
+            archive_name = "dump_timer_{:04d}".format(self.archive_id)
+            self.archive_id += 1
+            shutil.make_archive(os.path.join(self.dump_directory, archive_name), "zip", self.dump_time_directory)
+            for file in files:
+                os.remove(os.path.join(self.dump_time_directory, file))
 
     def set_input_dir(self, iter, directory):
         self.dump_directory = directory
@@ -165,6 +180,8 @@ class ExecuteTimeRecorder():
         self.df_time_recorder.to_csv(self.dump_time_directory + "/" + self.master_cycle + "_df_time_recorder.csv")
         if self.plot_df_timer:
             self.trigger_plot_df_time()
+
+        self.check_log()
 
     def plot_all_close_timer(self):
         csv_files = [file for file in os.listdir(self.dump_time_directory) if file.endswith('.csv')]
