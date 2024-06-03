@@ -14,6 +14,17 @@ import glob
 import shutil
 import pickle
 
+
+def _initialize_crag_telegram_bot(botId=""):
+    if botId == None or botId == "":
+        return None
+
+    if botId != None and botId != "":
+        bot_info = settings_helper.get_telegram_bot_info(botId)
+        token = bot_info.get("token", None)
+        chat_id = bot_info.get("chat_id", None)
+        return logger.LoggerTelegramBot(params={"id":botId, "token":token, "chat_id":chat_id})
+
 def _initialize_crag_discord_bot(botId=""):
     if botId == None or botId == "":
         return None

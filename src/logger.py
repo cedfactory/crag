@@ -275,3 +275,21 @@ class LoggerDiscordBot(ILogger):
             self.log_webhook(msg, header, author, attachments)
         else:
             self.log_post(msg, header, author, attachments)
+
+
+class LoggerTelegramBot(ILogger):
+    def __init__(self, params=None):
+        super().__init__(params)
+        self.id = None
+        self.token = None
+        self.chat_id = None
+        if params:
+            self.id = params.get("id", self.id)
+            self.token = params.get("token", self.token)
+            self.chat_id = params.get("chat_id", self.chat_id)
+
+    def log(self, msg, header="", author="", attachments=[]):
+        if self.id and self.token and self.chat_id:
+            params = {"chat_id": self.chat_id, "text": msg}
+            url = "https://api.telegram.org/bot" + self.token
+            response = requests.post(url + "/sendMessage", data=params)
