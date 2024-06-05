@@ -1,9 +1,11 @@
 from abc import ABCMeta, abstractmethod
+from dotenv import load_dotenv
 import pandas as pd
 from datetime import datetime
 import time
 import tracemalloc
 from . import utils
+from .toolbox import settings_helper
 
 # for LoggerConsole
 from rich import print
@@ -17,6 +19,49 @@ import requests
 import os
 import discord
 import xml.etree.cElementTree as ET
+
+
+def _initialize_crag_telegram_bot(botId=""):
+    if botId == None or botId == "":
+        return None
+
+    if botId != None and botId != "":
+        bot_info = settings_helper.get_telegram_bot_info(botId)
+        token = bot_info.get("token", None)
+        chat_id = bot_info.get("chat_id", None)
+        return LoggerTelegramBot(params={"id":botId, "token":token, "chat_id":chat_id})
+
+def _initialize_crag_discord_bot(botId=""):
+    if botId == None or botId == "":
+        return None
+
+    if botId != None and botId != "":
+        bot_info = settings_helper.get_discord_bot_info(botId)
+        token = bot_info.get("token", None)
+        channel_id = bot_info.get("channel", None)
+        webhook = bot_info.get("webhook", None)
+        return LoggerDiscordBot(params={"token":token, "channel_id":channel_id, "webhook":webhook})
+
+    load_dotenv()
+    token = os.getenv("CRAG_DISCORD_BOT_TOKEN")
+    channel_id = os.getenv("CRAG_DISCORD_BOT_CHANNEL")
+    webhook = os.getenv("CRAG_DISCORD_BOT_WEBHOOK")
+    return LoggerDiscordBot(params={"token":token, "channel_id":channel_id, "webhook":webhook})
+
+def get_loggers(str_loggers):
+    lst_loggers = str_loggers.split(';')
+    loggers = []
+    for iter_logger in lst_loggers:
+        logger_params = iter_logger.split("=")
+        if logger_params[0] == "console":
+            loggers.append(LoggerConsole())
+        elif logger_params[0] == "file" and len(logger_params) == 2:
+            loggers.append(LoggerFile({"filename": logger_params[1]}))
+        elif logger_params[0] == "discordBot" and len(logger_params) == 2:
+            loggers.append(_initialize_crag_discord_bot(logger_params[1]))
+        elif logger_params[0] == "telegramBot" and len(logger_params) == 2:
+            loggers.append(_initialize_crag_telegram_bot(logger_params[1]))
+    return loggers
 
 class ILogger(metaclass=ABCMeta):
     def __init__(self, params=None):
