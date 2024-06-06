@@ -68,7 +68,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         if isinstance(self.df_market, pd.DataFrame):
             self.df_market.drop( self.df_market[self.df_market['quoteCoin'] != 'USDT'].index, inplace=True)
             self.df_market.reset_index(drop=True)
-            self.log('list symbols perpetual/USDT: {}'.format(self.df_market["baseCoin"].tolist()))
+            #self.log('list symbols perpetual/USDT: {}'.format(self.df_market["baseCoin"].tolist()))
 
         # reset account
         if self.reset_account_orders:
@@ -268,7 +268,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
             # orders
             df_open_orders = futures[0].result()  # self.get_open_orders(lst_symbols)
-            if isinstance(df_open_orders, pd.Dataframe) and "symbol" in df_open_orders.columns:
+            if isinstance(df_open_orders, pd.DataFrame) and "symbol" in df_open_orders.columns:
                 df_open_orders['symbol'] = df_open_orders['symbol'].apply(lambda x: self._get_coin(x))
                 lst_tmp = []
                 for x in df_open_orders['symbol']:
@@ -284,7 +284,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
             # positions
             df_open_positions = futures[1].result()  # self.get_open_position()
-            if isinstance(df_open_positions, pd.Dataframe) and "symbol" in df_open_positions.columns:
+            if isinstance(df_open_positions, pd.DataFrame) and "symbol" in df_open_positions.columns:
                 df_open_positions['symbol'] = df_open_positions['symbol'].apply(self._get_coin)
                 df_open_positions_filtered = df_open_positions[df_open_positions['symbol'].isin(lst_symbols)]
 
@@ -295,7 +295,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
             # triggers
             df_triggers = futures[2].result()
-            if isinstance(df_triggers, pd.Dataframe) and 'symbol' in df_triggers.columns:
+            if isinstance(df_triggers, pd.DataFrame) and 'symbol' in df_triggers.columns:
                 df_triggers['symbol'] = df_triggers['symbol'].apply(self._get_coin)
             else:
                 success = False
@@ -307,7 +307,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
             # prices
             df_prices = futures[3].result()  # self.get_values(lst_symbols)
-            if not isinstance(df_triggers, pd.Dataframe):
+            if not isinstance(df_triggers, pd.DataFrame):
                 success = False
 
             self.current_state = {
