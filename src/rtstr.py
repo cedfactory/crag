@@ -127,7 +127,14 @@ class RealTimeStrategy(metaclass=ABCMeta):
             self.zero_print = params.get("zero_print", self.zero_print)
             if isinstance(self.zero_print, str):
                 self.zero_print = self.zero_print == "True"  # convert string to boolean
-            self.loggers = params.get("loggers", self.loggers)
+
+            loggers = params.get("loggers", self.loggers)
+            if isinstance(loggers, str):
+                self.loggers = logger.get_loggers(loggers)
+            elif isinstance(loggers, list):
+                self.loggers = loggers
+            else:
+                self.loggers = []
 
             self.id = params.get("id", self.id)
             self.min_bol_spread = params.get("min_bol_spread", self.min_bol_spread)

@@ -34,7 +34,12 @@ class Broker(metaclass = ABCMeta):
         self.reset_account = True  # Reset account default behavior
         self.reset_account_orders = True  # Reset account orders default behavior
         if params:
-            self.loggers = params.get("loggers", self.loggers)
+            loggers = params.get("loggers", self.loggers)
+            if isinstance(loggers, str):
+                self.loggers = logger.get_loggers(loggers)
+            elif isinstance(loggers, list):
+                self.loggers = loggers
+
             self.cash = params.get("cash", self.cash)
             self.fdp_url_id = params.get("fdp_url_id", self.fdp_url_id)
             self.reset_account = params.get("reset_account", self.reset_account)
@@ -225,3 +230,6 @@ class Broker(metaclass = ABCMeta):
 
     def get_cache_status(self):
         return None
+
+    def set_execute_time_recorder(self, execute_timer):
+        pass

@@ -1,9 +1,11 @@
 from abc import ABCMeta, abstractmethod
+from dotenv import load_dotenv
 import pandas as pd
 from datetime import datetime
 import time
 import tracemalloc
 from . import utils
+from .toolbox import settings_helper
 
 # for LoggerConsole
 from rich import print
@@ -17,6 +19,49 @@ import requests
 import os
 import discord
 import xml.etree.cElementTree as ET
+
+
+def _initialize_crag_telegram_bot(botId=""):
+    if botId == None or botId == "":
+        return None
+
+    if botId != None and botId != "":
+        bot_info = settings_helper.get_telegram_bot_info(botId)
+        token = bot_info.get("token", None)
+        chat_id = bot_info.get("chat_id", None)
+        return LoggerTelegramBot(params={"id":botId, "token":token, "chat_id":chat_id})
+
+def _initialize_crag_discord_bot(botId=""):
+    if botId == None or botId == "":
+        return None
+
+    if botId != None and botId != "":
+        bot_info = settings_helper.get_discord_bot_info(botId)
+        token = bot_info.get("token", None)
+        channel_id = bot_info.get("channel", None)
+        webhook = bot_info.get("webhook", None)
+        return LoggerDiscordBot(params={"token":token, "channel_id":channel_id, "webhook":webhook})
+
+    load_dotenv()
+    token = os.getenv("CRAG_DISCORD_BOT_TOKEN")
+    channel_id = os.getenv("CRAG_DISCORD_BOT_CHANNEL")
+    webhook = os.getenv("CRAG_DISCORD_BOT_WEBHOOK")
+    return LoggerDiscordBot(params={"token":token, "channel_id":channel_id, "webhook":webhook})
+
+def get_loggers(str_loggers):
+    lst_loggers = str_loggers.split(';')
+    loggers = []
+    for iter_logger in lst_loggers:
+        logger_params = iter_logger.split("=")
+        if logger_params[0] == "console":
+            loggers.append(LoggerConsole())
+        elif logger_params[0] == "file" and len(logger_params) == 2:
+            loggers.append(LoggerFile({"filename": logger_params[1]}))
+        elif logger_params[0] == "discordBot" and len(logger_params) == 2:
+            loggers.append(_initialize_crag_discord_bot(logger_params[1]))
+        elif logger_params[0] == "telegramBot" and len(logger_params) == 2:
+            loggers.append(_initialize_crag_telegram_bot(logger_params[1]))
+    return loggers
 
 class ILogger(metaclass=ABCMeta):
     def __init__(self, params=None):
@@ -147,7 +192,7 @@ class LoggerFile(ILogger):
             pathlib.Path(self.filename).touch()
 
     def _get_current_filename(self):
-        return "{}{:03d}.log".format(self.filename_base, self.current_id)
+        return "{}{:04d}.log".format(self.filename_base, self.current_id)
 
     def _get_current_filesize(self):
         if self.filename != "" and os.path.isfile(self.filename):
@@ -275,3 +320,21 @@ class LoggerDiscordBot(ILogger):
             self.log_webhook(msg, header, author, attachments)
         else:
             self.log_post(msg, header, author, attachments)
+
+
+class LoggerTelegramBot(ILogger):
+    def __init__(self, params=None):
+        super().__init__(params)
+        self.id = None
+        self.token = None
+        self.chat_id = None
+        if params:
+            self.id = params.get("id", self.id)
+            self.token = params.get("token", self.token)
+            self.chat_id = params.get("chat_id", self.chat_id)
+
+    def log(self, msg, header="", author="", attachments=[]):
+        if self.id and self.token and self.chat_id:
+            params = {"chat_id": self.chat_id, "text": msg}
+            url = "https://api.telegram.org/bot" + self.token
+            response = requests.post(url + "/sendMessage", data=params)

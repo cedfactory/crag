@@ -57,6 +57,20 @@ def get_discord_bot_info(botId, settings_path="./conf"):
 
     return info
 
+def get_telegram_bot_info(botId, settings_path="./conf"):
+    info = {}
+    telegrambots_node = _get_settings_node("telegrambots", settings_path)
+    telegrambots = list(telegrambots_node)
+    for telegrambot in telegrambots:
+        if telegrambot.tag != "telegrambot" or "id" not in telegrambot.attrib or telegrambot.attrib["id"] != botId:
+            continue
+
+        for name, value in telegrambot.attrib.items():
+            info[name] = value
+        break
+
+    return info
+
 def get_fdp_url_info(fdpId, settings_path="./conf"):
     info = {}
     fdps_node = _get_settings_node("fdp_urls", settings_path)

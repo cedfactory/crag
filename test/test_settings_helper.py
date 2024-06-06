@@ -23,6 +23,15 @@ class TestSettingsHelper:
         assert(info.get("sender") == "sender@foobar.com")
         assert(info.get("password") == "password")
 
+    def test_get_telegram_bot_info(self):
+        # action
+        info = settings_helper.get_telegram_bot_info("telegrambot1", "./test/data/")
+
+        # expectations
+        assert (info.get("id") == "telegrambot1")
+        assert (info.get("token") == "telegramTokenBot1")
+        assert (info.get("chat_id") == "chatId1")
+
     def test_get_discord_bot_info(self):
         # action
         info = settings_helper.get_discord_bot_info("bot1", "./test/data/")

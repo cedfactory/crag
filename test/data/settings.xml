@@ -25,6 +25,13 @@
             sender="sender@foobar.com"
             password = "password" />
     </mailbots>
+    <telegrambots>
+        <telegrambot
+            id="telegrambot1"
+            token="telegramTokenBot1"
+            chat_id="chatId1"
+        />
+    </telegrambots>
     <discordbots>
         <discordbot
             id="bot1"

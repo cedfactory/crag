@@ -471,6 +471,13 @@ class BrokerBitGet(broker.Broker):
             return lst_orders
 
 
+    def execute_batch_cancel_orders(self, symbol, lst_ordersIds):
+        result = None
+        if symbol != "" and len(lst_ordersIds) > 0:
+            symbol = self._get_symbol(symbol)
+            result = self._batch_cancel_orders_api(symbol, "USDT", lst_ordersIds)
+        return result
+
     @authentication_required
     def execute_orders(self, lst_orders):
         if len(lst_orders) == 0:

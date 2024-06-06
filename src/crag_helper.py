@@ -5,31 +5,13 @@ from src import rtstr,rtstr_dummy_test,rtstr_envelope,rtstr_envelopestochrsi,rts
 from src import broker_bitget_api
 from src import logger
 from src import utils
-from src.toolbox import settings_helper
 
 import xml.etree.cElementTree as ET
-from dotenv import load_dotenv
 import os
 import glob
 import shutil
 import pickle
 
-def _initialize_crag_discord_bot(botId=""):
-    if botId == None or botId == "":
-        return None
-
-    if botId != None and botId != "":
-        bot_info = settings_helper.get_discord_bot_info(botId)
-        token = bot_info.get("token", None)
-        channel_id = bot_info.get("channel", None)
-        webhook = bot_info.get("webhook", None)
-        return logger.LoggerDiscordBot(params={"token":token, "channel_id":channel_id, "webhook":webhook})
-
-    load_dotenv()
-    token = os.getenv("CRAG_DISCORD_BOT_TOKEN")
-    channel_id = os.getenv("CRAG_DISCORD_BOT_CHANNEL")
-    webhook = os.getenv("CRAG_DISCORD_BOT_WEBHOOK")
-    return logger.LoggerDiscordBot(params={"token":token, "channel_id":channel_id, "webhook":webhook})
 
 def get_configuration_files_list(config_files_df_lst):
     config_path = './conf'
@@ -122,41 +104,16 @@ def load_configuration_file(configuration_file, config_path = './conf'):
 
     return {'broker': params_broker, 'strategy': params_strategy, "crag": params_crag}
 
-def get_loggers(str_loggers):
-    lst_loggers = str_loggers.split(';')
-    loggers = []
-    for iter_logger in lst_loggers:
-        logger_params = iter_logger.split("=")
-        if logger_params[0] == "console":
-            loggers.append(logger.LoggerConsole())
-        elif logger_params[0] == "file" and len(logger_params) == 2:
-            loggers.append(logger.LoggerFile({"filename": logger_params[1]}))
-        elif logger_params[0] == "discordBot" and len(logger_params) == 2:
-            loggers.append(_initialize_crag_discord_bot(logger_params[1]))
-    return loggers
-
 def get_crag_params_from_configuration(configuration):
-    params_broker = configuration["broker"]
-    str_loggers = params_broker.get("loggers", "")
-    loggers = get_loggers(str_loggers)
-    params_broker["loggers"] = loggers
-
-    params_strategy = configuration["strategy"]
-    str_loggers = params_strategy.get("loggers", "")
-    loggers = get_loggers(str_loggers)
-    params_strategy["loggers"] = loggers
-
     params_crag = configuration["crag"]
     crag_id = params_crag.get("id", "")
     crag_interval = params_crag.get("interval", "")
     str_loggers = params_crag.get("loggers", "")
-    loggers = get_loggers(str_loggers)
+    loggers = logger.get_loggers(str_loggers)
 
-    bot_id = params_crag.get("bot_id", None)
-    crag_discord_bot = _initialize_crag_discord_bot(bot_id)
-    params_strategy["logger"] = crag_discord_bot
-    available_strategies = rtstr.RealTimeStrategy.get_strategies_list()
+    params_strategy = configuration["strategy"]
     strategy_name = params_strategy.get("name", "")
+    available_strategies = rtstr.RealTimeStrategy.get_strategies_list()
     if strategy_name in available_strategies:
         my_strategy = rtstr.RealTimeStrategy.get_strategy_from_name(strategy_name, params_strategy)
     else:
@@ -165,6 +122,7 @@ def get_crag_params_from_configuration(configuration):
         return None
 
     my_broker = None
+    params_broker = configuration["broker"]
     broker_name = params_broker.get("name", "")
     if broker_name == "simulator" or broker_name == "simulation" or broker_name == "simu":
         my_broker = broker_simulation.SimBroker(params_broker)
@@ -174,6 +132,9 @@ def get_crag_params_from_configuration(configuration):
         my_broker = broker_bitget_api.BrokerBitGetApi(params_broker)
     if broker_name != "mock" and (not my_broker or not my_broker.ready()):
         return None
+
+    bot_id = params_crag.get("bot_id", None)
+    crag_discord_bot = logger._initialize_crag_discord_bot(bot_id)
 
     return {"broker": my_broker, "rtstr": my_strategy, "id": crag_id, "interval": crag_interval, "logger": crag_discord_bot, "loggers": loggers}
 
