@@ -93,6 +93,7 @@ class Crag:
         self.safety_step_iterration = 0
         self.sum_duration_safety_step = 0
         self.reboot_iter = 0
+        self.reboot_exception = False
         self.previous_start_reboot = datetime.now()
         self.init_start_date = int(time.time())
         self.total_duration_reboot = 0
@@ -857,7 +858,7 @@ class Crag:
             self.execute_timer.set_system_record_to_zero(self.safety_step_iterration)
             # self.execute_timer.set_time_to_zero("crag", "request_backup", "set_system_record", self.safety_step_iterration)
         """
-        if reboot \
+        if self.reboot_exception or reboot \
                 or (delta_memory_used > 50) \
                 or (self.safety_step_iterration > 300):
             memory_usage = round(utils.get_memory_usage() / (1024 * 1024), 1)
@@ -1315,7 +1316,12 @@ class Crag:
         self.symbols = self.rtstr.lst_symbols
 
         # self.execute_timer.set_start_time("crag", "current_state_live", "get_current_state", self.current_state_live)
+        self.reboot_exception = False
         broker_current_state = self.broker.get_current_state(self.symbols)
+        if broker_current_state["success"] == False:
+            self.reboot_exception = True
+            return
+
         # self.execute_timer.set_end_time("crag", "current_state_live", "get_current_state", self.current_state_live)
 
         if self.init_grid_position:

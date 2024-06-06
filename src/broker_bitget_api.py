@@ -256,6 +256,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     @authentication_required
     def get_current_state(self, lst_symbols):
         del self.current_state
+        success = True
 
         with ThreadPoolExecutor() as executor:
             futures = []
@@ -267,32 +268,50 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
             # orders
             df_open_orders = futures[0].result()  # self.get_open_orders(lst_symbols)
-            df_open_orders['symbol'] = df_open_orders['symbol'].apply(lambda x: self._get_coin(x))
-            lst_tmp = []
-            for x in df_open_orders['symbol']:
-                coin = self._get_coin(x)
-                lst_tmp.append(coin)
-                del coin
-            df_open_orders['symbol'] = lst_tmp
-            df_open_orders.drop(['marginCoin', 'clientOid'], axis=1, inplace=True)
-            df_open_orders = self.set_open_orders_gridId(df_open_orders)
-            self.clear_gridId_orderId(df_open_orders["orderId"].to_list())
+            if isinstance(df_open_orders, pd.Dataframe) and "symbol" in df_open_orders.columns:
+                df_open_orders['symbol'] = df_open_orders['symbol'].apply(lambda x: self._get_coin(x))
+                lst_tmp = []
+                for x in df_open_orders['symbol']:
+                    coin = self._get_coin(x)
+                    lst_tmp.append(coin)
+                    del coin
+                df_open_orders['symbol'] = lst_tmp
+                df_open_orders.drop(['marginCoin', 'clientOid'], axis=1, inplace=True)
+                df_open_orders = self.set_open_orders_gridId(df_open_orders)
+                self.clear_gridId_orderId(df_open_orders["orderId"].to_list())
+            else:
+                success = False
 
             # positions
             df_open_positions = futures[1].result()  # self.get_open_position()
-            df_open_positions['symbol'] = df_open_positions['symbol'].apply(self._get_coin)
-            df_open_positions_filtered = df_open_positions[df_open_positions['symbol'].isin(lst_symbols)]
+            if isinstance(df_open_positions, pd.Dataframe) and "symbol" in df_open_positions.columns:
+                df_open_positions['symbol'] = df_open_positions['symbol'].apply(self._get_coin)
+                df_open_positions_filtered = df_open_positions[df_open_positions['symbol'].isin(lst_symbols)]
 
-            if any(df_open_positions_filtered):
-                df_open_positions = df_open_positions_filtered
+                if any(df_open_positions_filtered):
+                    df_open_positions = df_open_positions_filtered
+            else:
+                success = False
 
             # triggers
             df_triggers = futures[2].result()
-            df_triggers['symbol'] = df_triggers['symbol'].apply(self._get_coin)
+            if isinstance(df_triggers, pd.Dataframe) and 'symbol' in df_triggers.columns:
+                df_triggers['symbol'] = df_triggers['symbol'].apply(self._get_coin)
+            else:
+                success = False
+                if df_triggers == None:
+                    print("None")
+                print("Error: 'symbol' column not found in df_triggers")
+                print(df_triggers.to_string())
+                df_triggers['symbol'] = df_triggers['symbol'].apply(self._get_coin)
 
             # prices
             df_prices = futures[3].result()  # self.get_values(lst_symbols)
+            if not isinstance(df_triggers, pd.Dataframe):
+                success = False
+
             self.current_state = {
+                "success": success,
                 "open_orders": df_open_orders,
                 "open_positions": df_open_positions,
                 "triggers": df_triggers,
