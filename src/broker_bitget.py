@@ -378,7 +378,7 @@ class BrokerBitGet(broker.Broker):
             transaction = self._batch_orders_api(symbol, "USDT", lst_orderList)
         except (exceptions.BitgetAPIException, Exception) as e:
             transaction = None
-        transaction = None
+
         # Convert each dictionary to a string with newline character and concatenate them
         keys_to_exclude = ['orderType', 'timeInForceValue', 'clientOid']  # List of keys you want to exclude
         result_string = '\n'.join([
