@@ -3,6 +3,7 @@ import pandas as pd
 import gc
 import re
 import json
+from . bitget import exceptions
 
 class BrokerBitGet(broker.Broker):
     def __init__(self, params = None):
@@ -373,7 +374,11 @@ class BrokerBitGet(broker.Broker):
                 lst_orderList.append(orderParam)
 
         msg = "!!!!! EXECUTE BATCH LIMIT ORDER x" + str(len(lst_orderList)) + " !!!!!" + "\n"
-        transaction = self._batch_orders_api(symbol, "USDT", lst_orderList)
+        try:
+            transaction = self._batch_orders_api(symbol, "USDT", lst_orderList)
+        except (exceptions.BitgetAPIException, Exception) as e:
+            transaction = None
+        transaction = None
         # Convert each dictionary to a string with newline character and concatenate them
         keys_to_exclude = ['orderType', 'timeInForceValue', 'clientOid']  # List of keys you want to exclude
         result_string = '\n'.join([
@@ -386,39 +391,85 @@ class BrokerBitGet(broker.Broker):
         result_string = result_string.replace(",", "")
         msg += result_string + "\n"
 
-        if "msg" in transaction and transaction["msg"] == "success" and "data" in transaction and "orderInfo" in transaction["data"]:
-            if len(transaction["data"]["orderInfo"]) > 0:
-                if len(transaction["data"]["orderInfo"]) != len(lst_orderList):
-                    msg += "SUCCESS TRADE:" + str(len(transaction["data"]["orderInfo"])) + " / " + str(len(lst_orderList)) + "\n"
-                    failed_trade = len(lst_orderList) - len(transaction["data"]["orderInfo"])
-                else:
-                    failed_trade = 0
-            for orderInfo in transaction["data"]["orderInfo"]:
-                orderId = orderInfo["orderId"]
-                gridId = [int(num) for num in re.findall(r'__(\d+)__', orderInfo["clientOid"])]
-                self.add_gridId_orderId(gridId[0], orderId)
-                if failed_trade != 0:
-                    msg += "success gridId: " + str(gridId[0]) + "\n"
-            if len(transaction["data"]["failure"]) > 0:
-                msg += "FAILED TRADE: " + str(len(transaction["data"]["failure"])) + "\n"
-                for failureInfo in transaction["data"]["failure"]:
-                    gridId = [int(num) for num in re.findall(r'__(\d+)__', failureInfo["clientOid"])]
-                    msg += "failure gridId: " + str(gridId[0]) + "\n"
-                    msg += "errorCode: " + failureInfo["errorCode"] + "\n"
-                    msg += "errorMsg" + failureInfo["errorMsg"] + "\n"
-        else:
-            msg += "TRADE BATCH FAILED" + "\n"
-            if "data" in transaction and "failure" in transaction["data"]:
+        lst_success_trade = []
+        lst_failed_trade = []
+        if transaction != None:
+            if "msg" in transaction and transaction["msg"] == "success" and "data" in transaction and "orderInfo" in transaction["data"]:
+                if len(transaction["data"]["orderInfo"]) > 0:
+                    if len(transaction["data"]["orderInfo"]) != len(lst_orderList):
+                        msg += "SUCCESS TRADE:" + str(len(transaction["data"]["orderInfo"])) + " / " + str(len(lst_orderList)) + "\n"
+                        failed_trade = len(lst_orderList) - len(transaction["data"]["orderInfo"])
+                    else:
+                        failed_trade = 0
+                for orderInfo in transaction["data"]["orderInfo"]:
+                    orderId = orderInfo["orderId"]
+                    gridId = [int(num) for num in re.findall(r'__(\d+)__', orderInfo["clientOid"])]
+                    self.add_gridId_orderId(gridId[0], orderId)
+                    lst_success_trade.append({"orderId": orderId, "gridId": gridId[0]})
+                    if failed_trade != 0:
+                        msg += "success gridId: " + str(gridId[0]) + "\n"
+
                 if len(transaction["data"]["failure"]) > 0:
-                    msg += "FAILED TRADE: " + str(len(transaction["data"]["failure"])) + " / " + str(len(lst_orderList)) + "\n"
+                    msg += "FAILED TRADE: " + str(len(transaction["data"]["failure"])) + "\n"
                     for failureInfo in transaction["data"]["failure"]:
                         gridId = [int(num) for num in re.findall(r'__(\d+)__', failureInfo["clientOid"])]
+                        lst_failed_trade.append({"orderId": None, "gridId": gridId[0]})
                         msg += "failure gridId: " + str(gridId[0]) + "\n"
                         msg += "errorCode: " + failureInfo["errorCode"] + "\n"
                         msg += "errorMsg" + failureInfo["errorMsg"] + "\n"
+            else:
+                msg += "TRADE BATCH FAILED" + "\n"
+                if "data" in transaction and "failure" in transaction["data"]:
+                    if len(transaction["data"]["failure"]) > 0:
+                        msg += "FAILED TRADE: " + str(len(transaction["data"]["failure"])) + " / " + str(len(lst_orderList)) + "\n"
+                        for failureInfo in transaction["data"]["failure"]:
+                            gridId = [int(num) for num in re.findall(r'__(\d+)__', failureInfo["clientOid"])]
+                            lst_failed_trade.append({"orderId": None, "gridId": gridId[0]})
+                            msg += "failure gridId: " + str(gridId[0]) + "\n"
+                            msg += "errorCode: " + failureInfo["errorCode"] + "\n"
+                            msg += "errorMsg" + failureInfo["errorMsg"] + "\n"
 
-        self.log_trade = self.log_trade + msg.upper()
-        del msg
+            self.log_trade = self.log_trade + msg.upper()
+            del msg
+
+        success_trade_dict = {trade["gridId"]: trade["orderId"] for trade in lst_success_trade}
+
+        if transaction == None:
+            success_trade_dict = {}
+            lst_failed_trade = []
+
+        # Process each order in lst_orders
+        for order in lst_orders:
+            grid_id = order["grid_id"]
+            if grid_id in success_trade_dict:
+                order["trade_status"] = "SUCCESS"
+                order["orderId"] = success_trade_dict[grid_id]
+            elif grid_id in lst_failed_trade:
+                order["trade_status"] = "FAILED"
+                order["orderId"] = None
+            else:
+                order["trade_status"] = "UNKNOWN"
+        return lst_orders
+
+    def execute_orders_scenario(self, lst_orders):
+        if lst_orders is None:
+            return []
+        if len(lst_orders) == 0:
+            return lst_orders
+        else:
+            for order in lst_orders:
+                grid_id = order["grid_id"]
+                # if grid_id in success_trade_dict:
+                if True:
+                    order["trade_status"] = "SUCCESS"
+                    order["orderId"] = "ORDER_ID_" + str(grid_id)
+                elif grid_id in lst_failed_trade:
+                    order["trade_status"] = "FAILED"
+                    order["orderId"] = None
+                else:
+                    order["trade_status"] = "MISSING"
+            return lst_orders
+
 
     def execute_batch_cancel_orders(self, symbol, lst_ordersIds):
         result = None
@@ -449,13 +500,11 @@ class BrokerBitGet(broker.Broker):
         if len(lst_orders) > max_batch_size:
             sub_lst_orders = utils.split_list(lst_orders, max_batch_size)
             print("orders bach over max_batch_size")
+            lst_result_orders = []
             for lst in sub_lst_orders:
-                self.execute_batch_orders(lst)
-        elif len(lst_orders) > 1:
-            self.execute_batch_orders(lst_orders)
-        elif len(lst_orders) == 1:
-            self.execute_batch_orders(lst_orders)
-            # self.execute_uniq_order(lst_orders) # CEDE TO BE CONFIRMED AFTER TEST
+                lst_result_orders += self.execute_batch_orders(lst)
+        elif len(lst_orders) >= 1:
+            lst_result_orders = lst_orders = self.execute_batch_orders(lst_orders)
 
         # self.execute_timer.set_start_time("broker", "execute_orders", "execute_batch_orders", self.iter_execute_orders)
         del lst_triggers
@@ -463,6 +512,8 @@ class BrokerBitGet(broker.Broker):
         del max_batch_size
         locals().clear()
         self.iter_execute_orders += 1
+
+        return lst_result_orders
 
     def set_open_orders_gridId(self, df_open_orders):
         # self.execute_timer.set_start_time("broker", "set_open_orders_gridId", "set_open_orders_gridId", self.iter_set_open_orders_gridId)
