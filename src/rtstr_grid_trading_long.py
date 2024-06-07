@@ -75,6 +75,9 @@ class StrategyGridTradingLong(rtstr.RealTimeStrategy):
         self.df_grid_buying_size = df_grid_buying_size
         del df_grid_buying_size
 
+    def get_str_current_state_filter(self):
+        return "short"
+
     def set_broker_current_state(self, current_state):
         """
         current_state = {
@@ -583,7 +586,7 @@ class GridPosition():
 
     def clear_orderId(self, symbol, grid_id):
         df = self.grid[symbol]
-        df.loc[df['orderId'] == grid_id, 'orderId'] = ""
+        df.loc[df['grid_id'] == grid_id, 'orderId'] = ""
         del df
 
     def print_grid(self):

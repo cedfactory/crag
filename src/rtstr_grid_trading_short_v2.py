@@ -6,7 +6,7 @@ import numpy as np
 from . import utils
 from src import logger
 
-class StrategyGridTradingShort(rtstr.RealTimeStrategy):
+class StrategyGridTradingShortV2(rtstr.RealTimeStrategy):
 
     def __init__(self, params=None):
         super().__init__(params)

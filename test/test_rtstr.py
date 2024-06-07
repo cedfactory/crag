@@ -32,7 +32,7 @@ class TestRTSTR:
                                'StrategyDummyTest', 'StrategyDummyTestTP', 'StrategySLTPOnly',
                                'StrategyTvRecommendationMid', 'StrategyVolatilityTest',
                                'StrategySuperReversal', 'StrategyTrix', 'StrategyCryptobot',
-                               'StrategyGridTradingProtectLong', 'StrategyBigWill', 'StrategyVMC']
+                               'StrategyGridTradingBreakOut', 'StrategyBigWill', 'StrategyVMC']
         print(expected_strategies)
         print(available_strategies)
         assert(set(available_strategies) == set(expected_strategies))

@@ -41,6 +41,8 @@ class ExecuteTimeRecorder():
             for file in files:
                 os.remove(os.path.join(self.dump_time_directory, file))
 
+        self.scenario_directory = None
+
     def set_input_dir(self, iter, directory):
         self.dump_directory = directory
         self.dump_time_directory = self.dump_directory + "/timer"
@@ -241,8 +243,29 @@ class ExecuteTimeRecorder():
         if self.plot_df_grid:
             self.trigger_plot_df_grid()
 
+    def set_scenario_directory(self, directory):
+        self.scenario_directory = directory
+
+    def close_grid_scenario(self):
+        # self.df_grid = utils.concat_csv_files_with_df(self.dump_grid_directory, self.df_grid)
+        # utils.empty_files(self.dump_grid_directory, pattern=".png")
+        # utils.empty_files(self.dump_grid_directory, pattern=".csv")
+        keys_list = list(self.dct_grid.keys())
+        for side in keys_list:
+            if not (self.dct_grid[side] is None):
+                self.dct_grid[side].to_csv(self.scenario_directory + "/" + self.master_cycle + "_" + side + "_df_grid_recorder.csv")
+
+        if self.plot_df_grid:
+            self.trigger_plot_df_grid()
+
     def plot_all_close_grid(self):
-        self.df_grid = utils.concat_csv_files_with_df(self.dump_grid_directory)
+        pattern_csv = ".csv"
+        self.df_grid = utils.concat_csv_files_with_df(self.dump_grid_directory, pattern_csv)
+        self.trigger_plot_df_grid()
+
+    def plot_all_close_grid_scenario(self):
+        pattern_csv = "df_grid_recorder.csv"
+        self.df_grid = utils.concat_csv_files_with_df(self.scenario_directory, pattern_csv)
         self.trigger_plot_df_grid()
 
     def trigger_plot_df_grid(self):
@@ -280,7 +303,7 @@ class ExecuteTimeRecorder():
         plt.grid(True)
         plt.savefig(f"{self.dump_system_directory}/{self.master_cycle}-{section}.png")
         plt.close()
-
+    """
     def save_grid_cycle_plot(self):
         # Plotting
         if self.df_grid.apply(lambda x: x.str.contains('_long_')).any().any():
@@ -309,11 +332,58 @@ class ExecuteTimeRecorder():
             try:
                 plt.scatter(states, np.full(len(states), positions[i]), c=colors[i])
             except:
-                print("toto")
+                print("titi")
 
         plt.xlabel('Y')  # Label switched to match the new axis
         plt.ylabel('X')  # Label switched to match the new axis
         plt.title('Scatter Plot')
         plt.grid(True)
-        plt.savefig(f"{self.dump_grid_directory}/{self.master_cycle}-grid.png")
+        if self.scenario_directory is None:
+            plt.savefig(f"{self.dump_grid_directory}/{self.master_cycle}-grid.png")
+        else:
+            plt.savefig(f"{self.scenario_directory}/{self.master_cycle}-grid.png")
+        plt.close()
+    """
+
+    def save_grid_cycle_plot(self):
+        # Determine the color map based on whether '_long_' is in any of the DataFrame values
+        if self.df_grid.apply(lambda x: x.str.contains('_long_')).any().any():
+            color_map = {
+                'close_long_on_hold': 'silver',
+                'close_long_pending': 'gold',
+                'close_long_engaged': 'red',
+                'open_long_on_hold': 'grey',
+                'open_long_pending': 'orange',
+                'open_long_engaged': 'blue'
+            }
+        else:
+            color_map = {
+                'close_short_on_hold': 'silver',
+                'close_short_pending': 'gold',
+                'close_short_engaged': 'red',
+                'open_short_on_hold': 'grey',
+                'open_short_pending': 'orange',
+                'open_short_engaged': 'blue'
+            }
+
+        positions = self.df_grid.index.values  # Get positions
+        states = self.df_grid.columns.values  # Get states
+
+        # Map DataFrame values to colors, use 'black' as default color for unmapped values
+        colors = self.df_grid.applymap(lambda x: color_map.get(x, 'black')).values
+
+        plt.figure(figsize=(30, 15))
+
+        for i, position in enumerate(positions):
+            state_colors = colors[i]
+            plt.scatter(states, np.full(len(states), position), c=state_colors, s=100, edgecolors='w')
+
+        plt.xlabel('States')  # Changed for clarity
+        plt.ylabel('Positions')  # Changed for clarity
+        plt.title('Scatter Plot of Grid Cycles')
+        plt.grid(True)
+
+        # Save the plot
+        file_path = f"{self.scenario_directory or self.dump_grid_directory}/{self.master_cycle}-grid.png"
+        plt.savefig(file_path)
         plt.close()

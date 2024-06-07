@@ -481,6 +481,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
             return
         # cash = 10000 # CEDE GRID SCENARIO
         self.df_grid_buying_size = df_symbol_size
+        self.df_grid_buying_size['margin'] = None
         for symbol in df_symbol_size['symbol'].tolist():
             dol_per_grid = self.grid_margin / (self.nb_grid + 1)
             size = dol_per_grid / ((self.grid_high + self.grid_low )/2)
@@ -488,6 +489,8 @@ class RealTimeStrategy(metaclass=ABCMeta):
                     and (size * self.grid_low > 5) \
                     and (cash >= self.grid_margin):
                 self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "buyingSize"] = size
+                self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "margin"] = self.grid_margin
+                self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "maxSizeToBuy"] = self.nb_grid
                 msg = "**" + symbol + "**\n"
                 msg += "**cash: " + str(round(cash, 2)) + "**\n"
                 msg += "**grid_margin: " + str(round(self.grid_margin, 2)) + "**\n"

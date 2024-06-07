@@ -57,7 +57,7 @@ class Crag:
         self.total_SL_TP = 0
         self.total_SL_TP_percent = 0
         self.monitoring = monitoring_helper.SQLMonitoring("ovh_mysql")
-        self.tradetraces = traces.TradeTraces()
+        # self.tradetraces = traces.TradeTraces()
         self.init_grid_position = True
         self.start_time_grid_strategy = None
         self.iteration_times_grid_strategy = []
@@ -591,7 +591,7 @@ class Crag:
         self.previous_usdt_equity = usdt_equity
         self.log_discord(msg.upper(), "end step".upper())
 
-        self.tradetraces.export()
+        # self.tradetraces.export()
 
     def export_history(self, target=None):
         self.broker.export_history(target)
@@ -673,12 +673,13 @@ class Crag:
 
                     self.traces_trade_total_closed += 1
 
+                    """
                     self.tradetraces.set_sell(sell_trade.symbol, sell_trade.trace_id,
                                               sell_trade.symbol_price,
                                               sell_trade.gross_price,
                                               sell_trade.selling_fee,
                                               "CLOSURE")
-
+                    """
                     self.current_trades.append(sell_trade)
                     df_sell_performed.loc[len(df_sell_performed.index)] = [sell_trade.symbol, round(sell_trade.gross_price, 2), round(sell_trade.roi, 2), sell_trade.type]
 
@@ -741,11 +742,11 @@ class Crag:
                     current_trade.cash = self.cash
 
                     self.traces_trade_total_opened += 1
-
+                    """
                     self.tradetraces.add_new_entry(current_trade.symbol, current_trade.id, current_trade.clientOid,
                                                    current_trade.gross_size, current_trade.buying_price,
                                                    current_trade.bought_gross_price, current_trade.buying_fee)
-
+                    """
                     self.current_trades.append(current_trade)
 
                     symbols_bought["symbol"].append(current_trade.symbol)
@@ -1018,8 +1019,12 @@ class Crag:
         exit_scenario = False
         str_cpt = str(cpt)
 
-        if False: # CEDE SCENARIOS DATA IF NEEDED
+        if False: # CEDE SCENARIOS DATA IF NEEDED - DO NOT REMOVE
             filename = "_df_open_positions.csv"
+            utils.modify_strategy_data_files(input_dir, filename)
+            exit(1)
+        if False: # CEDE SCENARIOS DATA IF NEEDED - DO NOT REMOVE
+            filename = "_df_current_states.csv"
             utils.modify_strategy_data_files(input_dir, filename)
             exit(1)
 
@@ -1083,8 +1088,10 @@ class Crag:
                     self.log("GRIDS NOT MATCHING")
             else:
                 self.log("NO GRID BASELINE AVAILABLE FOR THIS SCENARIO")
-            self.execute_timer.close_grid()
-            self.execute_timer.plot_all_close_grid()
+
+            self.execute_timer.set_scenario_directory(input_dir)
+            self.execute_timer.close_grid_scenario()
+            self.execute_timer.plot_all_close_grid_scenario()
             exit(0)
 
         broker_current_state = {
@@ -1126,6 +1133,10 @@ class Crag:
             self.start_time_grid_strategy = time.time()
             broker_current_state = self.get_current_state_from_csv(input_dir, cpt, df_scenario_results_global, df_grid_global)
             lst_orders_to_execute = self.rtstr.set_broker_current_state(broker_current_state)
+            lst_orders_to_execute = self.broker.execute_orders_scenario(lst_orders_to_execute)
+            self.rtstr.update_executed_trade_status(lst_orders_to_execute)
+            self.rtstr.print_grid()
+            self.rtstr.save_grid_scenario(input_dir, cpt)
 
             if len(lst_orders_to_execute) > 0:
                 df_scenario_results = pd.DataFrame(lst_orders_to_execute)
@@ -1201,7 +1212,7 @@ class Crag:
         GRID_SCENARIO_ON = False
         if GRID_SCENARIO_ON:
             self.rtstr.set_scenario_mode()
-        SCENARIO_ID = 6
+        SCENARIO_ID = 1
         if GRID_SCENARIO_ON:
             self.udpate_strategy_with_broker_current_state_scenario(SCENARIO_ID)
         else:
@@ -1211,8 +1222,6 @@ class Crag:
 
             # self.execute_timer.set_end_time("crag", "udpate_strategy_with_broker", "udpate_strategy_with_broker_current_state_live", self.state_live)
             # self.state_live += 1
-
-
 
     def prepare_and_send_log_for_discord(self, msg, broker_current_state):
         current_datetime = datetime.today().strftime("%Y/%m/%d - %H:%M:%S")
@@ -1296,14 +1305,6 @@ class Crag:
         self.log_discord(msg, "GRID STATUS")
 
     def udpate_strategy_with_broker_current_state_live(self):
-        '''
-        memory_used_bytes = utils.get_memory_usage()
-        if self.memory_used_mb == 0:
-            self.init_memory_used_mb = memory_used_bytes / (1024 * 1024)
-            self.memory_used_mb = self.init_memory_used_mb
-        else:
-            self.memory_used_mb = memory_used_bytes / (1024 * 1024)  # Convert bytes to megabytes
-        '''
         self.start_time_grid_strategy = time.time()
         debug_start_time = time.time()
 
@@ -1334,12 +1335,6 @@ class Crag:
             del df_buying_size
             del df_buying_size_normalise
             self.rtstr.set_normalized_grid_price(self.broker.get_price_place_endstep(self.symbols))
-
-            lst_orders_to_execute = []
-
-            self.broker.execute_orders(lst_orders_to_execute)
-
-            # self.broker.reset_current_postion(broker_current_state)
             broker_current_state = self.broker.get_current_state(self.symbols)
 
         # self.execute_timer.set_start_time("crag", "current_state_live", "set_broker_current_state", self.current_state_live)
@@ -1363,7 +1358,8 @@ class Crag:
 
         # self.execute_timer.set_start_time("crag", "current_state_live", "execute_orders", self.current_state_live)
         if len(lst_orders_to_execute) > 0:
-            self.broker.execute_orders(lst_orders_to_execute)
+            lst_orders_to_execute_result = self.broker.execute_orders(lst_orders_to_execute)
+            self.rtstr.update_executed_trade_status(lst_orders_to_execute)
         # self.execute_timer.set_end_time("crag", "current_state_live", "execute_orders", self.current_state_live)
 
         del lst_orders_to_execute
@@ -1481,13 +1477,13 @@ class Crag:
                             current_trade.type = self.rtstr.get_close_type_and_close(current_trade.symbol)
                             self.cash = self.broker.get_cash()
                             sell_trade.cash = self.cash
-
+                            """
                             self.tradetraces.set_sell(sell_trade.symbol, sell_trade.trace_id,
                                                       current_trade.symbol_price,
                                                       current_trade.gross_price,
                                                       current_trade.selling_fee,
                                                       "SL-TP")
-
+                            """
                             if sell_trade.roi < 0:
                                 self.traces_trade_negative += 1
                             else:

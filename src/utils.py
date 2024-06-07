@@ -10,6 +10,9 @@ from src.toolbox import settings_helper
 import psutil
 import pandas as pd
 
+def is_unique(value, lst):
+    return lst.count(value) == 1
+
 def concat_csv_files(directory):
     csv_files = [file for file in os.listdir(directory) if file.endswith('.csv')]
     if len(csv_files) == 0:
@@ -29,8 +32,8 @@ def concat_csv_files(directory):
     df_new.columns = range(len(df_new.columns))
     return df_new
 
-def concat_csv_files_with_df(directory, existing_df=None):
-    csv_files = [file for file in os.listdir(directory) if file.endswith('.csv')]
+def concat_csv_files_with_df(directory, pattern='.csv', existing_df=None):
+    csv_files = [file for file in os.listdir(directory) if file.endswith(pattern)]
     if len(csv_files) == 0:
         return existing_df
     elif len(csv_files) > 1:
@@ -109,17 +112,27 @@ def drop_largest_items(lst, x):
     sorted_lst = sorted(lst, reverse=True)  # Sort the list in reverse order
     return sorted_lst[x:]  # Slice the list to remove the largest x items
 
+def filter_strings(strings, pattern):
+    filtered_list = [s for s in strings if pattern not in s.lower()]
+    return filtered_list
+
 def modify_strategy_data_files(input_dir, str):
     # Get list of all files in the directory
     files = os.listdir(input_dir)
     # Filter files containing "_df_open_positions.csv"
     matching_files = [file for file in files if str in file]
+    matching_files = filter_strings(matching_files, "baseline")
+    matching_files = filter_strings(matching_files, "result")
     for filename in matching_files:
         df_tmp = pd.read_csv(os.path.join(input_dir, filename))
-
-        unnamed_columns = [col for col in df_tmp.columns if col.startswith('Unnamed')]
-        df_tmp = df_tmp.drop(columns=unnamed_columns)
-        df_tmp.to_csv(os.path.join(input_dir, filename))
+        if len(df_tmp) > 0:
+            unnamed_columns = [col for col in df_tmp.columns if col.startswith('Unnamed')]
+            df_tmp = df_tmp.drop(columns=unnamed_columns)
+            df_tmp['orderId'] = ""
+            df_tmp['gridId_str'] = pd.Series(df_tmp['gridId'], dtype="string")
+            df_tmp['orderId'] = "ORDER_ID_" + df_tmp['gridId_str']
+            df_tmp = df_tmp.drop(columns=['gridId_str'])
+            df_tmp.to_csv(os.path.join(input_dir, filename))
 
         # if len(df_tmp) > 0:
         #     df_tmp["total"] = df_tmp["total"] / 2
