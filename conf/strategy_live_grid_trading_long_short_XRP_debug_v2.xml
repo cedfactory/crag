@@ -19,26 +19,26 @@
                 grid_low="0.48"
                 percent_per_grid="0"
                 nb_grid="60"
-                grid_margin="490"
-                loggers="console"
+                grid_margin="500"
+                loggers="file=log"
         />
     </strategy>
     <broker name="bitget">
         <params exchange="bitget"
                 fdp_url_id="gc1"
-                account="subfortest2"
+                account="subfortest1"
                 symbols="./symbols_df_sltp_XRP_usdt.csv"
                 simulation="1"
                 intervals="1h"
                 orders="market"
                 reset_account="True"
                 reset_account_orders="True"
-                loggers="console"
+                loggers="file=log"
         />
     </broker>
-    <crag id="grid_long_short"
+    <crag id="grid_long_short_v2"
           interval="3600"
-          botId="subfortest2"
+          botId="subfortest1"
           loggers="console"
     />
 </configuration>
