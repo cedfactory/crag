@@ -110,7 +110,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         if hasattr(self, "ws_client") and self.ws_client:
             self.ws_client.close()
 
-    def log_api_failure(self, function, msg, n_attempts):
+    def log_api_failure(self, function, msg, n_attempts=0):
         self.failure += 1
         now = datetime.now()
         current_time = now.strftime("%H:%M:%S")
@@ -846,13 +846,18 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             sdmcbl Universal margin simulation perpetual contract
             scmcbl USDC simulation perpetual contract
         """
-        dct_market = self.marketApi.contracts('umcbl')
-        df_market_umcbl = self._market_results_to_df(dct_market)
-        dct_market = self.marketApi.contracts('dmcbl')
-        df_market_dmcbl = self._market_results_to_df(dct_market)
-        dct_market = self.marketApi.contracts('cmcbl')
-        df_market_cmcbl = self._market_results_to_df(dct_market)
-        return pd.concat([df_market_umcbl, df_market_dmcbl, df_market_cmcbl]).reset_index(drop=True)
+        try:
+            dct_market = self.marketApi.contracts('umcbl')
+            df_market_umcbl = self._market_results_to_df(dct_market)
+            dct_market = self.marketApi.contracts('dmcbl')
+            df_market_dmcbl = self._market_results_to_df(dct_market)
+            dct_market = self.marketApi.contracts('cmcbl')
+            df_market_cmcbl = self._market_results_to_df(dct_market)
+            return pd.concat([df_market_umcbl, df_market_dmcbl, df_market_cmcbl]).reset_index(drop=True)
+        except (exceptions.BitgetAPIException, Exception) as e:
+            msg = getattr(e, "message", "")
+            self.log_api_failure("accountApi.accounts", msg)
+            return None
 
     def _get_df_account(self):
         # update market
