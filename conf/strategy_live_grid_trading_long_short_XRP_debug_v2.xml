@@ -20,6 +20,7 @@
                 percent_per_grid="0"
                 nb_grid="60"
                 grid_margin="500"
+                nb_position_limits="3"
                 loggers="file=log"
         />
     </strategy>

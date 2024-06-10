@@ -16,7 +16,11 @@ class StrategyGridTradingLongV2(rtstr.RealTimeStrategy):
         self.rtctrl.set_list_close_position_type(self.get_lst_closing_type())
 
         self.zero_print = False
-        self.grid = GridPosition(self.lst_symbols, self.grid_high, self.grid_low, self.nb_grid, self.percent_per_grid, self.zero_print, self.loggers)
+        self.grid = GridPosition(self.lst_symbols,
+                                 self.grid_high, self.grid_low, self.nb_grid, self.percent_per_grid,
+                                 self.nb_position_limits,
+                                 self.zero_print,
+                                 self.loggers)
         if self.percent_per_grid != 0:
             self.nb_grid = self.grid.get_grid_nb_grid()
         self.df_grid_buying_size = pd.DataFrame()
@@ -182,7 +186,6 @@ class StrategyGridTradingLongV2(rtstr.RealTimeStrategy):
     def activate_grid(self, current_state):
         if not current_state:
             return []
-        del self.df_prices
         self.df_prices = current_state["prices"]
         lst_buying_market_order = []
         for symbol in self.lst_symbols:
@@ -237,7 +240,7 @@ class StrategyGridTradingLongV2(rtstr.RealTimeStrategy):
                 self.grid.update_executed_trade_status(symbol, lst_orders)
 
 class GridPosition():
-    def __init__(self, lst_symbols, grid_high, grid_low, nb_grid, percent_per_grid, debug_mode=True, loggers=[]):
+    def __init__(self, lst_symbols, grid_high, grid_low, nb_grid, percent_per_grid, nb_position_limits, debug_mode=True, loggers=[]):
         self.grid_high = grid_high
         self.grid_low = grid_low
         self.nb_grid = nb_grid
@@ -299,7 +302,7 @@ class GridPosition():
         self.log("grid steps: {}".format(self.steps))
         self.log("grid values: {}".format(self.lst_grid_values))
 
-        self.columns = ["grid_id", "close_grid_id", "position", "lst_orderId", "nb_position", "triggered_by", "previous_side", "side", "previous_status", "status", "changes", "cross_checked", "on_edge", "unknown"]
+        self.columns = ["grid_id", "close_grid_id", "position", "lst_orderId", "nb_position", "triggered_by", "nb_triggered_by", "bool_position_limits", "previous_side", "side", "previous_status", "status", "changes", "cross_checked", "on_edge", "unknown"]
         self.grid = {key: pd.DataFrame(columns=self.columns) for key in self.lst_symbols}
         for symbol in lst_symbols:
             self.grid[symbol]["position"] = self.lst_grid_values
@@ -312,6 +315,8 @@ class GridPosition():
             self.grid[symbol]["lst_orderId"] = [[]] * len(self.grid[symbol])
             self.grid[symbol]["nb_position"] = 0
             self.grid[symbol]["triggered_by"] = [[]] * len(self.grid[symbol])
+            self.grid[symbol]["nb_triggered_by"] = 0
+            self.grid[symbol]["bool_position_limits"] = True
 
             self.grid[symbol]["previous_side"] = False
             self.grid[symbol]["side"] = ""
@@ -330,6 +335,8 @@ class GridPosition():
 
         self.total_position_opened = 0
         self.total_position_closed = 0
+
+        self.nb_position_limits = nb_position_limits
 
     def log(self, msg, header="", attachments=[]):
         if self.zero_print:
@@ -583,6 +590,8 @@ class GridPosition():
         condition_triggered_below = df_grid['status'] == 'triggered_below'
         condition_open_long = df_grid['side'] == 'open_long'
         condition_close_long = df_grid['side'] == 'close_long'
+        condition_open_long_positions_limit = df_grid['bool_position_limits'] == False
+
 
         ####################################################################################
         df_grid_short_changes = df_grid[condition_changes & condition_close_long]
@@ -642,6 +651,12 @@ class GridPosition():
         if value_to_remove in lst_close_long:
             lst_close_long.remove(value_to_remove)  # CEDE This should never happen
 
+        df_grid_positions_not_in_limits = df_grid[condition_open_long & condition_open_long_positions_limit]
+        if len(df_grid_positions_not_in_limits) > 0:
+            lst_open_long_positions_not_in_limits = df_grid_positions_not_in_limits["grid_id"].to_list()
+            # Filter out items
+            lst_open_long = [item for item in lst_open_long if item not in lst_open_long_positions_not_in_limits]
+
         lst_open_long.sort(reverse=True)
         lst_open_long_linked = [{'triggered_by': None, 'position': item1} for item1 in lst_open_long]
 
@@ -686,6 +701,18 @@ class GridPosition():
 
         return sorted_list
 
+    def update_nb_position_limits(self, df):
+        df['bool_position_limits'] = df['nb_position'].apply(lambda x: x < self.nb_position_limits)
+
+        exploded_df = df.explode('triggered_by')
+        trigger_counts = exploded_df['triggered_by'].value_counts()
+        df['nb_triggered_by'] = df['grid_id'].map(trigger_counts).fillna(0).astype(int)
+        df['bool_position_limits'] = df['nb_triggered_by'] <= self.nb_position_limits
+
+        # has_false = df['bool_position_limits'].eq(False).any()
+        # if has_false:
+        #     print("toto")
+
     def update_executed_trade_status(self, symbol, lst_orders):
         df_grid = self.grid[symbol]
         for order in lst_orders:
@@ -719,6 +746,7 @@ class GridPosition():
                     df_grid.loc[df_grid["grid_id"] == grid_id, "status"] = "on_hold"
             elif order["trade_status"] == "UNKNOWN":
                 df_grid.loc[df_grid["grid_id"] == grid_id, "unknown"] = True
+        self.update_nb_position_limits(df_grid)
 
     def set_to_pending_execute_order(self, symbol, lst_order_to_execute):
         """

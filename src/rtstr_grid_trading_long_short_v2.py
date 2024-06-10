@@ -1,5 +1,5 @@
 from . import rtdp, rtstr, rtctrl
-from . import rtstr_grid_trading_long, rtstr_grid_trading_short, rtstr_grid_trading_breakout, rtstr_grid_trading_long_v2, rtstr_grid_trading_short_v2
+from . import rtstr_grid_trading_long, rtstr_grid_trading_short, rtstr_grid_trading_breakout, rtstr_grid_trading_long_v2, rtstr_grid_trading_generic_v2, rtstr_grid_trading_short_v2
 import math
 import pandas as pd
 import numpy as np
@@ -13,6 +13,7 @@ class StrategyGridTradingLongShortV2(rtstr.RealTimeStrategy):
         super().__init__(params)
         self.lst_strategy = []
         self.strategy_long = rtstr_grid_trading_long_v2.StrategyGridTradingLongV2(params)
+        # self.strategy_long = rtstr_grid_trading_generic_v2.StrategyGridTradingGenericV2(params)
         self.lst_strategy.append(self.strategy_long)
         if False:
             self.strategy_short = rtstr_grid_trading_short_v2.StrategyGridTradingShort(params)

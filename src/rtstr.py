@@ -84,6 +84,10 @@ class RealTimeStrategy(metaclass=ABCMeta):
                     self.df_symbol_param = pd.DataFrame()  # empty df could be None ....
             else:
                 self.lst_symbols = symbols.split(",")
+            self.nb_position_limits = 1
+            self.nb_position_limits = params.get("nb_position_limits", self.nb_position_limits)
+            if isinstance(self.nb_position_limits, str):
+                self.nb_position_limits = int(self.nb_position_limits)
             self.grid_high = params.get("grid_high", self.grid_high)
             if isinstance(self.grid_high, str):
                 if len(self.grid_high) > 0:
