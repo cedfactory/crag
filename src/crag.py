@@ -1125,7 +1125,7 @@ class Crag:
             else:
                 self.grid_iteration += 1
 
-            break_pt = 40
+            break_pt = 16
             if cpt == break_pt:
                 self.log("toto")
                 pass
@@ -1212,7 +1212,7 @@ class Crag:
         GRID_SCENARIO_ON = False
         if GRID_SCENARIO_ON:
             self.rtstr.set_scenario_mode()
-        SCENARIO_ID = 1
+        SCENARIO_ID = 2
         if GRID_SCENARIO_ON:
             self.udpate_strategy_with_broker_current_state_scenario(SCENARIO_ID)
         else:

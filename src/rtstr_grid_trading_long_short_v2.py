@@ -12,8 +12,8 @@ class StrategyGridTradingLongShortV2(rtstr.RealTimeStrategy):
     def __init__(self, params=None):
         super().__init__(params)
         self.lst_strategy = []
-        self.strategy_long = rtstr_grid_trading_long_v2.StrategyGridTradingLongV2(params)
-        # self.strategy_long = rtstr_grid_trading_generic_v2.StrategyGridTradingGenericV2(params)
+        # self.strategy_long = rtstr_grid_trading_long_v2.StrategyGridTradingLongV2(params)
+        self.strategy_long = rtstr_grid_trading_generic_v2.StrategyGridTradingGenericV2(params)
         self.lst_strategy.append(self.strategy_long)
         if False:
             self.strategy_short = rtstr_grid_trading_short_v2.StrategyGridTradingShort(params)
