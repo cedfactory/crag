@@ -84,10 +84,7 @@ class StrategyGridTradingGenericV2(rtstr.RealTimeStrategy):
         del df_grid_buying_size
 
     def get_str_current_state_filter(self):
-        if self.side == 'long':
-            return "short"
-        elif self.side == 'short':
-            return "long"
+        return {"long": "short", "short": "long"}.get(self.side)
 
     def set_broker_current_state(self, current_state):
         """
@@ -115,44 +112,18 @@ class StrategyGridTradingGenericV2(rtstr.RealTimeStrategy):
         lst_order_to_execute = []
 
         for symbol in self.lst_symbols:
-            # self.execute_timer.set_start_time("rtstr", "set_broker_current_state", "set_current_orders_price_to_grid", self.iter_set_broker_current_state)
             df_current_state = self.grid.set_current_orders_price_to_grid(symbol, df_current_states)
-            # self.execute_timer.set_end_time("rtstr", "set_broker_current_state", "set_current_orders_price_to_grid", self.iter_set_broker_current_state)
-
-            # self.execute_timer.set_start_time("rtstr", "set_broker_current_state", "get_grid_buying_size", self.iter_set_broker_current_state)
             self.grid.set_buying_size(self.get_grid_buying_size(symbol))
-            # self.execute_timer.set_end_time("rtstr", "set_broker_current_state", "get_grid_buying_size", self.iter_set_broker_current_state)
-
-            # self.execute_timer.set_start_time("rtstr", "set_broker_current_state", "update_nb_open_positions", self.iter_set_broker_current_state)
             self.grid.update_nb_open_positions(symbol, df_open_positions)
-            # self.execute_timer.set_end_time("rtstr", "set_broker_current_state", "update_nb_open_positions", self.iter_set_broker_current_state)
-
             if symbol in df_price['symbols'].tolist():
                 self.grid.set_current_price(df_price.loc[df_price['symbols'] == symbol, 'values'].values[0])
                 self.grid.update_unknown_status(symbol, df_current_state)
-
-                # self.execute_timer.set_start_time("rtstr", "set_broker_current_state", "cross_check_with_current_state", self.iter_set_broker_current_state)
                 self.grid.cross_check_with_current_state(symbol, df_current_state)
-                # self.execute_timer.set_end_time("rtstr", "set_broker_current_state", "cross_check_with_current_state", self.iter_set_broker_current_state)
-
-                # self.execute_timer.set_start_time("rtstr", "set_broker_current_state", "update_grid_side", self.iter_set_broker_current_state)
                 self.grid.update_grid_side(symbol)
-                # self.execute_timer.set_end_time("rtstr", "set_broker_current_state", "update_grid_side", self.iter_set_broker_current_state)
-            # else:
-                # self.execute_timer.set_time_to_zero("rtstr", "set_broker_current_state", "cross_check_with_current_state", self.iter_set_broker_current_state)
-                # self.execute_timer.set_time_to_zero("rtstr", "set_broker_current_state", "update_grid_side", self.iter_set_broker_current_state)
-
-            # self.execute_timer.set_start_time("rtstr", "set_broker_current_state", "get_order_list", self.iter_set_broker_current_state)
             lst_order_to_execute = self.grid.get_order_list(symbol)
-            # self.execute_timer.set_end_time("rtstr", "set_broker_current_state", "get_order_list", self.iter_set_broker_current_state)
-
-            # self.execute_timer.set_start_time("rtstr", "set_broker_current_state", "set_to_pending_execute_order", self.iter_set_broker_current_state)
             self.grid.set_to_pending_execute_order(symbol, lst_order_to_execute)
-            # self.execute_timer.set_end_time("rtstr", "set_broker_current_state", "set_to_pending_execute_order", self.iter_set_broker_current_state)
-
-            # self.execute_timer.set_start_time("rtstr", "set_broker_current_state", "filter_lst_close_execute_order", self.iter_set_broker_current_state)
             lst_order_to_execute = self.grid.filter_lst_close_execute_order(symbol, lst_order_to_execute)
-            # self.execute_timer.set_end_time("rtstr", "set_broker_current_state", "filter_lst_close_execute_order", self.iter_set_broker_current_state)
+
 
         if not self.zero_print:
             df_sorted = df_current_state.sort_values(by='price')
@@ -208,10 +179,7 @@ class StrategyGridTradingGenericV2(rtstr.RealTimeStrategy):
         return lst_buying_market_order
 
     def get_info_msg_status(self):
-        # CEDE: MULTI SYMBOL TO BE IMPLEMENTED IF EVER ONE DAY.....
-        # self.execute_timer.set_start_time("rtstr", "get_info_msg_status", "record_grid_status", self.iter_set_broker_current_state)
-        # self.record_grid_status()
-        # self.execute_timer.set_end_time("rtstr", "get_info_msg_status", "record_grid_status", self.iter_set_broker_current_state)
+        self.record_grid_status()
         return ""
 
     def get_grid(self, cpt):
@@ -235,12 +203,11 @@ class StrategyGridTradingGenericV2(rtstr.RealTimeStrategy):
 class GridPosition():
     def __init__(self, side, lst_symbols, grid_high, grid_low, nb_grid, percent_per_grid, nb_position_limits, debug_mode=True, loggers=[]):
         self.grid_side = side
-        if self.grid_side == "long":
-            self.str_open = "open_long"
-            self.str_close = "close_long"
-        elif self.grid_side == "short":
-            self.str_open = "open_short"
-            self.str_close = "close_short"
+        side_mapping = {
+            "long": ("open_long", "close_long"),
+            "short": ("open_short", "close_short")
+        }
+        self.str_open, self.str_close = side_mapping.get(self.grid_side, (None, None))
 
         self.grid_high = grid_high
         self.grid_low = grid_low
@@ -401,7 +368,6 @@ class GridPosition():
             # Retrieve values to avoid repeated lookups
             cross_checked = df.loc[df['position'] == position, 'cross_checked'].values[0]
             side_value = df.loc[df['position'] == position, 'side'].values[0]
-
             # Define position adjustment mapping
             adjustment = {
                 "long": {
@@ -417,12 +383,9 @@ class GridPosition():
                     (True, self.str_close): delta
                 }
             }
-
             # Update position based on the grid_side and conditions
             if self.grid_side in adjustment:
                 position += adjustment[self.grid_side][(cross_checked, side_value)]
-            else:
-                raise ValueError(f"Unexpected grid_side: {self.grid_side}")
 
         df['previous_side'] = df['side']
         side_map = {
@@ -452,11 +415,9 @@ class GridPosition():
         # return closest
 
     def set_current_orders_price_to_grid(self, symbol, df_current_state):
-        if len(df_current_state) > 0:
+        if not df_current_state.empty:
             df_current_state = df_current_state[df_current_state['symbol'] == symbol]
             df_grid = self.grid[symbol]
-            # Replace values in df_current_state['price'] with the closest values from df_grid['position']
-            # lst_price = [df_grid['position'].iloc[self.find_closest(price, df_grid['position'])] for price in df_current_state['price']]
             lst_price = []
             for price in df_current_state['price']:
                 self.find_closest(price, df_grid['position'])
@@ -474,7 +435,6 @@ class GridPosition():
                     self.log("################ WARNING PRICE DIFF WITH ORDER AND GRID ###############################")
                     self.log("Elements in df_current_state['price'] that are not in df_grid['position']:")
                     self.log(different_prices)
-                    exit(0)
             del self.s_bool
             del self.all_prices_in_grid
             del df_grid
@@ -492,10 +452,8 @@ class GridPosition():
         df_grid = self.grid[symbol]
         if df_grid['unknown'].any():
             df_current_state = df_current_state_all[df_current_state_all["symbol"] == symbol]
-            if self.grid_side == "long":
-                df_current_state = df_current_state[~df_current_state['side'].str.contains("_short")]
-            elif self.grid_side == "short":
-                df_current_state = df_current_state[~df_current_state['side'].str.contains("_long")]
+            exclude_side = "_short" if self.grid_side == "long" else "_long"
+            df_current_state = df_current_state[~df_current_state['side'].str.contains(exclude_side)]
             df_filtered = df_grid[df_grid['unknown']]
             lst_grid_id_filtered = df_filtered["grid_id"].to_list()
             lst_current_state_id = df_current_state["gridId"].to_list()
@@ -543,15 +501,10 @@ class GridPosition():
                     triggered_grid_id = df_grid.loc[df_grid["grid_id"] == grid_id_engaged, 'close_grid_id'].values[0]
                     triggered_price = df_grid.loc[df_grid["grid_id"] == triggered_grid_id, 'position'].values[0]  # CEDE -1 case to be added
                     if self.grid_side == "long":
-                        if triggered_price > price:
-                            df_grid.loc[df_grid['grid_id'] == grid_id_engaged, "status"] = "triggered"
-                        else:
-                            df_grid.loc[df_grid['grid_id'] == grid_id_engaged, "status"] = "triggered_below"
+                        status = "triggered" if triggered_price > price else "triggered_below"
                     elif self.grid_side == "short":
-                        if triggered_price < price:
-                            df_grid.loc[df_grid['grid_id'] == grid_id_engaged, "status"] = "triggered"
-                        else:
-                            df_grid.loc[df_grid['grid_id'] == grid_id_engaged, "status"] = "triggered_below"
+                        status = "triggered" if triggered_price < price else "triggered_below"
+                    df_grid.loc[df_grid['grid_id'] == grid_id_engaged, "status"] = status
                     index = df_grid.index[df_grid["grid_id"] == grid_id_engaged].tolist()
                     idx = index[0]
                     df_grid.at[idx, 'lst_orderId'] = []
@@ -789,9 +742,9 @@ class GridPosition():
             del df_grid
 
     def update_nb_open_positions(self, symbol, df_open_positions):
-        if len(df_open_positions) > 0:
+        if not df_open_positions.empty:
             df_open_positions_filtered = df_open_positions[(df_open_positions['symbol'] == symbol) & (df_open_positions['holdSide'] == "long")]
-            if len(df_open_positions_filtered) > 0:
+            if not df_open_positions_filtered.empty:
                 sum_available_position = df_open_positions_filtered['total'].sum() if not df_open_positions_filtered.empty else 0
                 self.leverage = df_open_positions_filtered['leverage'].iloc[0]
                 self.previous_nb_open_positions = self.nb_open_positions

@@ -1,5 +1,5 @@
 from . import rtdp, rtstr, rtctrl
-from . import rtstr_grid_trading_long, rtstr_grid_trading_short, rtstr_grid_trading_breakout, rtstr_grid_trading_long_v2, rtstr_grid_trading_short_v2
+from . import rtstr_grid_trading_long, rtstr_grid_trading_short, rtstr_grid_trading_breakout, rtstr_grid_trading_long_v2, rtstr_grid_trading_generic_v2
 import math
 import pandas as pd
 import numpy as np
@@ -114,8 +114,6 @@ class StrategyGridTradingLongShortV2(rtstr.RealTimeStrategy):
 
     def get_info_msg_status(self):
         # CEDE: MULTI SYMBOL TO BE IMPLEMENTED IF EVER ONE DAY.....
-        self.record_grid_status()
-
         msg = ''
         for strategy in self.lst_strategy:
             msg_strategy = strategy.get_info_msg_status()
