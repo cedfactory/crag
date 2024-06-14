@@ -492,6 +492,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
             if (self.get_grid_buying_min_size(symbol) <= size)\
                     and (size * self.grid_low > 5) \
                     and (cash >= self.grid_margin):
+                self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "strategy_id"] = self.strategy_id
                 self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "buyingSize"] = size
                 self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "margin"] = self.grid_margin
                 self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "maxSizeToBuy"] = self.nb_grid

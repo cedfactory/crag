@@ -7,21 +7,43 @@ import numpy as np
 from . import utils
 from src import logger
 
+from os import path
+
 class StrategyGridTradingLongShortV2(rtstr.RealTimeStrategy):
 
     def __init__(self, params=None):
         super().__init__(params)
+        lst_combined_strategy = []
+        path_grid_param = ""
+        if params:
+            path_grid_param = params.get("path_grid_param", path_grid_param)
+
+        if path_grid_param != "" and path.exists("./symbols/" + path_grid_param):
+            df_grid_param = pd.read_csv("./symbols/" + path_grid_param)
+
+        lst_param_strategy = []
+        init_params = params
+        if isinstance(df_grid_param, pd.DataFrame):
+            for index, row in df_grid_param.iterrows():
+                lst_param_strategy.append({
+                    "id": row["id"],
+                    "name": row["name"],
+                    "type": row["type"],
+                    "grid_high": row["grid_high"],
+                    "grid_low": row["grid_low"],
+                    "percent_per_grid": row["percent_per_grid"],
+                    "nb_grid": row["nb_grid"],
+                    "grid_margin": row["grid_margin"]
+                })
+
         self.lst_strategy = []
-        # self.strategy_long = rtstr_grid_trading_long_v2.StrategyGridTradingLongV2(params)
-        self.strategy_long = rtstr_grid_trading_generic_v2.StrategyGridTradingGenericV2(params)
-        self.lst_strategy.append(self.strategy_long)
-        if False:
-            self.strategy_short = rtstr_grid_trading_short_v2.StrategyGridTradingShort(params)
-            self.lst_strategy.append(self.strategy_short)
-            self.strategy_breakout_long = rtstr_grid_trading_breakout.StrategyGridTradingBreakOut(params)
-            self.lst_strategy.append(self.strategy_breakout_long)
-            self.strategy_breakout_short = rtstr_grid_trading_breakout.StrategyGridTradingBreakOut(params)
-            self.lst_strategy.append(self.strategy_breakout_short)
+        available_strategies = rtstr.RealTimeStrategy.get_strategies_list()
+        for grid_param in lst_param_strategy:
+            if grid_param["name"] in available_strategies:
+                combined_param_dict = {**init_params, **grid_param}
+                my_strategy = rtstr.RealTimeStrategy.get_strategy_from_name(grid_param["name"], combined_param_dict)
+                self.lst_strategy.append(my_strategy)
+
         self.set_multiple_strategy()
         self.execute_timer = None
 
@@ -73,31 +95,31 @@ class StrategyGridTradingLongShortV2(rtstr.RealTimeStrategy):
             strategy.set_multiple_strategy()
 
     def set_df_normalize_buying_size(self, df_normalized_buying_size):
-        self.df_grid_buying_size = df_normalized_buying_size
         for strategy in self.lst_strategy:
-            strategy.set_df_grid_buying_size(self.df_grid_buying_size)
-        del df_normalized_buying_size
+            condition_strategy_id = df_normalized_buying_size['strategy_id'] == strategy.get_strategy_id()
+            df_grid_strategy_id = df_normalized_buying_size[condition_strategy_id]
+            strategy.set_df_normalize_buying_size(df_grid_strategy_id)
 
     def set_execute_time_recorder(self, execute_timer):
         for strategy in self.lst_strategy:
             strategy.set_execute_time_recorder(execute_timer)
         self.execute_timer = execute_timer
 
-    def set_broker_current_state(self, current_state):
+    def set_broker_current_state(self, df_current_state):
         lst_position = []
         for strategy in self.lst_strategy:
-            str_current_state = strategy.get_str_current_state_filter()
-            current_state_filtered = self.filter_position(current_state, str_current_state)  #######################
+            str_strategy_id_filter = strategy.get_strategy_id_code()
+            current_state_filtered = self.filter_position(df_current_state, str_strategy_id_filter)
             lst_position.extend(strategy.set_broker_current_state(current_state_filtered))
             del current_state_filtered["open_orders"]
             del current_state_filtered["open_positions"]
             del current_state_filtered["prices"]
             del current_state_filtered
 
-        del current_state["open_orders"]
-        del current_state["open_positions"]
-        del current_state["prices"]
-        del current_state
+        del df_current_state["open_orders"]
+        del df_current_state["open_positions"]
+        del df_current_state["prices"]
+        del df_current_state
         return lst_position
 
     def set_normalized_grid_price(self, lst_symbol_plc_endstp):
@@ -127,20 +149,13 @@ class StrategyGridTradingLongShortV2(rtstr.RealTimeStrategy):
         for strategy in self.lst_strategy:
             strategy.get_grid(cpt)
 
-    def record_grid_status(self):
+    def record_status(self):
         for strategy in self.lst_strategy:
-            strategy.record_grid_status()
+            strategy.record_status()
 
-    def filter_position(self, current_state, side):
+    def filter_position(self, current_state, id):
         current_state_filtred = current_state.copy()
-        if side == "long":
-            lst_patterns = ["open_short", "close_short"]
-            filter_side = 'short'
-        elif side == "short":
-            lst_patterns = ["open_long", "close_long"]
-            filter_side = 'long'
-        current_state_filtred["open_orders"] = current_state_filtred["open_orders"][current_state_filtred["open_orders"]['side'].isin(lst_patterns)]
-        current_state_filtred["open_positions"] = current_state_filtred["open_positions"][current_state_filtred["open_positions"]['holdSide'] == filter_side]
+        current_state_filtred["open_orders"] = current_state_filtred["open_orders"][current_state_filtred["open_orders"]['strategyId'] == id]
         return current_state_filtred
 
     def update_executed_trade_status(self, lst_orders):
@@ -154,3 +169,15 @@ class StrategyGridTradingLongShortV2(rtstr.RealTimeStrategy):
     def save_grid_scenario(self, path, cpt):
         for strategy in self.lst_strategy:
             strategy.save_grid_scenario(path, cpt)
+
+    def set_df_buying_size(self, df_symbol_size, cash):
+        df_concat = pd.DataFrame()
+        for strategy in self.lst_strategy:
+            df = strategy.set_df_buying_size(df_symbol_size, cash)
+            df_concat = pd.concat([df_concat, df], axis=0)
+        return df_concat
+
+
+    def set_df_buying_size_scenario(self, df_symbol_size, cash):
+        for strategy in self.lst_strategy:
+            strategy.set_df_buying_size_scenario(df_symbol_size, cash)

@@ -32,7 +32,7 @@ class BrokerBitGet(broker.Broker):
 
         self.clientOIdprovider = utils.ClientOIdProvider()
 
-        self.df_grid_id_match = pd.DataFrame(columns=["orderId", "grid_id"])
+        self.df_grid_id_match = pd.DataFrame(columns=["orderId", "grid_id", "strategy_id"])
 
         self.execute_timer = None
         self.iter_execute_orders = 0
@@ -103,10 +103,11 @@ class BrokerBitGet(broker.Broker):
                 or len(df_buying_size) == 0:
             return
 
-        for symbol in df_buying_size['symbol'].tolist():
-            size = df_buying_size.loc[df_buying_size['symbol'] == symbol, "buyingSize"].values[0]
+        for index, row in df_buying_size.iterrows():
+            symbol = row['symbol']
+            size = row['buyingSize']
             normalized_size = self.normalize_size(symbol, size)
-            df_buying_size.loc[df_buying_size['symbol'] == symbol, "buyingSize"] = normalized_size
+            df_buying_size.at[index, 'buyingSize'] = normalized_size
         return df_buying_size
 
     @authentication_required
@@ -262,21 +263,14 @@ class BrokerBitGet(broker.Broker):
     def store_gridId_orderId(self, trade):
         orderId = trade.orderId
         gridId = trade.grid_id
+        strategyId = trade.strategy_id
         if trade.success and orderId != None and gridId != -1:
-            self.add_gridId_orderId(gridId, orderId)
+            self.add_gridId_orderId(gridId, orderId, strategyId)
         del orderId
         del gridId
 
-    def add_gridId_orderId(self, gridId, orderId):
-        # CEDE TO BE REMOVED AFTER TESTS
-        """
-        if gridId in self.df_grid_id_match["grid_id"].tolist():
-            self.df_grid_id_match.loc[self.df_grid_id_match[self.df_grid_id_match['grid_id'] == gridId].index] = [orderId, gridId]
-        else:
-            self.df_grid_id_match.loc[len(self.df_grid_id_match)] = [orderId, gridId]
-        """
-
-        self.df_grid_id_match.loc[len(self.df_grid_id_match)] = [orderId, gridId]
+    def add_gridId_orderId(self, gridId, orderId, strategyId):
+        self.df_grid_id_match.loc[len(self.df_grid_id_match)] = [orderId, gridId, strategyId]
         self.df_grid_id_match = self.df_grid_id_match.drop_duplicates()
         del orderId
         del gridId
@@ -362,7 +356,7 @@ class BrokerBitGet(broker.Broker):
                     side = "close_short"
                     leverage = leverage_short
 
-                clientOid = self.clientOIdprovider.get_name(symbol, order["type"] + "__" + str(order["grid_id"]) + "__")
+                clientOid = self.clientOIdprovider.get_name(symbol, order["type"] + "__" + str(order["grid_id"]) + "__" + "--" + str(order["strategy_id"]) + "--")
                 orderParam = {
                     "size": str(order["gross_size"] * leverage),
                     "price": str(order["price"]),
@@ -404,8 +398,9 @@ class BrokerBitGet(broker.Broker):
                 for orderInfo in transaction["data"]["orderInfo"]:
                     orderId = orderInfo["orderId"]
                     gridId = [int(num) for num in re.findall(r'__(\d+)__', orderInfo["clientOid"])]
-                    self.add_gridId_orderId(gridId[0], orderId)
-                    lst_success_trade.append({"orderId": orderId, "gridId": gridId[0]})
+                    strategyId = orderInfo["clientOid"].split('--')[1]
+                    self.add_gridId_orderId(gridId[0], orderId, strategyId)
+                    lst_success_trade.append({"orderId": orderId, "gridId": gridId[0], "strategyId": strategyId})
                     if failed_trade != 0:
                         msg += "success gridId: " + str(gridId[0]) + "\n"
 
@@ -424,7 +419,8 @@ class BrokerBitGet(broker.Broker):
                         msg += "FAILED TRADE: " + str(len(transaction["data"]["failure"])) + " / " + str(len(lst_orderList)) + "\n"
                         for failureInfo in transaction["data"]["failure"]:
                             gridId = [int(num) for num in re.findall(r'__(\d+)__', failureInfo["clientOid"])]
-                            lst_failed_trade.append({"orderId": None, "gridId": gridId[0]})
+                            strategyId = failureInfo["clientOid"].split('--')[1]
+                            lst_failed_trade.append({"orderId": None, "gridId": gridId[0], "strategyId": strategyId})
                             msg += "failure gridId: " + str(gridId[0]) + "\n"
                             msg += "errorCode: " + failureInfo["errorCode"] + "\n"
                             msg += "errorMsg" + failureInfo["errorMsg"] + "\n"
@@ -516,21 +512,19 @@ class BrokerBitGet(broker.Broker):
         return lst_result_orders
 
     def set_open_orders_gridId(self, df_open_orders):
-        # self.execute_timer.set_start_time("broker", "set_open_orders_gridId", "set_open_orders_gridId", self.iter_set_open_orders_gridId)
-
         df_open_orders["gridId"] = None
+        df_open_orders["strategyId"] = None
         for orderId in df_open_orders["orderId"].tolist():
             # Define a condition
             condition = df_open_orders['orderId'] == orderId
             # Set a value in the 'gridId' column where the condition is true
             res = self.get_gridId_from_orderId(orderId)
             df_open_orders.loc[condition, 'gridId'] = res
+            res = self.get_strategyId_from_orderId(orderId)
+            df_open_orders.loc[condition, 'strategyId'] = res
             del condition
             del res
-
-        # self.execute_timer.set_start_time("broker", "set_open_orders_gridId", "set_open_orders_gridId", self.iter_set_open_orders_gridId)
         self.iter_set_open_orders_gridId += 1
-
         return df_open_orders
 
     def get_gridId_from_orderId(self, orderId):
@@ -539,6 +533,20 @@ class BrokerBitGet(broker.Broker):
             grid_id = self.df_grid_id_match.at[condition.idxmax(), 'grid_id']
             del condition
             return grid_id
+        else:
+            msg = "ERROR: BROKER ID NOT FOUND" + "\n"
+            msg += "ORDER ID: " + str(orderId) + "\n"
+            self.log_trade = self.log_trade + msg.upper()
+            del msg
+            del condition
+            return None
+
+    def get_strategyId_from_orderId(self, orderId):
+        condition = self.df_grid_id_match['orderId'] == orderId
+        if condition.any() and orderId == self.df_grid_id_match.at[condition.idxmax(), 'orderId']:
+            strategy_id = self.df_grid_id_match.at[condition.idxmax(), 'strategy_id']
+            del condition
+            return strategy_id
         else:
             msg = "ERROR: BROKER ID NOT FOUND" + "\n"
             msg += "ORDER ID: " + str(orderId) + "\n"

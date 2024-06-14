@@ -15,12 +15,9 @@
                 trailer_global_delta_tp="0"
                 trailer_sl="0"
                 high_volatility="False"
-                grid_high="0.53"
-                grid_low="0.48"
-                percent_per_grid="0"
-                nb_grid="60"
-                grid_margin="400"
+                path_grid_param="./grid_specific_param.csv"
                 nb_position_limits="3"
+                lst_combined_strategy=""
                 loggers="file=log"
         />
     </strategy>

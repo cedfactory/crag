@@ -1349,6 +1349,7 @@ class Crag:
         # self.execute_timer.set_start_time("crag", "current_state_live", "get_info_msg_status", self.current_state_live)
 
         self.msg_rtstr = self.rtstr.get_info_msg_status()
+        self.rtstr.record_status()
 
         # self.execute_timer.set_end_time("crag", "current_state_live", "get_info_msg_status", self.current_state_live)
 

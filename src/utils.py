@@ -9,6 +9,15 @@ from datetime import datetime, timedelta
 from src.toolbox import settings_helper
 import psutil
 import pandas as pd
+import random
+import string
+
+def generate_random_id(length=8):
+    # Define the characters to choose from: uppercase letters and digits
+    characters = string.ascii_uppercase + string.digits
+    # Generate a random sequence of the specified length
+    random_id = ''.join(random.choice(characters) for _ in range(length))
+    return random_id
 
 def is_unique(value, lst):
     return lst.count(value) == 1
@@ -311,7 +320,7 @@ class ClientOIdProvider():
         underscore = "_"
         key = "#"
         ct = datetime.now()
-        ts = ct.timestamp()
+        ts = int(ct.timestamp())
         self.id = "".join([symbol, underscore, side, underscore, str(self.iter), key, str(ts)])
         self.iter += 1
         del underscore
