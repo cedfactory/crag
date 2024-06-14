@@ -176,9 +176,16 @@ class StrategyGridTradingLongShortV2(rtstr.RealTimeStrategy):
         current_state_filtred["open_orders"] = current_state_filtred["open_orders"][current_state_filtred["open_orders"]['strategyId'] == id]
         return current_state_filtred
 
+    def _update_executed_trade_status_for_strategy(self, strategy, lst_orders):
+        strategy.update_executed_trade_status(lst_orders)
+
     def update_executed_trade_status(self, lst_orders):
-        for strategy in self.lst_strategy:
-            strategy.update_executed_trade_status(lst_orders)
+        with ThreadPoolExecutor() as executor:
+            futures = []
+            for strategy in self.lst_strategy:
+                futures.append(executor.submit(self._update_executed_trade_status_for_strategy, strategy, lst_orders))
+
+            wait(futures, timeout=1000, return_when=ALL_COMPLETED)
 
     def print_grid(self):
         for strategy in self.lst_strategy:
