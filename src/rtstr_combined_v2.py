@@ -3,6 +3,7 @@ from . import rtstr_grid_trading_long, rtstr_grid_trading_short, rtstr_grid_trad
 import math
 import pandas as pd
 import numpy as np
+from concurrent.futures import wait, ALL_COMPLETED, ThreadPoolExecutor
 
 from . import utils
 from src import logger
@@ -18,6 +19,7 @@ class StrategyGridTradingLongShortV2(rtstr.RealTimeStrategy):
         if params:
             path_grid_param = params.get("path_grid_param", path_grid_param)
 
+        df_grid_param = None
         if path_grid_param != "" and path.exists("./symbols/" + path_grid_param):
             df_grid_param = pd.read_csv("./symbols/" + path_grid_param)
 
@@ -105,22 +107,38 @@ class StrategyGridTradingLongShortV2(rtstr.RealTimeStrategy):
             strategy.set_execute_time_recorder(execute_timer)
         self.execute_timer = execute_timer
 
-    def set_broker_current_state(self, df_current_state):
-        lst_position = []
-        for strategy in self.lst_strategy:
-            str_strategy_id_filter = strategy.get_strategy_id_code()
-            current_state_filtered = self.filter_position(df_current_state, str_strategy_id_filter)
-            lst_position.extend(strategy.set_broker_current_state(current_state_filtered))
-            del current_state_filtered["open_orders"]
-            del current_state_filtered["open_positions"]
-            del current_state_filtered["prices"]
-            del current_state_filtered
+    def _set_broker_current_state_for_strategy(self, strategy, df_current_state):
+        str_strategy_id_filter = strategy.get_strategy_id_code()
+        current_state_filtered = self.filter_position(df_current_state, str_strategy_id_filter)
+        lst_positions = strategy.set_broker_current_state(current_state_filtered)
 
+        del current_state_filtered["open_orders"]
+        del current_state_filtered["open_positions"]
+        del current_state_filtered["prices"]
+        del current_state_filtered
+
+        return lst_positions
+
+    def set_broker_current_state(self, df_current_state):
+        lst_positions = []
+
+        with ThreadPoolExecutor() as executor:
+            futures = []
+            for strategy in self.lst_strategy:
+                futures.append(executor.submit(self._set_broker_current_state_for_strategy, strategy, df_current_state))
+
+            wait(futures, timeout=1000, return_when=ALL_COMPLETED)
+
+            for future in futures:
+                lst_positions.extend(future.result())
+
+        # cleaning
         del df_current_state["open_orders"]
         del df_current_state["open_positions"]
         del df_current_state["prices"]
         del df_current_state
-        return lst_position
+
+        return lst_positions
 
     def set_normalized_grid_price(self, lst_symbol_plc_endstp):
         for strategy in self.lst_strategy:
