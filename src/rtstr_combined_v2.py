@@ -168,23 +168,18 @@ class StrategyGridTradingLongShortV2(rtstr.RealTimeStrategy):
             strategy.get_grid(cpt)
 
     def record_status(self):
-        for strategy in self.lst_strategy:
-            strategy.record_status()
+        with ThreadPoolExecutor() as executor:
+            futures = [executor.submit(strategy.record_status) for strategy in self.lst_strategy]
+            wait(futures, timeout=1000, return_when=ALL_COMPLETED)
 
     def filter_position(self, current_state, id):
         current_state_filtred = current_state.copy()
         current_state_filtred["open_orders"] = current_state_filtred["open_orders"][current_state_filtred["open_orders"]['strategyId'] == id]
         return current_state_filtred
 
-    def _update_executed_trade_status_for_strategy(self, strategy, lst_orders):
-        strategy.update_executed_trade_status(lst_orders)
-
     def update_executed_trade_status(self, lst_orders):
         with ThreadPoolExecutor() as executor:
-            futures = []
-            for strategy in self.lst_strategy:
-                futures.append(executor.submit(self._update_executed_trade_status_for_strategy, strategy, lst_orders))
-
+            futures = [executor.submit(strategy.update_executed_trade_status,lst_orders) for strategy in self.lst_strategy]
             wait(futures, timeout=1000, return_when=ALL_COMPLETED)
 
     def print_grid(self):
