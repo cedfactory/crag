@@ -1,5 +1,5 @@
 from src import rtdp,rtdp_simulation,broker_simulation,broker_bitget,broker_bitget_api
-from src import rtstr,rtstr_dummy_test,rtstr_envelope,rtstr_envelopestochrsi,rtstr_dummy_test_tp,rtstr_bollinger_trend,rtstr_grid_trading_long_short,rtstr_combined_v2,rtstr_grid_trading_long,rtstr_grid_trading_long_v2,rtstr_grid_trading_generic_v2,rtstr_grid_trading_breakout,rtstr_grid_trading_short,rtstr_bollinger_trend_long,rtstr_tv_recommendation_mid,rtstr_super_reversal,rtstr_volatility_test_live,rtstr_trix,rtstr_cryptobot,rtstr_sltp_only,rtstr_bigwill,rtstr_VMC
+from src import rtstr,strategies
 from src import crag,crag_helper,trade,logger
 from src.toolbox import settings_helper
 import requests
@@ -366,6 +366,9 @@ def check_crag():
     params = crag_helper.get_crag_params_from_configuration(configuration)
     bot = crag.Crag(params)
 
+def check_strategies():
+    available_strategies = rtstr.RealTimeStrategy.get_strategies_list()
+    print("Available strategies :", available_strategies)
 
 def write_file(filename, string):
     with open(filename, 'w') as f:

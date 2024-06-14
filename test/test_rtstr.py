@@ -1,10 +1,6 @@
 import pytest
 from . import test_rtctrl
-from src import rtstr
-from src import rtstr_bigwill, rtstr_bollinger_trend, rtstr_bollinger_trend_long
-from src import rtstr_cryptobot, rtstr_envelope, rtstr_envelopestochrsi
-from src import rtstr_grid_protect_long, rtstr_grid_trading_long, rtstr_grid_trading_short
-from src import rtstr_super_reversal, rtstr_trix, rtstr_VMC
+from src import rtstr, strategies
 import pandas as pd
 
 def update_rtctrl(rtstr):
