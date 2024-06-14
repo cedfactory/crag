@@ -152,15 +152,26 @@ class StrategyGridTradingLongShortV2(rtstr.RealTimeStrategy):
             lst_buying_orders.extend(strategy.activate_grid(current_state))
         return lst_buying_orders
 
-    def get_info_msg_status(self):
-        # CEDE: MULTI SYMBOL TO BE IMPLEMENTED IF EVER ONE DAY.....
-        msg = ''
-        for strategy in self.lst_strategy:
-            msg_strategy = strategy.get_info_msg_status()
-            if msg_strategy != "":
-                msg += strategy.get_info() + ": \n"
-                msg += msg_strategy
+    def _get_info_msg_status_for_strategy(self, strategy):
+        msg = ""
+        msg_strategy = strategy.get_info_msg_status()
+        if msg_strategy != "":
+            msg += strategy.get_info() + ": \n"
+            msg += msg_strategy
         return msg
+
+    def get_info_msg_status(self):
+        result_msg = ""
+        with ThreadPoolExecutor() as executor:
+            futures = [executor.submit(self._get_info_msg_status_for_strategy, strategy) for strategy in self.lst_strategy]
+            wait(futures, timeout=1000, return_when=ALL_COMPLETED)
+
+            for future in futures:
+                msg_strategy = future.result()
+                if msg_strategy != "":
+                    result_msg += msg_strategy + "\n"
+
+        return result_msg
 
     def get_grid(self, cpt):
         # CEDE: MULTI SYMBOL TO BE IMPLEMENTED IF EVER ONE DAY.....
