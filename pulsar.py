@@ -56,4 +56,4 @@ if __name__ == '__main__':
         if message_id == None and response["ok"] == "true" and "result" in response and "message_id" in response["result"]:
             message_id = response["result"]["message_id"]
 
-        time.sleep(60*30)  # 30min
+        time.sleep(60*5)  # 5min
