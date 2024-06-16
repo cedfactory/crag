@@ -6,6 +6,7 @@ import time
 import tracemalloc
 from . import utils
 from .toolbox import settings_helper
+import json
 
 # for LoggerConsole
 from rich import print
@@ -333,8 +334,20 @@ class LoggerTelegramBot(ILogger):
             self.token = params.get("token", self.token)
             self.chat_id = params.get("chat_id", self.chat_id)
 
-    def log(self, msg, header="", author="", attachments=[]):
+    def log(self, msg, header="", author="", attachments=[], extra=None):
+        content = None
         if self.id and self.token and self.chat_id:
-            params = {"chat_id": self.chat_id, "text": msg}
-            url = "https://api.telegram.org/bot" + self.token
-            response = requests.post(url + "/sendMessage", data=params)
+            if "message_id" in extra:
+                params = {"message_id": extra["message_id"], "chat_id": self.chat_id, "text": msg, "parse_mode": "html"}
+                url = "https://api.telegram.org/bot" + self.token
+                response = requests.post(url + "/editMessageText", data=params)
+                content = json.loads(response.content)
+            else:
+                params = {"chat_id": self.chat_id, "text": msg, "parse_mode": "html"}
+                url = "https://api.telegram.org/bot" + self.token
+                response = requests.post(url + "/sendMessage", data=params)
+                content = json.loads(response.content)
+        return content
+
+    def log_info(self, msg, header="", author="", attachments=None):
+        self.log(msg, header, author, attachments)
