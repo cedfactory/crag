@@ -134,7 +134,7 @@ class BrokerBitGet(broker.Broker):
             self.log('transaction failed ", trade.type, " : ' + self.trade_symbol + ' - gross_size: ' + str(trade.gross_size))
 
         trigger_params = None
-        if hasattr(trade, "trigger") and trade.trigger and hasattr(trade, "trigger_price"):
+        if hasattr(trade, "trigger_price"):
             trigger_params = {}
             trigger_params["trigger_price"] = trade.trigger_price
         if trade.type in ["OPEN_LONG", "OPEN_SHORT", "OPEN_LONG_ORDER", "OPEN_SHORT_ORDER", "CLOSE_LONG_ORDER", "CLOSE_SHORT_ORDER"]:
