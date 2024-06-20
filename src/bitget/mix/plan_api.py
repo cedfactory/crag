@@ -173,7 +173,7 @@ class PlanApi(Client):
     be careful about productType ( https://bitgetlimited.github.io/apidoc/en/mix/#producttype )
     """
     def mix_place_trailing_stop_order(self, symbol, marginCoin, triggerPrice, side,
-                                      triggerType=None, size=None, rangeRate=None):
+                                      clientOid=None, triggerType=None, size=None, rangeRate=None):
 
         params = {}
         if symbol and marginCoin and side and triggerPrice:
@@ -183,10 +183,12 @@ class PlanApi(Client):
             params["triggerPrice"] = triggerPrice
             if triggerType is not None:
                 params["triggerType"] = triggerType
+            if clientOid is not None:
+                params["clientOid"] = clientOid
             if size is not None:
                 params["size"] = size
             if rangeRate is not None:
-                params["rangeRate"] = rangeRate
+                params["rangeRate"] = str(rangeRate)
             return self._request_with_params(POST, MIX_PLAN_V1_URL + '/placeTrailStop', params)
 
         return False

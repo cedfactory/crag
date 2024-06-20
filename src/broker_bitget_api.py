@@ -433,12 +433,12 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         return result
 
     @authentication_required
-    def place_trail_order(self, symbol, marginCoin, triggerPrice, side, triggerType=None, size=None, rangeRate=1):
+    def place_trail_order(self, symbol, marginCoin, triggerPrice, side, clientOid=None, triggerType=None, size=None, rangeRate=1):
         result = {}
         n_attempts = 3
         while n_attempts > 0:
             try:
-                result = self.planApi.mix_place_trailing_stop_order(symbol, marginCoin, triggerPrice, side, triggerType,
+                result = self.planApi.mix_place_trailing_stop_order(symbol, marginCoin, triggerPrice, side, clientOid, triggerType,
                                                                     size, rangeRate)
                 self.success += 1
                 break

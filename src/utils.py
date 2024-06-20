@@ -12,6 +12,10 @@ import pandas as pd
 import random
 import string
 
+
+def keep_n_smallest(df, column_name, n):
+    return df.nsmallest(n, column_name)
+
 def generate_random_id(length=8):
     # Define the characters to choose from: uppercase letters and digits
     characters = string.ascii_uppercase + string.digits

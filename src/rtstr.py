@@ -464,9 +464,10 @@ class RealTimeStrategy(metaclass=ABCMeta):
     def set_scenario_mode(self):
         self.scenario_mode = True
 
-    def get_grid_buying_size(self, symbol):
+    def get_grid_buying_size(self, symbol, strategy_id):
         if not self.scenario_mode:
-            row_index = self.df_grid_buying_size.index[self.df_grid_buying_size['symbol'] == symbol].tolist()
+            row_index = self.df_grid_buying_size.index[(self.df_grid_buying_size['symbol'] == symbol)
+                                                       & (self.df_grid_buying_size['strategy_id'] == strategy_id)].tolist()
             buying_size = self.df_grid_buying_size.at[row_index[0], "buyingSize"] if row_index else None
             del row_index
             return buying_size
@@ -484,7 +485,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
         if not isinstance(df_symbol_size, pd.DataFrame):
             return
         # cash = 10000 # CEDE GRID SCENARIO
-        self.df_grid_buying_size = df_symbol_size
+        self.df_grid_buying_size = pd.concat([self.df_grid_buying_size, df_symbol_size])
         self.df_grid_buying_size['margin'] = None
         for symbol in df_symbol_size['symbol'].tolist():
             dol_per_grid = self.grid_margin / (self.nb_grid + 1)

@@ -1,5 +1,2 @@
 ﻿id,name,type,grid_high,grid_low,percent_per_grid,nb_grid,grid_margin
-long_1,StrategyGridTradingGenericV2,long,0.53,0.45,0,60,400
-short_1,StrategyGridTradingGenericV2,short,0.53,0.45,0,60,400
-breakout_1,StrategyBreakout,long,0.53,0.45,0,60,400
-breakout_2,StrategyBreakout,short,0.53,0.45,0,60,400
+breakout_1,StrategyBreakoutTradingGenericV2,long,0.4895,0.489,0.02,5,400

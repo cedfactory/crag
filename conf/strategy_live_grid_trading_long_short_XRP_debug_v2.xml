@@ -1,5 +1,5 @@
 <configuration>
-    <strategy id="strategygridtradinglongshortv2" name="StrategyGridTradingLongShortV2">
+    <strategy id="StrategyGridTradingLongShortv2" name="StrategyGridTradingLongShortV2">
         <params symbols="./symbols_df_sltp_XRP_usdt.csv"
                 strategy_interval="3600"
                 multi_param="False"
