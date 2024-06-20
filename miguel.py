@@ -52,15 +52,19 @@ class PanelPositions(wx.Panel):
 
         # open position
         hsizer = wx.BoxSizer(wx.HORIZONTAL)
-        staticOpenPosition = wx.StaticText(self,label = "Open position :", style=wx.ALIGN_LEFT)
-        hsizer.Add(staticOpenPosition,0, wx.ALL | wx.ALIGN_CENTER, 5)
+
+        panel_open_close = wx.Panel(self, -1)
+        self.rb_open = wx.RadioButton(panel_open_close, -1, 'Open', (10, 10), style=wx.RB_GROUP)
+        self.rb_close = wx.RadioButton(panel_open_close, -1, 'Close', (10, 30))
+        hsizer.Add(panel_open_close, 0, wx.ALL | wx.CENTER, 5)
+
         self.symbols = wx.ComboBox(self,choices = ["BTC", "ETH", "XRP",  "SOL"])
         hsizer.Add(self.symbols,0, wx.ALL | wx.CENTER, 5)
 
-        panel = wx.Panel(self, -1)
-        self.rb_amount = wx.RadioButton(panel, -1, 'Amount ($)', (10, 10), style=wx.RB_GROUP)
-        self.rb_size = wx.RadioButton(panel, -1, 'Size ($)', (10, 30))
-        hsizer.Add(panel, 0, wx.ALL | wx.CENTER, 5)
+        panel_amount_size = wx.Panel(self, -1)
+        self.rb_amount = wx.RadioButton(panel_amount_size, -1, 'Amount ($)', (10, 10), style=wx.RB_GROUP)
+        self.rb_size = wx.RadioButton(panel_amount_size, -1, 'Size ($)', (10, 30))
+        hsizer.Add(panel_amount_size, 0, wx.ALL | wx.CENTER, 5)
 
         self.amount = FS.FloatSpin(self, -1, size=wx.Size(70, -1), min_val=0, increment=0.1, value=0., digits=3, agwStyle=FS.FS_LEFT)
         hsizer.Add(self.amount, 0, wx.ALL | wx.CENTER, 5)
@@ -71,11 +75,10 @@ class PanelPositions(wx.Panel):
         self.sides = wx.ComboBox(self, choices=["long", "short"])
         self.sides.SetSelection(0)
         hsizer.Add(self.sides, 0, wx.ALL | wx.CENTER, 5)
-        open_position_button = wx.Button(self, label="Open position")
+        open_position_button = wx.Button(self, label="Position")
         open_position_button.Bind(wx.EVT_BUTTON, self.main.on_open_position)
         hsizer.Add(open_position_button, 0, wx.ALL | wx.CENTER, 5)
         main_sizer.Add(hsizer, 0, wx.ALL | wx.LEFT, 5)
-
 
 class PanelOrders(wx.Panel):
     def __init__(self, parent, main):
@@ -117,15 +120,19 @@ class PanelOrders(wx.Panel):
 
         # open limit order
         hsizer = wx.BoxSizer(wx.HORIZONTAL)
-        staticOpenOrderLimit = wx.StaticText(self,label = "Open order :", style = wx.ALIGN_LEFT)
-        hsizer.Add(staticOpenOrderLimit,0, wx.ALL | wx.CENTER, 5)
+
+        panel_open_close = wx.Panel(self, -1)
+        self.rb_open = wx.RadioButton(panel_open_close, -1, 'Open', (10, 10), style=wx.RB_GROUP)
+        self.rb_close = wx.RadioButton(panel_open_close, -1, 'Close', (10, 30))
+        hsizer.Add(panel_open_close, 0, wx.ALL | wx.CENTER, 5)
+
         self.symbols = wx.ComboBox(self,choices = ["BTC", "ETH", "XRP", "SOL"])
         hsizer.Add(self.symbols,0, wx.ALL | wx.CENTER, 5)
 
-        panel = wx.Panel(self, -1)
-        self.rb_amount = wx.RadioButton(panel, -1, 'Amount ($)', (10, 10), style=wx.RB_GROUP)
-        self.rb_size = wx.RadioButton(panel, -1, 'Size ($)', (10, 30))
-        hsizer.Add(panel, 0, wx.ALL | wx.CENTER, 5)
+        panel_amount_size = wx.Panel(self, -1)
+        self.rb_amount = wx.RadioButton(panel_amount_size, -1, 'Amount ($)', (10, 10), style=wx.RB_GROUP)
+        self.rb_size = wx.RadioButton(panel_amount_size, -1, 'Size ($)', (10, 30))
+        hsizer.Add(panel_amount_size, 0, wx.ALL | wx.CENTER, 5)
 
         self.amount = FS.FloatSpin(self, -1, size=wx.Size(60, -1), min_val=0, increment=0.1, value=0., digits=2, agwStyle=FS.FS_LEFT)
         hsizer.Add(self.amount, 0, wx.ALL | wx.CENTER, 5)
@@ -140,10 +147,21 @@ class PanelOrders(wx.Panel):
         self.sides = wx.ComboBox(self, choices=["long", "short"])
         self.sides.SetSelection(0)
         hsizer.Add(self.sides, 0, wx.ALL | wx.CENTER, 5)
-        open_order_button = wx.Button(self, label="Open order")
+        open_order_button = wx.Button(self, label="Order")
         open_order_button.Bind(wx.EVT_BUTTON, self.main.on_open_limit_order)
         hsizer.Add(open_order_button, 0, wx.ALL | wx.CENTER, 5)
         main_sizer.Add(hsizer, 0, wx.ALL | wx.LEFT, 5)
+
+        # line 2
+        hsizer2 = wx.BoxSizer(wx.HORIZONTAL)
+
+        self.checkbox_trigger = wx.CheckBox(self, label="Trigger price", size=wx.DefaultSize)
+        hsizer2.Add(self.checkbox_trigger, 0, wx.ALL | wx.CENTER, 5)
+        self.trigger_price = FS.FloatSpin(self, -1, size=wx.Size(60, -1), min_val=0, increment=0.1, value=0., digits=3,
+                                  agwStyle=FS.FS_LEFT)
+        hsizer2.Add(self.trigger_price, 0, wx.ALL | wx.CENTER, 5)
+
+        main_sizer.Add(hsizer2, 0, wx.ALL | wx.LEFT, 5)
 
 
 class PanelTriggers(wx.Panel):
@@ -366,6 +384,14 @@ class MainPanel(wx.Panel):
 
             mytrade = trade.Trade()
             mytrade.symbol = symbol
+            open_close = ""
+            if self.panel_positions.rb_open.GetValue(): # open
+                open_close = "OPEN"
+            elif self.panel_positions.rb_close.GetValue():
+                open_close = "CLOSE"
+            else:
+                print("open limit order : open or close ???")
+                return
             if self.panel_positions.rb_amount.GetValue(): # amount
                 mytrade.gross_size = self.panel_positions.amount.GetValue() / my_broker.get_value(mytrade.symbol)
             elif self.panel_positions.rb_size.GetValue():
@@ -374,9 +400,9 @@ class MainPanel(wx.Panel):
                 print("open position : amount or size ???")
                 return
             if side == "long":
-                mytrade.type = "OPEN_LONG"
+                mytrade.type = open_close+"_LONG"
             else:
-                mytrade.type = "OPEN_SHORT"
+                mytrade.type = open_close+"_SHORT"
             print("open position : ", mytrade.symbol, " / ", mytrade.gross_size)
             my_broker.execute_trade(mytrade)
             self.update_positions(my_broker)
@@ -441,6 +467,14 @@ class MainPanel(wx.Panel):
 
             mytrade = trade.Trade()
             mytrade.symbol = symbol
+            open_close = ""
+            if self.panel_orders.rb_open.GetValue(): # open
+                open_close = "OPEN"
+            elif self.panel_orders.rb_close.GetValue():
+                open_close = "CLOSE"
+            else:
+                print("open limit order : open or close ???")
+                return
             if self.panel_orders.rb_amount.GetValue(): # amount
                 mytrade.gross_size = self.panel_orders.amount.GetValue() / my_broker.get_value(mytrade.symbol)
             elif self.panel_orders.rb_size.GetValue():
@@ -449,11 +483,16 @@ class MainPanel(wx.Panel):
                 print("open limit order : amount or size ???")
                 return
             if side == "long":
-                mytrade.type = "OPEN_LONG_ORDER"
+                mytrade.type = open_close+"_LONG_ORDER"
             else:
-                mytrade.type = "OPEN_SHORT_ORDER"
+                mytrade.type = open_close+"_SHORT_ORDER"
             mytrade.price = self.panel_orders.price.GetValue()
             print("open limit order : ", mytrade.symbol, " / ", mytrade.gross_size, " / ", mytrade.price)
+
+            # trigger
+            if self.panel_orders.checkbox_trigger.GetValue():
+                mytrade.trigger_price = self.panel_orders.trigger_price.GetValue()
+
             my_broker.execute_trade(mytrade)
             self.update_orders(my_broker)
 
