@@ -42,6 +42,11 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         self.enable_cache_data = False
         self.requests_cache = {}
 
+        self.df_triggers_previous = pd.DataFrame(columns=["planType", "symbol", "size", "side",
+                                                          "orderId", "orderType", "clientOid",
+                                                          "price", "triggerPrice", "triggerType",
+                                                          "marginMode", "gridId", "strategyId"])
+
         # initialize the websocket client
         api_key = self.account.get("api_key", "")
         api_secret = self.account.get("api_secret", "")
@@ -251,7 +256,28 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     def get_all_triggers(self):
         df_triggers_normal_plan = self.get_triggers("normal_plan")
         df_triggers_track_plan = self.get_triggers("track_plan")
-        return pd.concat([df_triggers_normal_plan, df_triggers_track_plan]).reset_index(drop=True)
+        df_triggers_profit_loss = self.get_triggers("profit_loss")
+        df_triggers = pd.concat([df_triggers_normal_plan, df_triggers_track_plan, df_triggers_profit_loss]).reset_index(drop=True)
+
+        merged = pd.merge(self.df_triggers_previous, df_triggers, on='orderId', suffixes=('_previous', '_current'),
+                          how='outer', indicator=True)
+
+        previous_columns = [col for col in merged.columns if col.endswith('_previous')]
+        current_columns = [col.replace('_previous', '_current') for col in previous_columns]
+
+        differences = merged[
+            (merged['_merge'] == 'both') & (merged[previous_columns].values != merged[current_columns].values).any(axis=1)]
+
+        disappeared = merged[merged['_merge'] == 'left_only']
+
+        df_differences = differences[['orderId'] + current_columns].rename(
+            columns={col: col.replace('_current', '') for col in current_columns})
+        df_disappeared = disappeared[['orderId'] + previous_columns].rename(
+            columns={col: col.replace('_previous', '') for col in previous_columns})
+
+        self.df_triggers_previous = df_triggers
+
+        return df_triggers
 
     @authentication_required
     def get_current_state(self, lst_symbols):

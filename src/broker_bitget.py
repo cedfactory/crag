@@ -319,7 +319,7 @@ class BrokerBitGet(broker.Broker):
 
         if trigger_price and range_rate:
             transaction = self.place_trail_order(symbol, marginCoin="USDT", triggerPrice=trigger_price, size=amount,
-                                                 side="open_long", clientOid=clientOid, triggerType=None, rangeRate=range_rate)
+                                                 side=side, clientOid=clientOid, triggerType=None, rangeRate=range_rate)
         elif trigger_price:
             transaction = self._place_trigger_order(symbol, margin_coin="USDT", size=amount, side=side,
                                              order_type='limit', price=trigger_price, client_oid=clientOid,

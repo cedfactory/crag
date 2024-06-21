@@ -574,6 +574,7 @@ class GridPosition():
                 order_to_execute["strategy_id"] = self.strategy_id
                 order_to_execute["symbol"] = symbol
                 order_to_execute["gross_size"] = size
+                order_to_execute["grid_trend"] = trend
                 self.clear_orderId(symbol, grid_id, trend)
                 if df_grid.loc[df_grid["grid_id"] == grid_id, 'side'].values[0] == "trigger_long":
                     order_to_execute["type"] = "OPEN_LONG_ORDER"
@@ -614,40 +615,33 @@ class GridPosition():
         #     print("toto")
 
     def update_executed_trade_status(self, symbol, lst_orders):
-        df_grid = self.grid[symbol]
-        for order in lst_orders:
-            if order["strategy_id"] == self.strategy_id:
-                grid_id = order["grid_id"]
-                if order["trade_status"] == "SUCCESS":
-                    df_grid.loc[df_grid["grid_id"] == grid_id, "status"] = "engaged"
-                    current_list = df_grid.loc[df_grid["grid_id"] == grid_id, "lst_orderId"].values[0]
-                    if not isinstance(current_list, list):
-                        current_list = []
-                    # current_list.append(order["orderId"])
-                    orderId_current_list = current_list + [order["orderId"]]
-                    index = df_grid.index[df_grid["grid_id"] == grid_id].tolist()
-                    idx = index[0]
-                    df_grid.at[idx, 'lst_orderId'] = orderId_current_list
-                    del current_list
-                    del orderId_current_list
-                    df_grid.loc[df_grid["grid_id"] == grid_id, "nb_position"] = df_grid.loc[df_grid["grid_id"] == grid_id, "nb_position"].values[0] + 1
-                    if order["type"] in ["CLOSE_SHORT_ORDER", "CLOSE_LONG_ORDER"]:
-                        current_list = df_grid.loc[df_grid["grid_id"] == grid_id, "triggered_by"].values[0]
-                        if not isinstance(current_list, list):
-                            current_list = []
-                        triggered_by_pos = order["linked_position"]["triggered_by"]
-                        current_list = current_list + [triggered_by_pos]
-                        index = df_grid.index[df_grid["grid_id"] == grid_id].tolist()
-                        idx = index[0]
-                        df_grid.at[idx, 'triggered_by'] = current_list
-                        del current_list
-                elif order["trade_status"] == "FAILED" \
-                        or order["trade_status"] == "MISSING":
-                    if df_grid.loc[df_grid["grid_id"] == grid_id, "status"].values[0] != "engaged":
-                        df_grid.loc[df_grid["grid_id"] == grid_id, "status"] = "on_hold"
-                elif order["trade_status"] == "UNKNOWN":
-                    df_grid.loc[df_grid["grid_id"] == grid_id, "unknown"] = True
-        self.update_nb_position_limits(df_grid)
+        for trend in self.lst_trend:
+            df_grid = self.grid[symbol][trend]
+            for order in lst_orders:
+                if order["strategy_id"] == self.strategy_id and trend == order["grid_trend"]:
+                    grid_id = order["grid_id"]
+                    if order["trade_status"] == "SUCCESS":
+                        df_grid.loc[df_grid["grid_id"] == grid_id, "status"] = "engaged"
+                        df_grid.loc[df_grid["grid_id"] == grid_id, "orderId"] = order["orderId"]
+                        if "LONG" in order["type"]:
+                            df_grid.loc[df_grid["grid_id"] == grid_id, "nb_position_long"] = 1
+                            df_grid.loc[df_grid["grid_id"] == grid_id, "triggered_long"] = True
+                        elif "SHORT" in order["type"]:
+                            df_grid.loc[df_grid["grid_id"] == grid_id, "nb_position_short"] = 1
+                            df_grid.loc[df_grid["grid_id"] == grid_id, "triggered_short"] = True
+                    elif order["trade_status"] == "FAILED" \
+                            or order["trade_status"] == "MISSING":
+                        if df_grid.loc[df_grid["grid_id"] == grid_id, "status"].values[0] != "engaged":
+                            df_grid.loc[df_grid["grid_id"] == grid_id, "status"] = "empty"
+                        if "LONG" in order["type"]:
+                            df_grid.loc[df_grid["grid_id"] == grid_id, "nb_position_long"] = 0
+                            df_grid.loc[df_grid["grid_id"] == grid_id, "triggered_long"] = False
+                        elif "SHORT" in order["type"]:
+                            df_grid.loc[df_grid["grid_id"] == grid_id, "nb_position_short"] = 0
+                            df_grid.loc[df_grid["grid_id"] == grid_id, "triggered_short"] = False
+                    elif order["trade_status"] == "UNKNOWN":
+                        df_grid.loc[df_grid["grid_id"] == grid_id, "unknown"] = True
+            # self.update_nb_position_limits(df_grid)
 
     def set_to_pending_execute_order(self, symbol, lst_order_to_execute):
         """
