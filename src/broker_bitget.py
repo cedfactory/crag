@@ -618,6 +618,18 @@ class BrokerBitGet(broker.Broker):
             })
         return df_triggers
 
+    def _build_df_orders_plan_history(self, orders):
+        df_orders = pd.DataFrame(columns=["orderId", "clientOid", "executeOrderId", "planType"])
+        for i in range(len(orders)):
+            data = orders[i]
+            df_orders.loc[i] = pd.Series({
+                "orderId": data["orderId"],
+                "clientOid": data["clientOid"],
+                "executeOrderId": data["executeOrderId"],
+                "planType": data["planType"]
+            })
+        return df_orders
+
     @authentication_required
     def execute_reset_account(self):
         df_positions = self.get_open_position()

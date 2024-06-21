@@ -247,6 +247,38 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
         return res
 
+    # @authentication_required
+    def get_orders_plan_history(self, orderId, plan_type="normal_plan"):
+        params = {
+            "orderId": orderId,
+            "planType": plan_type,
+            "productType": "USDT-FUTURES"
+        }
+
+        res = pd.DataFrame()
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                response = self.orderV2Api.ordersPlanHistory(params)
+                if "data" in response and "entrustedList" in response["data"]:
+                    lst_orders = []
+                    if response["data"]["entrustedList"]:
+                        lst_orders = [data for data in response["data"]["entrustedList"]]
+                    current_res = self._build_df_orders_plan_history(lst_orders)
+                    res = pd.concat([res, current_res])
+                    del lst_orders
+                del response
+                self.success += 1
+                break
+            except (exceptions.BitgetAPIException, Exception) as e:
+                msg = getattr(e, "message", "")
+                self.log_api_failure("orderV2Api.ordersPlanHistory", msg, n_attempts)
+                time.sleep(2)
+                n_attempts = n_attempts - 1
+        del n_attempts
+
+        return res
+
     @authentication_required
     def get_all_triggers(self):
         df_triggers_normal_plan = self.get_triggers("normal_plan")
