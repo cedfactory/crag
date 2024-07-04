@@ -29,8 +29,8 @@
                 simulation="1"
                 intervals="1h"
                 orders="market"
-                reset_account="True"
-                reset_account_orders="True"
+                reset_account="False"
+                reset_account_orders="False"
                 loggers="file=log"
         />
     </broker>

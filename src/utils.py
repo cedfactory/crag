@@ -13,6 +13,13 @@ import random
 import string
 
 
+def create_equal_spacing_list(x, y, num_values=5):
+    if num_values < 2:
+        raise ValueError("num_values must be at least 2 to create a range.")
+
+    step = (y - x) / (num_values - 1)
+    return [x + i * step for i in range(num_values)]
+
 def keep_n_smallest(df, column_name, n):
     return df.nsmallest(n, column_name)
 

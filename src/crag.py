@@ -1335,7 +1335,6 @@ class Crag:
             del df_buying_size
             del df_buying_size_normalise
             self.rtstr.set_normalized_grid_price(self.broker.get_price_place_endstep(self.symbols))
-            broker_current_state = self.broker.get_current_state(self.symbols)
 
         # self.execute_timer.set_start_time("crag", "current_state_live", "set_broker_current_state", self.current_state_live)
 

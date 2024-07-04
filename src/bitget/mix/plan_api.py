@@ -115,18 +115,25 @@ class PlanApi(Client):
     holdSide: Long long short short short position in position direction
     :return:
     '''
-    def place_tpsl(self, symbol, marginCoin, triggerPrice, planType, holdSide ):
+    def place_tpsl(self, symbol, marginCoin, triggerPrice, triggerType, planType, holdSide, size, rangeRate, clientOid):
         params = {}
-        if symbol and marginCoin and planType and holdSide and triggerPrice:
-            params["symbol"] = symbol
+        if symbol and marginCoin and planType and holdSide and triggerPrice and size:
             params["marginCoin"] = marginCoin
+            params["symbol"] = symbol
             params["planType"] = planType
-            params["holdSide"] = holdSide
             params["triggerPrice"] = triggerPrice
+            if triggerType is not None:
+                params["triggerType"] = triggerType
+            params["holdSide"] = holdSide
+            if size is not None:
+                params["size"] = size
+            if rangeRate is not None:
+                params["rangeRate"] = str(rangeRate)
+            if clientOid is not None:
+                params["clientOid"] = str(clientOid)
             return self._request_with_params(POST, MIX_PLAN_V1_URL + '/placeTPSL', params)
         else:
-            return "pls check args "
-
+            return False
 
     '''
     Planned entrustment (profit and loss stop) cancellation

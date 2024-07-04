@@ -4,6 +4,7 @@ import gc
 import re
 import json
 from . bitget import exceptions
+from concurrent.futures import wait, ALL_COMPLETED, ThreadPoolExecutor
 
 class BrokerBitGet(broker.Broker):
     def __init__(self, params = None):
@@ -296,36 +297,61 @@ class BrokerBitGet(broker.Broker):
     def execute_trigger(self, trigger):
         symbol = self.trade_symbol = self._get_symbol(trigger["symbol"])
         order_side = trigger["type"]
+        if not isinstance(order_side, str):
+            order_side = str(order_side)
         amount = str(trigger["gross_size"])
-        # price = str(trigger["price"])
-        strategy_id = str(trigger["strategy_id"])
+        if not isinstance(amount, str):
+            amount = str(amount)
         trigger_price = trigger.get("trigger_price", None)
+        if not isinstance(trigger_price, str):
+            trigger_price = str(trigger_price)
         range_rate = trigger.get("range_rate", None)
-        grid_id = str(trigger.get("grid_id", ""))  # well... too specific...
+        if not isinstance(range_rate, str):
+            range_rate = str(range_rate)
+        order_type = trigger.get("order_type", None)
+        if not isinstance(order_type, str):
+            order_type = str(order_type)
+        trigger_type = trigger.get("triggerType", None)
+        if not isinstance(trigger_type, str):
+            trigger_type = str(trigger_type)
+        grid_id = str(trigger.get("grid_id", ""))
+        if not isinstance(grid_id, str):
+            grid_id = str(grid_id)
 
-        clientOid = self.clientOIdprovider.get_name(symbol, order_side)
+        clientOid = self.clientOIdprovider.get_name(symbol,
+                                                    trigger["type"]
+                                                    + "__" + str(trigger["grid_id"]) + "__"
+                                                    + "--" + str(trigger["strategy_id"]) + "--")
 
         if "OPEN" in order_side and "LONG" in order_side:
-            side = "open_long"
+            trade_side = 'Open'
+            side = 'Buy'
         elif "OPEN" in order_side and "SHORT" in order_side:
-            side = "open_short"
+            trade_side = 'Open'
+            side = 'Sell'
         elif "CLOSE" in order_side and "LONG" in order_side:
-            side = "close_long"
+            trade_side = 'Close'
+            side = 'Buy'
         elif "CLOSE" in order_side and "SHORT" in order_side:
-            side = "close_short"
+            trade_side = 'Close'
+            side = 'Sell'
 
-        msg = "!!!!! EXECUTE TRADE LIMIT ORDER !!!!!" + "\n"
-        msg += "{} size: {} trigger_price: {}".format(order_side, amount, trigger_price) + "\n"
+        if trigger_price and range_rate and amount and order_side and amount and side and trade_side:
+            msg = "!!!!! EXECUTE TRIGGER ORDER !!!!!" + "\n"
+            trigger_price = str(self.normalize_price(symbol, float(trigger_price)))
+            msg += "{} size: {} trigger_price: {}".format(order_side, amount, trigger_price) + "\n"
 
-        if trigger_price and range_rate:
-            transaction = self.place_trail_order(symbol, marginCoin="USDT", triggerPrice=trigger_price, size=amount,
-                                                 side=side, clientOid=clientOid, triggerType=None, rangeRate=range_rate)
-        elif trigger_price:
-            transaction = self._place_trigger_order(symbol, margin_coin="USDT", size=amount, side=side,
-                                             order_type='limit', price=trigger_price, client_oid=clientOid,
-                                             trigger_params={ "trigger_price": trigger_price})
-        else:
-            transaction = self._place_order_api(symbol, marginCoin="USDT", size=amount, side=side, orderType='limit', price=trigger_price, clientOId=clientOid)
+            amount = str(15)  # CEDE For test
+
+            transaction = self._place_trigger_order_v2(symbol,  planType="normal_plan", triggerPrice=trigger_price,
+                                                       marginCoin="USDT", size=amount, side=side,
+                                                       tradeSide=trade_side, reduceOnly="YES",
+                                                       orderType="limit",
+                                                       triggerType="fill_price",
+                                                       clientOid=clientOid,
+                                                       callbackRatio="",
+                                                       price=trigger_price
+                                                       )
 
         if "msg" in transaction and transaction["msg"] == "success" and "data" in transaction:
             orderId = transaction["data"]["orderId"]
@@ -345,12 +371,129 @@ class BrokerBitGet(broker.Broker):
             trigger["orderId"] = None
         else:
             trigger["trade_status"] = "UNKNOWN"
-
         del msg
+
         return trigger
 
+    @authentication_required
+    def execute_sltp_trailling(self, order):
+        symbol = self.trade_symbol = self._get_symbol(order["symbol"])
+        order_side = order["type"]
+        if not isinstance(order_side, str):
+            order_side = str(order_side)
+        amount = str(order["gross_size"])
+        if not isinstance(amount, str):
+            amount = str(amount)
+        trigger_price = order.get("trigger_price", None)
+        if not isinstance(trigger_price, str):
+            trigger_price = str(trigger_price)
+        range_rate = order.get("range_rate", None)
+        if not isinstance(range_rate, str):
+            range_rate = str(range_rate)
+        order_type = order.get("order_type", None)
+        if not isinstance(order_type, str):
+            order_type = str(order_type)
+        trigger_type = order.get("triggerType", None)
+        if not isinstance(trigger_type, str):
+            trigger_type = str(trigger_type)
+        grid_id = str(order.get("grid_id", ""))
+        if not isinstance(grid_id, str):
+            grid_id = str(grid_id)
+        strategy_id = str(order["strategy_id"])
+
+        """
+        clientOid = self.clientOIdprovider.get_name(symbol,
+                                                    order["type"]
+                                                    + "__" + str(order["grid_id"]) + "__"
+                                                    + "--" + str(order["strategy_id"]) + "--")
+        """
+        clientOid = self.clientOIdprovider.get_name(symbol, order["type"])
+
+        if "OPEN" in order_side and "LONG" in order_side:
+            hold_side = "long"
+        elif "OPEN" in order_side and "SHORT" in order_side:
+            hold_side = "short"
+        elif "CLOSE" in order_side and "LONG" in order_side:
+            hold_side = "long"
+        elif "CLOSE" in order_side and "SHORT" in order_side:
+            hold_side = "short"
+
+        if trigger_price and range_rate and amount and range_rate and clientOid:
+            msg = "!!!!! EXECUTE TRAILLING TPSL ORDER !!!!!" + "\n"
+            msg += "{} size: {} sltp trailling price: {}".format(order_side, amount, trigger_price) + "\n"
+
+            amount = str(15)  # CEDE For test
+
+            exit_tpsl = False
+            while not exit_tpsl:
+                trigger_price = self.get_values([symbol])
+                value = trigger_price.loc[trigger_price["symbols"] == symbol, "values"].values[0]
+                trigger_price = str(self.normalize_price(symbol, float(value)))
+                transaction = self.place_tpsl_order(symbol, marginCoin="USDT",
+                                                    planType="moving_plan", triggerPrice=trigger_price,
+                                                    holdSide=hold_side, triggerType="mark_price",
+                                                    size=amount, rangeRate=range_rate, clientOid=clientOid)
+                try:
+                    orderId = transaction['data']['orderId']
+                    print("transaction orderId : ", orderId)
+                    exit_tpsl = True
+                    """
+                    self.set_slpt_trailling_status(orderId, grid_id, trigger_price,
+                                                   exit_tpsl, order_side, amount,
+                                                   range_rate, strategy_id)
+                    """
+                except:
+                    print("tpsl: failed")
+
+        if "msg" in transaction and transaction["msg"] == "success" and "data" in transaction and len(transaction["data"]) > 0:
+            orderId = transaction["data"]["orderId"]
+            strategy_id = order["strategy_id"]
+            self.add_gridId_orderId(grid_id, orderId, strategy_id)
+            transaction_failure = False
+        else:
+            transaction_failure = True
+            msg += "TRADE FAILED: {} size: {} sltp_trigger_price: {}".format(order_side, amount, trigger_price) + "\n"
+        self.log_trade = self.log_trade + msg.upper()
+
+        if not transaction_failure:
+            order["trade_status"] = "SUCCESS"
+            order["orderId"] = orderId
+        elif transaction_failure:
+            order["trade_status"] = "FAILED"
+            order["orderId"] = None
+        else:
+            order["trade_status"] = "UNKNOWN"
+        del msg
+
+        return order
+
     def execute_lst_triggers(self, lst_triggers):
-        return [self.execute_trigger(trigger) for trigger in lst_triggers]
+        lst_result_triggers = []
+        with ThreadPoolExecutor() as executor:
+            futures = []
+            for trigger in lst_triggers:
+                futures.append(executor.submit(self.execute_trigger, trigger))
+
+            wait(futures, timeout=1000, return_when=ALL_COMPLETED)
+
+            for future in futures:
+                lst_result_triggers.append(future.result())
+
+        return lst_result_triggers
+
+    def execute_lst_sltp_trailling_orders(self, lst_orders):
+        lst_result_orders = []
+        with ThreadPoolExecutor() as executor:
+            futures = []
+            for order in lst_orders:
+                futures.append(executor.submit(self.execute_sltp_trailling, order))
+
+            wait(futures, timeout=1000, return_when=ALL_COMPLETED)
+
+            for future in futures:
+                lst_result_orders.append(future.result())
+
+        return lst_result_orders
 
     @authentication_required
     def execute_batch_orders(self, lst_orders):
@@ -500,15 +643,20 @@ class BrokerBitGet(broker.Broker):
 
         # self.execute_timer.set_start_time("broker", "execute_orders", "execute_batch_orders", self.iter_execute_orders)
         lst_result_triggers_orders = []
-
         # extract triggers...
         lst_triggers = [order for order in lst_orders if "trigger_price" in order]
-
         # ...and execute them
         lst_result_triggers_orders = self.execute_lst_triggers(lst_triggers)
-
         # extract orders
         lst_orders = [order for order in lst_orders if "trigger_price" not in order]
+
+        lst_result_sltp_trailling_orders = []
+        # extract sltp trailling orders...
+        lst_sltp_trailing_orders = [order for order in lst_orders if "sltp_trailling" in order]
+        # ...and execute them
+        lst_result_sltp_trailling_orders = self.execute_lst_sltp_trailling_orders(lst_sltp_trailing_orders)
+        # extract orders
+        lst_orders = [order for order in lst_orders if "sltp_trailing" not in order]
 
         lst_result_orders = []
         max_batch_size = 49
@@ -598,7 +746,7 @@ class BrokerBitGet(broker.Broker):
         return df_open_orders
 
     def _build_df_triggers(self, triggers):
-        df_triggers = pd.DataFrame(columns=["planType", "symbol", "size", "side", "orderId", "orderType", "clientOid", "price", "triggerPrice", "triggerType", "marginMode", "gridId", "strategyId"])
+        df_triggers = pd.DataFrame(columns=["planType", "symbol", "size", "side", "orderId", "orderType", "clientOid", "price", "triggerPrice", "triggerType", "marginMode", "gridId", "strategyId", "executeOrderId", "planStatus"])
         for i in range(len(triggers)):
             data = triggers[i]
             df_triggers.loc[i] = pd.Series({
@@ -614,19 +762,22 @@ class BrokerBitGet(broker.Broker):
                 "triggerType": data["triggerType"],
                 "marginMode": data["marginMode"],
                 "gridId": self.get_gridId_from_orderId(data["orderId"]),
-                "strategyId": self.get_strategyId_from_orderId(data["orderId"])
+                "strategyId": self.get_strategyId_from_orderId(data["orderId"]),
+                "executeOrderId": "",
+                "planStatus": ""
             })
         return df_triggers
 
     def _build_df_orders_plan_history(self, orders):
-        df_orders = pd.DataFrame(columns=["orderId", "clientOid", "executeOrderId", "planType"])
+        df_orders = pd.DataFrame(columns=["orderId", "clientOid", "executeOrderId", "planType", "planStatus"])
         for i in range(len(orders)):
             data = orders[i]
             df_orders.loc[i] = pd.Series({
                 "orderId": data["orderId"],
                 "clientOid": data["clientOid"],
                 "executeOrderId": data["executeOrderId"],
-                "planType": data["planType"]
+                "planType": data["planType"],
+                "planStatus": data["planStatus"]
             })
         return df_orders
 

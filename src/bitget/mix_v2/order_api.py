@@ -40,6 +40,9 @@ class OrderApi(Client):
     def placePlanOrder(self, params):
         return self._request_with_params(POST, '/api/v2/mix/order/place-plan-order', params)
 
+    def placeTPSLOrder(self, params):
+        return self._request_with_params(POST, '/api/v2/mix/order/place-tpsl-order', params)
+
     def cancelPlanOrder(self, params):
         return self._request_with_params(POST, '/api/v2/mix/order/cancel-plan-order', params)
 

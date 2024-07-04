@@ -45,7 +45,20 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         self.df_triggers_previous = pd.DataFrame(columns=["planType", "symbol", "size", "side",
                                                           "orderId", "orderType", "clientOid",
                                                           "price", "triggerPrice", "triggerType",
-                                                          "marginMode", "gridId", "strategyId"])
+                                                          "marginMode", "gridId", "strategyId",
+                                                          "executeOrderId", "planStatus"])
+
+        # https://bitgetlimited.github.io/apidoc/en/mix/#plantype
+        # https://bitgetlimited.github.io/apidoc/en/mix/#isplan
+        self.plan_mapping = {
+            'profit_plan': 'profit_loss',
+            'loss_plan': 'profit_loss',
+            'pos_profit': 'profit_loss',
+            'pos_loss': 'profit_loss',
+            'moving_plan': 'profit_loss',
+            'normal_plan': 'normal_plan',  # These remain the same, but we include them for completeness
+            'track_plan': 'track_plan'
+        }
 
         # initialize the websocket client
         api_key = self.account.get("api_key", "")
@@ -220,7 +233,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             "productType": "USDT-FUTURES"
         }
 
-        if self.get_cache_status():
+        if False and self.get_cache_status():
             df_from_cache = self.requests_cache_get("get_triggers_"+plan_type)
             if isinstance(df_from_cache, pd.DataFrame):
                 return df_from_cache.copy()
@@ -284,12 +297,28 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
         return res
 
+    def apply_func(self, row):
+        self.add_gridId_orderId(row['gridId'], row['executeOrderId'], row['strategyId'])
+
+    def add_plan_history(self, df):
+        for orderId, plan_type in zip(df['orderId'], df['planType']):
+            order_plan_history = self.get_orders_plan_history(orderId, plan_type)
+            self.plan_history_list.append(order_plan_history)
+
     @authentication_required
     def get_all_triggers(self):
-        df_triggers_normal_plan = self.get_triggers("normal_plan")
-        df_triggers_track_plan = self.get_triggers("track_plan")
-        df_triggers_profit_loss = self.get_triggers("profit_loss")
-        df_triggers = pd.concat([df_triggers_normal_plan, df_triggers_track_plan, df_triggers_profit_loss]).reset_index(drop=True)
+        lst_df_triggers = []
+        with ThreadPoolExecutor() as executor:
+            futures = []
+            for plan_type in ["normal_plan", "track_plan", "profit_loss"]:
+                futures.append(executor.submit(self.get_triggers, plan_type))
+
+            wait(futures, timeout=1000, return_when=ALL_COMPLETED)
+
+            for future in futures:
+                lst_df_triggers.append(future.result())
+
+        df_triggers = pd.concat(lst_df_triggers).reset_index(drop=True)
 
         merged = pd.merge(self.df_triggers_previous, df_triggers, on='orderId', suffixes=('_previous', '_current'),
                           how='outer', indicator=True)
@@ -307,9 +336,50 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         df_disappeared = disappeared[['orderId'] + previous_columns].rename(
             columns={col: col.replace('_previous', '') for col in previous_columns})
 
-        self.df_triggers_previous = df_triggers
+        # CEDE: df_differences should not happen tbc
+        if len(df_differences) > 0 \
+                or len(df_disappeared) > 0:
+            # Replace the values in the 'planType' column based on the mapping dictionary
+            df_differences['planType'] = df_differences['planType'].replace(self.plan_mapping)
+            df_disappeared['planType'] = df_disappeared['planType'].replace(self.plan_mapping)
+
+            self.plan_history_list = []
+            self.add_plan_history(df_disappeared)
+            self.add_plan_history(df_differences)
+
+            if self.plan_history_list:
+                df_plan_history = pd.concat(self.plan_history_list, ignore_index=True)
+                self.plan_history_list = []
+
+                df_plan_history = df_plan_history.sort_values(by='orderId')
+                df_disappeared = df_disappeared.sort_values(by='orderId')
+
+                if 'executeOrderId' in df_plan_history.columns and 'planStatus' in df_plan_history.columns:
+                    df_disappeared['executeOrderId'] = df_plan_history['executeOrderId'].tolist()
+                    df_disappeared['planStatus'] = df_plan_history['planStatus'].tolist()
+
+                self.df_triggers_previous = df_triggers
+                df_triggers = pd.concat([df_triggers, df_disappeared], ignore_index=True)
+
+                df_filtered = df_triggers[(df_triggers['planStatus'] == 'executed') & (df_triggers['executeOrderId'] != '')]
+                if len(df_filtered) > 0:
+                    df_filtered.apply(self.apply_func, axis=1)
+            else:
+                self.df_triggers_previous = df_triggers
+        else:
+            self.df_triggers_previous = df_triggers
 
         return df_triggers
+
+    def merge_plan_history(self, df):
+        df_plan_history = pd.DataFrame()
+        for orderId, plan_type in zip(df['orderId'].tolist(), df['planType'].tolist()):
+            order_plan_history = self.get_orders_plan_history(orderId, plan_type)
+            if df_plan_history.empty:
+                df_plan_history = order_plan_history
+            else:
+                df_plan_history = pd.merge(df_plan_history, order_plan_history)
+        return df_plan_history
 
     @authentication_required
     def get_current_state(self, lst_symbols):
@@ -509,6 +579,115 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         locals().clear()
         return result
 
+    @authentication_required
+    def get_orders(self, symbol):
+        result = {}
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                result = self.orderApi.current(symbol)
+                self.success += 1
+                break
+            except (exceptions.BitgetAPIException, Exception) as e:
+                msg = getattr(e, "message", "")
+                self.log_api_failure("planApi.current", msg, n_attempts)
+                time.sleep(2)
+                n_attempts = n_attempts - 1
+        n_attempts = False
+        locals().clear()
+        return result
+
+    @authentication_required
+    def place_tpsl_order(self, symbol, marginCoin, triggerPrice, planType, holdSide, triggerType=None, size=None, rangeRate=None, clientOid=None):
+        result = {}
+        try:
+            result = self.planApi.place_tpsl(symbol, marginCoin, triggerPrice, triggerType, planType, holdSide, size, rangeRate, clientOid)
+            print("place_tpsl_order - success -", holdSide, " at: ", triggerPrice)
+        except (exceptions.BitgetAPIException, Exception) as e:
+            msg = getattr(e, "message", "")
+            self.log_api_failure("planApi.place_tpsl", msg)
+        locals().clear()
+        return result
+
+    @authentication_required
+    def _place_TPSL_Order_v2(self, symbol, marginCoin, productType, planType, triggerPrice,
+                             triggerType, executePrice, holdSide, size, rangeRate, clientOid):
+
+        params = {}
+        # params["symbol"] = symbol
+        params["marginCoin"] = "USDT"
+        params["productType"] = "USDT-FUTURES"
+        params["symbol"] = "XRPUSDT" # CEDE to be fixed
+        params["planType"] = planType
+        params["triggerPrice"] = triggerPrice
+        params["triggerType"] = triggerType
+        # params["executePrice"] = executePrice
+        params["size"] = size
+        params["holdSide"] = holdSide
+        params["rangeRate"] = rangeRate
+        params["clienOid"] = clientOid
+
+        result = {}
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                result = self.orderV2Api.placeTPSLOrder(params)
+                self.success += 1
+                break
+            except (exceptions.BitgetAPIException, Exception) as e:
+                msg = getattr(e, "message", "")
+                self.log_api_failure("planApi.place_plan_v2", msg, n_attempts)
+                time.sleep(2)
+                n_attempts = n_attempts - 1
+        n_attempts = False
+        locals().clear()
+        return result
+
+    # reference : https://www.bitget.com/api-doc/contract/plan/Place-Plan-Order
+    @authentication_required
+    def _place_trigger_order_v2(self, symbol, planType, triggerPrice, marginCoin, size, side, tradeSide, reduceOnly,
+                                orderType, triggerType, clientOid, callbackRatio, price=''):
+        params = {}
+        # params["symbol"] = symbol
+        params["symbol"] = "XRPUSDT" # CEDE to be fixed
+        params["planType"] = planType
+        params["triggerPrice"] = triggerPrice
+        params["marginCoin"] = "USDT"
+        params["size"] = size
+        params["side"] = side
+        params["tradeSide"] = tradeSide
+        params["reduceOnly"] = reduceOnly
+        params["orderType"] = orderType
+        params["triggerType"] = triggerType
+        params["clienOid"] = clientOid
+        if callbackRatio != "":
+            params["callbackRatio"] = callbackRatio
+        if price != "":
+            params["price"] = price
+        params["productType"] = "USDT-FUTURES"
+        params["marginMode"] = "crossed"
+        # params["marginMode"] = "cross" # CEDE to be fixed
+        #params["stopSurplusTriggerPrice"] =  # optional
+        #params["stopSurplusExecutePrice"] =  # optional
+        #params["stopSurplusTriggerType"] =  # optional
+        #params["stopLossTriggerPrice"] =  # optional
+        #params["stopLossExecutePrice"] =  # optional
+        #params["stopLossTriggerType"] = # optional
+        result = {}
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                result = self.orderV2Api.placePlanOrder(params)
+                self.success += 1
+                break
+            except (exceptions.BitgetAPIException, Exception) as e:
+                msg = getattr(e, "message", "")
+                self.log_api_failure("planApi.place_plan_v2", msg, n_attempts)
+                time.sleep(2)
+                n_attempts = n_attempts - 1
+        n_attempts = False
+        locals().clear()
+        return result
 
     # reference : https://www.bitget.com/api-doc/contract/plan/Place-Plan-Order
     @authentication_required
@@ -540,7 +719,6 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         n_attempts = 3
         while n_attempts > 0:
             try:
-                #result = self.orderV2Api.placePlanOrder(params)
                 result = self.planApi.place_plan(symbol, margin_coin, str(size), side, order_type, str(trigger_params["trigger_price"]), "market_price", str(price), client_oid)
 
                 self.success += 1
@@ -777,7 +955,8 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     @authentication_required
     def get_value(self, symbol):
-        symbol = symbol + 'USDT_UMCBL'
+        if not symbol.endswith('USDT_UMCBL'):
+            symbol += 'USDT_UMCBL'
         value = 0
         n_attempts = 3
         while n_attempts > 0:

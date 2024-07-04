@@ -112,34 +112,19 @@ class StrategyBreakoutTradingGenericV2(rtstr.RealTimeStrategy):
 
         del self.df_price
         self.df_price = df_price
+        self.grid.set_prices(self.df_price)
         lst_order_to_execute = []
 
         for symbol in self.lst_symbols:
-            df_current_state = self.grid.set_current_orders_price_to_grid(symbol, df_current_states)
+            # df_open_triggers = self.grid.set_current_orders_price_to_grid(symbol, df_open_triggers)
             self.grid.set_buying_size(self.get_grid_buying_size(symbol, self.strategy_id))
-            self.grid.update_nb_open_positions(symbol, df_open_positions)
             if symbol in df_price['symbols'].tolist():
+                self.grid.set_triggers_executed(symbol, df_open_triggers)
                 self.grid.set_current_price(df_price.loc[df_price['symbols'] == symbol, 'values'].values[0])
-                self.grid.update_unknown_status(symbol, df_current_state)
-                self.grid.cross_check_with_current_state(symbol, df_current_state)
+                self.grid.update_unknown_status(symbol)
+                # self.grid.cross_check_with_current_state(symbol)
                 self.grid.update_grid_side(symbol)
             lst_order_to_execute = self.grid.get_order_list(symbol)
-            self.grid.set_to_pending_execute_order(symbol, lst_order_to_execute)
-            lst_order_to_execute = self.grid.filter_lst_close_execute_order(symbol, lst_order_to_execute)
-
-
-        if not self.zero_print:
-            df_sorted = df_current_state.sort_values(by='price')
-            self.log("#############################################################################################")
-            self.log("current_state: \n" + df_sorted.to_string(index=False))
-            del df_sorted
-            self.log("open_positions: \n" + df_open_positions.to_string(index=False))
-            self.log("price: \n" + df_price.to_string(index=False))
-            lst_order_to_print = []
-            for order in lst_order_to_execute:
-                lst_order_to_print.append((order["grid_id"], order["trigger_price"], order["type"]))
-            self.log("order list: \n" + str(lst_order_to_print))
-            del lst_order_to_print
 
         del df_current_states
         del df_open_positions
@@ -164,13 +149,14 @@ class StrategyBreakoutTradingGenericV2(rtstr.RealTimeStrategy):
     def activate_grid(self, current_state):
         if not current_state:
             return []
-        self.df_prices = current_state["prices"]
+        self.df_price = current_state["prices"]
+        self.grid.set_prices(self.df_price)
         lst_buying_market_order = []
         for symbol in self.lst_symbols:
             lst_buying_market_order = []
             self.buying_size = self.get_grid_buying_size(symbol, self.strategy_id)
-            if symbol in self.df_prices['symbols'].tolist():
-                price = self.df_prices.loc[self.df_prices['symbols'] == symbol, 'values'].values[0]
+            if symbol in self.df_price['symbols'].tolist():
+                price = self.df_price.loc[self.df_price['symbols'] == symbol, 'values'].values[0]
                 order = self.grid.get_buying_market_order(symbol, self.buying_size, price)
                 lst_buying_market_order.append(order)
         del lst_buying_market_order
@@ -196,9 +182,10 @@ class StrategyBreakoutTradingGenericV2(rtstr.RealTimeStrategy):
                 self.execute_timer.set_grid_infos(df_grid_values, self.side)
 
     def update_executed_trade_status(self, lst_orders):
-        if lst_orders is None:
-            return []
-        if len(lst_orders) > 0:
+        if lst_orders is None \
+                or (len(lst_orders) == 0):
+            return
+        else:
             for symbol in self.lst_symbols:
                 self.grid.update_executed_trade_status(symbol, lst_orders)
 
@@ -216,6 +203,8 @@ class GridPosition():
         self.lst_trend = ["up", "down"]
 
         self.str_open, self.str_close = self.side_mapping.get(self.grid_side, (None, None))
+
+        self.df_price = None
 
         self.strategy_id = strategy_id
         self.grid_high = grid_high
@@ -249,8 +238,6 @@ class GridPosition():
         self.closest = None
 
         self.previous_nb_open_positions = 0
-        self.nb_open_positions = 0
-        self.nb_open_positions_triggered = 0
 
         self.max_grid_close_order = -1
         self.min_grid_close_order = -1
@@ -266,13 +253,8 @@ class GridPosition():
         self.nb_open_selected_to_be_open = 0
         self.nb_close_selected_to_be_open = 0
 
-        # Create a list with nb_grid split between high and low
-        # lst_grid_values_up = np.linspace(self.grid_high + self.grid_high * self.percent_per_grid / 100 * self.nb_grid_up,
-        #                                  self.grid_high, self.nb_grid_up + 1, endpoint=True).tolist()
-        # self.nb_grid_down = int(100 / self.percent_per_grid)
-
-        # lst_grid_values_down = np.linspace(self.grid_low,
-        #                                    0, self.nb_grid_down, endpoint=True).tolist()
+        self.nb_order_trigger_executed = 0
+        self.df_open_triggers_executed = None
 
         self.nb_grid_up = 100
         self.nb_grid_down = 100
@@ -314,7 +296,6 @@ class GridPosition():
                 self.grid[symbol][trend]["unknown"] = False
 
         self.lst_limit_order_missing = []
-        self.nb_open_positions = 0
         self.nb_close_positions = 0
         self.diff_nb_open_positions = 0
         self.diff_nb_close_positions = 0
@@ -329,6 +310,9 @@ class GridPosition():
             return
         for iter_logger in self.loggers:
             iter_logger.log(msg, header=header, author=type(self).__name__, attachments=attachments)
+
+    def set_prices(self, df):
+        self.df_price = df
 
     def update_pending_status_from_current_state(self, symbol, df_current_state):
         # Update grid status from 'pending' status to 'engaged'
@@ -383,83 +367,97 @@ class GridPosition():
 
     # Function to find the index of the closest value in an array
     def find_closest(self, value, array):
-        if self.abs is not None:
-            del self.abs
-        if self.closest is not None:
-            del self.closest
-        self.abs = array - value
-        self.abs = np.abs(self.abs)
+        self.abs = None
+        self.closest = None
+
+        self.abs = np.abs(array - value)
         self.closest = self.abs.argmin()
         # closest = np.abs(array - value).argmin()
         # return closest
 
-    def set_current_orders_price_to_grid(self, symbol, df_current_state):
-        if not df_current_state.empty:
-            df_current_state = df_current_state[df_current_state["symbol"] == symbol]
-            df_current_state = df_current_state.loc[df_current_state['strategyId'] == self.strategy_id]
+    def set_current_orders_price_to_grid(self, symbol, df_open_triggers):
+        if not df_open_triggers.empty:
+            df_open_triggers = df_open_triggers[df_open_triggers["symbol"] == symbol]
+            df_open_triggers = df_open_triggers.loc[df_open_triggers['strategyId'] == self.strategy_id]
             df_grid_concat = pd.DataFrame()
             for trend in self.lst_trend:
                 df_grid = self.grid[symbol][trend]
                 df_grid_concat = pd.concat([df_grid_concat, df_grid], axis=0)
             df_grid = df_grid_concat
             lst_price = []
-            for price in df_current_state['price']:
+            for price in df_open_triggers['triggerPrice']:
                 self.find_closest(price, df_grid['position'])
-                closest_index = self.closest
-                closest_value = df_grid.at[closest_index, 'position']
+                closest_value = df_grid.at[self.closest, 'position']
                 lst_price.append(closest_value)
-            df_current_state['price'] = lst_price
+            df_open_triggers['triggerPrice'] = lst_price
             del lst_price
             # Check if all elements in df_current_state['price'] are in df_grid['position']
-            self.s_bool = df_current_state['price'].isin(df_grid['position'])
+            self.s_bool = df_open_triggers['price'].isin(df_grid['position'])
             self.all_prices_in_grid = self.s_bool.all()
             if not self.zero_print and not self.all_prices_in_grid:
-                    # Print the elements that are different
-                    different_prices = df_current_state.loc[~df_current_state['price'].isin(df_grid['position']), 'price']
-                    self.log("################ WARNING PRICE DIFF WITH ORDER AND GRID ###############################")
-                    self.log("Elements in df_current_state['price'] that are not in df_grid['position']:")
-                    self.log(different_prices)
+                # Print the elements that are different
+                different_prices = df_open_triggers.loc[~df_open_triggers['price'].isin(df_grid['position']), 'price']
+                self.log("################ WARNING PRICE DIFF WITH ORDER AND GRID ###############################")
+                self.log("Elements in df_current_state['price'] that are not in df_grid['position']:")
+                self.log(different_prices)
             del self.s_bool
             del self.all_prices_in_grid
             del df_grid
-        return df_current_state
+        return df_open_triggers
 
     def set_current_price(self, price):
         self.current_price = price
 
-    def update_unknown_status(self, symbol, df_current_state_all):
+    def update_unknown_status(self, symbol):
+        df_open_triggers = self.df_open_triggers
         for trend in self.lst_trend:
             df_grid = self.grid[symbol][trend]
             if df_grid['unknown'].any():
-                df_current_state = df_current_state_all[df_current_state_all["symbol"] == symbol]
-                df_current_state = df_current_state.loc[df_current_state['strategyId'] == self.strategy_id]
                 df_filtered = df_grid[df_grid['unknown']]
                 lst_grid_id_filtered = df_filtered["grid_id"].to_list()
-                lst_current_state_id = df_current_state["gridId"].to_list()
+                lst_current_state_id = df_open_triggers["gridId"].to_list()
                 for grid_id in lst_grid_id_filtered:
                     if grid_id in lst_current_state_id:
-                        df_filtered_current_state = df_current_state[df_current_state['gridId'] == grid_id]
-                        lst_order_id = df_filtered_current_state["orderId"].to_list()
+                        df_filtered_current_state = df_open_triggers[df_open_triggers['gridId'] == grid_id]
+                        order_id = df_filtered_current_state["orderId"].iat[0]
                         side = df_filtered_current_state["side"].iat[0]
                         index = df_grid.index[df_grid["grid_id"] == grid_id].tolist()
                         idx = index[0]
                         df_grid.at[idx, 'status'] = "engaged"
-                        df_grid.at[idx, 'lst_orderId'] = lst_order_id
+                        df_grid.at[idx, 'orderId'] = order_id
                         df_grid.at[idx, 'side'] = side
                     else:
                         index = df_grid.index[df_grid["grid_id"] == grid_id].tolist()
                         idx = index[0]
                         df_grid.at[idx, 'status'] = "on_hold"
-                        df_grid.at[idx, 'lst_orderId'] = []
+                        df_grid.at[idx, 'orderId'] = ""
                 df_grid["unknown"] = False
 
-    def cross_check_with_current_state(self, symbol, df_current_state_all):
+    def cross_check_with_current_state(self, symbol):
+        if self.nb_order_trigger_executed > 0:
+            # self.df_open_triggers_executed = df_open_triggers_executed.copy()
+            self.lst_gridId_open_triggers_executed = self.df_open_triggers_executed["grid_id"].to_list()
+            for trend in self.lst_trend:
+                df_grid = self.grid[symbol][trend]
+                lst_order_id = self.df_open_triggers_executed['orderId'].to_list()
+                for orderId in lst_order_id:
+                    side = self.df_open_triggers_executed.loc[self.df_open_triggers_executed['orderId'] == orderId, "side"].values[0]
+
+                    condition_engaged = df_grid['status'] == 'engaged'
+                    condition_orderId_long = df_grid['orderId_long'] == orderId
+                    condition_orderId_short = df_grid['orderId_short'] == orderId
+                    condition_trigger_long = df_grid['side'].str.contains('long', case=False, regex=False)
+                    condition_trigger_short = df_grid['side'].str.contains('short', case=False, regex=False)
+
+        df_current_state_all = self.df_open_triggers
         for trend in self.lst_trend:
             price = self.current_price
             df_grid = self.grid[symbol][trend]
             df_grid['cross_checked'] = False
             df_grid['previous_status'] = df_grid['status']
-            df_current_state = df_current_state_all[df_current_state_all["symbol"] == symbol]
+            if not symbol.endswith('USDT'):
+                symbol_condition = symbol + 'USDT'
+            df_current_state = df_current_state_all[df_current_state_all["symbol"] == symbol_condition]
             df_current_state = df_current_state.loc[df_current_state['strategyId'] == self.strategy_id]
             lst_current_state_id = df_current_state["gridId"].to_list()
             list_orderId = df_current_state_all["orderId"].to_list()
@@ -476,47 +474,18 @@ class GridPosition():
             for grid_id_engaged, order_id_engaged in zip(lst_engaged, lst_order_id):
                 index = df_grid.index[df_grid["grid_id"] == grid_id_engaged].tolist()
                 idx = index[0]
-                if grid_id_engaged in lst_current_state_id \
+                if str(grid_id_engaged) in lst_current_state_id \
                         and order_id_engaged in list_orderId:
                     df_grid.at[idx, 'status'] = "engaged"
                     df_grid.at[idx, 'nb_position'] = 1
+                    df_grid.at[idx, 'triggered'] = True
+                    df_grid.at[idx, 'orderId'] = order_id_engaged
                     if grid_id_engaged in lst_order_long:
                         df_grid.at[idx, 'triggered_long'] = True
                         df_grid.at[idx, 'orderId_long'] = order_id_engaged
                     elif grid_id_engaged in lst_order_short:
                         df_grid.at[idx, 'triggered_short'] = True
                         df_grid.at[idx, 'orderId_short'] = order_id_engaged
-                else:
-                    df_grid.at[idx, 'status'] = "empty"
-                    df_grid.at[idx, 'orderId'] = ""
-                    df_grid.at[idx, 'nb_position'] = 0
-                    df_grid.at[idx, 'triggered'] = False
-
-                    """
-                    if df_grid.loc[df_grid["grid_id"] == grid_id_engaged, 'side'].values[0] == self.str_open:
-                        triggered_grid_id = df_grid.loc[df_grid["grid_id"] == grid_id_engaged, 'close_grid_id'].values[0]
-                        triggered_price = df_grid.loc[df_grid["grid_id"] == triggered_grid_id, 'position'].values[0]  # CEDE -1 case to be added
-                        if self.grid_side == "long":
-                            status = "triggered" if triggered_price > price else "triggered_below"
-                        elif self.grid_side == "short":
-                            status = "triggered" if triggered_price < price else "triggered_below"
-                        df_grid.loc[df_grid['grid_id'] == grid_id_engaged, "status"] = status
-                        index = df_grid.index[df_grid["grid_id"] == grid_id_engaged].tolist()
-                        idx = index[0]
-                        df_grid.at[idx, 'lst_orderId'] = []
-                        df_grid.at[idx, 'triggered_by'] = []
-                        df_grid.at[idx, 'nb_position'] = 0
-                        self.total_position_opened += 1
-                    elif df_grid.loc[df_grid["grid_id"] == grid_id_engaged, 'side'].values[0] == self.str_close:
-                        df_grid.loc[df_grid['grid_id'] == grid_id_engaged, "status"] = "on_hold"
-                        self.total_position_closed += len(df_grid.loc[df_grid['grid_id'] == grid_id_engaged, "lst_orderId"].values[0])
-                        index = df_grid.index[df_grid["grid_id"] == grid_id_engaged].tolist()
-                        idx = index[0]
-                        df_grid.at[idx, 'lst_orderId'] = []
-                        df_grid.at[idx, 'triggered_by'] = []
-                        self.total_position_closed += df_grid.loc[df_grid["grid_id"] == grid_id_engaged, "nb_position"].values[0]
-                        df_grid.at[idx, 'nb_position'] = 0
-                    """
         del lst_engaged
         del condition_engaged
         del df_grid_engaged
@@ -569,6 +538,9 @@ class GridPosition():
 
             lst_order = []
             df_grid = self.grid[symbol][trend]
+            tmp_bool_long = False
+            tmp_bool_short = False
+            # lst_spraid_values = utils.create_equal_spacing_list(0.47100, 0.47600, 5)
             for grid_id in lst_order_grid_id:
                 order_to_execute = {}
                 order_to_execute["strategy_id"] = self.strategy_id
@@ -581,7 +553,19 @@ class GridPosition():
                 elif df_grid.loc[df_grid["grid_id"] == grid_id, 'side'].values[0] == "trigger_short":
                     order_to_execute["type"] = "OPEN_SHORT_ORDER"
                 if "type" in order_to_execute:
-                    order_to_execute["trigger_price"] = df_grid.loc[df_grid["grid_id"] == grid_id, 'position'].values[0]
+                    if order_to_execute["type"] == "OPEN_LONG_ORDER" and tmp_bool_long:
+                        # order_to_execute["trigger_price"] = self.df_price.loc[self.df_price['symbols'] == symbol, 'values'].values[0] + 0.0001 * i
+                        order_to_execute["trigger_price"] = self.df_price.loc[self.df_price['symbols'] == symbol, 'values'].values[0] \
+                                                            + self.df_price.loc[self.df_price['symbols'] == symbol, 'values'].values[0] * 0.01 / 100
+                        tmp_bool_long = False
+                    elif order_to_execute["type"] == "OPEN_SHORT_ORDER" and tmp_bool_short:
+                        order_to_execute["trigger_price"] = self.df_price.loc[self.df_price['symbols'] == symbol, 'values'].values[0] \
+                                                            - self.df_price.loc[self.df_price['symbols'] == symbol, 'values'].values[0] * 0.01 / 100
+                        tmp_bool_short = False
+                    else:
+                        order_to_execute["trigger_price"] = df_grid.loc[df_grid["grid_id"] == grid_id, 'position'].values[0]
+                    if grid_id in self.lst_gridId_open_triggers_executed:
+                        order_to_execute["sltp_trailling"] = True
                     order_to_execute["grid_id"] = grid_id
                     order_to_execute["trade_status"] = "pending"
                     order_to_execute["range_rate"] = self.percent_per_grid
@@ -618,7 +602,8 @@ class GridPosition():
         for trend in self.lst_trend:
             df_grid = self.grid[symbol][trend]
             for order in lst_orders:
-                if order["strategy_id"] == self.strategy_id and trend == order["grid_trend"]:
+                if order["strategy_id"] == self.strategy_id \
+                        and trend == order["grid_trend"]:
                     grid_id = order["grid_id"]
                     if order["trade_status"] == "SUCCESS":
                         df_grid.loc[df_grid["grid_id"] == grid_id, "status"] = "engaged"
@@ -626,40 +611,30 @@ class GridPosition():
                         if "LONG" in order["type"]:
                             df_grid.loc[df_grid["grid_id"] == grid_id, "nb_position_long"] = 1
                             df_grid.loc[df_grid["grid_id"] == grid_id, "triggered_long"] = True
+                            df_grid.loc[df_grid["grid_id"] == grid_id, "orderId_long"] = order["orderId"]
                         elif "SHORT" in order["type"]:
                             df_grid.loc[df_grid["grid_id"] == grid_id, "nb_position_short"] = 1
                             df_grid.loc[df_grid["grid_id"] == grid_id, "triggered_short"] = True
+                            df_grid.loc[df_grid["grid_id"] == grid_id, "orderId_short"] = order["orderId"]
                     elif order["trade_status"] == "FAILED" \
                             or order["trade_status"] == "MISSING":
                         if df_grid.loc[df_grid["grid_id"] == grid_id, "status"].values[0] != "engaged":
                             df_grid.loc[df_grid["grid_id"] == grid_id, "status"] = "empty"
+                            df_grid.loc[df_grid["grid_id"] == grid_id, "orderId"] = ""
                         if "LONG" in order["type"]:
                             df_grid.loc[df_grid["grid_id"] == grid_id, "nb_position_long"] = 0
                             df_grid.loc[df_grid["grid_id"] == grid_id, "triggered_long"] = False
+                            df_grid.loc[df_grid["grid_id"] == grid_id, "orderId_long"] = ""
                         elif "SHORT" in order["type"]:
                             df_grid.loc[df_grid["grid_id"] == grid_id, "nb_position_short"] = 0
                             df_grid.loc[df_grid["grid_id"] == grid_id, "triggered_short"] = False
+                            df_grid.loc[df_grid["grid_id"] == grid_id, "orderId_short"] = ""
                     elif order["trade_status"] == "UNKNOWN":
                         df_grid.loc[df_grid["grid_id"] == grid_id, "unknown"] = True
-            # self.update_nb_position_limits(df_grid)
+            df_grid["nb_position"] = df_grid["nb_position_long"] + df_grid["nb_position_short"]
+            df_grid['triggered'] = df_grid['nb_position'] != 0
 
-    def set_to_pending_execute_order(self, symbol, lst_order_to_execute):
-        """
-        df = self.grid[symbol]
-        for placed_order in lst_order_to_execute:
-            grid_id = placed_order["grid_id"]
-            mask = df['grid_id'] == grid_id
-            test_mask = mask.any()
-            if test_mask:
-                del test_mask
-                id = mask.idxmax()
-                df.at[id , 'status'] = 'pending'
-                df.at[id, 'orderId'] = ''
-            del mask
-            del id
-        del df
-        """
-        return
+            # self.update_nb_position_limits(df_grid)
 
     def clear_orderId(self, symbol, grid_id, trend):
         df = self.grid[symbol][trend]
@@ -673,21 +648,6 @@ class GridPosition():
             self.log("\n" + df_grid.to_string(index=False))
             del df_grid
 
-    def update_nb_open_positions(self, symbol, df_open_positions):
-        if not df_open_positions.empty:
-            df_open_positions_filtered = df_open_positions[(df_open_positions['symbol'] == symbol) & (df_open_positions['holdSide'] == "long")]
-            if not df_open_positions_filtered.empty:
-                sum_available_position = df_open_positions_filtered['total'].sum() if not df_open_positions_filtered.empty else 0
-                self.leverage = df_open_positions_filtered['leverage'].iloc[0]
-                self.previous_nb_open_positions = self.nb_open_positions
-                previous_nb_open_positions = self.previous_nb_open_positions
-                self.nb_open_positions = int(sum_available_position / self.buying_size / self.leverage)
-                self.nb_open_positions_triggered = self.nb_open_positions - previous_nb_open_positions
-            else:
-                self.previous_nb_open_positions = self.nb_open_positions
-                self.nb_open_positions = 0
-                self.nb_open_positions_triggered = 0
-
     def get_nb_open_positions_from_state(self, symbol):
         row = self.df_nb_open_positions[self.df_nb_open_positions['symbol'] == symbol]
         if not row.empty:
@@ -698,33 +658,6 @@ class GridPosition():
             res = 0
         del row
         return res
-
-    def filter_lst_close_execute_order(self, symbol, lst_order_to_execute):
-        return lst_order_to_execute
-        for trend in self.lst_trend:
-            df = self.grid[symbol][trend]
-
-            condition_engaged = df['status'] == 'engaged'
-            # condition_open_long = df['side'] == 'open_long'
-            condition_close_long = df['side'] == 'close_long'
-
-            df_filtered_previous_close_long = df[condition_close_long & condition_engaged]
-            count_open_orders = max(len(df_filtered_previous_close_long), self.nb_open_positions)
-
-            open_orders = [order for order in lst_order_to_execute if "open_" in order["type"]]
-            count_open_orders_in_lst = len(open_orders)
-            count_open_orders += count_open_orders_in_lst
-
-            if count_open_orders <= self.nb_grid:
-                return lst_order_to_execute
-            else:
-                nb_open_to_filter = count_open_orders - self.nb_grid
-                sorted_open_orders = sorted(open_orders, key=lambda x: x["grid_id"])
-                if nb_open_to_filter < count_open_orders_in_lst:
-                    nb_open_to_filter = len(open_orders)
-                orders_to_drop = sorted_open_orders[:nb_open_to_filter]
-                lst_order_to_execute_filtered = [order for order in lst_order_to_execute if order not in orders_to_drop]
-                return lst_order_to_execute_filtered
 
     def cross_check_order_with_price(self, lst_orders):
         lst_filtered = []
@@ -871,6 +804,27 @@ class GridPosition():
             filename = path + "/data_" + str(cpt) + "_df_open_positions.csv"
             df.reset_index(drop=True, inplace=True)
             df.to_csv(filename)
+
+    def set_triggers_executed(self, symbol, df_open_triggers):
+        condition_strategy_id = df_open_triggers['strategyId'] == self.strategy_id
+        if not symbol.endswith('USDT'):
+            symbol += 'USDT'
+        condition_trigger_symbol = df_open_triggers['symbol'] == symbol
+        df_open_triggers = df_open_triggers[condition_strategy_id & condition_trigger_symbol]
+
+        condition_trigger_open = df_open_triggers['planStatus'] != 'executed'
+        self.df_open_triggers = df_open_triggers[condition_trigger_open].copy()
+
+        condition_trigger_executed = df_open_triggers['planStatus'] == 'executed'
+        df_open_triggers_executed = df_open_triggers[condition_trigger_executed]
+        if len(df_open_triggers_executed) > 0:
+            self.nb_order_trigger_executed = len(df_open_triggers_executed)
+            self.df_open_triggers_executed = df_open_triggers_executed.copy()
+            self.lst_gridId_open_triggers_executed = self.df_open_triggers_executed["grid_id"].to_list()
+        else:
+            self.nb_order_trigger_executed = 0
+            self.df_open_triggers_executed = None
+            self.lst_gridId_open_triggers_executed = []
 
 class GridCalculator:
     def __init__(self, grid_high, grid_low, percent_per_grid, nb_grid_up, nb_grid_down):
