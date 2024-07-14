@@ -240,7 +240,8 @@ class GridPosition():
 
         self.previous_nb_open_positions = 0
 
-        # self.debug_cpt = 0 # CEDE For Test
+        if False:
+            self.debug_cpt = 0 # CEDE For Test
 
         self.max_grid_close_order = -1
         self.min_grid_close_order = -1
@@ -588,10 +589,12 @@ class GridPosition():
 
     def get_cancel_trigger(self, df_grid, trend):
         # CEDE TO test CANCEL TRIGGER
-        # self.debug_cpt += 1
-        # if self.debug_cpt > 3:
-        #     self.lst_cancel_trigger_orderId = self.trend_data[trend]['lst_orderId_all_open_triggers']
-        #     return True
+        if False:
+            self.debug_cpt += 1
+            if self.debug_cpt > 3:
+                self.lst_cancel_trigger_orderId = self.trend_data[trend]['lst_orderId_all_open_triggers']
+                return True
+
         self.lst_cancel_trigger_orderId = []
 
         if trend == "up":
@@ -681,7 +684,8 @@ class GridPosition():
                                 df_grid.loc[df_grid["grid_id"] == grid_id, "trigger_short"] = True
                                 df_grid.loc[df_grid["grid_id"] == grid_id, "status_trigger_short"] = "engaged"
                         elif "CANCEL_TRIGGER":
-                            # self.debug_cpt = 0 # CEDE DEBUG
+                            if False:
+                                self.debug_cpt = 0 # CEDE DEBUG
                             condition = df_grid['orderId_trigger_short'] == order["orderId"]
                             df_grid.loc[condition, ['orderId_trigger_short', 'trigger_short', 'status_trigger_short', 'status']] = ['',
                                                                                                                                     False,
