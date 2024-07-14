@@ -150,7 +150,6 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         return wrapped
 
     def _get_symbol(self, coin, base = "USDT"):
-        # self.get_future_market()
         if coin in self.df_market['symbol'].tolist():
             return coin
         symbol = self.df_market.loc[(self.df_market['baseCoin'] == coin) & (self.df_market['quoteCoin'] == base), "symbol"].values[0]
@@ -298,7 +297,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         return res
 
     def apply_func(self, row):
-        self.add_gridId_orderId(row['gridId'], row['executeOrderId'], row['strategyId'])
+        self.add_gridId_orderId(row['gridId'], row['executeOrderId'], row['strategyId'], row['trend'])
 
     def add_plan_history(self, df):
         for orderId, plan_type in zip(df['orderId'], df['planType']):
@@ -326,8 +325,8 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         previous_columns = [col for col in merged.columns if col.endswith('_previous')]
         current_columns = [col.replace('_previous', '_current') for col in previous_columns]
 
-        differences = merged[
-            (merged['_merge'] == 'both') & (merged[previous_columns].values != merged[current_columns].values).any(axis=1)]
+        differences = merged[(merged['_merge'] == 'both')
+                             & (merged[previous_columns].values != merged[current_columns].values).any(axis=1)]
 
         disappeared = merged[merged['_merge'] == 'left_only']
 
@@ -637,6 +636,41 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             except (exceptions.BitgetAPIException, Exception) as e:
                 msg = getattr(e, "message", "")
                 self.log_api_failure("planApi.place_plan_v2", msg, n_attempts)
+                time.sleep(2)
+                n_attempts = n_attempts - 1
+        n_attempts = False
+        locals().clear()
+        return result
+
+    @authentication_required
+    def _cancel_Plan_Order_v2(self, symbol, marginCoin, lst_orderId):
+
+        orderIdList = []
+        for orderid in lst_orderId:
+            cancel_orderId = {
+                "orderId": orderid
+            }
+            orderIdList.append(cancel_orderId)
+
+        params = {}
+        # params["symbol"] = symbol
+        params["marginCoin"] = "USDT"
+        params["productType"] = "USDT-FUTURES"
+        params["symbol"] = "XRPUSDT" # CEDE to be fixed
+
+        params["orderIdList"] = orderIdList
+
+
+        result = {}
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                result = self.orderV2Api.cancelPlanOrder(params)
+                self.success += 1
+                break
+            except (exceptions.BitgetAPIException, Exception) as e:
+                msg = getattr(e, "message", "")
+                self.log_api_failure("planApi.cancelPlanOrder", msg, n_attempts)
                 time.sleep(2)
                 n_attempts = n_attempts - 1
         n_attempts = False
@@ -975,7 +1009,6 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     @authentication_required
     def get_values(self, symbols):
         values = []
-        del self.df_prices
         for symbol in symbols:
             val = self.get_value(symbol)
             values.append(val)

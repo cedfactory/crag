@@ -5,6 +5,7 @@ import re
 import json
 from . bitget import exceptions
 from concurrent.futures import wait, ALL_COMPLETED, ThreadPoolExecutor
+import threading
 
 class BrokerBitGet(broker.Broker):
     def __init__(self, params = None):
@@ -33,8 +34,9 @@ class BrokerBitGet(broker.Broker):
 
         self.clientOIdprovider = utils.ClientOIdProvider()
 
-        self.df_grid_id_match = pd.DataFrame(columns=["orderId", "grid_id", "strategy_id"])
-
+        self.df_grid_id_match = pd.DataFrame(columns=["orderId", "grid_id", "strategy_id", "trend"])
+        self.lock = threading.Lock()
+        self.lock_bitget = threading.Lock()
         self.execute_timer = None
         self.iter_execute_orders = 0
         self.iter_set_open_orders_gridId = 0
@@ -266,15 +268,14 @@ class BrokerBitGet(broker.Broker):
         gridId = trade.grid_id
         strategyId = trade.strategy_id
         if trade.success and orderId != None and gridId != -1:
-            self.add_gridId_orderId(gridId, orderId, strategyId)
+            self.add_gridId_orderId(gridId, orderId, strategyId, None)
         del orderId
         del gridId
 
-    def add_gridId_orderId(self, gridId, orderId, strategyId):
-        self.df_grid_id_match.loc[len(self.df_grid_id_match)] = [orderId, gridId, strategyId]
-        self.df_grid_id_match = self.df_grid_id_match.drop_duplicates()
-        del orderId
-        del gridId
+    def add_gridId_orderId(self, gridId, orderId, strategyId, trend=None):
+        with self.lock:
+            self.df_grid_id_match.loc[len(self.df_grid_id_match)] = [orderId, gridId, strategyId, trend]
+            self.df_grid_id_match = self.df_grid_id_match.drop_duplicates()
 
     def clear_gridId_orderId(self, lst_orderId):
         if False \
@@ -317,6 +318,7 @@ class BrokerBitGet(broker.Broker):
         grid_id = str(trigger.get("grid_id", ""))
         if not isinstance(grid_id, str):
             grid_id = str(grid_id)
+        trend = str(trigger.get("trend", ""))
 
         clientOid = self.clientOIdprovider.get_name(symbol,
                                                     trigger["type"]
@@ -342,21 +344,21 @@ class BrokerBitGet(broker.Broker):
             msg += "{} size: {} trigger_price: {}".format(order_side, amount, trigger_price) + "\n"
 
             amount = str(15)  # CEDE For test
-
-            transaction = self._place_trigger_order_v2(symbol,  planType="normal_plan", triggerPrice=trigger_price,
-                                                       marginCoin="USDT", size=amount, side=side,
-                                                       tradeSide=trade_side, reduceOnly="YES",
-                                                       orderType="limit",
-                                                       triggerType="fill_price",
-                                                       clientOid=clientOid,
-                                                       callbackRatio="",
-                                                       price=trigger_price
-                                                       )
+            with self.lock_bitget:
+                transaction = self._place_trigger_order_v2(symbol,  planType="normal_plan", triggerPrice=trigger_price,
+                                                           marginCoin="USDT", size=amount, side=side,
+                                                           tradeSide=trade_side, reduceOnly="YES",
+                                                           orderType="market",
+                                                           triggerType="mark_price",
+                                                           clientOid=clientOid,
+                                                           callbackRatio="",
+                                                           price=""
+                                                           )
 
         if "msg" in transaction and transaction["msg"] == "success" and "data" in transaction:
             orderId = transaction["data"]["orderId"]
             strategy_id = trigger["strategy_id"]
-            self.add_gridId_orderId(grid_id, orderId, strategy_id)
+            self.add_gridId_orderId(grid_id, orderId, strategy_id, trend=trend)
             transaction_failure = False
         else:
             transaction_failure = True
@@ -400,13 +402,8 @@ class BrokerBitGet(broker.Broker):
         if not isinstance(grid_id, str):
             grid_id = str(grid_id)
         strategy_id = str(order["strategy_id"])
+        trend = str(order["trend"])
 
-        """
-        clientOid = self.clientOIdprovider.get_name(symbol,
-                                                    order["type"]
-                                                    + "__" + str(order["grid_id"]) + "__"
-                                                    + "--" + str(order["strategy_id"]) + "--")
-        """
         clientOid = self.clientOIdprovider.get_name(symbol, order["type"])
 
         if "OPEN" in order_side and "LONG" in order_side:
@@ -437,18 +434,12 @@ class BrokerBitGet(broker.Broker):
                     orderId = transaction['data']['orderId']
                     print("transaction orderId : ", orderId)
                     exit_tpsl = True
-                    """
-                    self.set_slpt_trailling_status(orderId, grid_id, trigger_price,
-                                                   exit_tpsl, order_side, amount,
-                                                   range_rate, strategy_id)
-                    """
                 except:
-                    print("tpsl: failed")
+                    print("TPSL: FAILED - DO NOT PANIC - TRY AGAIN")
 
         if "msg" in transaction and transaction["msg"] == "success" and "data" in transaction and len(transaction["data"]) > 0:
             orderId = transaction["data"]["orderId"]
-            strategy_id = order["strategy_id"]
-            self.add_gridId_orderId(grid_id, orderId, strategy_id)
+            self.add_gridId_orderId(grid_id, orderId, strategy_id, trend=trend)
             transaction_failure = False
         else:
             transaction_failure = True
@@ -494,6 +485,17 @@ class BrokerBitGet(broker.Broker):
                 lst_result_orders.append(future.result())
 
         return lst_result_orders
+
+    def execute_lst_cancel_orders(self, lst_orders):
+        if len(lst_orders) > 0:
+            order_ids = [d['orderId'] for d in lst_orders]
+            lst_success_oredId = self.execute_list_cancel_orders(lst_orders[0]["symbol"], order_ids)
+            for order in lst_orders:
+                if order["orderId"] in lst_success_oredId:
+                    order["trade_status"] = "SUCCESS"
+                else:
+                    order["trade_status"] = "FAILED"
+        return lst_orders
 
     @authentication_required
     def execute_batch_orders(self, lst_orders):
@@ -559,7 +561,7 @@ class BrokerBitGet(broker.Broker):
                     orderId = orderInfo["orderId"]
                     gridId = [int(num) for num in re.findall(r'__(\d+)__', orderInfo["clientOid"])]
                     strategyId = orderInfo["clientOid"].split('--')[1]
-                    self.add_gridId_orderId(gridId[0], orderId, strategyId)
+                    self.add_gridId_orderId(gridId[0], orderId, strategyId, trend=None)
                     lst_success_trade.append({"orderId": orderId, "gridId": gridId[0], "strategyId": strategyId})
                     if failed_trade != 0:
                         msg += "success gridId: " + str(gridId[0]) + "\n"
@@ -634,6 +636,17 @@ class BrokerBitGet(broker.Broker):
             result = self._batch_cancel_orders_api(symbol, "USDT", lst_ordersIds)
         return result
 
+    def execute_list_cancel_orders(self, symbol, lst_ordersIds):
+        success_order_ids = []
+        if symbol != "" and len(lst_ordersIds) > 0:
+            symbol = self._get_symbol(symbol)
+            result = self._cancel_Plan_Order_v2(symbol, "USDT", lst_ordersIds)
+            if result["msg"] == 'success':
+                success_order_ids = [d['orderId'] for d in result["data"]["successList"]]
+                # failure_order_ids = [d['orderId'] for d in result["data"]["failureList"]]
+
+        return success_order_ids
+
     @authentication_required
     def execute_orders(self, lst_orders):
         if len(lst_orders) == 0:
@@ -644,19 +657,24 @@ class BrokerBitGet(broker.Broker):
         # self.execute_timer.set_start_time("broker", "execute_orders", "execute_batch_orders", self.iter_execute_orders)
         lst_result_triggers_orders = []
         # extract triggers...
-        lst_triggers = [order for order in lst_orders if "trigger_price" in order]
+        lst_triggers = [order for order in lst_orders if order["trigger_type"] == "TRIGGER"]
         # ...and execute them
         lst_result_triggers_orders = self.execute_lst_triggers(lst_triggers)
         # extract orders
-        lst_orders = [order for order in lst_orders if "trigger_price" not in order]
+        lst_orders = [order for order in lst_orders if order["trigger_type"] != "TRIGGER"]
 
         lst_result_sltp_trailling_orders = []
         # extract sltp trailling orders...
-        lst_sltp_trailing_orders = [order for order in lst_orders if "sltp_trailling" in order]
+        lst_sltp_trailing_orders = [order for order in lst_orders if order["trigger_type"] == "SL_TP_TRAILER"]
         # ...and execute them
         lst_result_sltp_trailling_orders = self.execute_lst_sltp_trailling_orders(lst_sltp_trailing_orders)
         # extract orders
-        lst_orders = [order for order in lst_orders if "sltp_trailing" not in order]
+        lst_orders = [order for order in lst_orders if order["trigger_type"] != "SL_TP_TRAILER"]
+
+        lst_result_cancel_orders = []
+        lst_cancel_orders = [order for order in lst_orders if order["trigger_type"] == "CANCEL_TRIGGER"]
+        lst_result_cancel_orders = self.execute_lst_cancel_orders(lst_cancel_orders)
+        lst_orders = [order for order in lst_orders if order["trigger_type"] != "CANCEL_TRIGGER"]
 
         lst_result_orders = []
         max_batch_size = 49
@@ -675,11 +693,15 @@ class BrokerBitGet(broker.Broker):
         locals().clear()
         self.iter_execute_orders += 1
 
-        return lst_result_orders + lst_result_triggers_orders
+        return lst_result_orders \
+               + lst_result_triggers_orders \
+               + lst_result_sltp_trailling_orders \
+               + lst_result_cancel_orders
 
     def set_open_orders_gridId(self, df_open_orders):
         df_open_orders["gridId"] = None
         df_open_orders["strategyId"] = None
+        df_open_orders["trend"] = None
         for orderId in df_open_orders["orderId"].tolist():
             # Define a condition
             condition = df_open_orders['orderId'] == orderId
@@ -688,6 +710,8 @@ class BrokerBitGet(broker.Broker):
             df_open_orders.loc[condition, 'gridId'] = res
             res = self.get_strategyId_from_orderId(orderId)
             df_open_orders.loc[condition, 'strategyId'] = res
+            res = self.get_trend_from_orderId(orderId)
+            df_open_orders.loc[condition, 'trend'] = res
             del condition
             del res
         self.iter_set_open_orders_gridId += 1
@@ -711,6 +735,20 @@ class BrokerBitGet(broker.Broker):
         condition = self.df_grid_id_match['orderId'] == orderId
         if condition.any() and orderId == self.df_grid_id_match.at[condition.idxmax(), 'orderId']:
             strategy_id = self.df_grid_id_match.at[condition.idxmax(), 'strategy_id']
+            del condition
+            return strategy_id
+        else:
+            msg = "ERROR: BROKER ID NOT FOUND" + "\n"
+            msg += "ORDER ID: " + str(orderId) + "\n"
+            self.log_trade = self.log_trade + msg.upper()
+            del msg
+            del condition
+            return None
+
+    def get_trend_from_orderId(self, orderId):
+        condition = self.df_grid_id_match['orderId'] == orderId
+        if condition.any() and orderId == self.df_grid_id_match.at[condition.idxmax(), 'orderId']:
+            strategy_id = self.df_grid_id_match.at[condition.idxmax(), 'trend']
             del condition
             return strategy_id
         else:
@@ -746,7 +784,10 @@ class BrokerBitGet(broker.Broker):
         return df_open_orders
 
     def _build_df_triggers(self, triggers):
-        df_triggers = pd.DataFrame(columns=["planType", "symbol", "size", "side", "orderId", "orderType", "clientOid", "price", "triggerPrice", "triggerType", "marginMode", "gridId", "strategyId", "executeOrderId", "planStatus"])
+        df_triggers = pd.DataFrame(columns=["planType", "symbol", "size", "side", "orderId", "orderType", "clientOid",
+                                            "price", "triggerPrice", "triggerType", "marginMode",
+                                            "gridId", "strategyId", "trend",
+                                            "executeOrderId", "planStatus"])
         for i in range(len(triggers)):
             data = triggers[i]
             df_triggers.loc[i] = pd.Series({
@@ -763,6 +804,7 @@ class BrokerBitGet(broker.Broker):
                 "marginMode": data["marginMode"],
                 "gridId": self.get_gridId_from_orderId(data["orderId"]),
                 "strategyId": self.get_strategyId_from_orderId(data["orderId"]),
+                "trend": self.get_trend_from_orderId(data["orderId"]),
                 "executeOrderId": "",
                 "planStatus": ""
             })

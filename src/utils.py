@@ -23,6 +23,9 @@ def create_equal_spacing_list(x, y, num_values=5):
 def keep_n_smallest(df, column_name, n):
     return df.nsmallest(n, column_name)
 
+def keep_n_highest(df, column_name, n):
+    return df.nlargest(n, column_name)
+
 def generate_random_id(length=8):
     # Define the characters to choose from: uppercase letters and digits
     characters = string.ascii_uppercase + string.digits

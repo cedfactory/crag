@@ -15,7 +15,7 @@
                 trailer_global_delta_tp="0"
                 trailer_sl="0"
                 high_volatility="False"
-                path_grid_param="./grid_specific_param.csv"
+                path_grid_param="./grid_specific_param_breakout_test.csv"
                 nb_position_limits="3"
                 lst_combined_strategy=""
                 loggers="file=log"
