@@ -721,6 +721,10 @@ class BrokerBitGet(broker.Broker):
         for order in lst_record_missing_orders:
             self.add_gridId_orderId(order["gridId"], order["orderId"], order["strategyId"], order["trend"])
 
+    def execute_cancel_sltp_orders(self, lst_cancel_sltp_orders):
+        for order in lst_cancel_sltp_orders:
+            self.cancel_order_sltp(order["orderId"]) # CEDE to CL to complete cancel_order_sltp
+
     @authentication_required
     def execute_orders(self, lst_orders):
         if len(lst_orders) == 0:
@@ -754,6 +758,11 @@ class BrokerBitGet(broker.Broker):
         lst_record_missing_orders = [order for order in lst_orders if "type" in order and order["type"] == "RECORD_DATA"]
         self.execute_record_missing_orders(lst_record_missing_orders)
         lst_orders = [order for order in lst_orders if not ("type" in order) or order["type"] != "RECORD_DATA"]
+
+        lst_result_cancel_sltp_orders = []
+        lst_cancel_sltp_orders = [order for order in lst_orders if "type" in order and order["type"] == "CANCEL_SLTP"]
+        self.execute_cancel_sltp_orders(lst_cancel_sltp_orders)
+        lst_orders = [order for order in lst_orders if not ("type" in order) or order["type"] != "CANCEL_SLTP"]
 
         lst_result_orders = []
         max_batch_size = 49

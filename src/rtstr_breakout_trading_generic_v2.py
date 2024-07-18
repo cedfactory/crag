@@ -646,7 +646,7 @@ class GridPosition():
                         lst_order.append(order_to_execute)
                 lst_of_lst_order = lst_of_lst_order + lst_order
 
-        lst_order = lst_of_lst_order + self.lst_of_data_record + self.lst_cancel_sltp
+        lst_order = lst_of_lst_order + self.lst_of_data_record + self.lst_cancel_order_sltp
         sorting_order = ['OPEN_LONG_ORDER', 'OPEN_SHORT_ORDER',
                          'CLOSE_LONG_ORDER', 'CLOSE_SHORT_ORDER',
                          "CANCEL_ORDER", "RECORD_DATA", "CANCEL_SLTP"]
@@ -1101,7 +1101,6 @@ class GridPosition():
         df_open_triggers.loc[condition_grid_low, "trend"] = 'down'
 
         self.lst_of_data_record = []
-        self.lst_cancel_sltp = []
         if len(lst_order_Ids_new_SL_TP) > 0:
             condition_new_SL_TP = df_open_triggers["orderId"].isin(lst_order_Ids_new_SL_TP)
             # Extract matching rows
@@ -1118,6 +1117,9 @@ class GridPosition():
             condition_trigger_trend = df_open_triggers['trend'] == trend
             condition_trigger_trailer_open = df_open_triggers['planStatus'] != 'executed'
             condition_trigger_plan = df_open_triggers['planType'] == 'normal_plan'
+            condition_trigger_plan_TP = df_open_triggers['planType'] == 'profit_plan'
+            condition_trigger_plan_SL = df_open_triggers['planType'] == 'loss_plan'
+            condition_trigger_moving_plan = df_open_triggers['planType'] == 'moving_plan'
 
             self.trend_data[trend]['df_all_open_triggers'] = df_open_triggers[condition_trigger_trailer_open
                                                                               & condition_trigger_plan].copy()
@@ -1200,7 +1202,84 @@ class GridPosition():
 
             self.trend_data[trend]['lst_global_orderId'] += self.trend_data[trend]['lst_orderId_executed_trailer']
 
+            # SL TP Orders
+            self.lst_cancel_order_sltp = []
+            nb_new_SLTP = len(self.lst_of_data_record)
+            if nb_new_SLTP == 0:
+                condition_trigger_moving_plan_long = df_open_triggers['planType'] == 'buy'
+                condition_trigger_moving_plan_short = df_open_triggers['planType'] == 'sell'
+                self.trend_data[trend]['df_open_SL_order'] = df_open_triggers[condition_trigger_plan_SL
+                                                                              & condition_trigger_trend].copy()
+                self.trend_data[trend]['nb_open_SL_order'] = len(self.trend_data[trend]['df_open_SL_order'])
 
+                self.trend_data[trend]['df_open_TP_order'] = df_open_triggers[condition_trigger_plan_TP
+                                                                              & condition_trigger_trend].copy()
+                self.trend_data[trend]['nb_open_TP_order'] = len(self.trend_data[trend]['df_open_TP_order'])
+
+                self.trend_data[trend]['df_open_trailers_order_long'] = df_open_triggers[condition_trigger_moving_plan
+                                                                                         & condition_trigger_moving_plan_long
+                                                                                         & condition_trigger_trend].copy()
+                self.trend_data[trend]['nb_open_trailers_order_long'] = len(self.trend_data[trend]['df_open_trailers_order_long'])
+
+                self.trend_data[trend]['df_open_trailers_order_short'] = df_open_triggers[condition_trigger_moving_plan
+                                                                                          & condition_trigger_moving_plan_short
+                                                                                          & condition_trigger_trend].copy()
+                self.trend_data[trend]['nb_open_trailers_order_short'] = len(self.trend_data[trend]['df_open_trailers_order_short'])
+
+                if trend == "up":
+                    # Cancel SL orders
+                    if self.trend_data[trend]['nb_open_SL_order'] > self.trend_data[trend]['nb_open_trailers_order_long']:
+                        nb_to_cancel = self.trend_data[trend]['nb_open_SL_order'] - self.trend_data[trend]['nb_open_trailers_order_long']
+                        df_sl = self.trend_data[trend]['df_open_SL_order']
+                        df_trailers_long = self.trend_data[trend]['df_open_trailers_order_long']
+                        self.lst_cancel_order_sltp += self.get_orders_to_cancel(df_sl, df_trailers_long, nb_to_cancel)
+
+                    # Cancel TP orders
+                    if self.trend_data[trend]['nb_open_TP_order'] > self.trend_data[trend]['nb_open_trailers_order_short']:
+                        nb_to_cancel = self.trend_data[trend]['nb_open_TP_order'] - self.trend_data[trend]['nb_open_trailers_order_short']
+                        df_tp = self.trend_data[trend]['df_open_TP_order']
+                        df_trailers_short = self.trend_data[trend]['df_open_trailers_order_short']
+                        self.lst_cancel_order_sltp += self.get_orders_to_cancel(df_tp, df_trailers_short, nb_to_cancel)
+
+                elif trend == "down":
+                    # Cancel SL orders
+                    if self.trend_data[trend]['nb_open_SL_order'] > self.trend_data[trend]['nb_open_trailers_order_short']:
+                        nb_to_cancel = self.trend_data[trend]['nb_open_SL_order'] - self.trend_data[trend]['nb_open_trailers_order_short']
+                        df_sl = self.trend_data[trend]['df_open_SL_order']
+                        df_trailers_short = self.trend_data[trend]['df_open_trailers_order_short']
+                        self.lst_cancel_order_sltp += self.get_orders_to_cancel(df_sl, df_trailers_short, nb_to_cancel)
+
+                    # Cancel TP orders
+                    if self.trend_data[trend]['nb_open_TP_order'] > self.trend_data[trend]['nb_open_trailers_order_long']:
+                        nb_to_cancel = self.trend_data[trend]['nb_open_TP_order'] - self.trend_data[trend]['nb_open_trailers_order_long']
+                        df_tp = self.trend_data[trend]['df_open_TP_order']
+                        df_trailers_long = self.trend_data[trend]['df_open_trailers_order_long']
+                        self.lst_cancel_order_sltp += self.get_orders_to_cancel(df_tp, df_trailers_long, nb_to_cancel)
+
+                if len(self.lst_cancel_order_sltp) > 0:
+                    list_of_dicts = self.transform_order_ids_to_dict(self.lst_cencel_order_sltp)
+                    self.lst_cencel_order_sltp = list_of_dicts
+
+    def transform_order_ids_to_dict(self, order_ids):
+        return [{'orderId': order_id, 'type': 'CANCEL_SLTP'} for order_id in order_ids]
+
+    def get_orders_to_cancel(self, df_orders, df_trailers, nb_to_cancel):
+        # Identify orders with different "size" values
+        differing_orders = df_orders[~df_orders['size'].isin(df_trailers['size'])]
+
+        if len(differing_orders) >= nb_to_cancel:
+            # If we have enough differing orders, take the required number
+            orders_to_cancel = differing_orders.head(nb_to_cancel)
+        else:
+            # Otherwise, take all differing orders and fill the rest with the smallest "size" orders
+            orders_to_cancel = differing_orders
+            remaining_to_cancel = nb_to_cancel - len(differing_orders)
+            same_size_orders = df_orders[df_orders['size'].isin(df_trailers['size'])]
+            smallest_orders = same_size_orders.nsmallest(remaining_to_cancel, 'size')
+            orders_to_cancel = pd.concat([orders_to_cancel, smallest_orders])
+
+        return orders_to_cancel['orderId'].tolist()
+    
 class GridCalculator:
     def __init__(self, grid_high, grid_low, percent_per_grid, nb_grid_up, nb_grid_down):
         self.grid_high = grid_high
