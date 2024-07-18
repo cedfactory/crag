@@ -325,26 +325,18 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         previous_columns = [col for col in merged.columns if col.endswith('_previous')]
         current_columns = [col.replace('_previous', '_current') for col in previous_columns]
 
-        differences = merged[(merged['_merge'] == 'both')
-                             & (merged[previous_columns].values != merged[current_columns].values).any(axis=1)]
-
         disappeared = merged[merged['_merge'] == 'left_only']
 
-        df_differences = differences[['orderId'] + current_columns].rename(
-            columns={col: col.replace('_current', '') for col in current_columns})
         df_disappeared = disappeared[['orderId'] + previous_columns].rename(
             columns={col: col.replace('_previous', '') for col in previous_columns})
 
         # CEDE: df_differences should not happen tbc
-        if len(df_differences) > 0 \
-                or len(df_disappeared) > 0:
+        if len(df_disappeared) > 0:
             # Replace the values in the 'planType' column based on the mapping dictionary
-            df_differences['planType'] = df_differences['planType'].replace(self.plan_mapping)
             df_disappeared['planType'] = df_disappeared['planType'].replace(self.plan_mapping)
 
             self.plan_history_list = []
             self.add_plan_history(df_disappeared)
-            self.add_plan_history(df_differences)
 
             if self.plan_history_list:
                 df_plan_history = pd.concat(self.plan_history_list, ignore_index=True)
@@ -680,7 +672,8 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     # reference : https://www.bitget.com/api-doc/contract/plan/Place-Plan-Order
     @authentication_required
     def _place_trigger_order_v2(self, symbol, planType, triggerPrice, marginCoin, size, side, tradeSide, reduceOnly,
-                                orderType, triggerType, clientOid, callbackRatio, price=''):
+                                orderType, triggerType, clientOid, callbackRatio, price='',
+                                sl='', tp='', stopLossTriggerType='', stopSurplusTriggerType=''):
         params = {}
         # params["symbol"] = symbol
         params["symbol"] = "XRPUSDT" # CEDE to be fixed
@@ -691,6 +684,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         params["side"] = side
         params["tradeSide"] = tradeSide
         params["reduceOnly"] = reduceOnly
+        # params["reduceOnly"] = "YES"
         params["orderType"] = orderType
         params["triggerType"] = triggerType
         params["clienOid"] = clientOid
@@ -698,6 +692,15 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             params["callbackRatio"] = callbackRatio
         if price != "":
             params["price"] = price
+        if sl != "":
+            params["stopLossTriggerPrice"] = sl
+        if tp != "":
+            params["stopSurplusTriggerPrice"] = tp
+        if stopLossTriggerType != "":
+            params["stopLossTriggerType"] = stopLossTriggerType
+        if stopSurplusTriggerType != "":
+            params["stopSurplusTriggerType"] = stopSurplusTriggerType
+
         params["productType"] = "USDT-FUTURES"
         params["marginMode"] = "crossed"
         # params["marginMode"] = "cross" # CEDE to be fixed
@@ -742,7 +745,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         #params["tradeSide"] =  # optional
         params["orderType"] = order_type
         params["clienOid"] = client_oid
-        #params["reduceOnly"] =  # optional
+        # params["reduceOnly"] = "YES"
         #params["stopSurplusTriggerPrice"] =  # optional
         #params["stopSurplusExecutePrice"] =  # optional
         #params["stopSurplusTriggerType"] =  # optional

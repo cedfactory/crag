@@ -848,17 +848,7 @@ class Crag:
                 self.average_duration_safety_step = self.sum_duration_safety_step
 
         reboot = False
-        """
-        if self.duration_time_safety_step > (1.5 * self.average_duration_safety_step):
-            # self.execute_timer.set_start_time("crag", "request_backup", "set_system_record", self.safety_step_iterration)
-            self.execute_timer.set_system_record(self.safety_step_iterration)
-            # self.execute_timer.set_end_time("crag", "request_backup", "set_system_record", self.safety_step_iterration)
-            if self.duration_time_safety_step > (3 * self.average_duration_safety_step):
-                reboot = True
-        else:
-            self.execute_timer.set_system_record_to_zero(self.safety_step_iterration)
-            # self.execute_timer.set_time_to_zero("crag", "request_backup", "set_system_record", self.safety_step_iterration)
-        """
+
         if self.reboot_exception or reboot \
                 or (delta_memory_used > 50) \
                 or (self.safety_step_iterration > 300):

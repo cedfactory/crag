@@ -319,6 +319,15 @@ class BrokerBitGet(broker.Broker):
         if not isinstance(grid_id, str):
             grid_id = str(grid_id)
         trend = str(trigger.get("trend", ""))
+        tp = str(trigger.get("TP", ""))
+        sl = str(trigger.get("SL", ""))
+        stopSurplusTriggerType = ""
+        stopLossTriggerType = ""
+        if sl != "":
+            stopLossTriggerType = "mark_price"
+        if tp != "":
+            stopSurplusTriggerType = "mark_price"
+
 
         clientOid = self.clientOIdprovider.get_name(symbol,
                                                     trigger["type"]
@@ -343,7 +352,7 @@ class BrokerBitGet(broker.Broker):
             trigger_price = str(self.normalize_price(symbol, float(trigger_price)))
             msg += "{} size: {} trigger_price: {}".format(order_side, amount, trigger_price) + "\n"
 
-            amount = str(15)  # CEDE For test
+            # amount = str(15)  # CEDE For test size / amount
             with self.lock_bitget:
                 transaction = self._place_trigger_order_v2(symbol,  planType="normal_plan", triggerPrice=trigger_price,
                                                            marginCoin="USDT", size=amount, side=side,
@@ -352,7 +361,11 @@ class BrokerBitGet(broker.Broker):
                                                            triggerType="mark_price",
                                                            clientOid=clientOid,
                                                            callbackRatio="",
-                                                           price=""
+                                                           price="",
+                                                           sl=sl,
+                                                           tp=tp,
+                                                           stopLossTriggerType=stopLossTriggerType,
+                                                           stopSurplusTriggerType=stopSurplusTriggerType
                                                            )
 
         if "msg" in transaction and transaction["msg"] == "success" and "data" in transaction:
@@ -389,6 +402,7 @@ class BrokerBitGet(broker.Broker):
         trigger_price = order.get("trigger_price", None)
         if not isinstance(trigger_price, str):
             trigger_price = str(trigger_price)
+            initial_trigger_price = str(trigger_price)
         range_rate = order.get("range_rate", None)
         if not isinstance(range_rate, str):
             range_rate = str(range_rate)
@@ -419,23 +433,43 @@ class BrokerBitGet(broker.Broker):
             msg = "!!!!! EXECUTE TRAILLING TPSL ORDER !!!!!" + "\n"
             msg += "{} size: {} sltp trailling price: {}".format(order_side, amount, trigger_price) + "\n"
 
-            amount = str(15)  # CEDE For test
+            # amount = str(15)  # CEDE For test  size / amount
 
             exit_tpsl = False
             while not exit_tpsl:
-                trigger_price = self.get_values([symbol])
-                value = trigger_price.loc[trigger_price["symbols"] == symbol, "values"].values[0]
-                trigger_price = str(self.normalize_price(symbol, float(value)))
-                transaction = self.place_tpsl_order(symbol, marginCoin="USDT",
-                                                    planType="moving_plan", triggerPrice=trigger_price,
-                                                    holdSide=hold_side, triggerType="mark_price",
-                                                    size=amount, rangeRate=range_rate, clientOid=clientOid)
-                try:
-                    orderId = transaction['data']['orderId']
-                    print("transaction orderId : ", orderId)
-                    exit_tpsl = True
-                except:
-                    print("TPSL: FAILED - DO NOT PANIC - TRY AGAIN")
+                if not exit_tpsl and hold_side == "long":
+                    trigger_price = self.get_values([symbol])
+                    value = trigger_price.loc[trigger_price["symbols"] == symbol, "values"].values[0]
+                    trigger_price = str(self.normalize_price(symbol, float(value + value * 0.001 / 100)))
+                    transaction = self.place_tpsl_order(symbol, marginCoin="USDT",
+                                                        planType="moving_plan", triggerPrice=trigger_price,
+                                                        holdSide=hold_side, triggerType="mark_price",
+                                                        size=amount, rangeRate=range_rate, clientOid=clientOid)
+                    try:
+                        orderId = transaction['data']['orderId']
+                        print("transaction orderId : ", orderId)
+                        print("trigger price : ", initial_trigger_price)
+                        print("trailer trigger price : ", trigger_price)
+                        exit_tpsl = True
+                    except:
+                        pass
+
+                if not exit_tpsl and hold_side == "short":
+                    trigger_price = self.get_values([symbol])
+                    value = trigger_price.loc[trigger_price["symbols"] == symbol, "values"].values[0]
+                    trigger_price = str(self.normalize_price(symbol, float(value - value * 0.001 / 100)))
+                    transaction = self.place_tpsl_order(symbol, marginCoin="USDT",
+                                                        planType="moving_plan", triggerPrice=trigger_price,
+                                                        holdSide=hold_side, triggerType="mark_price",
+                                                        size=amount, rangeRate=range_rate, clientOid=clientOid)
+                    try:
+                        orderId = transaction['data']['orderId']
+                        print("transaction orderId : ", orderId)
+                        print("trigger price : ", initial_trigger_price)
+                        print("trailer trigger price : ", trigger_price)
+                        exit_tpsl = True
+                    except:
+                        print("TPSL: FAILED - DO NOT PANIC - TRY AGAIN")
 
         if "msg" in transaction and transaction["msg"] == "success" and "data" in transaction and len(transaction["data"]) > 0:
             orderId = transaction["data"]["orderId"]
@@ -647,6 +681,46 @@ class BrokerBitGet(broker.Broker):
 
         return success_order_ids
 
+    def get_pending_orders(self, symbol):
+        if symbol != "":
+            symbol = self._get_symbol(symbol)
+            result = self._get_orders_Pending_v2(symbol)
+            if result["msg"] == 'success':
+                # Check if the list is empty
+                if not(result["data"]['entrustedList'] is None):
+                    # Convert the list of dictionaries into a DataFrame
+                    df = pd.DataFrame(result["data"]['entrustedList'])
+
+                    # Convert specific columns to appropriate types
+                    df['size'] = df['size'].astype(int)
+                    df['baseVolume'] = df['baseVolume'].astype(float)
+                    df['fee'] = df['fee'].astype(float)
+                    df['totalProfits'] = df['totalProfits'].astype(float)
+                    df['quoteVolume'] = df['quoteVolume'].astype(float)
+                    df['leverage'] = df['leverage'].astype(int)
+                    df['presetStopLossPrice'] = df['presetStopLossPrice'].astype(float)
+                    df['cTime'] = pd.to_datetime(df['cTime'], unit='ms')
+                    df['uTime'] = pd.to_datetime(df['uTime'], unit='ms')
+
+                    df['symbol'] = df['symbol'].str.rstrip('USDT') # CEDE better way to do it
+                else:
+                    columns = [
+                        'symbol', 'size', 'orderId', 'clientOid', 'baseVolume', 'fee', 'price', 'priceAvg', 'status',
+                        'side', 'force',
+                        'totalProfits', 'posSide', 'marginCoin', 'quoteVolume', 'leverage', 'marginMode',
+                        'enterPointSource', 'tradeSide',
+                        'posMode', 'orderType', 'orderSource', 'presetStopSurplusPrice', 'presetStopLossPrice',
+                        'reduceOnly', 'cTime', 'uTime'
+                    ]
+                    # Create an empty DataFrame with specified columns
+                    df = pd.DataFrame(columns=columns)
+
+        return df
+
+    def execute_record_missing_orders(self, lst_record_missing_orders):
+        for order in lst_record_missing_orders:
+            self.add_gridId_orderId(order["gridId"], order["orderId"], order["strategyId"], order["trend"])
+
     @authentication_required
     def execute_orders(self, lst_orders):
         if len(lst_orders) == 0:
@@ -657,24 +731,29 @@ class BrokerBitGet(broker.Broker):
         # self.execute_timer.set_start_time("broker", "execute_orders", "execute_batch_orders", self.iter_execute_orders)
         lst_result_triggers_orders = []
         # extract triggers...
-        lst_triggers = [order for order in lst_orders if order["trigger_type"] == "TRIGGER"]
+        lst_triggers = [order for order in lst_orders if "trigger_type" in order and order["trigger_type"] == "TRIGGER"]
         # ...and execute them
         lst_result_triggers_orders = self.execute_lst_triggers(lst_triggers)
         # extract orders
-        lst_orders = [order for order in lst_orders if order["trigger_type"] != "TRIGGER"]
+        lst_orders = [order for order in lst_orders if not ("trigger_type" in order) or order["trigger_type"] != "TRIGGER"]
 
         lst_result_sltp_trailling_orders = []
         # extract sltp trailling orders...
-        lst_sltp_trailing_orders = [order for order in lst_orders if order["trigger_type"] == "SL_TP_TRAILER"]
+        lst_sltp_trailing_orders = [order for order in lst_orders if "trigger_type" in order and order["trigger_type"] == "SL_TP_TRAILER"]
         # ...and execute them
         lst_result_sltp_trailling_orders = self.execute_lst_sltp_trailling_orders(lst_sltp_trailing_orders)
         # extract orders
-        lst_orders = [order for order in lst_orders if order["trigger_type"] != "SL_TP_TRAILER"]
+        lst_orders = [order for order in lst_orders if not ("trigger_type" in order) or order["trigger_type"] != "SL_TP_TRAILER"]
 
         lst_result_cancel_orders = []
-        lst_cancel_orders = [order for order in lst_orders if order["trigger_type"] == "CANCEL_TRIGGER"]
+        lst_cancel_orders = [order for order in lst_orders if "trigger_type" in order and order["trigger_type"] == "CANCEL_TRIGGER"]
         lst_result_cancel_orders = self.execute_lst_cancel_orders(lst_cancel_orders)
-        lst_orders = [order for order in lst_orders if order["trigger_type"] != "CANCEL_TRIGGER"]
+        lst_orders = [order for order in lst_orders if not ("trigger_type" in order) or order["trigger_type"] != "CANCEL_TRIGGER"]
+
+        lst_result_record_missing_orders = []
+        lst_record_missing_orders = [order for order in lst_orders if "type" in order and order["type"] == "RECORD_DATA"]
+        self.execute_record_missing_orders(lst_record_missing_orders)
+        lst_orders = [order for order in lst_orders if not ("type" in order) or order["type"] != "RECORD_DATA"]
 
         lst_result_orders = []
         max_batch_size = 49
@@ -780,7 +859,20 @@ class BrokerBitGet(broker.Broker):
         df_open_orders = pd.DataFrame(columns=["symbol", "price", "side", "size", "leverage", "marginCoin", "marginMode", "reduceOnly", "clientOid", "orderId"])
         for i in range(len(open_orders)):
             data = open_orders[i]
-            df_open_orders.loc[i] = pd.Series({"symbol": data["symbol"], "price": data["price"], "side": data["side"], "size": data["size"], "leverage": data["leverage"], "marginCoin": data["marginCoin"], "marginMode": data["marginMode"], "reduceOnly": data["reduceOnly"], "clientOid": data["clientOid"], "orderId": data["orderId"]})
+            # df_open_orders.loc[i] = pd.Series({"symbol": data["symbol"], "price": data["price"], "side": data["side"], "size": data["size"], "leverage": data["leverage"], "marginCoin": data["marginCoin"], "marginMode": data["marginMode"], "reduceOnly": data["reduceOnly"], "clientOid": data["clientOid"], "orderId": data["orderId"]})
+            df_open_orders.loc[i] = pd.Series({
+                "symbol": data["symbol"],
+                "price": data["price"],
+                "side": data["side"],
+                "size": data["size"],
+                "leverage": data["leverage"],
+                "marginCoin": data["marginCoin"],
+                "marginMode": data["marginMode"],
+                "reduceOnly": bool(data["reduceOnly"]),  # Explicitly cast to bool
+                "clientOid": data["clientOid"],
+                "orderId": data["orderId"]
+            })
+            df_open_orders["reduceOnly"] = df_open_orders["reduceOnly"].astype(bool)
         return df_open_orders
 
     def _build_df_triggers(self, triggers):
@@ -790,6 +882,14 @@ class BrokerBitGet(broker.Broker):
                                             "executeOrderId", "planStatus"])
         for i in range(len(triggers)):
             data = triggers[i]
+            grid_id = self.get_gridId_from_orderId(data["orderId"])
+            if grid_id == None:
+                grid_id = 0
+                strategyId = None
+                trend = None
+            else:
+                strategyId = self.get_strategyId_from_orderId(data["orderId"])
+                trend = self.get_trend_from_orderId(data["orderId"])
             df_triggers.loc[i] = pd.Series({
                 "planType": data["planType"],
                 "symbol": data["symbol"],
@@ -802,9 +902,9 @@ class BrokerBitGet(broker.Broker):
                 "triggerPrice": data["triggerPrice"],
                 "triggerType": data["triggerType"],
                 "marginMode": data["marginMode"],
-                "gridId": self.get_gridId_from_orderId(data["orderId"]),
-                "strategyId": self.get_strategyId_from_orderId(data["orderId"]),
-                "trend": self.get_trend_from_orderId(data["orderId"]),
+                "gridId": grid_id,
+                "strategyId": strategyId,
+                "trend": trend,
                 "executeOrderId": "",
                 "planStatus": ""
             })

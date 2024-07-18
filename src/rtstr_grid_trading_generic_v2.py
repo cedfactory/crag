@@ -594,13 +594,17 @@ class GridPosition():
                 close_fake_grid_id = df_grid.loc[df_grid['grid_id'] == long_fake_triggered, 'close_grid_id'].values[0]
                 close_grid_id_list.append(close_fake_grid_id)
                 df_grid.loc[df_grid['grid_id'] == long_fake_triggered, 'changes'] = False
-                df_grid.loc[df_grid['grid_id'] == long_fake_triggered, 'status'].values[0]
-                if df_grid.loc[df_grid['grid_id'] == long_fake_triggered, 'status'].values[0] != "pending" \
-                        and df_grid.loc[df_grid['grid_id'] == long_fake_triggered, 'status'].values[0] != "engaged":
-                    df_grid.loc[df_grid['grid_id'] == long_fake_triggered, 'status'] = "on_hold"
-                if df_grid.loc[df_grid['grid_id'] == close_fake_grid_id, 'status'].values[0] != "pending" \
-                        and df_grid.loc[df_grid['grid_id'] == close_fake_grid_id, 'status'].values[0] != "engaged":
-                    df_grid.loc[df_grid['grid_id'] == close_fake_grid_id, 'status'] = "pending"
+                # Check and update the status for long_fake_triggered
+                if not df_grid.loc[df_grid['grid_id'] == long_fake_triggered, 'status'].empty:
+                    status_long = df_grid.loc[df_grid['grid_id'] == long_fake_triggered, 'status'].values[0]
+                    if status_long != "pending" and status_long != "engaged":
+                        df_grid.loc[df_grid['grid_id'] == long_fake_triggered, 'status'] = "on_hold"
+
+                # Check and update the status for close_fake_grid_id
+                if not df_grid.loc[df_grid['grid_id'] == close_fake_grid_id, 'status'].empty:
+                    status_close = df_grid.loc[df_grid['grid_id'] == close_fake_grid_id, 'status'].values[0]
+                    if status_close != "pending" and status_close != "engaged":
+                        df_grid.loc[df_grid['grid_id'] == close_fake_grid_id, 'status'] = "pending"
 
         close_grid_id_list = close_grid_id_list + lst_close_long
         open_long_triggered = open_long_triggered + lst_open_long_triggered
