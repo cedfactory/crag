@@ -29,7 +29,7 @@ if __name__ == '__main__':
         exit(1)
     console.log("Bot {} initialized".format(botId))
 
-    accountId = "subfortest1"
+    accountId = "subfortest2"
     params = {"exchange": "bitget", "account": accountId,
               "reset_account": False, "reset_account_orders": False, "zero_print": False}
     my_broker = broker_bitget_api.BrokerBitGetApi(params)
