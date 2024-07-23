@@ -891,8 +891,8 @@ class Crag:
             del duration
 
             self.log_discord(self.msg_backup.upper(), "REBOOT STATUS")
-
-            self.backup_debug(round(self.duration_time_safety_step, 2))
+            if False: # CEDE NO GRID AND TIMER EXPORT
+                self.backup_debug(round(self.duration_time_safety_step, 2))
             self.backup()
             raise SystemExit(self.msg_backup)
 

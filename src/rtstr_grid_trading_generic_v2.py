@@ -37,6 +37,8 @@ class StrategyGridTradingGenericV2(rtstr.RealTimeStrategy):
         self.df_price = None
         self.mutiple_strategy = False
 
+        self.self_execute_trade_recorder_not_active = True
+
     def get_data_description(self):
         ds = rtdp.DataDescription()
         ds.symbols = self.lst_symbols
@@ -77,6 +79,9 @@ class StrategyGridTradingGenericV2(rtstr.RealTimeStrategy):
         self.mutiple_strategy = True
 
     def set_execute_time_recorder(self, execute_timer):
+        if self.self_execute_trade_recorder_not_active:
+            return
+
         if self.execute_timer is not None:
             del self.execute_timer
         self.execute_timer = execute_timer
@@ -190,12 +195,18 @@ class StrategyGridTradingGenericV2(rtstr.RealTimeStrategy):
             return self.grid.get_grid(symbol, cpt)
 
     def record_status(self):
+        if self.self_execute_trade_recorder_not_active:
+            return
+
         if hasattr(self, 'df_price'):
             for symbol in self.lst_symbols:
                 df_grid_values = self.grid.get_grid_for_record(symbol)
                 self.execute_timer.set_grid_infos(df_grid_values, self.side)
 
     def update_executed_trade_status(self, lst_orders):
+        if self.self_execute_trade_recorder_not_active:
+            return
+
         if lst_orders is None:
             return []
         if len(lst_orders) > 0:
