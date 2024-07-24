@@ -69,7 +69,22 @@ class ILogger(metaclass=ABCMeta):
         self.timers = {}
 
     @abstractmethod
-    def log(self, msg, header="", author="", attachments=[]):
+    def log(self, msg, header="", author="", attachments=None):
+        pass
+
+    def log_debug(self, msg, header="", author="", attachments=None):
+        pass
+
+    def log_info(self, msg, header="", author="", attachments=None):
+        pass
+
+    def log_warning(self, msg, header="", author="", attachments=None):
+        pass
+
+    def log_error(self, msg, header="", author="", attachments=None):
+        pass
+
+    def log_fatal(self, msg, header="", author="", attachments=None):
         pass
 
     def log_time_start(self, tag):
@@ -340,12 +355,22 @@ class LoggerTelegramBot(ILogger):
             if "message_id" in extra:
                 params = {"message_id": extra["message_id"], "chat_id": self.chat_id, "text": msg, "parse_mode": "html"}
                 url = "https://api.telegram.org/bot" + self.token
-                response = requests.post(url + "/editMessageText", data=params)
+                if attachments and os.path.exists(attachments[0]):
+                    params["media"] = json.dumps({"type": "photo", "media": "attach://photo", "caption": msg, "parse_mode": "html", "show_caption_above_media": True})
+                    imageFile = open(attachments[0], "rb")
+                    response = requests.post(url + "/editMessageMedia", files={"photo": imageFile}, data=params)
+                else:
+                    response = requests.post(url + "/editMessageText", data=params)
                 content = json.loads(response.content)
             else:
                 params = {"chat_id": self.chat_id, "text": msg, "parse_mode": "html"}
                 url = "https://api.telegram.org/bot" + self.token
-                response = requests.post(url + "/sendMessage", data=params)
+                if attachments and os.path.exists(attachments[0]):
+                    params["media"] = json.dumps({"type": "photo", "media": "attach://photo", "caption": msg, "parse_mode": "html", "show_caption_above_media": True})
+                    imageFile = open(attachments[0], "rb")
+                    response = requests.post(url + "/sendPhoto", files={"photo": imageFile}, data=params)
+                else:
+                    response = requests.post(url + "/sendMessage", data=params)
                 content = json.loads(response.content)
         return content
 
