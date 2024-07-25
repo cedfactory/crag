@@ -634,6 +634,28 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         locals().clear()
         return result
 
+
+    @authentication_required
+    def _cancel_Plan_Order_v1(self, symbol, marginCoin, orderId, planType):
+        # https://bitgetlimited.github.io/apidoc/en/mix/#cancel-plan-order-tpsl
+        # planType : https://bitgetlimited.github.io/apidoc/en/mix/#plantype
+
+        result = {}
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                result = self.planApi.cancel_plan(symbol, marginCoin, orderId, planType)
+                self.success += 1
+                break
+            except (exceptions.BitgetAPIException, Exception) as e:
+                msg = getattr(e, "message", "")
+                self.log_api_failure("planApi.cancel_plan", msg, n_attempts)
+                time.sleep(2)
+                n_attempts = n_attempts - 1
+        n_attempts = False
+        locals().clear()
+        return result
+
     @authentication_required
     def _cancel_Plan_Order_v2(self, symbol, marginCoin, lst_orderId):
 
@@ -652,7 +674,6 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
         params["orderIdList"] = orderIdList
 
-
         result = {}
         n_attempts = 3
         while n_attempts > 0:
@@ -662,7 +683,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 break
             except (exceptions.BitgetAPIException, Exception) as e:
                 msg = getattr(e, "message", "")
-                self.log_api_failure("planApi.cancelPlanOrder", msg, n_attempts)
+                self.log_api_failure("orderV2Api.cancelPlanOrder", msg, n_attempts)
                 time.sleep(2)
                 n_attempts = n_attempts - 1
         n_attempts = False
