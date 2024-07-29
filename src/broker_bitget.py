@@ -531,6 +531,17 @@ class BrokerBitGet(broker.Broker):
                     order["trade_status"] = "FAILED"
         return lst_orders
 
+    def execute_lst_cancel_sltp_orders(self, lst_orders):
+        if len(lst_orders) > 0:
+            # order_ids = [d['orderId'] for d in lst_orders]
+            lst_success_orderIds = self.execute_list_cancel_sltp_orders(lst_orders[0]["symbol"], lst_orders)
+            for order in lst_orders:
+                if order["orderId"] in lst_success_orderIds:
+                    order["trade_status"] = "SUCCESS"
+                else:
+                    order["trade_status"] = "FAILED"
+        return lst_orders
+
     @authentication_required
     def execute_batch_orders(self, lst_orders):
         if len(lst_orders) > 0:
@@ -681,6 +692,22 @@ class BrokerBitGet(broker.Broker):
 
         return success_order_ids
 
+    def execute_list_cancel_sltp_orders(self, symbol, lst_sltp_orders):
+        success_order_ids = []
+        if symbol != "" and len(lst_sltp_orders) > 0:
+            symbol = self._get_symbol(symbol)
+            for sltp_order in lst_sltp_orders:
+                result = self._cancel_Plan_Order_v1(symbol, "USDT", sltp_order["orderId"], sltp_order["planType"])
+                if "msg" in result \
+                        and result["msg"] == 'success' \
+                        and "data" in result \
+                        and "orderId" in result["data"]:
+                    success_order_ids.append(result["data"]["orderId"])
+                else:
+                    print("FAILURE CANCEL SLTP")
+
+        return success_order_ids
+
     def get_pending_orders(self, symbol):
         if symbol != "":
             symbol = self._get_symbol(symbol)
@@ -722,11 +749,10 @@ class BrokerBitGet(broker.Broker):
             self.add_gridId_orderId(order["gridId"], order["orderId"], order["strategyId"], order["trend"])
 
     def execute_cancel_sltp_orders(self, lst_cancel_sltp_orders):
-        print("[execute_cancel_sltp_orders] orders : ", lst_cancel_sltp_orders)
-        result = self.execute_lst_cancel_orders(lst_cancel_sltp_orders)
-        print("[execute_cancel_sltp_orders] result : ", result)
-        #for order in lst_cancel_sltp_orders:
-        #    self.cancel_order_sltp(order["orderId"]) # CEDE to CL to complete cancel_order_sltp
+        if len(lst_cancel_sltp_orders) > 0:
+            print("[execute_cancel_sltp_orders] orders : ", lst_cancel_sltp_orders)
+            result = self.execute_lst_cancel_sltp_orders(lst_cancel_sltp_orders)
+            print("[execute_cancel_sltp_orders] result : ", result)
 
     @authentication_required
     def execute_orders(self, lst_orders):

@@ -80,6 +80,7 @@ class StrategyGridTradingGenericV2(rtstr.RealTimeStrategy):
 
     def set_execute_time_recorder(self, execute_timer):
         if self.self_execute_trade_recorder_not_active:
+            self.iter_set_broker_current_state = 0
             return
 
         if self.execute_timer is not None:
@@ -204,9 +205,6 @@ class StrategyGridTradingGenericV2(rtstr.RealTimeStrategy):
                 self.execute_timer.set_grid_infos(df_grid_values, self.side)
 
     def update_executed_trade_status(self, lst_orders):
-        if self.self_execute_trade_recorder_not_active:
-            return
-
         if lst_orders is None:
             return []
         if len(lst_orders) > 0:
@@ -688,10 +686,6 @@ class GridPosition():
         trigger_counts = exploded_df['triggered_by'].value_counts()
         df['nb_triggered_by'] = df['grid_id'].map(trigger_counts).fillna(0).astype(int)
         df['bool_position_limits'] = df['nb_triggered_by'] <= self.nb_position_limits
-
-        # has_false = df['bool_position_limits'].eq(False).any()
-        # if has_false:
-        #     print("toto")
 
     def update_executed_trade_status(self, symbol, lst_orders):
         df_grid = self.grid[symbol]
