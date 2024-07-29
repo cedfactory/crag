@@ -1033,11 +1033,16 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     @authentication_required
     def get_values(self, symbols):
         values = []
+        timestamps = []
+        now = datetime.now()
+        current_timestamp = datetime.timestamp(now)
         for symbol in symbols:
             val = self.get_value(symbol)
             values.append(val)
+            timestamps.append(current_timestamp)
             del val
         self.df_prices = pd.DataFrame({
+            "timestamp": timestamps,
             "symbols": symbols,
             "values": values
         })

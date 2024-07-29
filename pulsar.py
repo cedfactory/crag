@@ -8,6 +8,7 @@ import time
 import pandas as pd
 
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 
 g_os_platform = platform.system()
 g_python_executable = ""
@@ -16,7 +17,6 @@ def get_now():
     return datetime.now()
 
 def get_timestamp_from_datetime(dt):
-    now = datetime.now()
     current_timestamp = datetime.timestamp(dt)
     return current_timestamp
 
@@ -28,12 +28,21 @@ def get_fig_orders(my_broker):
     fig = plt.figure(figsize=(10, 15))
 
     current_state = my_broker.get_current_state(["XRP"])
-    orders = current_state["open_orders"]
-    triggers = current_state["triggers"]
     df_prices = current_state["prices"]
-    current_price = df_prices.loc[df_prices["symbols"] == "XRP", "values"][0]
-    plt.scatter([1], [current_price], marker="_", color="#000000", label="Current price")
 
+    current_price = df_prices.loc[df_prices["symbols"] == "XRP", "values"][0]
+    current_timestamp = df_prices.loc[df_prices["symbols"] == "XRP", "timestamp"][0]
+    current_timestamp = datetime.fromtimestamp(float(current_timestamp))
+
+    ax = plt.gca()
+    xfmt = mdates.DateFormatter("%d-%m-%Y %H:%M:%S.%f")
+    ax.xaxis.set_major_formatter(xfmt)
+    ax.set_xticks([current_timestamp])
+
+
+    plt.scatter([current_timestamp], [current_price], marker="_", color="#000000", label="Current price")
+
+    orders = current_state["open_orders"]
     if isinstance(orders, pd.DataFrame):
         xSell = []
         ySell = []
@@ -44,11 +53,12 @@ def get_fig_orders(my_broker):
                 xSell.append(1)
                 ySell.append(float(row["price"]))
             elif row["side"] == "buy":
-                xBuy.append(1)
+                xBuy.append(current_timestamp)
                 yBuy.append(float(row["price"]))
         plt.scatter(xSell, ySell, marker="s", color="#ff0000", label="Order sell")
         plt.scatter(xBuy, yBuy, marker="s", color="#00ff00", label="Order buy ")
 
+    triggers = current_state["triggers"]
     if isinstance(triggers, pd.DataFrame):
         xSell = []
         ySell = []
@@ -57,10 +67,10 @@ def get_fig_orders(my_broker):
         # triggerType ?
         for index, row in triggers.iterrows():
             if row["side"] == "sell":
-                xSell.append(1)
+                xSell.append(current_timestamp)
                 ySell.append(float(row["triggerPrice"]))
             elif row["side"] == "buy":
-                xBuy.append(1)
+                xBuy.append(current_timestamp)
                 yBuy.append(float(row["triggerPrice"]))
         plt.scatter(xSell, ySell, marker="o", color="#ff0000", label="Trigger sell")
         plt.scatter(xBuy, yBuy, marker="o", color="#00ff00", label="Trigger buy")
