@@ -7,6 +7,9 @@ from datetime import datetime, timedelta
 import time
 import pandas as pd
 
+import matplotlib.pyplot as plt
+import numpy as np
+
 g_os_platform = platform.system()
 g_python_executable = ""
 
@@ -21,6 +24,50 @@ def get_timestamp_from_datetime(dt):
 def get_time_from_datetime(dt):
     current_time = dt.strftime("%Y/%m/%d %H:%M:%S.%f")
     return current_time.split('.')[0]
+
+def get_fig_orders(my_broker):
+    fig = plt.figure(figsize=(15, 30))
+
+    orders = my_broker.get_open_orders(["XRP"])
+    print(orders)
+    if isinstance(orders, pd.DataFrame):
+        xSell = []
+        ySell = []
+        xBuy = []
+        yBuy = []
+        # triggerType ?
+        for index, row in orders.iterrows():
+            if row["side"] == "sell":
+                xSell.append(1)
+                ySell.append(float(row["price"]))
+            elif row["side"] == "buy":
+                xBuy.append(1)
+                yBuy.append(float(row["price"]))
+        plt.scatter(xSell, ySell, marker="s", color="#ff0000")
+        plt.scatter(xBuy, yBuy, marker="s", color="#00ff00")
+
+    triggers = my_broker.get_all_triggers()
+    if isinstance(triggers, pd.DataFrame):
+        xSell = []
+        ySell = []
+        xBuy = []
+        yBuy = []
+        # triggerType ?
+        for index, row in triggers.iterrows():
+            if row["side"] == "sell":
+                xSell.append(1)
+                ySell.append(float(row["triggerPrice"]))
+            elif row["side"] == "buy":
+                xBuy.append(1)
+                yBuy.append(float(row["triggerPrice"]))
+        plt.scatter(xSell, ySell, marker="o", color="#ff0000")
+        plt.scatter(xBuy, yBuy, marker="o", color="#00ff00")
+
+    plt.savefig("pulsar_current_state.png")
+    plt.close()
+
+    return fig
+
 
 if __name__ == '__main__':
     print("Platform :", g_os_platform)
@@ -74,11 +121,19 @@ if __name__ == '__main__':
         timestamp_begin = (now - timedelta(hours=72)).timestamp()
         df_filtered = df.loc[df["timestamp"] > timestamp_begin]
 
-        graph_helper.export_graph("pulsar_graph.png", accountId,
+        fig = graph_helper.export_graph("pulsar_history.png", accountId,
                                   [{"dataframe": df_filtered, "plots": [{"column": "usdt_equity", "label": "USDT equity"}]}])
 
-        response = botTelegram.log(message, attachments=["pulsar_graph.png"], extra=extra)
-        if message_id == None and response["ok"] == "true" and "result" in response and "message_id" in response["result"]:
-            message_id = response["result"]["message_id"]
+        response = botTelegram.log(message, attachments=["pulsar_history.png"], extra=extra)
+        if response["ok"] and "result" in response:
+            if "message_id" in response["result"]:
+                message_id = response["result"]["message_id"]
+            elif isinstance(response["result"], list):
+                message_id = [res["message_id"] for res in response["result"]]
+
+        get_fig_orders(my_broker)
+        extra["message_id"] = 57
+        message = current_time + "\n" + "<b>" + my_broker.account["id"] + "</b>" + " : current state"
+        response = botTelegram.log(message, attachments=["pulsar_current_state.png"], extra=extra)
 
         time.sleep(60*5)  # 5min
