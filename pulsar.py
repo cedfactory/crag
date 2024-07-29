@@ -8,7 +8,6 @@ import time
 import pandas as pd
 
 import matplotlib.pyplot as plt
-import numpy as np
 
 g_os_platform = platform.system()
 g_python_executable = ""
@@ -26,16 +25,20 @@ def get_time_from_datetime(dt):
     return current_time.split('.')[0]
 
 def get_fig_orders(my_broker):
-    fig = plt.figure(figsize=(15, 30))
+    fig = plt.figure(figsize=(10, 15))
 
-    orders = my_broker.get_open_orders(["XRP"])
-    print(orders)
+    current_state = my_broker.get_current_state(["XRP"])
+    orders = current_state["open_orders"]
+    triggers = current_state["triggers"]
+    df_prices = current_state["prices"]
+    current_price = df_prices.loc[df_prices["symbols"] == "XRP", "values"][0]
+    plt.scatter([1], [current_price], marker="_", color="#000000", label="Current price")
+
     if isinstance(orders, pd.DataFrame):
         xSell = []
         ySell = []
         xBuy = []
         yBuy = []
-        # triggerType ?
         for index, row in orders.iterrows():
             if row["side"] == "sell":
                 xSell.append(1)
@@ -43,10 +46,9 @@ def get_fig_orders(my_broker):
             elif row["side"] == "buy":
                 xBuy.append(1)
                 yBuy.append(float(row["price"]))
-        plt.scatter(xSell, ySell, marker="s", color="#ff0000")
-        plt.scatter(xBuy, yBuy, marker="s", color="#00ff00")
+        plt.scatter(xSell, ySell, marker="s", color="#ff0000", label="Order sell")
+        plt.scatter(xBuy, yBuy, marker="s", color="#00ff00", label="Order buy ")
 
-    triggers = my_broker.get_all_triggers()
     if isinstance(triggers, pd.DataFrame):
         xSell = []
         ySell = []
@@ -60,8 +62,10 @@ def get_fig_orders(my_broker):
             elif row["side"] == "buy":
                 xBuy.append(1)
                 yBuy.append(float(row["triggerPrice"]))
-        plt.scatter(xSell, ySell, marker="o", color="#ff0000")
-        plt.scatter(xBuy, yBuy, marker="o", color="#00ff00")
+        plt.scatter(xSell, ySell, marker="o", color="#ff0000", label="Trigger sell")
+        plt.scatter(xBuy, yBuy, marker="o", color="#00ff00", label="Trigger buy")
+
+    plt.legend()
 
     plt.savefig("pulsar_current_state.png")
     plt.close()
