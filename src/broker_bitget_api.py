@@ -907,6 +907,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     @authentication_required
     def get_usdt_equity(self):
+        self.df_account_assets = None  # reset self.df_account_assets
         n_attempts = 3
         while n_attempts > 0:
             try:
@@ -918,9 +919,10 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 self.log_api_failure("get_list_of_account_assets", msg, n_attempts)
                 time.sleep(2)
                 n_attempts = n_attempts - 1
-        cell = self.df_account_assets.loc[(self.df_account_assets['baseCoin'] == 'USDT') & (self.df_market['quoteCoin'] == 'USDT'), "usdtEquity"]
-        if len(cell.values) > 0:
-            return cell.values[0]
+        if isinstance(self.df_account_assets, pd.DataFrame):
+            cell = self.df_account_assets.loc[(self.df_account_assets['baseCoin'] == 'USDT') & (self.df_market['quoteCoin'] == 'USDT'), "usdtEquity"]
+            if len(cell.values) > 0:
+                return cell.values[0]
         return 0
 
     @authentication_required
