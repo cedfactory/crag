@@ -364,7 +364,12 @@ class LoggerTelegramBot(ILogger):
                         if os.path.exists(attachments[0]):
                             params["media"] = json.dumps({"type": "photo", "media": "attach://photo", "caption": msg, "parse_mode": "html", "show_caption_above_media": True})
                             imageFile = open(attachments[0], "rb")
-                            response = requests.post(url + "/editMessageMedia", files={"photo": imageFile}, data=params)
+                            try:
+                                response = requests.post(url + "/editMessageMedia", files={"photo": imageFile}, data=params)
+                            except (Exception) as e:
+                                args = getattr(e, "args", [])
+                                if len(args):
+                                    print(args[0])
                     else:
                         # first delete the previous message and create a new one
                         if "message_id" in extra:

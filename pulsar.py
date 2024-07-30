@@ -139,7 +139,7 @@ if __name__ == '__main__':
                                   [{"dataframe": df_filtered, "plots": [{"column": "usdt_equity", "label": "USDT equity"}]}])
 
         response = botTelegram.log(message, attachments=["pulsar_history.png"], extra=extra)
-        if response["ok"] and "result" in response:
+        if response and "ok" in response and response["ok"] and "result" in response:
             if "message_id" in response["result"]:
                 message_id = response["result"]["message_id"]
             elif isinstance(response["result"], list):
