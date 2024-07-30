@@ -923,7 +923,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             cell = self.df_account_assets.loc[(self.df_account_assets['baseCoin'] == 'USDT') & (self.df_market['quoteCoin'] == 'USDT'), "usdtEquity"]
             if len(cell.values) > 0:
                 return cell.values[0]
-        return 0
+        return None
 
     @authentication_required
     def get_spot_usdt_equity(self, lst_symbols):

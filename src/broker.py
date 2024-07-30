@@ -141,7 +141,7 @@ class Broker(metaclass = ABCMeta):
         return False
 
     def get_usdt_equity(self):
-        return 1000.
+        return None
 
     def get_current_state(self, lst_symbols):
         current_state = {

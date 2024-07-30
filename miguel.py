@@ -286,10 +286,14 @@ class MainPanel(wx.Panel):
         usdt_equity = "-"
         if my_broker:
             usdt_equity = my_broker.get_usdt_equity()
+            if usdt_equity is None:
+                usdt_equity = "-"
+            else:
+                usdt_equity = utils.KeepNDecimals(usdt_equity)
 
         # update usdt equity
         print("usdt equity : ", usdt_equity)
-        self.staticTextUsdtEquity.SetLabel("USDT Equity : "+utils.KeepNDecimals(usdt_equity))
+        self.staticTextUsdtEquity.SetLabel("USDT Equity : " + usdt_equity)
 
     def update_positions(self, my_broker):
         positions = []
