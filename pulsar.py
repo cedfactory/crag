@@ -106,9 +106,6 @@ if __name__ == '__main__':
         exit(1)
     console.log("Account {} initialized".format(botId))
 
-    usdt_equity_0 = my_broker.get_usdt_equity()
-    console.log("USDT equity at start : ${}".format(str(utils.KeepNDecimals(usdt_equity_0, 2))))
-
     datafile = "pulsar_data.csv"
     df = pd.DataFrame(columns=["account", "timestamp", "usdt_equity"])
     if os.path.exists(datafile):
@@ -120,7 +117,10 @@ if __name__ == '__main__':
     message_id = 42
     while True:
         usdt_equity = my_broker.get_usdt_equity()
-        usdt_equity = str(utils.KeepNDecimals(usdt_equity, 2))
+        if usdt_equity is None:
+            continue
+        else:
+            usdt_equity = str(utils.KeepNDecimals(usdt_equity, 2))
         extra = {}
         if message_id:
             extra["message_id"] = message_id
