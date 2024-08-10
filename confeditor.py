@@ -42,11 +42,11 @@ class DlgAddKeyValue(wx.Dialog):
 
 
 class PanelNode(wx.Panel):
-    def __init__(self, parent, main):
+    def __init__(self, parent):
         wx.Panel.__init__(self, parent)
 
         # DataViewListCtrl
-        self.dvlc = dv.DataViewListCtrl(self, style=wx.LC_REPORT, size=(570, 350))
+        self.dvlc = dv.DataViewListCtrl(self, style=wx.LC_REPORT, size=(470, 250))
 
         # editable columns
         key_renderer = dv.DataViewTextRenderer(mode=dv.DATAVIEW_CELL_EDITABLE, align=wx.ALIGN_LEFT)
@@ -61,23 +61,24 @@ class PanelNode(wx.Panel):
         self.dvlc.AssociateModel(self.model)
 
         # ui
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.dvlc, 1, wx.EXPAND)
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.sizer.Add(self.dvlc, 1, wx.EXPAND)
 
         # button to add key / value
         button_add_key_value = wx.Button(self, label="Add key / value")
         button_add_key_value.Bind(wx.EVT_BUTTON, self.on_add_key_value)
 
-        sizer.Add(button_add_key_value, 0, wx.ALL | wx.CENTER, 5)
-
-
-        self.SetSizer(sizer)
-
-        self.Centre()
+        self.sizer.Add(button_add_key_value, 0, wx.ALL | wx.CENTER, 5)
 
     def load(self, dict_data):
         for key, value in dict_data.items():
-            self.model.AppendItem([key, str(value)])
+            if key == "symbols":
+                self.load_symbols(value)
+            else:
+                self.model.AppendItem([key, str(value)])
+
+    def load_symbols(self, source):
+        pass
 
     def reset(self):
         self.model.DeleteAllItems()
@@ -89,6 +90,64 @@ class PanelNode(wx.Panel):
             value = dialog.value_text.GetValue()
             self.model.AppendItem([key, value])
         dialog.Destroy()
+
+
+class PanelBroker(PanelNode):
+    def __init__(self, parent):
+        super().__init__(parent)
+
+        self.SetSizer(self.sizer)
+
+        self.Centre()
+
+
+class PanelCrag(PanelNode):
+    def __init__(self, parent):
+        super().__init__(parent)
+
+        self.SetSizer(self.sizer)
+
+        self.Centre()
+
+
+class PanelStrategy(PanelNode):
+    def __init__(self, parent):
+        super().__init__(parent)
+
+        self.dvlc_symbols = dv.DataViewListCtrl(self, style=wx.LC_REPORT, size=(470, 5))
+
+        # data model
+        self.model_symbols = dv.DataViewListStore()
+        self.dvlc_symbols.AssociateModel(self.model_symbols)
+
+        # ui
+        self.sizer.Add(self.dvlc_symbols, 1, wx.EXPAND)
+
+        self.SetSizer(self.sizer)
+
+        self.Centre()
+
+    def reset(self):
+        self.model.DeleteAllItems()
+        self.model_symbols.DeleteAllItems()
+
+        # clean previous dvlc_symbols
+        while self.dvlc_symbols.GetColumnCount() > 0:
+            column = self.dvlc_symbols.GetColumn(0)
+            self.dvlc_symbols.DeleteColumn(column)
+
+    def load_symbols(self, source):
+        path = "./symbols/"
+        df_symbols = pd.read_csv(path + source)
+
+        for col in df_symbols.columns:
+            #self.dvlc_symbols.AppendTextColumn(col)
+            renderer = dv.DataViewTextRenderer(mode=dv.DATAVIEW_CELL_EDITABLE, align=wx.ALIGN_LEFT)
+            column = dv.DataViewColumn(col, renderer, len(self.dvlc_symbols.Columns))
+            self.dvlc_symbols.AppendColumn(column)
+
+        for _, row in df_symbols.iterrows():
+            self.model_symbols.AppendItem([str(row[col]) for col in df_symbols.columns])
 
 class MainPanel(wx.Panel):
 
@@ -105,22 +164,21 @@ class MainPanel(wx.Panel):
         main_sizer.Add(sl1, 0, wx.ALL | wx.EXPAND, 5)
 
 
-        self.notebook_strategy = wx.Notebook(self)
-        self.panel_strategy = PanelNode(self.notebook_strategy, self)
-        self.notebook_strategy.AddPage(self.panel_strategy, "Strategy")
-        self.panel_broker = PanelNode(self.notebook_strategy, self)
-        self.notebook_strategy.AddPage(self.panel_broker, "Broker")
-        self.panel_crag = PanelNode(self.notebook_strategy, self)
-        self.notebook_strategy.AddPage(self.panel_crag, "Crag")
-        main_sizer.Add(self.notebook_strategy, 0, wx.ALL | wx.EXPAND, 5)
-
+        self.notebook = wx.Notebook(self)
+        self.panel_strategy = PanelStrategy(self.notebook)
+        self.notebook.AddPage(self.panel_strategy, "Strategy")
+        self.panel_broker = PanelBroker(self.notebook)
+        self.notebook.AddPage(self.panel_broker, "Broker")
+        self.panel_crag = PanelCrag(self.notebook)
+        self.notebook.AddPage(self.panel_crag, "Crag")
+        main_sizer.Add(self.notebook, 0, wx.ALL | wx.EXPAND, 5)
 
         sl3 = wx.StaticLine(self, size=(200, 1))
         main_sizer.Add(sl3, 0, wx.ALL | wx.EXPAND, 5)
 
         # Console
-        staticTextConsole = wx.StaticText(self,label = "Console", style = wx.ALIGN_LEFT)
-        main_sizer.Add(staticTextConsole,0, wx.ALL | wx.EXPAND, 5)
+        static_text_console = wx.StaticText(self, label="Console", style=wx.ALIGN_LEFT)
+        main_sizer.Add(static_text_console, 0, wx.ALL | wx.EXPAND, 5)
 
         self.log = wx.TextCtrl(self, -1, size=(200, 100), style=wx.TE_MULTILINE|wx.TE_READONLY|wx.HSCROLL)
         main_sizer.Add(self.log,0, wx.ALL | wx.EXPAND, 5)
@@ -206,7 +264,12 @@ class MainPanel(wx.Panel):
 class ConfEditorFrame(wx.Frame):
 
     def __init__(self):
-        wx.Frame.__init__(self, parent=None, title='ConfEditor',pos=wx.DefaultPosition,size=(700, 700), style= wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX)
+        wx.Frame.__init__(self,
+                          parent=None,
+                          title='ConfEditor',
+                          pos=wx.DefaultPosition,
+                          size=(700, 800),
+                          style=wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX)
         self.panel = MainPanel(self)
         self.create_menu()
         self.Show()
