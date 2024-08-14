@@ -398,6 +398,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 df_open_orders.drop(['marginCoin', 'clientOid'], axis=1, inplace=True)
                 df_open_orders = self.set_open_orders_gridId(df_open_orders)
                 self.clear_gridId_orderId(df_open_orders["orderId"].to_list())
+                del lst_tmp
             else:
                 success = False
 
@@ -418,7 +419,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 df_triggers['symbol'] = df_triggers['symbol'].apply(self._get_coin)
             else:
                 success = False
-                if df_triggers == None:
+                if df_triggers is None:
                     print("None")
                 print("Error: 'symbol' column not found in df_triggers")
                 print(df_triggers.to_string())
@@ -441,7 +442,6 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             del df_open_orders
             del df_open_positions
             del df_prices
-            del lst_tmp
             del df_open_positions_filtered
 
         return self.current_state
