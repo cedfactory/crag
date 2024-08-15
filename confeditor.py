@@ -2,6 +2,8 @@ import pandas as pd
 import wx
 import wx.dataview as dv
 import sys
+from pathlib import Path
+from io import StringIO
 import xml.etree.ElementTree as ET
 
 from src import crag_helper
@@ -137,8 +139,13 @@ class PanelStrategy(PanelNode):
             self.dvlc_symbols.DeleteColumn(column)
 
     def load_symbols(self, source):
-        path = "./symbols/"
-        df_symbols = pd.read_csv(path + source)
+        path = Path("./symbols/" + source)
+        df_symbols = None
+        if path.is_file():
+            df_symbols = pd.read_csv(path)
+        else:
+            sourceIO = StringIO(source)
+            df_symbols = pd.read_csv(sourceIO, sep=",")
 
         for col in df_symbols.columns:
             #self.dvlc_symbols.AppendTextColumn(col)
@@ -207,6 +214,7 @@ class MainPanel(wx.Panel):
 
         root = ET.Element("configuration")
 
+        # strategy
         strategy = ET.SubElement(root, "strategy")
         strategy_params = ET.SubElement(strategy, "params")
         item_count = self.panel_strategy.model.GetCount()
@@ -218,7 +226,19 @@ class MainPanel(wx.Panel):
             else:
                 strategy_params.set(str(key), str(value))
 
+        # symbols
+        columns = [self.panel_strategy.dvlc_symbols.GetColumn(col).GetTitle() for col in range(self.panel_strategy.dvlc_symbols.GetColumnCount())]
 
+        data = []
+        for row in range(self.panel_strategy.dvlc_symbols.GetItemCount()):
+            row_data = [self.panel_strategy.dvlc_symbols.GetTextValue(row, col) for col in range(len(columns))]
+            data.append(row_data)
+
+        # Créer le DataFrame
+        df = pd.DataFrame(data, columns=columns)
+        strategy_params.set("symbols", df.to_csv(index=False))
+
+        # broker
         broker = ET.SubElement(root, "broker")
         broker_params = ET.SubElement(broker, "params")
         item_count = self.panel_broker.model.GetCount()
@@ -230,6 +250,7 @@ class MainPanel(wx.Panel):
             else:
                 broker_params.set(str(key), str(value))
 
+        # crag
         crag = ET.SubElement(root, "crag")
         item_count = self.panel_crag.model.GetCount()
         for row in range(item_count):
