@@ -437,14 +437,39 @@ class BrokerBitGet(broker.Broker):
 
             exit_tpsl = False
             while not exit_tpsl:
-                if not exit_tpsl and hold_side == "long":
+                if not exit_tpsl and (hold_side == "long" or hold_side == "short"):
                     trigger_price = self.get_values([symbol])
                     value = trigger_price.loc[trigger_price["symbols"] == symbol, "values"].values[0]
-                    trigger_price = str(self.normalize_price(symbol, float(value + value * 0.001 / 100)))
+
+                    # trigger_price = str(self.normalize_price(symbol, float(value + value * 0.001 / 100)))
+
+                    lst_trigger_price = [float(value + value * 0.001 * i / 100) for i in range(-10, 10, 1)]
+                    lst_trigger_price = [str(self.normalize_price(symbol, x)) for x in  lst_trigger_price]
+                    lst_trigger_price = list(set(lst_trigger_price))
+                    print("lst_trigger_price : ", lst_trigger_price)
+
+                    for trigger_price in lst_trigger_price:
+                        transaction = self.place_tpsl_order(symbol, marginCoin="USDT",
+                                                            planType="moving_plan", triggerPrice=trigger_price,
+                                                            holdSide=hold_side, triggerType="mark_price",
+                                                            size=amount, rangeRate=range_rate, clientOid=clientOid)
+
+                        try:
+                            orderId = transaction['data']['orderId']
+                            print("transaction orderId : ", orderId)
+                            print("trigger price : ", initial_trigger_price)
+                            print("trailer trigger price : ", trigger_price)
+                            exit_tpsl = True
+                            break
+                        except:
+                            pass
+
+                    '''
                     transaction = self.place_tpsl_order(symbol, marginCoin="USDT",
                                                         planType="moving_plan", triggerPrice=trigger_price,
                                                         holdSide=hold_side, triggerType="mark_price",
                                                         size=amount, rangeRate=range_rate, clientOid=clientOid)
+
                     try:
                         orderId = transaction['data']['orderId']
                         print("transaction orderId : ", orderId)
@@ -453,11 +478,14 @@ class BrokerBitGet(broker.Broker):
                         exit_tpsl = True
                     except:
                         pass
+                    '''
 
-                if not exit_tpsl and hold_side == "short":
+                if not exit_tpsl and hold_side == "short" and False:
                     trigger_price = self.get_values([symbol])
                     value = trigger_price.loc[trigger_price["symbols"] == symbol, "values"].values[0]
+
                     trigger_price = str(self.normalize_price(symbol, float(value - value * 0.001 / 100)))
+
                     transaction = self.place_tpsl_order(symbol, marginCoin="USDT",
                                                         planType="moving_plan", triggerPrice=trigger_price,
                                                         holdSide=hold_side, triggerType="mark_price",
@@ -761,11 +789,13 @@ class BrokerBitGet(broker.Broker):
             self.iter_execute_orders += 1
             return
 
-        # self.execute_timer.set_start_time("broker", "execute_orders", "execute_batch_orders", self.iter_execute_orders)
+        lst_result_cancel_orders = []
+        lst_cancel_orders = [order for order in lst_orders if "trigger_type" in order and order["trigger_type"] == "CANCEL_TRIGGER"]
+        lst_result_cancel_orders = self.execute_lst_cancel_orders(lst_cancel_orders)
+        lst_orders = [order for order in lst_orders if not ("trigger_type" in order) or order["trigger_type"] != "CANCEL_TRIGGER"]
+
         lst_result_triggers_orders = []
-        # extract triggers...
         lst_triggers = [order for order in lst_orders if "trigger_type" in order and order["trigger_type"] == "TRIGGER"]
-        # ...and execute them
         lst_result_triggers_orders = self.execute_lst_triggers(lst_triggers)
         # extract orders
         lst_orders = [order for order in lst_orders if not ("trigger_type" in order) or order["trigger_type"] != "TRIGGER"]
@@ -777,11 +807,6 @@ class BrokerBitGet(broker.Broker):
         lst_result_sltp_trailling_orders = self.execute_lst_sltp_trailling_orders(lst_sltp_trailing_orders)
         # extract orders
         lst_orders = [order for order in lst_orders if not ("trigger_type" in order) or order["trigger_type"] != "SL_TP_TRAILER"]
-
-        lst_result_cancel_orders = []
-        lst_cancel_orders = [order for order in lst_orders if "trigger_type" in order and order["trigger_type"] == "CANCEL_TRIGGER"]
-        lst_result_cancel_orders = self.execute_lst_cancel_orders(lst_cancel_orders)
-        lst_orders = [order for order in lst_orders if not ("trigger_type" in order) or order["trigger_type"] != "CANCEL_TRIGGER"]
 
         lst_result_record_missing_orders = []
         lst_record_missing_orders = [order for order in lst_orders if "type" in order and order["type"] == "RECORD_DATA"]

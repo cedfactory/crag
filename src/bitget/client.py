@@ -66,6 +66,13 @@ class Client(object):
         if not str(response.status_code).startswith('2'):
             print("url : ", url)
             print("response : ", response)
+            if hasattr(response, "content"):
+                content = response.content.decode('utf-8')
+                dict_content = json.loads(content)
+                code = dict_content.get("code", "no code")
+                msg = dict_content.get("msg", "no msg")
+                print("code : ", code)
+                print("msg : ", msg)
             raise exceptions.BitgetAPIException(response)
         try:
             res_header = response.headers

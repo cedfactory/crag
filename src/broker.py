@@ -26,7 +26,6 @@ def create_df_prices():
 class Broker(metaclass = ABCMeta):
     
     def __init__(self, params = None):
-        self.zero_print = False
         self.loggers = [ logger.LoggerConsole() ]
         self.df_symbols = None
         self.cash = 10
@@ -89,8 +88,6 @@ class Broker(metaclass = ABCMeta):
         return None
 
     def log(self, msg, header="", attachments=[]):
-        if self.zero_print:
-            return
         for iter_logger in self.loggers:
             iter_logger.log(msg, header=header, author=type(self).__name__, attachments=attachments)
 
