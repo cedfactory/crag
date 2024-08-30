@@ -17,6 +17,7 @@ from datetime import datetime
 import time
 import os, shutil
 import pandas as pd
+import numpy as np
 from concurrent.futures import wait, ALL_COMPLETED, ThreadPoolExecutor
 import gc
 
@@ -658,14 +659,15 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     @authentication_required
     def _cancel_Plan_Order_v2(self, symbol, marginCoin, lst_orderId):
-
         orderIdList = []
         for orderid in lst_orderId:
-            cancel_orderId = {
-                "orderId": orderid
-            }
-            orderIdList.append(cancel_orderId)
-
+            if orderid != '':
+                cancel_orderId = {
+                    "orderId": orderid
+                }
+                orderIdList.append(cancel_orderId)
+        if len(orderIdList) == 0:
+            return None
         params = {}
         # params["symbol"] = symbol
         params["marginCoin"] = "USDT"
@@ -1595,6 +1597,19 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     def save_reboot_data(self, df):
         df.to_csv(self.broker_dir_path_filename)
+
+    def generateRangePrices(self, symbol, amount, range_percentage, nb_values):
+        amount = self.normalize_price(symbol, amount)
+        start = self.normalize_price(symbol, amount - (amount * range_percentage / 2))
+        end = self.normalize_price(symbol, amount + (amount * range_percentage / 2))
+
+        lst_prices = np.linspace(start, end, nb_values)
+        lst_normalized_prices = [self.normalize_price(symbol, price) for price in lst_prices]
+        lst_normalized_prices = list(set(lst_normalized_prices))
+        lst_normalized_prices.sort(key=lambda x: abs(x - amount))
+        lst_str_prices = [str(price) for price in lst_normalized_prices]
+
+        return lst_str_prices
 
     def normalize_price(self, symbol, amount):
         if symbol in self.df_normalize_price["symbol"].tolist():

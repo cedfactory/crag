@@ -441,12 +441,7 @@ class BrokerBitGet(broker.Broker):
                     trigger_price = self.get_values([symbol])
                     value = trigger_price.loc[trigger_price["symbols"] == symbol, "values"].values[0]
 
-                    # trigger_price = str(self.normalize_price(symbol, float(value + value * 0.001 / 100)))
-
-                    lst_trigger_price = [float(value + value * 0.001 * i / 100) for i in range(-10, 10, 1)]
-                    lst_trigger_price = [str(self.normalize_price(symbol, x)) for x in  lst_trigger_price]
-                    lst_trigger_price = list(set(lst_trigger_price))
-                    print("lst_trigger_price : ", lst_trigger_price)
+                    lst_trigger_price = self.generateRangePrices(symbol, value, 0.02, 100)
 
                     for trigger_price in lst_trigger_price:
                         transaction = self.place_tpsl_order(symbol, marginCoin="USDT",
@@ -456,48 +451,20 @@ class BrokerBitGet(broker.Broker):
 
                         try:
                             orderId = transaction['data']['orderId']
+                            print("price : ", value)
+                            print("len(lst_trigger_price) : ", len(lst_trigger_price))
+                            print("lst_trigger_price : ", lst_trigger_price)
                             print("transaction orderId : ", orderId)
                             print("trigger price : ", initial_trigger_price)
                             print("trailer trigger price : ", trigger_price)
                             exit_tpsl = True
                             break
                         except:
+                            print("price : ", value)
+                            print("len(lst_trigger_price) : ", len(lst_trigger_price))
+                            print("lst_trigger_price : ", lst_trigger_price)
+                            print("TPSL: FAILED - DO NOT PANIC - TRY AGAIN")
                             pass
-
-                    '''
-                    transaction = self.place_tpsl_order(symbol, marginCoin="USDT",
-                                                        planType="moving_plan", triggerPrice=trigger_price,
-                                                        holdSide=hold_side, triggerType="mark_price",
-                                                        size=amount, rangeRate=range_rate, clientOid=clientOid)
-
-                    try:
-                        orderId = transaction['data']['orderId']
-                        print("transaction orderId : ", orderId)
-                        print("trigger price : ", initial_trigger_price)
-                        print("trailer trigger price : ", trigger_price)
-                        exit_tpsl = True
-                    except:
-                        pass
-                    '''
-
-                if not exit_tpsl and hold_side == "short" and False:
-                    trigger_price = self.get_values([symbol])
-                    value = trigger_price.loc[trigger_price["symbols"] == symbol, "values"].values[0]
-
-                    trigger_price = str(self.normalize_price(symbol, float(value - value * 0.001 / 100)))
-
-                    transaction = self.place_tpsl_order(symbol, marginCoin="USDT",
-                                                        planType="moving_plan", triggerPrice=trigger_price,
-                                                        holdSide=hold_side, triggerType="mark_price",
-                                                        size=amount, rangeRate=range_rate, clientOid=clientOid)
-                    try:
-                        orderId = transaction['data']['orderId']
-                        print("transaction orderId : ", orderId)
-                        print("trigger price : ", initial_trigger_price)
-                        print("trailer trigger price : ", trigger_price)
-                        exit_tpsl = True
-                    except:
-                        print("TPSL: FAILED - DO NOT PANIC - TRY AGAIN")
 
         if "msg" in transaction and transaction["msg"] == "success" and "data" in transaction and len(transaction["data"]) > 0:
             orderId = transaction["data"]["orderId"]
@@ -714,6 +681,8 @@ class BrokerBitGet(broker.Broker):
         if symbol != "" and len(lst_ordersIds) > 0:
             symbol = self._get_symbol(symbol)
             result = self._cancel_Plan_Order_v2(symbol, "USDT", lst_ordersIds)
+            if result == None:
+                return []
             if result["msg"] == 'success':
                 success_order_ids = [d['orderId'] for d in result["data"]["successList"]]
                 # failure_order_ids = [d['orderId'] for d in result["data"]["failureList"]]
