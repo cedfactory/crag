@@ -441,7 +441,7 @@ class BrokerBitGet(broker.Broker):
                     trigger_price = self.get_values([symbol])
                     value = trigger_price.loc[trigger_price["symbols"] == symbol, "values"].values[0]
 
-                    lst_trigger_price = self.generateRangePrices(symbol, value, 0.02, 100)
+                    lst_trigger_price = self.generateRangePrices(symbol, value, 0.02, 100, 10)
 
                     for trigger_price in lst_trigger_price:
                         transaction = self.place_tpsl_order(symbol, marginCoin="USDT",
