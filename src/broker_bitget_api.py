@@ -606,6 +606,13 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                              triggerType, executePrice, holdSide, size, rangeRate, clientOid):
 
         params = {}
+        # Process the symbol based on conditions
+        if symbol.endswith('USDT_UMCBL'):
+            # Remove '_UMCBL' and ensure it ends with 'USDT'
+            symbol = symbol.replace('_UMCBL', '')
+        elif not symbol.endswith('USDT'):
+            # If the symbol does not end with 'USDT', append 'USDT'
+            symbol = symbol + 'USDT'
         # params["symbol"] = symbol
         params["marginCoin"] = "USDT"
         params["productType"] = "USDT-FUTURES"
@@ -669,7 +676,11 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         if len(orderIdList) == 0:
             return None
         params = {}
-        # params["symbol"] = symbol
+        if symbol.endswith('USDT_UMCBL'):
+            symbol = symbol.replace('_UMCBL', '')
+        elif not symbol.endswith('USDT'):
+            symbol = symbol + 'USDT'
+
         params["marginCoin"] = "USDT"
         params["productType"] = "USDT-FUTURES"
         params["symbol"] = symbol
@@ -698,6 +709,10 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                                 orderType, triggerType, clientOid, callbackRatio, price='',
                                 sl='', tp='', stopLossTriggerType='', stopSurplusTriggerType=''):
         params = {}
+        if symbol.endswith('USDT_UMCBL'):
+            symbol = symbol.replace('_UMCBL', '')
+        elif not symbol.endswith('USDT'):
+            symbol = symbol + 'USDT'
         params["symbol"] = symbol
         params["planType"] = planType
         params["triggerPrice"] = triggerPrice
