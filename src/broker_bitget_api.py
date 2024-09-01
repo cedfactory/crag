@@ -609,7 +609,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         # params["symbol"] = symbol
         params["marginCoin"] = "USDT"
         params["productType"] = "USDT-FUTURES"
-        params["symbol"] = "XRPUSDT" # CEDE to be fixed
+        params["symbol"] = symbol
         params["planType"] = planType
         params["triggerPrice"] = triggerPrice
         params["triggerType"] = triggerType
@@ -672,7 +672,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         # params["symbol"] = symbol
         params["marginCoin"] = "USDT"
         params["productType"] = "USDT-FUTURES"
-        params["symbol"] = "XRPUSDT" # CEDE to be fixed
+        params["symbol"] = symbol
 
         params["orderIdList"] = orderIdList
 
@@ -698,8 +698,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                                 orderType, triggerType, clientOid, callbackRatio, price='',
                                 sl='', tp='', stopLossTriggerType='', stopSurplusTriggerType=''):
         params = {}
-        # params["symbol"] = symbol
-        params["symbol"] = "XRPUSDT" # CEDE to be fixed
+        params["symbol"] = symbol
         params["planType"] = planType
         params["triggerPrice"] = triggerPrice
         params["marginCoin"] = "USDT"
