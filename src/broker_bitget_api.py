@@ -150,10 +150,18 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 return fn(self, *args, **kwargs)
         return wrapped
 
-    def _get_symbol(self, coin, base = "USDT"):
+    def _get_symbol(self, coin, base="USDT"):
         if coin in self.df_market['symbol'].tolist():
             return coin
         symbol = self.df_market.loc[(self.df_market['baseCoin'] == coin) & (self.df_market['quoteCoin'] == base), "symbol"].values[0]
+        return symbol
+
+    def _get_symbol_v2(self, coin, base="USDT"):
+        # hack : use market from v1 and adapt it for v2
+        # todo : fill df_market_v2 with api v2 and read it
+        symbol = self._get_symbol(coin, base)
+        if symbol.endswith('_UMCBL'):
+            symbol = symbol.replace('_UMCBL', '')
         return symbol
 
     def _get_coin(self, symbol, base = "USDT"):
@@ -606,14 +614,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                              triggerType, executePrice, holdSide, size, rangeRate, clientOid):
 
         params = {}
-        # Process the symbol based on conditions
-        if symbol.endswith('USDT_UMCBL'):
-            # Remove '_UMCBL' and ensure it ends with 'USDT'
-            symbol = symbol.replace('_UMCBL', '')
-        elif not symbol.endswith('USDT'):
-            # If the symbol does not end with 'USDT', append 'USDT'
-            symbol = symbol + 'USDT'
-        # params["symbol"] = symbol
+        params["symbol"] = self._get_symbol_v2(symbol)
         params["marginCoin"] = "USDT"
         params["productType"] = "USDT-FUTURES"
         params["symbol"] = symbol
@@ -675,17 +676,13 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 orderIdList.append(cancel_orderId)
         if len(orderIdList) == 0:
             return None
-        params = {}
-        if symbol.endswith('USDT_UMCBL'):
-            symbol = symbol.replace('_UMCBL', '')
-        elif not symbol.endswith('USDT'):
-            symbol = symbol + 'USDT'
 
-        params["marginCoin"] = "USDT"
-        params["productType"] = "USDT-FUTURES"
-        params["symbol"] = symbol
-
-        params["orderIdList"] = orderIdList
+        params = {
+            "marginCoin": "USDT",
+            "productType": "USDT-FUTURES",
+            "symbol": self._get_symbol_v2(symbol),
+            "orderIdList": orderIdList
+        }
 
         result = {}
         n_attempts = 3
@@ -709,11 +706,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                                 orderType, triggerType, clientOid, callbackRatio, price='',
                                 sl='', tp='', stopLossTriggerType='', stopSurplusTriggerType=''):
         params = {}
-        if symbol.endswith('USDT_UMCBL'):
-            symbol = symbol.replace('_UMCBL', '')
-        elif not symbol.endswith('USDT'):
-            symbol = symbol + 'USDT'
-        params["symbol"] = symbol
+        params["symbol"] = self._get_symbol(symbol)
         params["planType"] = planType
         params["triggerPrice"] = triggerPrice
         params["marginCoin"] = "USDT"
@@ -721,7 +714,6 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         params["side"] = side
         params["tradeSide"] = tradeSide
         params["reduceOnly"] = reduceOnly
-        # params["reduceOnly"] = "YES"
         params["orderType"] = orderType
         params["triggerType"] = triggerType
         params["clienOid"] = clientOid
