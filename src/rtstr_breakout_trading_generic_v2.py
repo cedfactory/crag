@@ -212,9 +212,9 @@ class StrategyBreakoutTradingGenericV2(rtstr.RealTimeStrategy):
         for symbol in df_symbol_size['symbol'].tolist():
             dol_per_grid = self.grid_margin / self.nb_grid
             size = dol_per_grid
-            if (self.get_grid_buying_min_size(symbol) <= size)\
-                    and (size > 5) \
-                    and (cash >= self.grid_margin):
+            if (self.get_grid_buying_min_size(symbol) <= (size / self.grid.get_max_price_in_grid())) \
+                    and (size > 5) and \
+                    (cash >= self.grid_margin):
 
                 self.set_breakout_grid_buying_size(symbol, dol_per_grid)
 
@@ -241,7 +241,7 @@ class StrategyBreakoutTradingGenericV2(rtstr.RealTimeStrategy):
                 msg += "**min size: " + str(self.get_grid_buying_min_size(symbol)) + " - $" + str(self.get_grid_buying_min_size(symbol) * (self.grid_high + self.grid_low )/2) + "**\n"
                 msg += "**strategy stopped : ERROR NOT ENOUGH $ FOR GRID - INCREASE MARGIN OR REDUCE GRID SIZE **\n"
                 self.log(msg, "GRID SETUP FAILED")
-                exit(2)
+                exit(22)
         return self.df_grid_buying_size
 
 class GridPosition():
@@ -335,10 +335,14 @@ class GridPosition():
                         "cross_checked", "unknown"]
         grid_break_out = {key: pd.DataFrame(columns=self.columns) for key in self.lst_trend}
         self.grid = {key: grid_break_out for key in self.lst_symbols}
+        self.max_position = 0
         for symbol in lst_symbols:
             for trend in self.lst_trend:
                 self.grid[symbol][trend]["position"] = self.dct_lst_grid_values[trend]
                 print(self.grid[symbol][trend]["position"].to_list())
+
+                self.max = max(self.grid[symbol][trend]["position"].to_list())
+                self.max_position = max(self.max, self.max_position)
 
                 self.grid[symbol][trend]["grid_id"] = self.grid[symbol][trend].index
                 sequence = self.grid[symbol][trend].index.tolist()[1:] + [-1]
@@ -370,6 +374,9 @@ class GridPosition():
 
     def set_prices(self, df):
         self.df_price = df
+
+    def get_max_price_in_grid(self):
+        return self.max_position
 
     def get_opposite_trend(self, trend):
         return "down" if trend == "up" else "up"

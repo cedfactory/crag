@@ -706,7 +706,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                                 orderType, triggerType, clientOid, callbackRatio, price='',
                                 sl='', tp='', stopLossTriggerType='', stopSurplusTriggerType=''):
         params = {}
-        params["symbol"] = self._get_symbol(symbol)
+        params["symbol"] = self._get_symbol_v2(symbol)
         params["planType"] = planType
         params["triggerPrice"] = triggerPrice
         params["marginCoin"] = "USDT"

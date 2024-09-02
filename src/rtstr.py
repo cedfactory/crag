@@ -518,6 +518,9 @@ class RealTimeStrategy(metaclass=ABCMeta):
                 msg += "**min size: " + str(self.get_grid_buying_min_size(symbol)) + " - $" + str(self.get_grid_buying_min_size(symbol) * (self.grid_high + self.grid_low )/2) + "**\n"
                 msg += "**strategy stopped : ERROR NOT ENOUGH $ FOR GRID - INCREASE MARGIN OR REDUCE GRID SIZE **\n"
                 self.log(msg, "GRID SETUP FAILED")
+                print(msg)
+                print("GRID SETUP FAILED")
+                print("set_df_buying_size")
                 exit(2)
         return self.df_grid_buying_size
 
