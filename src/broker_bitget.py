@@ -441,7 +441,7 @@ class BrokerBitGet(broker.Broker):
                     trigger_price = self.get_values([symbol])
                     value = trigger_price.loc[trigger_price["symbols"] == symbol, "values"].values[0]
 
-                    lst_trigger_price = self.generateRangePrices(symbol, value, 0.02, 100, 10)
+                    lst_trigger_price = self.generateRangePrices(symbol, value, 0.2, 100, 10)
 
                     for trigger_price in lst_trigger_price:
                         transaction = self.place_tpsl_order(symbol, marginCoin="USDT",
@@ -461,6 +461,8 @@ class BrokerBitGet(broker.Broker):
                             break
                         except:
                             print("price : ", value)
+                            print("amount : ", amount)
+                            print("price * amount : ", str(float(value) * float(amount)))
                             print("len(lst_trigger_price) : ", len(lst_trigger_price))
                             print("lst_trigger_price : ", lst_trigger_price)
                             print("TPSL: FAILED - DO NOT PANIC - TRY AGAIN")

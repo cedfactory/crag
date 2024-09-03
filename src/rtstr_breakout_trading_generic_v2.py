@@ -997,6 +997,10 @@ class GridPosition():
             self.log("grid price normalized: " + str(df['position'].tolist()))
             df['buying_size'] = df['buying_size'].apply(lambda x: self.normalize_price(x, pricePlace, priceEndStep))
             df['buying_size'] = df['buying_size'].astype(int)
+
+            df['buying_size'] = (df['buying_size'] // 1000) * 1000  # Modif CEDE WARNING !!!!! GENERIC SOLUTION TO BE IMPLEMENTED
+
+            df['buying_size'] = df['buying_size'].astype(int)
         del df
         del pricePlace
         del priceEndStep

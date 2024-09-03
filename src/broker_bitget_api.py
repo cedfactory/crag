@@ -153,6 +153,12 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     def _get_symbol(self, coin, base="USDT"):
         if coin in self.df_market['symbol'].tolist():
             return coin
+        if coin.endswith(base):
+            base_coin = coin.replace('USDT', '')
+            row = self.df_market[(self.df_market['baseCoin'] == base_coin) & (self.df_market['quoteCoin'] == base)]
+            if not row.empty:
+                return row['symbol'].values[0]
+
         symbol = self.df_market.loc[(self.df_market['baseCoin'] == coin) & (self.df_market['quoteCoin'] == base), "symbol"].values[0]
         return symbol
 
@@ -1613,7 +1619,9 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         lst_normalized_prices = [self.normalize_price(symbol, price) for price in lst_prices]
         lst_normalized_prices = list(set(lst_normalized_prices))
         lst_normalized_prices.sort(key=lambda x: abs(x - amount))
-        lst_str_prices = [str(price) for price in lst_normalized_prices]
+        # CEDE WARNING TO BE TESTED WITH BIGGER VALUES
+        # lst_str_prices = [str(price) for price in lst_normalized_prices]
+        lst_str_prices = [f'{price:.10f}'.rstrip('0').rstrip('.') for price in lst_normalized_prices]
 
         lst_first_nb_values_elements = lst_str_prices[:nb_values]
 
