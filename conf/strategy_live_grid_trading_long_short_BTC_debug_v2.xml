@@ -1,6 +1,6 @@
 <configuration>
     <strategy id="StrategyGridTradingLongShortv2" name="StrategyGridTradingLongShortV2">
-        <params symbols="./symbols_df_sltp_XRP_usdt.csv"
+        <params symbols="./symbols_df_sltp_BTC_usdt.csv"
                 strategy_interval="3600"
                 multi_param="False"
                 candle_stick="released"
@@ -15,7 +15,7 @@
                 trailer_global_delta_tp="0"
                 trailer_sl="0"
                 high_volatility="False"
-                path_grid_param="./grid_specific_param_breakout_XRP_test.csv"
+                path_grid_param="./grid_specific_param_breakout_BTC_test.csv"
                 nb_position_limits="1"
                 lst_combined_strategy=""
                 loggers="file=log"
@@ -25,7 +25,7 @@
         <params exchange="bitget"
                 fdp_url_id="gc1"
                 account="subfortest2"
-                symbols="./symbols_df_sltp_XRP_usdt.csv"
+                symbols="./symbols_df_sltp_BTC_usdt.csv"
                 simulation="1"
                 intervals="1h"
                 orders="market"

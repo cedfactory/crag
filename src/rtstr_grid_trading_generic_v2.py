@@ -92,6 +92,11 @@ class StrategyGridTradingGenericV2(rtstr.RealTimeStrategy):
         self.df_grid_buying_size = df_grid_buying_size
         del df_grid_buying_size
 
+    def normalize_size(self, size, sizeMultiplier):
+        size = (size // sizeMultiplier) * sizeMultiplier
+
+        return size
+
     def get_strategy_id_code(self):
         return self.strategy_id
 
@@ -164,7 +169,7 @@ class StrategyGridTradingGenericV2(rtstr.RealTimeStrategy):
 
     def set_normalized_grid_price(self, lst_symbol_plc_endstp):
         for price_plc in lst_symbol_plc_endstp:
-            self.grid.normalize_grid_price(price_plc['symbol'], price_plc['pricePlace'], price_plc['priceEndStep'])
+            self.grid.normalize_grid_price(price_plc['symbol'], price_plc['pricePlace'], price_plc['priceEndStep'], price_plc['sizeMultiplier'])
         del lst_symbol_plc_endstp
 
     def activate_grid(self, current_state):

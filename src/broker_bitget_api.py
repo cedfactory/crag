@@ -154,7 +154,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         if coin in self.df_market['symbol'].tolist():
             return coin
         if coin.endswith(base):
-            base_coin = coin.replace('USDT', '')
+            base_coin = coin.replace(base, '')
             row = self.df_market[(self.df_market['baseCoin'] == base_coin) & (self.df_market['quoteCoin'] == base)]
             if not row.empty:
                 return row['symbol'].values[0]
@@ -180,9 +180,13 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             coin = self.df_market.at[row_index[0], "baseCoin"] if row_index else None
             del row_index
             return coin
-        else:
-            self.log("WARNING COIN NOT IN MARKET LIST")
-            return symbol.split("USDT_UMCBL")[0]
+        elif symbol.endswith(base):
+            symbol = symbol.replace(base, '')
+            if symbol in self.df_market['baseCoin'].tolist():
+                return symbol
+
+        self.log("WARNING COIN NOT IN MARKET LIST")
+        return symbol.split("USDT_UMCBL")[0]
 
     def single_position(self, symbol, marginCoin = "USDT"):
         single_position = self.positionApi.single_position(symbol, marginCoin='USDT')
@@ -1697,6 +1701,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             dct['symbol'] = symbol
             dct['pricePlace'] = int(self.get_pricePlace(symbol))
             dct['priceEndStep'] = self.get_priceEndStep(symbol)
+            dct['sizeMultiplier'] = self.get_sizeMultiplier(symbol)
             lst.append(dct)
         return lst
 

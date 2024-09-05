@@ -5,6 +5,10 @@ import numpy as np
 
 import heapq
 
+import copy
+import os
+import glob
+
 from . import utils
 from src import logger
 
@@ -38,6 +42,7 @@ class StrategyBreakoutTradingGenericV2(rtstr.RealTimeStrategy):
         self.df_price = None
         self.mutiple_strategy = False
 
+        self.backup_grid = None
 
         self.self_execute_trade_recorder_not_active = True
 
@@ -126,6 +131,7 @@ class StrategyBreakoutTradingGenericV2(rtstr.RealTimeStrategy):
         lst_order_to_execute = []
 
         for symbol in self.lst_symbols:
+            # self.print_debug_grid(symbol)
             # df_open_triggers = self.grid.set_current_orders_price_to_grid(symbol, df_open_triggers)
             self.grid.set_buying_size(self.get_grid_buying_size(symbol, self.strategy_id))
             if symbol in df_price['symbols'].tolist():
@@ -144,6 +150,83 @@ class StrategyBreakoutTradingGenericV2(rtstr.RealTimeStrategy):
 
         return lst_order_to_execute
 
+    def print_debug_grid(self, symbol):
+        lst_trend = ["up", "down"]
+        exclude_columns = ['changes', 'previous_side', 'cross_checked', 'unknown', 'status']
+
+        # Initialize backup_grid if it's None
+        if self.backup_grid is None:
+            # Create a deep copy of the grid as backup
+            self.backup_grid = copy.deepcopy(self.grid.grid)
+
+            # Delete all the trend.txt files in the 'debug_backup_grid' directory
+            backup_dir = 'debug_backup_grid'
+            if os.path.exists(backup_dir):
+                # Use glob to find all .txt files in the directory and remove them
+                for file in glob.glob(os.path.join(backup_dir, "*.txt")):
+                    os.remove(file)
+
+            return
+        else:
+            # Iterate over trends and check if the backup does not match the current grid
+            for trend in lst_trend:
+                # Create a copy of the DataFrame without the excluded columns
+                df_to_save = self.grid.grid[symbol][trend].drop(columns=exclude_columns)
+                df_backup_to_save = self.backup_grid[symbol][trend].drop(columns=exclude_columns)
+
+                # Use DataFrame.equals() to check if DataFrames are exactly the same
+                if not df_backup_to_save.equals(df_to_save):
+                    # Create the directory if it doesn't exist
+                    os.makedirs('debug_backup_grid', exist_ok=True)
+
+                    # Open the file in append mode
+                    backup_file = f'debug_backup_grid/{trend}.txt'
+                    with open(backup_file, 'a') as f:
+                        # Write additional values
+                        f.write(f"\n---\n")
+                        f.write(f"Trend: {trend}\n")
+                        f.write(f"nb_open_triggers_long: {self.grid.trend_data[trend]['nb_open_triggers_long']}\n")
+                        f.write(f"nb_executed_trigger_long: {self.grid.trend_data[trend]['nb_executed_trigger_long']}\n")
+                        f.write(f"nb_open_trailers_long: {self.grid.trend_data[trend]['nb_open_trailers_long']}\n")
+                        f.write(f"sum_long: {self.grid.trend_data[trend]['nb_open_triggers_long'] + self.grid.trend_data[trend]['nb_executed_trigger_long'] + self.grid.trend_data[trend]['nb_open_trailers_long']}\n")
+                        f.write(f"nb_open_triggers_short: {self.grid.trend_data[trend]['nb_open_triggers_short']}\n")
+                        f.write(f"nb_executed_trigger_short: {self.grid.trend_data[trend]['nb_executed_trigger_short']}\n")
+                        f.write(f"nb_open_trailers_short: {self.grid.trend_data[trend]['nb_open_trailers_short']}\n")
+                        f.write(f"sum_short: {self.grid.trend_data[trend]['nb_open_triggers_short'] + self.grid.trend_data[trend]['nb_executed_trigger_short'] + self.grid.trend_data[trend]['nb_open_trailers_short']}\n")
+                        try:
+                            # Append the filtered DataFrame to the file
+                            if isinstance(self.grid.trend_data[trend]['df_open_triggers'], pd.DataFrame) \
+                                    and not self.grid.trend_data[trend]['df_open_triggers'].empty:
+                                f.write("df_open_triggers" + "\n")
+                                f.write(self.grid.trend_data[trend]['df_open_triggers'].to_string() + "\n")
+                            if isinstance(self.grid.trend_data[trend]['df_open_trailers'], pd.DataFrame) \
+                                    and not self.grid.trend_data[trend]['df_open_trailers'].empty:
+                                f.write("df_open_trailers" + "\n")
+                                f.write(self.grid.trend_data[trend]['df_open_TP_order'].to_string() + "\n")
+                            if isinstance(self.grid.trend_data[trend]['df_open_TP_order'], pd.DataFrame) \
+                                    and not self.grid.trend_data[trend]['df_open_SL_order'].empty:
+                                f.write("\n" + "df_open_TP_order" + "\n")
+                                f.write(self.grid.trend_data[trend]['df_open_TP_order'].to_string() + "\n")
+                            f.write("\n" + "df_open_SL_order" + "\n")
+                            if isinstance(self.grid.trend_data[trend]['df_open_SL_order'], pd.DataFrame) \
+                                    and not self.grid.trend_data[trend]['df_open_SL_order'].empty:
+                                f.write(self.grid.trend_data[trend]['df_open_SL_order'].to_string() + "\n")
+                            f.write("\n" + "df_executed_trigger_debug" + "\n")
+                            if isinstance(self.grid.trend_data[trend]['df_executed_trigger_debug'], pd.DataFrame) \
+                                    and not self.grid.trend_data[trend]['df_executed_trigger_debug'].empty:
+                                f.write("\n" + "df_executed_trigger_debug" + "\n")
+                                f.write(self.grid.trend_data[trend]['df_executed_trigger_debug'].to_string() + "\n")
+                            f.write("\n")
+                            f.write(df_to_save.to_string())  # Write full DataFrame to file
+                            f.write("\n---\n")  # Add a separator line
+                        except:
+                            print("toto")
+
+            # Update the backup after processing
+            self.backup_grid = copy.deepcopy(self.grid.grid)
+
+        return
+
     def print_grid(self):
         self.grid.print_grid()
 
@@ -153,7 +236,7 @@ class StrategyBreakoutTradingGenericV2(rtstr.RealTimeStrategy):
 
     def set_normalized_grid_price(self, lst_symbol_plc_endstp):
         for price_plc in lst_symbol_plc_endstp:
-            self.grid.normalize_grid_price(price_plc['symbol'], price_plc['pricePlace'], price_plc['priceEndStep'])
+            self.grid.normalize_grid_price(price_plc['symbol'], price_plc['pricePlace'], price_plc['priceEndStep'], price_plc['sizeMultiplier'])
         del lst_symbol_plc_endstp
 
     def activate_grid(self, current_state):
@@ -299,9 +382,6 @@ class GridPosition():
 
         self.record_trigger_opened = []
 
-        if False:
-            self.debug_cpt = 0 # CEDE For Test
-
         self.max_grid_close_order = -1
         self.min_grid_close_order = -1
         self.nb_close_missing = -1
@@ -389,6 +469,10 @@ class GridPosition():
             df.loc[df['position'] > self.current_price, 'side'] = self.side_mapping["up"]
             df.loc[df['position'] < self.current_price, 'side'] = self.side_mapping["down"]
             df.loc[df['position'] == self.current_price, 'side'] = "on_edge"
+
+            differences = df['position'].diff().dropna()
+            diff = differences.mean() / 2
+            df.loc[(df['position'] >= self.current_price - diff) & (df['position'] <= self.current_price + diff), 'side'] = "on_edge"
 
             # Compare if column1 and column2 are the same
             df['changes'] = df['previous_side'] != df['side']
@@ -547,8 +631,11 @@ class GridPosition():
             condition_trigger_short = df_grid['status_trigger_short'] == 'engaged'
             condition_trigger_long_free = df_grid['status_trigger_long'] == 'empty'
             condition_trigger_short_free = df_grid['status_trigger_short'] == 'empty'
+            condition_trailer_long_free = df_grid['status_trailer_long'] == 'empty'
+            condition_trailer_short_free = df_grid['status_trailer_short'] == 'empty'
             condition_side_long = df_grid['side'] == 'trigger_long'
             condition_side_short = df_grid['side'] == 'trigger_short'
+            condition_not_on_edge = df_grid['side'] != 'on_edge'
 
             df_grid_cancel_long = df_grid[condition_0
                                           & condition_trigger_long
@@ -580,7 +667,9 @@ class GridPosition():
 
                 df_grid_free_spot_short = df_grid[condition_0
                                                   & condition_side_short
-                                                  & condition_trigger_short_free].copy()
+                                                  & condition_trigger_short_free
+                                                  & condition_trailer_short_free
+                                                  & condition_not_on_edge].copy()
                 lst_grid_free_spot_short = df_grid_free_spot_short['grid_id'].to_list()
                 if trend == "up":
                     lst_grid_free_spot_short = heapq.nlargest(nb_trigger_to_raise, lst_grid_free_spot_short)
@@ -626,7 +715,9 @@ class GridPosition():
 
                 df_grid_free_spot_long = df_grid[condition_0
                                                  & condition_side_long
-                                                 & condition_trigger_long_free].copy()
+                                                 & condition_trigger_long_free
+                                                 & condition_trailer_long_free
+                                                 & condition_not_on_edge].copy()
                 lst_grid_free_spot_long = df_grid_free_spot_long['grid_id'].to_list()
                 if trend == "up":
                     lst_grid_free_spot_long = heapq.nsmallest(nb_trigger_to_raise, lst_grid_free_spot_long)
@@ -809,7 +900,9 @@ class GridPosition():
                                              & condition_side_on_edge
                                              & condition_side_long
                                              & condition_trigger_long_free
-                                             & condition_trailer_long_free].copy()
+                                             & condition_trailer_long_free
+                                             & condition_trigger_short_free
+                                             & condition_trailer_short_free].copy()
             lst_grid_free_spot_long = df_grid_free_spot_long['grid_id'].to_list()
 
             # df_grid_engaged_long = df_grid[condition_trigger_long].copy()
@@ -827,7 +920,9 @@ class GridPosition():
                                               & condition_side_on_edge
                                               & condition_side_short
                                               & condition_trigger_short_free
-                                              & condition_trailer_short_free].copy()
+                                              & condition_trailer_short_free
+                                              & condition_trigger_long_free
+                                              & condition_trailer_long_free].copy()
             lst_grid_free_spot_short = df_grid_free_spot_short['grid_id'].to_list()
 
             # df_grid_engaged_short = df_grid[condition_trigger_short].copy()
@@ -843,9 +938,12 @@ class GridPosition():
         elif trend == "down":
             # free_spot_long
             df_grid_free_spot_long = df_grid[condition_0
-                                             & condition_side_on_edge
-                                             & condition_side_long
-                                             & condition_trigger_long_free].copy()
+                                              & condition_side_on_edge
+                                              & condition_side_long
+                                              & condition_trigger_short_free
+                                              & condition_trailer_short_free
+                                              & condition_trigger_long_free
+                                              & condition_trailer_long_free].copy()
             lst_grid_free_spot_long = df_grid_free_spot_long['grid_id'].to_list()
 
             # df_grid_engaged_long = df_grid[condition_trigger_long].copy()
@@ -856,13 +954,19 @@ class GridPosition():
             else:
                 trigger_grid_id_min_long = min(self.trend_data[trend]['lst_gridId_open_triggers_long'])
                 self.lst_grid_free_spot_long = [grid_id for grid_id in lst_grid_free_spot_long if grid_id >= trigger_grid_id_min_long]
+
             self.nb_free_spot_long = len(self.lst_grid_free_spot_long)
+            if self.nb_free_spot_long > 0:
+                print("toto")
 
             # free_spot_short
             df_grid_free_spot_short = df_grid[condition_0
                                               & condition_side_on_edge
                                               & condition_side_short
-                                              & condition_trigger_short_free].copy()
+                                              & condition_trigger_short_free
+                                              & condition_trailer_short_free
+                                              & condition_trigger_long_free
+                                              & condition_trailer_long_free].copy()
             lst_grid_free_spot_short = df_grid_free_spot_short['grid_id'].to_list()
 
             # df_grid_engaged_short = df_grid[condition_trigger_short].copy()
@@ -950,8 +1054,6 @@ class GridPosition():
                                     print("trigger orderId triggered missing")
                             elif "trigger_type" in order \
                                     and order["trigger_type"] == "CANCEL_TRIGGER":
-                                if False:
-                                    self.debug_cpt = 0 # CEDE DEBUG
                                 condition = df_grid['orderId_trigger_short'] == order["orderId"]
                                 df_grid.loc[condition, ['orderId_trigger_short', 'trigger_short', 'status_trigger_short', 'status']] = ['',
                                                                                                                                         False,
@@ -990,20 +1092,19 @@ class GridPosition():
             self.log("\n" + df_grid.to_string(index=False))
             del df_grid
 
-    def normalize_grid_price(self, symbol, pricePlace, priceEndStep):
+    def normalize_grid_price(self, symbol, pricePlace, priceEndStep, sizeMultiplier):
         for trend in self.lst_trend:
             df = self.grid[symbol][trend]
             df['position'] = df['position'].apply(lambda x: self.normalize_price(x, pricePlace, priceEndStep))
-            self.log("grid price normalized: " + str(df['position'].tolist()))
-            df['buying_size'] = df['buying_size'].apply(lambda x: self.normalize_price(x, pricePlace, priceEndStep))
-            df['buying_size'] = df['buying_size'].astype(int)
+            # self.log("grid price normalized: " + str(df['position'].tolist()))
 
-            df['buying_size'] = (df['buying_size'] // 1000) * 1000  # Modif CEDE WARNING !!!!! GENERIC SOLUTION TO BE IMPLEMENTED
+            df['buying_size'] = df['buying_size'].apply(lambda x: self.normalize_size(x, sizeMultiplier))
+            # self.log("grid size normalized: " + str(df['buying_size'].tolist()))
 
-            df['buying_size'] = df['buying_size'].astype(int)
-        del df
-        del pricePlace
-        del priceEndStep
+    def normalize_size(self, size, sizeMultiplier):
+        size = (size // sizeMultiplier) * sizeMultiplier
+
+        return size
 
     def normalize_price(self, amount, pricePlace, priceEndStep):
         amount = amount * pow(10, pricePlace)
@@ -1064,9 +1165,8 @@ class GridPosition():
         return df
 
     def set_triggers_executed(self, symbol, df_open_triggers):
+        df_grid_tend = self.grid[symbol]
         condition_strategy_id = df_open_triggers['strategyId'] == self.strategy_id
-        if not symbol.endswith('USDT'): # CEDE: to be fixed
-            symbol += 'USDT'
         condition_trigger_symbol = df_open_triggers['symbol'] == symbol
 
         # Define conditions for strategyId update
@@ -1109,6 +1209,8 @@ class GridPosition():
             self.trend_data[trend] = {}
             condition_trigger_trend = df_open_triggers['trend'] == trend
             condition_trigger_trailer_open = df_open_triggers['planStatus'] != 'executed'
+            condition_trigger_not_canceled = df_open_triggers['planStatus'] != 'cancelled'
+            condition_trigger_canceled = df_open_triggers['planStatus'] == 'cancelled'
             condition_trigger_trailer_executed = df_open_triggers['planStatus'] == 'executed'
             condition_trigger_plan = df_open_triggers['planType'] == 'normal_plan'
             condition_trigger_plan_TP = df_open_triggers['planType'] == 'profit_plan'
@@ -1118,7 +1220,27 @@ class GridPosition():
             condition_long = df_open_triggers['side'] == 'buy'
             condition_short = df_open_triggers['side'] == 'sell'
 
+            self.trend_data[trend]['df_canceled_triggers'] = df_open_triggers[condition_trigger_trailer_open
+                                                                              & condition_trigger_plan
+                                                                              & condition_trigger_trend
+                                                                              & condition_trigger_canceled].copy()
+            if len(self.trend_data[trend]['df_canceled_triggers']) > 0:
+                df_grid = df_grid_tend[trend]
+                lst_canceled_order_id = self.trend_data[trend]['df_canceled_triggers']["orderId"].to_list()
+                for canceled_order_id in lst_canceled_order_id:
+                    condition = df_grid['orderId_trigger_short'] == canceled_order_id
+                    df_grid.loc[condition, ['orderId_trigger_short', 'trigger_short', 'status_trigger_short', 'status']] = ['',
+                                                                                                                            False,
+                                                                                                                            'empty',
+                                                                                                                            'empty']
+                    condition = df_grid['orderId_trigger_long'] == canceled_order_id
+                    df_grid.loc[condition, ['orderId_trigger_long', 'trigger_long', 'status_trigger_long', 'status']] = ['',
+                                                                                                                         False,
+                                                                                                                         'empty',
+                                                                                                                         'empty']
+
             self.trend_data[trend]['df_open_triggers'] = df_open_triggers[condition_trigger_trailer_open
+                                                                          & condition_trigger_not_canceled
                                                                           & condition_trigger_plan
                                                                           & condition_trigger_trend].copy()
             self.trend_data[trend]['nb_open_triggers'] = len(self.trend_data[trend]['df_open_triggers'])
@@ -1127,6 +1249,7 @@ class GridPosition():
 
             self.trend_data[trend]['df_open_triggers_long'] = df_open_triggers[condition_long
                                                                                & condition_trigger_trailer_open
+                                                                               & condition_trigger_not_canceled
                                                                                & condition_trigger_plan
                                                                                & condition_trigger_trend].copy()
             self.trend_data[trend]['nb_open_triggers_long'] = len(self.trend_data[trend]['df_open_triggers_long'])
@@ -1135,6 +1258,7 @@ class GridPosition():
 
             self.trend_data[trend]['df_open_triggers_short'] = df_open_triggers[condition_short
                                                                                 & condition_trigger_trailer_open
+                                                                                & condition_trigger_not_canceled
                                                                                 & condition_trigger_plan
                                                                                 & condition_trigger_trend].copy()
             self.trend_data[trend]['nb_open_triggers_short'] = len(self.trend_data[trend]['df_open_triggers_short'])
@@ -1150,7 +1274,7 @@ class GridPosition():
             self.trend_data[trend]['df_open_trailers_long'] = df_open_triggers[condition_long
                                                                                & condition_trigger_moving_plan
                                                                                & condition_trigger_trend].copy()
-            self.trend_data[trend]['nb_open_trailers_long'] = len(self.trend_data[trend]['df_open_trailers'])
+            self.trend_data[trend]['nb_open_trailers_long'] = len(self.trend_data[trend]['df_open_trailers_long'])
             self.trend_data[trend]['lst_gridId_open_trailers_long'] = list(map(int, self.trend_data[trend]['df_open_trailers_long']["gridId"].to_list()))
             self.trend_data[trend]['lst_orderId_open_trailers_long'] = self.trend_data[trend]['df_open_trailers_long']["orderId"].to_list()
 
@@ -1212,6 +1336,16 @@ class GridPosition():
             self.trend_data[trend]['df_executed_trigger'] = df_open_triggers[condition_trigger_trailer_executed
                                                                              & condition_trigger_trend
                                                                              & condition_trigger_plan].copy()
+
+
+
+
+            self.trend_data[trend]['df_executed_trigger_debug'] = self.trend_data[trend]['df_executed_trigger']
+
+
+
+
+
             self.trend_data[trend]['nb_executed_trigger'] = len(self.trend_data[trend]['df_executed_trigger']) + len(lst_fast_trigger_triggered_order_id)
             self.trend_data[trend]['lst_gridId_executed_trigger'] = list(map(int, self.trend_data[trend]['df_executed_trigger']["gridId"].to_list())) + lst_fast_trigger_triggered_grid_id
             self.trend_data[trend]['lst_orderId_executed_trigger'] = self.trend_data[trend]['df_executed_trigger']["orderId"].to_list() + lst_fast_trigger_triggered_order_id
@@ -1315,6 +1449,26 @@ class GridPosition():
                         else:
                             order["planType"] = ""
                     self.lst_cancel_order_sltp = list_of_dicts
+            else:
+                condition_trigger_moving_plan_long = df_open_triggers['side'] == 'buy'
+                condition_trigger_moving_plan_short = df_open_triggers['side'] == 'sell'
+                self.trend_data[trend]['df_open_SL_order'] = df_open_triggers[condition_trigger_plan_SL
+                                                                              & condition_trigger_trend].copy()
+                self.trend_data[trend]['nb_open_SL_order'] = len(self.trend_data[trend]['df_open_SL_order'])
+
+                self.trend_data[trend]['df_open_TP_order'] = df_open_triggers[condition_trigger_plan_TP
+                                                                              & condition_trigger_trend].copy()
+                self.trend_data[trend]['nb_open_TP_order'] = len(self.trend_data[trend]['df_open_TP_order'])
+
+                self.trend_data[trend]['df_open_trailers_order_long'] = df_open_triggers[condition_trigger_moving_plan
+                                                                                         & condition_trigger_moving_plan_long
+                                                                                         & condition_trigger_trend].copy()
+                self.trend_data[trend]['nb_open_trailers_order_long'] = len(self.trend_data[trend]['df_open_trailers_order_long'])
+
+                self.trend_data[trend]['df_open_trailers_order_short'] = df_open_triggers[condition_trigger_moving_plan
+                                                                                          & condition_trigger_moving_plan_short
+                                                                                          & condition_trigger_trend].copy()
+                self.trend_data[trend]['nb_open_trailers_order_short'] = len(self.trend_data[trend]['df_open_trailers_order_short'])
 
     def transform_order_ids_to_dict(self, symbol, order_ids):
         if symbol == "XRPUSDT":

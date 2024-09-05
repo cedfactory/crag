@@ -481,6 +481,11 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
         return self.df_grid_buying_size
 
+    def normalize_size(self, size, sizeMultiplier):
+        size = (size // sizeMultiplier) * sizeMultiplier
+
+        return size
+
     def set_df_buying_size(self, df_symbol_size, cash):
         if not isinstance(df_symbol_size, pd.DataFrame):
             return
@@ -490,6 +495,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
         for symbol in df_symbol_size['symbol'].tolist():
             dol_per_grid = self.grid_margin / (self.nb_grid + 1)
             size = dol_per_grid / ((self.grid_high + self.grid_low )/2)
+            size = self.normalize_size(size, df_symbol_size['sizeMultiplier'])
             if (self.get_grid_buying_min_size(symbol) <= size)\
                     and (size * self.grid_low > 5) \
                     and (cash >= self.grid_margin):

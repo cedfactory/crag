@@ -1318,13 +1318,16 @@ class Crag:
         if self.init_grid_position:
             self.init_grid_position = False
             df_symbol_minsize = self.broker.get_df_minimum_size(self.symbols)
+            dct_symbol_price_place = self.broker.get_price_place_endstep(self.symbols)
+            df_symbol_price_place = pd.DataFrame(dct_symbol_price_place)
+            df_symbol_features = pd.merge(df_symbol_minsize, df_symbol_price_place, on='symbol')
             df_buying_size = self.rtstr.set_df_buying_size(df_symbol_minsize, self.usdt_equity)
             del df_symbol_minsize
             df_buying_size_normalise = self.broker.normalize_grid_df_buying_size_size(df_buying_size)
             self.rtstr.set_df_normalize_buying_size(df_buying_size_normalise)
             del df_buying_size
             del df_buying_size_normalise
-            self.rtstr.set_normalized_grid_price(self.broker.get_price_place_endstep(self.symbols))
+            self.rtstr.set_normalized_grid_price(dct_symbol_price_place)
 
         # self.execute_timer.set_start_time("crag", "current_state_live", "set_broker_current_state", self.current_state_live)
 
