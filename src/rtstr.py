@@ -492,10 +492,13 @@ class RealTimeStrategy(metaclass=ABCMeta):
         # cash = 10000 # CEDE GRID SCENARIO
         self.df_grid_buying_size = pd.concat([self.df_grid_buying_size, df_symbol_size])
         self.df_grid_buying_size['margin'] = None
+
         for symbol in df_symbol_size['symbol'].tolist():
             dol_per_grid = self.grid_margin / (self.nb_grid + 1)
             size = dol_per_grid / ((self.grid_high + self.grid_low )/2)
-            size = self.normalize_size(size, df_symbol_size['sizeMultiplier'])
+            size = dol_per_grid / self.grid_high
+            size = dol_per_grid / self.grid_low
+            size = self.normalize_size(size, df_symbol_size.loc[df_symbol_size['symbol'] == symbol, "sizeMultiplier"].values[0])
             if (self.get_grid_buying_min_size(symbol) <= size)\
                     and (size * self.grid_low > 5) \
                     and (cash >= self.grid_margin):

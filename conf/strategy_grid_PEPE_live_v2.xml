@@ -15,7 +15,7 @@
                 trailer_global_delta_tp="0"
                 trailer_sl="0"
                 high_volatility="False"
-                path_grid_param="./grid_specific_param_breakout_PEPE_test.csv"
+                path_grid_param="./grid_specific_param_grid_PEPE_live.csv"
                 nb_position_limits="1"
                 lst_combined_strategy=""
                 loggers="file=log"
@@ -36,7 +36,7 @@
     </broker>
     <crag id="grid_long_short_v2"
           interval="3600"
-          botId="subfortest2"
+          botId="subfortest1"
           loggers="console"
     />
 </configuration>

@@ -220,7 +220,8 @@ class StrategyGridTradingGenericV2(rtstr.RealTimeStrategy):
         return self.strategy_id
 
 class GridPosition():
-    def __init__(self, side, lst_symbols, grid_high, grid_low, nb_grid, percent_per_grid, nb_position_limits, strategy_id, debug_mode=True, loggers=[]):
+    def __init__(self, side, lst_symbols, grid_high, grid_low, nb_grid, percent_per_grid,
+                 nb_position_limits, strategy_id, debug_mode=True, loggers=[]):
         self.grid_side = side
         side_mapping = {
             "long": ("open_long", "close_long"),
@@ -290,11 +291,21 @@ class GridPosition():
         self.log("grid steps: {}".format(self.steps))
         self.log("grid values: {}".format(self.lst_grid_values))
 
-        self.columns = ["grid_id", "close_grid_id", "position", "lst_orderId", "nb_position", "triggered_by", "nb_triggered_by", "bool_position_limits", "previous_side", "side", "previous_status", "status", "changes", "cross_checked", "on_edge", "unknown"]
+        self.columns = ["grid_id", "close_grid_id", "position", "lst_orderId", "nb_position",
+                        "triggered_by", "nb_triggered_by", "bool_position_limits", "previous_side",
+                        "side", "previous_status", "status", "changes", "cross_checked", "on_edge",
+                        "unknown", "size", "dol_per_grid"]
         self.grid = {key: pd.DataFrame(columns=self.columns) for key in self.lst_symbols}
         for symbol in lst_symbols:
             self.grid[symbol]["position"] = self.lst_grid_values
             print(self.grid[symbol]["position"].to_list())
+
+            self.grid[symbol]["dol_per_grid"] = self.grid_margin / len(self.grid[symbol])
+            self.grid[symbol]["size"] = self.grid[symbol]["dol_per_grid"] / self.grid[symbol]["position"]
+
+            sizeMultiplier = 1000
+
+            self.grid[symbol]['size'] = self.grid[symbol]['size'].apply(lambda size: self.normalize_size(size, sizeMultiplier))
 
             self.grid[symbol]["grid_id"] = np.arange(len(self.grid[symbol]))[::-1]
             if self.grid_side == "long":
