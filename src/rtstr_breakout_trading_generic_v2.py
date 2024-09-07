@@ -239,27 +239,6 @@ class StrategyBreakoutTradingGenericV2(rtstr.RealTimeStrategy):
             self.grid.normalize_grid_price(price_plc['symbol'], price_plc['pricePlace'], price_plc['priceEndStep'], price_plc['sizeMultiplier'])
         del lst_symbol_plc_endstp
 
-    def activate_grid(self, current_state):
-        if not current_state:
-            return []
-        self.df_price = current_state["prices"]
-        self.grid.set_prices(self.df_price)
-        lst_buying_market_order = []
-        for symbol in self.lst_symbols:
-            lst_buying_market_order = []
-            self.buying_size = self.get_grid_buying_size(symbol, self.strategy_id)
-            if symbol in self.df_price['symbols'].tolist():
-                price = self.df_price.loc[self.df_price['symbols'] == symbol, 'values'].values[0]
-                order = self.grid.get_buying_market_order(symbol, self.buying_size, price)
-                lst_buying_market_order.append(order)
-        del lst_buying_market_order
-        del current_state
-        if self.lst_symbols > 0:
-            del symbol
-            del price
-            del order
-        return lst_buying_market_order
-
     def get_info_msg_status(self):
         return ""
 
@@ -385,7 +364,6 @@ class GridPosition():
         self.max_grid_close_order = -1
         self.min_grid_close_order = -1
         self.nb_close_missing = -1
-        self.buying_size = 0
 
         self.remaining_close_to_be_open = 0
 
@@ -600,9 +578,6 @@ class GridPosition():
                                                                                                                False,
                                                                                                                'empty']
 
-    def set_buying_size(self, buying_size):
-        self.buying_size = buying_size
-
     def get_order_list(self, symbol):
         """
         order_to_execute = {
@@ -615,7 +590,6 @@ class GridPosition():
         }
         """
         lst_of_lst_order = []
-        size = self.buying_size
         for trend in self.lst_trend:
             df_grid = self.grid[symbol][trend]
             lst_order_trailer = []
@@ -1095,31 +1069,11 @@ class GridPosition():
     def normalize_grid_price(self, symbol, pricePlace, priceEndStep, sizeMultiplier):
         for trend in self.lst_trend:
             df = self.grid[symbol][trend]
-            df['position'] = df['position'].apply(lambda x: self.normalize_price(x, pricePlace, priceEndStep))
+            df['position'] = df['position'].apply(lambda x: utils.normalize_price(x, pricePlace, priceEndStep))
             # self.log("grid price normalized: " + str(df['position'].tolist()))
 
-            df['buying_size'] = df['buying_size'].apply(lambda x: self.normalize_size(x, sizeMultiplier))
+            df['buying_size'] = df['buying_size'].apply(lambda x: utils.normalize_size(x, sizeMultiplier))
             # self.log("grid size normalized: " + str(df['buying_size'].tolist()))
-
-    def normalize_size(self, size, sizeMultiplier):
-        size = (size // sizeMultiplier) * sizeMultiplier
-
-        return size
-
-    def normalize_price(self, amount, pricePlace, priceEndStep):
-        amount = amount * pow(10, pricePlace)
-        amount = math.floor(amount)
-        amount = amount * pow(10, -pricePlace)
-        amount = round(amount, pricePlace)
-        # Calculate the decimal without using %
-        decimal_multiplier = priceEndStep * pow(10, -pricePlace)
-        decimal = amount - math.floor(round(amount / decimal_multiplier)) * decimal_multiplier
-        amount = amount - decimal
-        amount = round(amount, pricePlace)
-        del pricePlace
-        del decimal_multiplier
-        del decimal
-        return amount
 
     def get_buying_market_order(self, symbol, size, price):
         order_to_execute = {}

@@ -11,7 +11,31 @@ import psutil
 import pandas as pd
 import random
 import string
+import math
 
+
+def normalize_price(amount, pricePlace, priceEndStep):
+    pricePlace = float(pricePlace)
+    priceEndStep = float(priceEndStep)
+    amount = amount * pow(10, pricePlace)
+    amount = math.floor(amount)
+    amount = amount * pow(10, -pricePlace)
+    amount = round(amount, int(pricePlace))
+    # Calculate the decimal without using %
+    decimal_multiplier = priceEndStep * pow(10, -pricePlace)
+    decimal = amount - math.floor(round(amount / decimal_multiplier)) * decimal_multiplier
+    amount = amount - decimal
+    amount = round(amount, int(pricePlace))
+
+    del pricePlace
+    del decimal_multiplier
+    del decimal
+    return amount
+
+def normalize_size(size, sizeMultiplier):
+    size = (size // sizeMultiplier) * sizeMultiplier
+
+    return size
 
 def create_equal_spacing_list(x, y, num_values=5):
     if num_values < 2:

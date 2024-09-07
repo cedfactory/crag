@@ -92,11 +92,6 @@ class StrategyGridTradingGenericV2(rtstr.RealTimeStrategy):
         self.df_grid_buying_size = df_grid_buying_size
         del df_grid_buying_size
 
-    def normalize_size(self, size, sizeMultiplier):
-        size = (size // sizeMultiplier) * sizeMultiplier
-
-        return size
-
     def get_strategy_id_code(self):
         return self.strategy_id
 
@@ -127,8 +122,6 @@ class StrategyGridTradingGenericV2(rtstr.RealTimeStrategy):
 
         for symbol in self.lst_symbols:
             df_current_state = self.grid.set_current_orders_price_to_grid(symbol, df_current_states)
-            self.grid.set_buying_size(self.get_grid_buying_size(symbol, self.strategy_id))
-            self.grid.update_nb_open_positions(symbol, df_open_positions)
             if symbol in df_price['symbols'].tolist():
                 self.grid.set_current_price(df_price.loc[df_price['symbols'] == symbol, 'values'].values[0])
                 self.grid.update_unknown_status(symbol, df_current_state)
@@ -168,29 +161,12 @@ class StrategyGridTradingGenericV2(rtstr.RealTimeStrategy):
             self.grid.save_grid_scenario(symbol, path, cpt)
 
     def set_normalized_grid_price(self, lst_symbol_plc_endstp):
+        return
+        """
         for price_plc in lst_symbol_plc_endstp:
             self.grid.normalize_grid_price(price_plc['symbol'], price_plc['pricePlace'], price_plc['priceEndStep'], price_plc['sizeMultiplier'])
         del lst_symbol_plc_endstp
-
-    def activate_grid(self, current_state):
-        if not current_state:
-            return []
-        self.df_prices = current_state["prices"]
-        lst_buying_market_order = []
-        for symbol in self.lst_symbols:
-            lst_buying_market_order = []
-            self.buying_size = self.get_grid_buying_size(symbol, self.strategy_id)
-            if symbol in self.df_prices['symbols'].tolist():
-                price = self.df_prices.loc[self.df_prices['symbols'] == symbol, 'values'].values[0]
-                order = self.grid.get_buying_market_order(symbol, self.buying_size, price)
-                lst_buying_market_order.append(order)
-        del lst_buying_market_order
-        del current_state
-        if self.lst_symbols > 0:
-            del symbol
-            del price
-            del order
-        return lst_buying_market_order
+        """
 
     def get_info_msg_status(self):
         return ""
@@ -218,6 +194,12 @@ class StrategyGridTradingGenericV2(rtstr.RealTimeStrategy):
 
     def get_strategy_id(self):
         return self.strategy_id
+
+    def set_df_normalize_buying_size(self, df_normalized_buying_size):
+        self.df_grid_buying_size = df_normalized_buying_size
+        self.grid.set_grid_buying_size(self.df_grid_buying_size)
+        for symbol in self.lst_symbols:
+            self.grid.cross_check_buying_size(symbol, self.get_grid_buying_min_size(symbol))
 
 class GridPosition():
     def __init__(self, side, lst_symbols, grid_high, grid_low, nb_grid, percent_per_grid,
@@ -264,10 +246,6 @@ class GridPosition():
         self.abs = None
         self.closest = None
 
-        self.previous_nb_open_positions = 0
-        self.nb_open_positions = 0
-        self.nb_open_positions_triggered = 0
-
         self.max_grid_close_order = -1
         self.min_grid_close_order = -1
         self.nb_close_missing = -1
@@ -298,14 +276,7 @@ class GridPosition():
         self.grid = {key: pd.DataFrame(columns=self.columns) for key in self.lst_symbols}
         for symbol in lst_symbols:
             self.grid[symbol]["position"] = self.lst_grid_values
-            print(self.grid[symbol]["position"].to_list())
-
-            self.grid[symbol]["dol_per_grid"] = self.grid_margin / len(self.grid[symbol])
-            self.grid[symbol]["size"] = self.grid[symbol]["dol_per_grid"] / self.grid[symbol]["position"]
-
-            sizeMultiplier = 1000
-
-            self.grid[symbol]['size'] = self.grid[symbol]['size'].apply(lambda size: self.normalize_size(size, sizeMultiplier))
+            # print(self.grid[symbol]["position"].to_list())
 
             self.grid[symbol]["grid_id"] = np.arange(len(self.grid[symbol]))[::-1]
             if self.grid_side == "long":
@@ -330,11 +301,7 @@ class GridPosition():
             self.grid[symbol]["on_edge"] = False
             self.grid[symbol]["unknown"] = False
 
-        self.lst_limit_order_missing = []
         self.nb_open_positions = 0
-        self.nb_close_positions = 0
-        self.diff_nb_open_positions = 0
-        self.diff_nb_close_positions = 0
 
         self.total_position_opened = 0
         self.total_position_closed = 0
@@ -346,39 +313,6 @@ class GridPosition():
             return
         for iter_logger in self.loggers:
             iter_logger.log(msg, header=header, author=type(self).__name__, attachments=attachments)
-
-    def update_pending_status_from_current_state(self, symbol, df_current_state):
-        # Update grid status from 'pending' status to 'engaged'
-        # from previous cycle request to open limit order
-        self.lst_limit_order_missing = []
-        df = self.grid[symbol]
-        # Define a condition
-        condition_pending = df['status'] == 'pending'
-        # Use boolean indexing to filter the DataFrame
-        df_filtered = df[condition_pending]
-        lst_grid_id = df_filtered['grid_id'].tolist()
-        lst_grid_id.extend(df_filtered['grid_id'].tolist())
-        lst_grid_id = list(set(lst_grid_id))
-        for grid_id in lst_grid_id:
-            side = df.loc[df['grid_id'] == grid_id, "side"].values[0]
-            if grid_id in df_current_state["gridId"].tolist():
-                if side == df_current_state.loc[df_current_state["gridId"] == grid_id, 'side'].values[0]:
-                    df.loc[df['grid_id'] == grid_id, 'status'] = 'engaged'
-                    df.loc[df['grid_id'] == grid_id, 'orderId'] = df_current_state.loc[df_current_state["gridId"] == grid_id, 'orderId'].values[0]
-                else:
-                    # CEDE: This should not be triggered
-                    # CEDE UPDATE : Maybe Not
-                    self.log("GRID ERROR - open_long vs open_short - grid id: {}".format(grid_id))
-            else:
-                # CEDE: Executed when high volatility is triggering an limit order just after being raised
-                #       and before being recorded by the strategy in the grid process structure
-                self.log("GRID ERROR - limit order failed - grid_id missing: " + str(grid_id) + ' side: ' + side)
-            del side
-        del df
-        del condition_pending
-        del df_filtered
-        del lst_grid_id
-        del df_current_state
 
     def get_grid_nb_grid(self):
         return self.nb_grid
@@ -552,9 +486,6 @@ class GridPosition():
         del condition_engaged
         del df_grid_engaged
 
-    def set_buying_size(self, buying_size):
-        self.buying_size = buying_size
-
     def get_order_list(self, symbol):
         """
         order_to_execute = {
@@ -566,7 +497,6 @@ class GridPosition():
             "linked_position": linked_position
         }
         """
-        size = self.buying_size
         df_grid = self.grid[symbol]
 
         condition_changes = df_grid['changes']
@@ -665,7 +595,6 @@ class GridPosition():
             order_to_execute = {}
             order_to_execute["strategy_id"] = self.strategy_id
             order_to_execute["symbol"] = symbol
-            order_to_execute["gross_size"] = size
             order_to_execute["linked_position"] = linked_position
             if df_grid.loc[df_grid["grid_id"] == grid_id, 'side'].values[0] == "open_long":
                 self.clear_orderId(symbol, grid_id)
@@ -680,6 +609,7 @@ class GridPosition():
             if "type" in order_to_execute:
                 order_to_execute["price"] = df_grid.loc[df_grid["grid_id"] == grid_id, 'position'].values[0]
                 order_to_execute["grid_id"] = grid_id
+                order_to_execute["gross_size"] = df_grid.loc[df_grid["grid_id"] == grid_id, 'size'].values[0]
                 order_to_execute["trade_status"] = "pending"
                 df_grid.loc[df_grid["grid_id"] == grid_id, 'status'] = 'pending'
                 lst_order.append(order_to_execute)
@@ -770,32 +700,6 @@ class GridPosition():
             self.log("\n" + df_grid.to_string(index=False))
             del df_grid
 
-    def update_nb_open_positions(self, symbol, df_open_positions):
-        if not df_open_positions.empty:
-            df_open_positions_filtered = df_open_positions[(df_open_positions['symbol'] == symbol) & (df_open_positions['holdSide'] == "long")]
-            if not df_open_positions_filtered.empty:
-                sum_available_position = df_open_positions_filtered['total'].sum() if not df_open_positions_filtered.empty else 0
-                self.leverage = df_open_positions_filtered['leverage'].iloc[0]
-                self.previous_nb_open_positions = self.nb_open_positions
-                previous_nb_open_positions = self.previous_nb_open_positions
-                self.nb_open_positions = int(sum_available_position / self.buying_size / self.leverage)
-                self.nb_open_positions_triggered = self.nb_open_positions - previous_nb_open_positions
-            else:
-                self.previous_nb_open_positions = self.nb_open_positions
-                self.nb_open_positions = 0
-                self.nb_open_positions_triggered = 0
-
-    def get_nb_open_positions_from_state(self, symbol):
-        row = self.df_nb_open_positions[self.df_nb_open_positions['symbol'] == symbol]
-        if not row.empty:
-            idx = row.index[0]
-            res = row.at[idx, 'nb_open_positions']
-            del idx
-        else:
-            res = 0
-        del row
-        return res
-
     def filter_lst_close_execute_order(self, symbol, lst_order_to_execute):
         df = self.grid[symbol]
 
@@ -804,6 +708,7 @@ class GridPosition():
         condition_close_long = df['side'] == 'close_long'
 
         df_filtered_previous_close_long = df[condition_close_long & condition_engaged]
+        self.nb_open_positions = df["nb_position"].sum()
         count_open_orders = max(len(df_filtered_previous_close_long), self.nb_open_positions)
 
         open_orders = [order for order in lst_order_to_execute if "open_" in order["type"]]
@@ -846,28 +751,49 @@ class GridPosition():
             self.set_on_hold_from_grid_id(order["symbol"], order["grid_id"])
         del resulted_lst
 
-    def normalize_grid_price(self, symbol, pricePlace, priceEndStep):
-        df = self.grid[symbol]
-        df['position'] = df['position'].apply(lambda x: self.normalize_price(x, pricePlace, priceEndStep))
-        self.log("grid price normalized: " + str(df['position'].tolist()))
-        del df
-        del pricePlace
-        del priceEndStep
+    def normalize_grid_price(self, symbol, pricePlace, priceEndStep, sizeMultiplier):
+        return
 
-    def normalize_price(self, amount, pricePlace, priceEndStep):
-        amount = amount * pow(10, pricePlace)
-        amount = math.floor(amount)
-        amount = amount * pow(10, -pricePlace)
-        amount = round(amount, pricePlace)
-        # Calculate the decimal without using %
-        decimal_multiplier = priceEndStep * pow(10, -pricePlace)
-        decimal = amount - math.floor(round(amount / decimal_multiplier)) * decimal_multiplier
-        amount = amount - decimal
-        amount = round(amount, pricePlace)
-        del pricePlace
-        del decimal_multiplier
-        del decimal
-        return amount
+    def set_grid_buying_size(self, df_grid_buying_size):
+        self.df_grid_buying_size = df_grid_buying_size
+
+        for symbol in self.lst_symbols:
+            # Calculate dol_per_grid for the symbol, dividing grid_margin by the number of rows (cells) in grid[symbol]
+            grid_margin = self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "margin"].values[0]
+            pricePlace = self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "pricePlace"].values[0]
+            priceEndStep = self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "priceEndStep"].values[0]
+            self.grid[symbol]['position'] = self.grid[symbol]['position'].apply(lambda x: utils.normalize_price(x, pricePlace, priceEndStep))
+
+            num_cells = len(self.grid[symbol])
+            self.grid[symbol]["dol_per_grid"] = grid_margin / num_cells
+
+            # Calculate size by dividing dol_per_grid by the position column
+            self.grid[symbol]["size"] = self.grid[symbol]["dol_per_grid"] / self.grid[symbol]["position"]
+
+            # Get the sizeMultiplier for the symbol
+            sizeMultiplier = self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "sizeMultiplier"].values[0]
+
+            # Apply the normalize_size function to each value in the 'size' column
+            self.grid[symbol]["size"] = self.grid[symbol]["size"].apply(
+                lambda size: utils.normalize_size(size, sizeMultiplier))
+
+            # Fill NaN values in case there are any undefined cells
+            self.grid[symbol]["size"].fillna(0, inplace=True)
+            self.grid[symbol]["dol_per_grid"].fillna(0, inplace=True)
+            self.grid[symbol]["dol_per_grid_verif"] = self.grid[symbol]["size"] * self.grid[symbol]["position"]
+
+            # Check if any value in dol_per_grid_verif is less than 5
+            if (self.grid[symbol]["dol_per_grid_verif"] < 5).any():
+                print(f"Exiting because dol_per_grid_verif for {symbol} has a value less than $5.")
+                exit(33)
+            self.grid[symbol] = self.grid[symbol].drop(columns=["dol_per_grid_verif"])
+        return
+
+    def cross_check_buying_size(self, symbol, buying_min_size):
+        if (self.grid[symbol]["size"] < buying_min_size).any():
+            print(f"Exiting because buying_min_size for {symbol} has a value less than buying_min_size {buying_min_size}.")
+            exit(44)
+        return
 
     def get_buying_market_order(self, symbol, size, price):
         order_to_execute = {}

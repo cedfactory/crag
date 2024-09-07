@@ -8,6 +8,8 @@ from os import path
 from datetime import datetime, timedelta
 from src import logger
 
+import utils
+
 class RealTimeStrategy(metaclass=ABCMeta):
 
     def __init__(self, params=None):
@@ -481,11 +483,6 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
         return self.df_grid_buying_size
 
-    def normalize_size(self, size, sizeMultiplier):
-        size = (size // sizeMultiplier) * sizeMultiplier
-
-        return size
-
     def set_df_buying_size(self, df_symbol_size, cash):
         if not isinstance(df_symbol_size, pd.DataFrame):
             return
@@ -496,14 +493,22 @@ class RealTimeStrategy(metaclass=ABCMeta):
         for symbol in df_symbol_size['symbol'].tolist():
             dol_per_grid = self.grid_margin / (self.nb_grid + 1)
             size = dol_per_grid / ((self.grid_high + self.grid_low )/2)
-            size = dol_per_grid / self.grid_high
-            size = dol_per_grid / self.grid_low
-            size = self.normalize_size(size, df_symbol_size.loc[df_symbol_size['symbol'] == symbol, "sizeMultiplier"].values[0])
-            if (self.get_grid_buying_min_size(symbol) <= size)\
-                    and (size * self.grid_low > 5) \
+            size_high = dol_per_grid / self.grid_high
+            size_low = dol_per_grid / self.grid_low
+            size_high = utils.normalize_size(size_high, self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol,
+                                                                                    "sizeMultiplier"].values[0])
+            size_low = utils.normalize_size(size_low, self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol,
+                                                                                  "sizeMultiplier"].values[0])
+            if (self.get_grid_buying_min_size(symbol) <= size_high) \
+                    and (self.get_grid_buying_min_size(symbol) <= size_low) \
+                    and (dol_per_grid > 5) \
                     and (cash >= self.grid_margin):
+                size = (size_high + size_low) / 2
+                size = utils.normalize_size(size,
+                                           self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol,
+                                                                        "sizeMultiplier"].values[0])
                 self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "strategy_id"] = self.strategy_id
-                self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "buyingSize"] = size
+                self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "buyingSize"] = size    # CEDE: Average size
                 self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "margin"] = self.grid_margin
                 self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "maxSizeToBuy"] = self.nb_grid
                 msg = "**" + symbol + "**\n"

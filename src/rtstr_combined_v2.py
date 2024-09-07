@@ -146,12 +146,6 @@ class StrategyGridTradingLongShortV2(rtstr.RealTimeStrategy):
 
         del lst_symbol_plc_endstp
 
-    def activate_grid(self, current_state):
-        lst_buying_orders = []
-        for strategy in self.lst_strategy:
-            lst_buying_orders.extend(strategy.activate_grid(current_state))
-        return lst_buying_orders
-
     def _get_info_msg_status_for_strategy(self, strategy):
         msg = ""
         msg_strategy = strategy.get_info_msg_status()
