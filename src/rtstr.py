@@ -8,7 +8,7 @@ from os import path
 from datetime import datetime, timedelta
 from src import logger
 
-import utils
+from . import utils
 
 class RealTimeStrategy(metaclass=ABCMeta):
 
