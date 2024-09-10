@@ -202,7 +202,6 @@ class StrategyGridTradingLongShortV2(rtstr.RealTimeStrategy):
             df_concat = pd.concat([df_concat, df], axis=0)
         return df_concat
 
-
     def set_df_buying_size_scenario(self, df_symbol_size, cash):
         for strategy in self.lst_strategy:
             strategy.set_df_buying_size_scenario(df_symbol_size, cash)

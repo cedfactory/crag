@@ -36,7 +36,7 @@ class BrokerBitGet(broker.Broker):
 
         self.df_grid_id_match = pd.DataFrame(columns=["orderId", "grid_id", "strategy_id", "trend"])
         self.lock = threading.Lock()
-        self.lock_bitget = threading.Lock()
+        self.lock_place_trigger_order_v2 = threading.Lock()
         self.execute_timer = None
         self.iter_execute_orders = 0
         self.iter_set_open_orders_gridId = 0
@@ -353,7 +353,7 @@ class BrokerBitGet(broker.Broker):
             msg += "{} size: {} trigger_price: {}".format(order_side, amount, trigger_price) + "\n"
 
             # amount = str(15)  # CEDE For test size / amount
-            with self.lock_bitget:
+            with self.lock_place_trigger_order_v2:
                 transaction = self._place_trigger_order_v2(symbol,  planType="normal_plan", triggerPrice=trigger_price,
                                                            marginCoin="USDT", size=amount, side=side,
                                                            tradeSide=trade_side, reduceOnly="YES",
@@ -441,7 +441,7 @@ class BrokerBitGet(broker.Broker):
                     trigger_price = self.get_values([symbol])
                     value = trigger_price.loc[trigger_price["symbols"] == symbol, "values"].values[0]
 
-                    lst_trigger_price = self.generateRangePrices(symbol, value, 0.2, 100, 10)
+                    lst_trigger_price = self.generateRangePrices(symbol, value, 0.2, 1000, 10)
 
                     for trigger_price in lst_trigger_price:
                         transaction = self.place_tpsl_order(symbol, marginCoin="USDT",

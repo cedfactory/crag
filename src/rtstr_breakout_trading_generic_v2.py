@@ -113,8 +113,8 @@ class StrategyBreakoutTradingGenericV2(rtstr.RealTimeStrategy):
         if not current_state:
             return []
 
-        df_current_states = current_state["open_orders"].copy()
-        df_open_positions = current_state["open_positions"].copy()
+        # df_current_states = current_state["open_orders"].copy()
+        # df_open_positions = current_state["open_positions"].copy()
         df_open_triggers = current_state["triggers"].copy()
         df_price = current_state["prices"].copy()
 
@@ -133,7 +133,6 @@ class StrategyBreakoutTradingGenericV2(rtstr.RealTimeStrategy):
         for symbol in self.lst_symbols:
             # self.print_debug_grid(symbol)
             # df_open_triggers = self.grid.set_current_orders_price_to_grid(symbol, df_open_triggers)
-            self.grid.set_buying_size(self.get_grid_buying_size(symbol, self.strategy_id))
             if symbol in df_price['symbols'].tolist():
                 self.grid.set_triggers_executed(symbol, df_open_triggers)
                 self.grid.set_current_price(df_price.loc[df_price['symbols'] == symbol, 'values'].values[0])
@@ -141,9 +140,6 @@ class StrategyBreakoutTradingGenericV2(rtstr.RealTimeStrategy):
                 self.grid.cross_check_with_current_state(symbol)
                 self.grid.update_grid_side(symbol)
             lst_order_to_execute = self.grid.get_order_list(symbol)
-
-        del df_current_states
-        del df_open_positions
         del df_price
 
         self.iter_set_broker_current_state += 1
@@ -171,8 +167,8 @@ class StrategyBreakoutTradingGenericV2(rtstr.RealTimeStrategy):
             # Iterate over trends and check if the backup does not match the current grid
             for trend in lst_trend:
                 # Create a copy of the DataFrame without the excluded columns
-                df_to_save = self.grid.grid[symbol][trend].drop(columns=exclude_columns)
-                df_backup_to_save = self.backup_grid[symbol][trend].drop(columns=exclude_columns)
+                df_to_save = self.grid.grid[symbol][trend].drop(columns=exclude_columns).copy()
+                df_backup_to_save = self.backup_grid[symbol][trend].drop(columns=exclude_columns).copy()
 
                 # Use DataFrame.equals() to check if DataFrames are exactly the same
                 if not df_backup_to_save.equals(df_to_save):

@@ -39,7 +39,6 @@ class RealTimeStrategy(metaclass=ABCMeta):
         self.trigger_global_trailer_SL = False
         self.drawdown_SL = 0
         self.MAX_POSITION = 5    # Asset Overall Percent Size
-        self.set_buying_size = False
         self.buying_size = 0
         self.zero_print = True
         self.loggers = [ logger.LoggerConsole() ]

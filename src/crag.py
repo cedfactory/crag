@@ -18,6 +18,7 @@ from datetime import date
 from threading import Thread
 from concurrent.futures import ThreadPoolExecutor
 import multiprocessing
+import threading
 # import tracemalloc
 
 import gc
@@ -87,7 +88,10 @@ class Crag:
         self.init_market_price = 0
         self.market_price_max = 0
         self.market_price_min = 0
+        self.lock_usdt_equity_thread = threading.Lock()
         self.usdt_equity = 0
+        self.usdt_equity_previous = 0
+        self.usdt_equity_thread = 0
 
         self.resume = False
         self.safety_step_iterration = 0
@@ -269,6 +273,12 @@ class Crag:
 
         start = datetime.now()
         start = start.replace(second=0, microsecond=0)
+        # init
+        self.usdt_equity_thread = self.broker.get_usdt_equity()
+        # get usdt_euqity to run_in_background
+        t = threading.Thread(target=self.update_status_for_TPSL, daemon=True)
+        t.start()
+
         if self.interval == 24 * 60 * 60:  # 1d
             start = start.replace(hour=0, minute=0, second=0, microsecond=0)
             start += timedelta(days=1)
@@ -380,7 +390,7 @@ class Crag:
 
 
     def step(self):
-        self.usdt_equity = self.broker.get_usdt_equity()
+        self.usdt_equity = self.usdt_equity_thread
         self.send_alive_notification()
         stop = self.monitoring.get_strategy_stop(self.rtstr.id)
         if stop:
@@ -851,7 +861,7 @@ class Crag:
 
         if self.reboot_exception or reboot \
                 or (delta_memory_used > 50) \
-                or (self.safety_step_iterration > 300):
+                or (self.safety_step_iterration > 3000  ):
             memory_usage = round(utils.get_memory_usage() / (1024 * 1024), 1)
             print("****************** memory: ", memory_usage, " ******************")
             print("****************** delta memory: ", delta_memory_used, " ******************")
@@ -1314,7 +1324,7 @@ class Crag:
             return
 
         # self.execute_timer.set_end_time("crag", "current_state_live", "get_current_state", self.current_state_live)
-
+        self.usdt_equity = self.usdt_equity_thread
         if self.init_grid_position:
             self.init_grid_position = False
             df_symbol_minsize = self.broker.get_df_minimum_size(self.symbols)
@@ -1380,11 +1390,22 @@ class Crag:
         locals().clear()
         self.current_state_live += 1
 
+    def update_status_for_TPSL(self):
+        while True:
+            usdt_equity_thread = self.broker.get_usdt_equity()
+            with self.lock_usdt_equity_thread:
+                self.usdt_equity_thread = usdt_equity_thread
+            time.sleep(2)
+
     def safety_step(self):
         start_safety_step = time.time()
         self.broker.enable_cache()
 
-        self.usdt_equity = self.broker.get_usdt_equity()
+        self.usdt_equity = self.usdt_equity_thread
+        if self.usdt_equity != self.usdt_equity_previous:
+            print(" self.usdt_equity: ", self.usdt_equity)
+        self.usdt_equity_previous = self.usdt_equity
+
         self.total_SL_TP = self.usdt_equity - self.original_portfolio_value
         if self.usdt_equity >= self.maximal_portfolio_value:
             self.maximal_portfolio_value = self.usdt_equity

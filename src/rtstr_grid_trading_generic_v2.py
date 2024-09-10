@@ -107,7 +107,7 @@ class StrategyGridTradingGenericV2(rtstr.RealTimeStrategy):
             return []
 
         df_current_states = current_state["open_orders"].copy()
-        df_open_positions = current_state["open_positions"].copy()
+        # df_open_positions = current_state["open_positions"].copy()
         df_price = current_state["prices"].copy()
 
         if not self.mutiple_strategy:
@@ -137,7 +137,6 @@ class StrategyGridTradingGenericV2(rtstr.RealTimeStrategy):
             self.log("#############################################################################################")
             self.log("current_state: \n" + df_sorted.to_string(index=False))
             del df_sorted
-            self.log("open_positions: \n" + df_open_positions.to_string(index=False))
             self.log("price: \n" + df_price.to_string(index=False))
             lst_order_to_print = []
             for order in lst_order_to_execute:
@@ -146,7 +145,6 @@ class StrategyGridTradingGenericV2(rtstr.RealTimeStrategy):
             del lst_order_to_print
 
         del df_current_states
-        del df_open_positions
         del df_price
 
         self.iter_set_broker_current_state += 1
@@ -162,11 +160,6 @@ class StrategyGridTradingGenericV2(rtstr.RealTimeStrategy):
 
     def set_normalized_grid_price(self, lst_symbol_plc_endstp):
         return
-        """
-        for price_plc in lst_symbol_plc_endstp:
-            self.grid.normalize_grid_price(price_plc['symbol'], price_plc['pricePlace'], price_plc['priceEndStep'], price_plc['sizeMultiplier'])
-        del lst_symbol_plc_endstp
-        """
 
     def get_info_msg_status(self):
         return ""
