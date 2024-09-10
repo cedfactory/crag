@@ -1,0 +1,42 @@
+<configuration>
+    <strategy id="StrategyGridTradingLongShortv2" name="StrategyGridTradingLongShortV2">
+        <params symbols="./symbols_df_sltp_PEPE_usdt.csv"
+                strategy_interval="3600"
+                multi_param="False"
+                candle_stick="released"
+                max_position="1"
+                sl="0"
+                tp="0"
+                global_sl="-50"
+                global_tp="20"
+                trailer_tp="0"
+                trailer_delta_tp="0"
+                trailer_global_tp="0"
+                trailer_global_delta_tp="0"
+                trailer_sl="0"
+                high_volatility="False"
+                path_grid_param="./grid_specific_param_grid_breakout_PEPE_live.csv"
+                nb_position_limits="1"
+                lst_combined_strategy=""
+                loggers="file=log"
+        />
+    </strategy>
+    <broker name="bitget">
+        <params exchange="bitget"
+                fdp_url_id="gc1"
+                account="subfortest1"
+                symbols="./symbols_df_sltp_PEPE_usdt.csv"
+                simulation="1"
+                intervals="1h"
+                orders="market"
+                reset_account="False"
+                reset_account_orders="False"
+                loggers="file=log"
+        />
+    </broker>
+    <crag id="grid_long_short_v2"
+          interval="3600"
+          botId="subfortest1"
+          loggers="file=log"
+    />
+</configuration>

@@ -1,4 +1,4 @@
-symbol,UpperPriceLimit,LowerPriceLimit,OutboundZoneMax,OutboundZoneMin,grid_step,grid_threshold,balance_min_size,out_of_range_SL,out_of_range_TP
+ymbol,UpperPriceLimit,LowerPriceLimit,OutboundZoneMax,OutboundZoneMin,grid_step,grid_threshold,balance_min_size,out_of_range_SL,out_of_range_TP
 BTC/USD,21100,19900,100000,10000,10,0.08,0.0001,-1,1
 ETH/USD,1700,1450,3000,1000,10,0.08,0.001,-1,1
 XRP/USD,0.51,0.45,2,0.1,10,0.08,1,-1,1
