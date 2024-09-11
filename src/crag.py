@@ -12,6 +12,7 @@ import json
 # import ast
 import threading
 import pickle
+import dill
 from pathlib import Path
 from datetime import datetime, timedelta
 from datetime import date
@@ -826,7 +827,12 @@ class Crag:
     def backup(self):
         with open(self.backup_filename, 'wb') as file:
             self.log("[crag::backup]", self.backup_filename)
+            dill.dump(self, file)
+        """
+        with open(self.backup_filename, 'wb') as file:
+            self.log("[crag::backup]", self.backup_filename)
             pickle.dump(self, file)
+        """
 
     def backup_debug(self, duration):
         dump_dir = "dump_crag"
@@ -861,7 +867,7 @@ class Crag:
 
         if self.reboot_exception or reboot \
                 or (delta_memory_used > 50) \
-                or (self.safety_step_iterration > 3000  ):
+                or (self.safety_step_iterration > 3000):
             memory_usage = round(utils.get_memory_usage() / (1024 * 1024), 1)
             print("****************** memory: ", memory_usage, " ******************")
             print("****************** delta memory: ", delta_memory_used, " ******************")
