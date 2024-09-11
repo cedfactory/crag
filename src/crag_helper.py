@@ -11,6 +11,7 @@ import os
 import glob
 import shutil
 import pickle
+import dill
 
 
 def get_configuration_files_list(config_files_df_lst):
@@ -143,7 +144,8 @@ def initialization_from_pickle(picklefilename):
     if os.path.exists(picklefilename):
         with open(picklefilename, 'rb') as file:
             try:
-                bot = pickle.load(file)
+                # bot = pickle.load(file)
+                bot = dill.load(file)
             except Exception as exception:
                 print(exception)
     return bot
