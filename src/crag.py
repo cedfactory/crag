@@ -88,7 +88,7 @@ class Crag:
         self.init_market_price = 0
         self.market_price_max = 0
         self.market_price_min = 0
-        self.lock_usdt_equity_thread = threading.Lock()
+
         self.usdt_equity = 0
         self.usdt_equity_previous = 0
         self.usdt_equity_thread = 0
@@ -1393,6 +1393,7 @@ class Crag:
     def update_status_for_TPSL(self):
         while True:
             usdt_equity_thread = self.broker.get_usdt_equity()
+            self.lock_usdt_equity_thread = threading.Lock()
             with self.lock_usdt_equity_thread:
                 self.usdt_equity_thread = usdt_equity_thread
             time.sleep(2)

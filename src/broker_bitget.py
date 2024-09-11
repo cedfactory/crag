@@ -35,8 +35,8 @@ class BrokerBitGet(broker.Broker):
         self.clientOIdprovider = utils.ClientOIdProvider()
 
         self.df_grid_id_match = pd.DataFrame(columns=["orderId", "grid_id", "strategy_id", "trend"])
-        self.lock = threading.Lock()
-        self.lock_place_trigger_order_v2 = threading.Lock()
+
+
         self.execute_timer = None
         self.iter_execute_orders = 0
         self.iter_set_open_orders_gridId = 0
@@ -273,6 +273,7 @@ class BrokerBitGet(broker.Broker):
         del gridId
 
     def add_gridId_orderId(self, gridId, orderId, strategyId, trend=None):
+        self.lock = threading.Lock()
         with self.lock:
             self.df_grid_id_match.loc[len(self.df_grid_id_match)] = [orderId, gridId, strategyId, trend]
             self.df_grid_id_match = self.df_grid_id_match.drop_duplicates()
@@ -353,6 +354,7 @@ class BrokerBitGet(broker.Broker):
             msg += "{} size: {} trigger_price: {}".format(order_side, amount, trigger_price) + "\n"
 
             # amount = str(15)  # CEDE For test size / amount
+            self.lock_place_trigger_order_v2 = threading.Lock()
             with self.lock_place_trigger_order_v2:
                 transaction = self._place_trigger_order_v2(symbol,  planType="normal_plan", triggerPrice=trigger_price,
                                                            marginCoin="USDT", size=amount, side=side,
