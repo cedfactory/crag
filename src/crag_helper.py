@@ -142,6 +142,9 @@ def initialization_from_pickle(picklefilename):
     bot = None
     if os.path.exists(picklefilename):
         with open(picklefilename, 'rb') as file:
-            bot = pickle.load(file)
+            try:
+                bot = pickle.load(file)
+            except Exception as exception:
+                print(exception)
     return bot
 
