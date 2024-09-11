@@ -349,7 +349,7 @@ class LoggerTelegramBot(ILogger):
             self.token = params.get("token", self.token)
             self.chat_id = params.get("chat_id", self.chat_id)
 
-    def log(self, msg, header="", author="", attachments=[], extra=None):
+    def log(self, msg, header="", author="", attachments=[], extra={}):
         response = None
         if self.id and self.token and self.chat_id:
             url = "https://api.telegram.org/bot" + self.token
@@ -357,6 +357,8 @@ class LoggerTelegramBot(ILogger):
             if "message_id" in extra:
                 if isinstance(extra["message_id"], int):
                     params["message_id"] = extra["message_id"]
+                elif isinstance(extra["message_id"], str):
+                    params["message_id"] = int(extra["message_id"])
                 elif isinstance(extra["message_id"], list) and len(extra["message_id"]) > 1:
                     params["message_id"] = extra["message_id"][0]
                 if attachments:

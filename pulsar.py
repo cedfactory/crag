@@ -1,10 +1,10 @@
-import subprocess
 import os, sys, platform
-from src import crag_helper, broker_bitget_api, logger, utils
+from src import broker_bitget_api, logger, utils
 from src.toolbox import graph_helper
 from rich import print
 from datetime import datetime, timedelta
 import time
+import csv
 import pandas as pd
 
 import matplotlib.pyplot as plt
@@ -82,72 +82,153 @@ def get_fig_orders(my_broker):
 
     return fig
 
+class Agent:
+    def __init__(self):
+        self.bot_id = None
+        self.account_id = None
+        self.message1_id = "-1"
+        self.message2_id = "-1"
+        self.message3_id = "-1"
+
+def _usage():
+    usage = "pulsar <pulsar.csv>"
+    print(usage)
 
 if __name__ == '__main__':
-    print("Platform :", g_os_platform)
-    g_python_executable = sys.executable
-    print("Python executable :", g_python_executable)
-
     console = logger.LoggerConsole()
 
-    botId = "cedfactory1"
-    botTelegram = logger._initialize_crag_telegram_bot("cedfactory1")
-    if botTelegram == None:
-        console.log("💥 Bot {} failed".format(botId))
-        exit(1)
-    console.log("Bot {} initialized".format(botId))
+    agents = []
 
-    accountId = "subfortest2"
-    params = {"exchange": "bitget", "account": accountId,
-              "reset_account": False, "reset_account_orders": False, "zero_print": False}
-    my_broker = broker_bitget_api.BrokerBitGetApi(params)
-    if my_broker == None:
-        console.log("💥 Broker {} failed".format(accountId))
-        exit(1)
-    console.log("Account {} initialized".format(botId))
-
-    datafile = "pulsar_data.csv"
-    df = pd.DataFrame(columns=["account", "timestamp", "usdt_equity"])
-    if os.path.exists(datafile):
-        df = pd.read_csv(datafile)
-        #df['timestamp'] = df['timestamp'].astype(float)
-        #df['usdt_equity'] = df['usdt_equity'].astype(float)
-        #df["usdt_equity"] = pd.to_numeric(df["usdt_equity"], errors='coerce')
-
-    message_id = 42
-    while True:
-        usdt_equity = my_broker.get_usdt_equity()
-        if usdt_equity is None:
-            continue
+    file_path = ""
+    if len(sys.argv) == 2:
+        file_path = sys.argv[1]
+        if os.path.exists(file_path):
+            with open(file_path, "r") as file:
+                csvreader = csv.reader(file)
+                next(csvreader)
+                for row in csvreader:
+                    agent = Agent()
+                    agent.bot_id = row[0]
+                    agent.account_id = row[1]
+                    agent.message1_id = row[2]
+                    agent.message2_id = row[3]
+                    agent.message3_id = row[4]
+                    agents.append(agent)
         else:
-            usdt_equity = str(utils.KeepNDecimals(usdt_equity, 2))
-        extra = {}
-        if message_id:
-            extra["message_id"] = message_id
-        now = get_now()
-        current_time = get_time_from_datetime(now)
-        message = current_time + "\n" + "<b>" + my_broker.account["id"] + "</b>" + " : $ " + usdt_equity
+            _usage()
+            exit(0)
+    else:
+        _usage()
+        exit(0)
 
-        current_timestamp = get_timestamp_from_datetime(now)
-        df.loc[len(df)] = [accountId, float(current_timestamp), float(usdt_equity)]
-        df.to_csv(datafile, index=False)
+    console.log("Platform :" + g_os_platform)
+    g_python_executable = sys.executable
+    console.log("Python executable :" + g_python_executable)
 
-        timestamp_begin = (now - timedelta(hours=72)).timestamp()
-        df_filtered = df.loc[df["timestamp"] > timestamp_begin]
+    console.log(str(len(agents)) + " agents read")
+    if len(agents) == 0:
+        sys.exit(0)
 
-        fig = graph_helper.export_graph("pulsar_history.png", accountId,
-                                  [{"dataframe": df_filtered, "plots": [{"column": "usdt_equity", "label": "USDT equity"}]}])
+    # initialize the agents
+    for agent in agents:
+        bot_id = agent.bot_id
+        agent.bot = logger._initialize_crag_telegram_bot(bot_id)
+        if agent.bot == None:
+            console.log("💥 Bot {} failed".format(bot_id))
+            exit(1)
+        console.log("Bot {} initialized".format(bot_id))
 
-        response = botTelegram.log(message, attachments=["pulsar_history.png"], extra=extra)
-        if response and "ok" in response and response["ok"] and "result" in response:
-            if "message_id" in response["result"]:
-                message_id = response["result"]["message_id"]
-            elif isinstance(response["result"], list):
-                message_id = [res["message_id"] for res in response["result"]]
+        account_id = agent.account_id
+        params = {"exchange": "bitget", "account": account_id,
+                  "reset_account": False, "reset_account_orders": False, "zero_print": False}
+        agent.broker = broker_bitget_api.BrokerBitGetApi(params)
+        if agent.broker == None:
+            console.log("💥 Broker {} failed".format(account_id))
+            exit(1)
+        console.log("Account {} initialized".format(account_id))
 
-        get_fig_orders(my_broker)
-        extra["message_id"] = 57
-        message = current_time + "\n" + "<b>" + my_broker.account["id"] + "</b>" + " : current state"
-        response = botTelegram.log(message, attachments=["pulsar_current_state.png"], extra=extra)
+        agent.datafile = "pulsar_" + account_id + "_data.csv"
+        agent.df = pd.DataFrame(columns=["account", "timestamp", "usdt_equity"])
+        if os.path.exists(agent.datafile):
+            agent.df = pd.read_csv(agent.datafile)
+            agent.df['timestamp'] = agent.df['timestamp'].astype(float)
+            agent.df['usdt_equity'] = agent.df['usdt_equity'].astype(float)
+            #agent.df["usdt_equity"] = agent.df.to_numeric(agent.df["usdt_equity"], errors='coerce')
+
+        update_csv = False
+        if agent.message1_id == "-1":
+            response = agent.bot.log(account_id)
+            try:
+                agent.message1_id = str(response["result"]["message_id"])
+                update_csv = True
+            except Exception as e:
+                console.log("Problem while sending message with " + agent.bot_id)
+
+        if agent.message2_id == "-1":
+            response = agent.bot.log("usdt equity", attachments=["pulsar.png"])
+            try:
+                agent.message2_id = str(response["result"]["message_id"])
+                update_csv = True
+            except Exception as e:
+                console.log("Problem while sending message with " + agent.bot_id)
+
+        if agent.message3_id == "-1":
+            response = agent.bot.log("grid", attachments=["pulsar.png"])
+            try:
+                agent.message3_id = str(response["result"]["message_id"])
+                update_csv = True
+            except Exception as e:
+                console.log("Problem while sending message with " + agent.bot_id)
+
+    console.log(agent.message1_id)
+    console.log(agent.message2_id)
+    console.log(agent.message3_id)
+    if update_csv:
+        with open(file_path, "w", newline="") as file:
+            writer = csv.writer(file)
+            writer.writerow(["bot_id","account_id","message1_id","message2_id","message3_id"])
+            for agent in agents:
+                writer.writerow([agent.bot_id, agent.account_id, agent.message1_id, agent.message2_id, agent.message3_id])
+
+
+    while True:
+        for agent in agents:
+            usdt_equity = agent.broker.get_usdt_equity()
+            if usdt_equity is None:
+                continue
+            else:
+                usdt_equity = str(utils.KeepNDecimals(usdt_equity, 2))
+            extra = {}
+            if agent.message1_id != "-1":
+                extra["message_id"] = agent.message1_id
+            now = get_now()
+            current_time = get_time_from_datetime(now)
+            message = current_time + "\n" + "<b>" + agent.broker.account["id"] + "</b>" + " : $ " + usdt_equity
+
+            current_timestamp = get_timestamp_from_datetime(now)
+            agent.df.loc[len(agent.df)] = [agent.account_id, float(current_timestamp), float(usdt_equity)]
+            agent.df.to_csv(agent.datafile, index=False)
+
+            response = agent.bot.log(message, extra=extra)
+
+            # message 2
+            extra["message_id"] = agent.message2_id
+            timestamp_begin = (now - timedelta(hours=72)).timestamp()
+            df_filtered = agent.df.loc[agent.df["timestamp"] > timestamp_begin]
+
+            fig = graph_helper.export_graph("pulsar_history.png", agent.account_id,
+                                      [{"dataframe": df_filtered, "plots": [{"column": "usdt_equity", "label": "USDT equity"}]}])
+
+            response = agent.bot.log(message, attachments=["pulsar_history.png"], extra=extra)
+            if response and "ok" in response and response["ok"] and "result" in response:
+                if "message_id" in response["result"]:
+                    message_id = response["result"]["message_id"]
+                elif isinstance(response["result"], list):
+                    message_id = [res["message_id"] for res in response["result"]]
+
+            get_fig_orders(agent.broker)
+            extra["message_id"] = agent.message3_id
+            message = current_time + "\n" + "<b>" + agent.broker.account["id"] + "</b>" + " : current state"
+            response = agent.bot.log(message, attachments=["pulsar_current_state.png"], extra=extra)
 
         time.sleep(60*5)  # 5min
