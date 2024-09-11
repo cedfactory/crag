@@ -180,9 +180,6 @@ if __name__ == '__main__':
             except Exception as e:
                 console.log("Problem while sending message with " + agent.bot_id)
 
-    console.log(agent.message1_id)
-    console.log(agent.message2_id)
-    console.log(agent.message3_id)
     if update_csv:
         with open(file_path, "w", newline="") as file:
             writer = csv.writer(file)
