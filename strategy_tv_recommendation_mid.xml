@@ -1,9 +1,0 @@
-<configuration>
-    <strategy id="room1" name="StrategyTvRecommendationMid">
-        <params share_size="10" grid_df_params="./grid_df_params.csv" />
-    </strategy>
-    <broker name="binance">
-        <params exchange="binance" account="TV_MID" simulation="0" />
-    </broker>
-    <crag id="test" interval="60" />
-</configuration>

@@ -1,7 +1,0 @@
-<configuration>
-    <strategy name="StrategySuperReversal" />
-    <broker name="binance">
-        <params exchange="binance" account="room1" simulation="0" />
-    </broker>
-    <crag interval="3600" />
-</configuration>

@@ -1,9 +1,0 @@
-<configuration>
-    <strategy name="StrategySuperReversal">
-        <params max_position="10" />
-    </strategy>
-    <broker name="simulator">
-        <params cash="100" start_date="2022-01-01" end_date="2022-02-01" intervals="1h"/>
-    </broker>
-    <crag interval="3600" />
-</configuration>
