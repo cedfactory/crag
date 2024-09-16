@@ -208,8 +208,11 @@ class LoggerFile(ILogger):
         else:
             pathlib.Path(self.filename).touch()
 
+    def _get_filename(self, n):
+        return "{}{:04d}.log".format(self.filename_base, n)
+
     def _get_current_filename(self):
-        return "{}{:04d}.log".format(self.filename_base, self.current_id)
+        return self._get_filename(self.current_id)
 
     def _get_current_filesize(self):
         if self.filename != "" and os.path.isfile(self.filename):
@@ -223,6 +226,12 @@ class LoggerFile(ILogger):
                 with open(self.filename, "rb") as f_in, gzip.open(self.filename+".gz", "wb") as f_out:
                     f_out.writelines(f_in)
                 os.remove(self.filename)
+
+                # remove old file
+                if self.current_id >= 3:
+                    old_filename = self._get_filename(self.current_id - 3)
+                    if os.path.isfile(old_filename):
+                        os.remove(old_filename)
 
                 self.current_id += 1
                 self.filename = self._get_current_filename()
