@@ -7,6 +7,7 @@ import tracemalloc
 from . import utils
 from .toolbox import settings_helper
 import json
+import gzip
 
 # for LoggerConsole
 from rich import print
@@ -218,6 +219,11 @@ class LoggerFile(ILogger):
     def log(self, msg, header="", author="", attachments=[]):
         if self.filename != "":
             if self._get_current_filesize() > self.max_size:
+                # gzip current log file
+                with open(self.filename, "rb") as f_in, gzip.open(self.filename+".gz", "wb") as f_out:
+                    f_out.writelines(f_in)
+                os.remove(self.filename)
+
                 self.current_id += 1
                 self.filename = self._get_current_filename()
             with open(self.filename, "a", encoding="utf-8") as f:
