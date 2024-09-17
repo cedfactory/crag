@@ -49,10 +49,10 @@ def generate_figure_orders(my_broker):
         xBuy = []
         yBuy = []
         for index, row in orders.iterrows():
-            if row["side"] == "sell":
-                xSell.append(1)
+            if row["side"] == "close_long":
+                xSell.append(current_timestamp)
                 ySell.append(float(row["price"]))
-            elif row["side"] == "buy":
+            elif row["side"] == "open_long":
                 xBuy.append(current_timestamp)
                 yBuy.append(float(row["price"]))
         plt.scatter(xSell, ySell, marker="s", color="#ff0000", label="Order sell")
@@ -66,10 +66,10 @@ def generate_figure_orders(my_broker):
         yBuy = []
         # triggerType ?
         for index, row in triggers.iterrows():
-            if row["side"] == "sell":
+            if row["side"] == "close_long":
                 xSell.append(current_timestamp)
                 ySell.append(float(row["triggerPrice"]))
-            elif row["side"] == "buy":
+            elif row["side"] == "open_long":
                 xBuy.append(current_timestamp)
                 yBuy.append(float(row["triggerPrice"]))
         plt.scatter(xSell, ySell, marker="o", color="#ff0000", label="Trigger sell")
