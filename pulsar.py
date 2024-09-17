@@ -27,11 +27,11 @@ def get_time_from_datetime(dt):
 def generate_figure_orders(my_broker):
     plt.figure(figsize=(10, 15))
 
-    current_state = my_broker.get_current_state(["XRP"])
+    current_state = my_broker.get_current_state(["PEPE"])
     df_prices = current_state["prices"]
 
-    current_price = df_prices.loc[df_prices["symbols"] == "XRP", "values"][0]
-    current_timestamp = df_prices.loc[df_prices["symbols"] == "XRP", "timestamp"][0]
+    current_price = df_prices.loc[df_prices["symbols"] == "PEPE", "values"][0]
+    current_timestamp = df_prices.loc[df_prices["symbols"] == "PEPE", "timestamp"][0]
     current_timestamp = datetime.fromtimestamp(float(current_timestamp))
 
     ax = plt.gca()
