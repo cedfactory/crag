@@ -24,8 +24,8 @@ def get_time_from_datetime(dt):
     current_time = dt.strftime("%Y/%m/%d %H:%M:%S.%f")
     return current_time.split('.')[0]
 
-def get_fig_orders(my_broker):
-    fig = plt.figure(figsize=(10, 15))
+def generate_figure_orders(my_broker):
+    plt.figure(figsize=(10, 15))
 
     current_state = my_broker.get_current_state(["XRP"])
     df_prices = current_state["prices"]
@@ -80,7 +80,6 @@ def get_fig_orders(my_broker):
     plt.savefig("pulsar_current_state.png")
     plt.close()
 
-    return fig
 
 class Agent:
     def __init__(self):
@@ -213,7 +212,7 @@ if __name__ == '__main__':
             timestamp_begin = (now - timedelta(hours=72)).timestamp()
             df_filtered = agent.df.loc[agent.df["timestamp"] > timestamp_begin]
 
-            fig = graph_helper.export_graph("pulsar_history.png", agent.account_id,
+            graph_helper.export_graph("pulsar_history.png", agent.account_id,
                                       [{"dataframe": df_filtered, "plots": [{"column": "usdt_equity", "label": "USDT equity"}]}])
 
             response = agent.bot.log(message, attachments=["pulsar_history.png"], extra=extra)
@@ -223,7 +222,7 @@ if __name__ == '__main__':
                 elif isinstance(response["result"], list):
                     message_id = [res["message_id"] for res in response["result"]]
 
-            get_fig_orders(agent.broker)
+            generate_figure_orders(agent.broker)
             extra["message_id"] = agent.message3_id
             message = current_time + "\n" + "<b>" + agent.broker.account["id"] + "</b>" + " : current state"
             response = agent.bot.log(message, attachments=["pulsar_current_state.png"], extra=extra)
