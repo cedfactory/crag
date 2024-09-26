@@ -7,6 +7,7 @@ import tracemalloc
 from . import utils
 from .toolbox import settings_helper
 import json
+import gzip
 
 # for LoggerConsole
 from rich import print
@@ -207,8 +208,11 @@ class LoggerFile(ILogger):
         else:
             pathlib.Path(self.filename).touch()
 
+    def _get_filename(self, n):
+        return "{}{:04d}.log".format(self.filename_base, n)
+
     def _get_current_filename(self):
-        return "{}{:04d}.log".format(self.filename_base, self.current_id)
+        return self._get_filename(self.current_id)
 
     def _get_current_filesize(self):
         if self.filename != "" and os.path.isfile(self.filename):
@@ -218,6 +222,17 @@ class LoggerFile(ILogger):
     def log(self, msg, header="", author="", attachments=[]):
         if self.filename != "":
             if self._get_current_filesize() > self.max_size:
+                # gzip current log file
+                with open(self.filename, "rb") as f_in, gzip.open(self.filename+".gz", "wb") as f_out:
+                    f_out.writelines(f_in)
+                os.remove(self.filename)
+
+                # remove old file
+                if self.current_id >= 3:
+                    old_filename = self._get_filename(self.current_id - 3)
+                    if os.path.isfile(old_filename):
+                        os.remove(old_filename)
+
                 self.current_id += 1
                 self.filename = self._get_current_filename()
             with open(self.filename, "a", encoding="utf-8") as f:
@@ -349,63 +364,69 @@ class LoggerTelegramBot(ILogger):
             self.token = params.get("token", self.token)
             self.chat_id = params.get("chat_id", self.chat_id)
 
-    def log(self, msg, header="", author="", attachments=[], extra=None):
+    def log(self, msg, header="", author="", attachments=[], extra={}):
         response = None
-        if self.id and self.token and self.chat_id:
-            url = "https://api.telegram.org/bot" + self.token
-            params = {"chat_id": self.chat_id, "text": msg, "parse_mode": "html"}
-            if "message_id" in extra:
-                if isinstance(extra["message_id"], int):
-                    params["message_id"] = extra["message_id"]
-                elif isinstance(extra["message_id"], list) and len(extra["message_id"]) > 1:
-                    params["message_id"] = extra["message_id"][0]
-                if attachments:
-                    if len(attachments) == 1:
-                        if os.path.exists(attachments[0]):
-                            params["media"] = json.dumps({"type": "photo", "media": "attach://photo", "caption": msg, "parse_mode": "html", "show_caption_above_media": True})
-                            imageFile = open(attachments[0], "rb")
-                            try:
-                                response = requests.post(url + "/editMessageMedia", files={"photo": imageFile}, data=params)
-                            except (Exception) as e:
-                                args = getattr(e, "args", [])
-                                if len(args):
-                                    print(args[0])
-                    else:
-                        # first delete the previous message and create a new one
-                        if "message_id" in extra:
-                            for message_id in extra["message_id"]:
-                                requests.post(url + "/deleteMessage", data={"chat_id": self.chat_id, "message_id": message_id})
+        try:
+            if self.id and self.token and self.chat_id:
+                url = "https://api.telegram.org/bot" + self.token
+                params = {"chat_id": self.chat_id, "text": msg, "parse_mode": "html"}
+                if "message_id" in extra:
+                    if isinstance(extra["message_id"], int):
+                        params["message_id"] = extra["message_id"]
+                    elif isinstance(extra["message_id"], str):
+                        params["message_id"] = int(extra["message_id"])
+                    elif isinstance(extra["message_id"], list) and len(extra["message_id"]) > 1:
+                        params["message_id"] = extra["message_id"][0]
+                    if attachments:
+                        if len(attachments) == 1:
+                            if os.path.exists(attachments[0]):
+                                params["media"] = json.dumps({"type": "photo", "media": "attach://photo", "caption": msg, "parse_mode": "html", "show_caption_above_media": True})
+                                imageFile = open(attachments[0], "rb")
+                                try:
+                                    response = requests.post(url + "/editMessageMedia", files={"photo": imageFile}, data=params)
+                                except (Exception) as e:
+                                    args = getattr(e, "args", [])
+                                    if len(args):
+                                        print(args[0])
+                        else:
+                            # first delete the previous message and create a new one
+                            if "message_id" in extra:
+                                for message_id in extra["message_id"]:
+                                    requests.post(url + "/deleteMessage", data={"chat_id": self.chat_id, "message_id": message_id})
 
-                        # create a new message
-                        del extra["message_id"]
-                        return self.log(msg, header=header, author=author, attachments=attachments, extra=extra)
-                else:
-                    response = requests.post(url + "/editMessageText", data=params)
-            else:
-                if attachments:
-                    if len(attachments) == 1:
-                        if os.path.exists(attachments[0]):
-                            params["media"] = json.dumps({"type": "photo", "media": "attach://photo", "caption": msg, "parse_mode": "html", "show_caption_above_media": True})
-                            imageFile = open(attachments[0], "rb")
-                            response = requests.post(url + "/sendPhoto", files={"photo": imageFile}, data=params)
+                            # create a new message
+                            del extra["message_id"]
+                            return self.log(msg, header=header, author=author, attachments=attachments, extra=extra)
                     else:
-                        media = []
-                        files = {}
-                        id = 0
-                        for attachment in attachments:
-                            if os.path.exists(attachment):
-                                media.append({"type": "photo", "media": "attach://photo"+str(id), "caption": "attachment"})
-                                imageFile = open(attachment, "rb")
-                                files["photo"+str(id)] = imageFile
-                                id = id + 1
-                        params["media"] = json.dumps(media)
-                        response = requests.post(url + "/sendMediaGroup", files=files, data=params)
+                        response = requests.post(url + "/editMessageText", data=params)
                 else:
-                    response = requests.post(url + "/sendMessage", data=params)
-        content = None
+                    if attachments:
+                        if len(attachments) == 1:
+                            if os.path.exists(attachments[0]):
+                                params["media"] = json.dumps({"type": "photo", "media": "attach://photo", "caption": msg, "parse_mode": "html", "show_caption_above_media": True})
+                                imageFile = open(attachments[0], "rb")
+                                response = requests.post(url + "/sendPhoto", files={"photo": imageFile}, data=params)
+                        else:
+                            media = []
+                            files = {}
+                            id = 0
+                            for attachment in attachments:
+                                if os.path.exists(attachment):
+                                    media.append({"type": "photo", "media": "attach://photo"+str(id), "caption": "attachment"})
+                                    imageFile = open(attachment, "rb")
+                                    files["photo"+str(id)] = imageFile
+                                    id = id + 1
+                            params["media"] = json.dumps(media)
+                            response = requests.post(url + "/sendMediaGroup", files=files, data=params)
+                    else:
+                        response = requests.post(url + "/sendMessage", data=params)
+        except Exception as exception:
+            print(exception)
+            return response
+
         if response:
-            content = json.loads(response.content)
-        return content
+            return json.loads(response.content)
+        return None
 
     def log_info(self, msg, header="", author="", attachments=None):
         self.log(msg, header, author, attachments)

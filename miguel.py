@@ -6,7 +6,7 @@ import sys
 from src.utils import settings_helper
 from src import broker_helper,broker_bitget_api,utils,trade
 
-
+g_selected_symbols = ["XRP", "BTC", "ETH", "SOL", "PEPE"]
 
 # class to redirect the console into a widget
 class RedirectText(object):
@@ -58,7 +58,7 @@ class PanelPositions(wx.Panel):
         self.rb_close = wx.RadioButton(panel_open_close, -1, 'Close', (10, 30))
         hsizer.Add(panel_open_close, 0, wx.ALL | wx.CENTER, 5)
 
-        self.symbols = wx.ComboBox(self,choices = ["BTC", "ETH", "XRP",  "SOL"])
+        self.symbols = wx.ComboBox(self,choices = g_selected_symbols)
         hsizer.Add(self.symbols,0, wx.ALL | wx.CENTER, 5)
 
         panel_amount_size = wx.Panel(self, -1)
@@ -126,7 +126,7 @@ class PanelOrders(wx.Panel):
         self.rb_close = wx.RadioButton(panel_open_close, -1, 'Close', (10, 30))
         hsizer.Add(panel_open_close, 0, wx.ALL | wx.CENTER, 5)
 
-        self.symbols = wx.ComboBox(self,choices = ["BTC", "ETH", "XRP", "SOL"])
+        self.symbols = wx.ComboBox(self,choices = g_selected_symbols)
         hsizer.Add(self.symbols,0, wx.ALL | wx.CENTER, 5)
 
         panel_amount_size = wx.Panel(self, -1)
@@ -318,7 +318,7 @@ class MainPanel(wx.Panel):
     def update_orders(self, my_broker):
         orders = []
         if my_broker:
-            orders = my_broker.get_open_orders(["XRP", "BTC", "ETH", "SOL"])
+            orders = my_broker.get_open_orders(g_selected_symbols)
 
         # update orders
         print("orders : ", orders)
@@ -425,7 +425,7 @@ class MainPanel(wx.Panel):
 
     def on_cancel_all_limit_orders(self, event):
         my_broker = self.get_broker_from_selected_account()
-        my_broker.cancel_all_orders(["XRP", "BTC", "ETH", "SOL"])
+        my_broker.cancel_all_orders(g_selected_symbols)
         self.update_orders(my_broker)
 
     def on_export_all_limit_orders(self, event):

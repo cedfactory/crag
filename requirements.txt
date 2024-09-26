@@ -30,3 +30,4 @@ psutil==5.9.8
 Pympler==1.0.1
 websocket-client==1.7.0
 python-telegram-bot==21.2
+dill==0.3.8

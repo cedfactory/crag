@@ -1,9 +1,0 @@
-<configuration>
-    <strategy id="room2" name="StrategyBalanceTradingMulti">
-        <params grid_df_params="./grid_df_params.csv" />
-    </strategy>
-    <broker name="binance">
-        <params exchange="binance" account="room1" simulation="1" />
-    </broker>
-    <crag id="room2" interval="60" />
-</configuration>
