@@ -1,4 +1,4 @@
-from . import rtdp, rtstr, rtctrl
+from . import rtdp, rtstr
 
 # Ref:
 # https://github.com/CryptoRobotFr/backtest_tools/blob/main/backtest/single_coin/super_reversal.ipynb
@@ -8,10 +8,6 @@ class StrategySuperReversal(rtstr.RealTimeStrategy):
 
     def __init__(self, params=None):
         super().__init__(params)
-
-        self.rtctrl = rtctrl.rtctrl(params=params)
-        self.rtctrl.set_list_open_position_type(self.get_lst_opening_type())
-        self.rtctrl.set_list_close_position_type(self.get_lst_closing_type())
 
         self.zero_print = True
 

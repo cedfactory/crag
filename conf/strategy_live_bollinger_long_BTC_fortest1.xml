@@ -1,9 +1,0 @@
-<configuration>
-    <strategy id="strategybollingertrendlong" name="StrategyBollingerTrendLong">
-        <params symbols="./symbols_df_bollinger_BTC_usdt.csv" strategy_interval="3600" candle_stick="alive" max_position="1" sl="-25" tp="25" global_sl="0" global_tp="0" trailer_tp="3" trailer_delta_tp="1" trailer_global_tp="0" trailer_global_delta_tp="0" trailer_sl="0"/>
-    </strategy>
-    <broker name="bitget">
-        <params exchange="bitget" fdp_url_id="gc1" account="subfortest1" simulation="1" intervals="1h" orders="market" reset_account="True"/>
-    </broker>
-    <crag id="bollinger_long" interval="3600" botId="ayato_sub3"/>
-</configuration>

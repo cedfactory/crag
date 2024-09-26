@@ -79,12 +79,12 @@ class Broker(metaclass = ABCMeta):
 
     def get_leverage_long(self, symbol):
         if symbol in self.df_symbols["symbol"].values:
-            return self.df_symbols.loc[self.df_symbols["symbol"] == symbol, "leverage_long"][0]
+            return self.df_symbols.loc[self.df_symbols["symbol"] == symbol, "leverage_long"].values[0]
         return None
 
     def get_leverage_short(self, symbol):
         if symbol in self.df_symbols["symbol"].values:
-            return self.df_symbols.loc[self.df_symbols["symbol"] == symbol, "leverage_short"][0]
+            return self.df_symbols.loc[self.df_symbols["symbol"] == symbol, "leverage_short"].values[0]
         return None
 
     def log(self, msg, header="", attachments=[]):
@@ -105,6 +105,11 @@ class Broker(metaclass = ABCMeta):
     def get_current_data(self, data_description):
         if self.rtdp:
             return self.rtdp.get_current_data(data_description, self.fdp_url_id)
+        return None
+
+    def get_lst_current_data(self, data_description):
+        if self.rtdp:
+            return self.rtdp.get_lst_current_data(data_description, self.fdp_url_id)
         return None
 
     def get_cash(self):

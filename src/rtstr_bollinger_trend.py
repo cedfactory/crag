@@ -1,13 +1,12 @@
 import pandas as pd
 import numpy as np
-from . import trade
 import json
 import time
 import csv
 from datetime import datetime
 import datetime
 
-from . import rtdp, rtstr, utils, rtctrl
+from . import rtdp, rtstr, utils
 
 # Reference: https://crypto-robot.com/blog/bollinger-trend
 # Reference: https://github.com/CryptoRobotFr/backtest_tools/blob/main/backtest/single_coin/bol_trend.ipynb
@@ -16,10 +15,6 @@ class StrategyBollingerTrend(rtstr.RealTimeStrategy):
 
     def __init__(self, params=None):
         super().__init__(params)
-
-        self.rtctrl = rtctrl.rtctrl(params=params)
-        self.rtctrl.set_list_open_position_type(self.get_lst_opening_type())
-        self.rtctrl.set_list_close_position_type(self.get_lst_closing_type())
 
         self.epsilon = 0.1 # CEDE specific for bollinger - to be included to .xml depending on results...
 
@@ -75,16 +70,6 @@ class StrategyBollingerTrend(rtstr.RealTimeStrategy):
         ma_band_epsilon = ma_band_epsilon - ma_band_epsilon * self.epsilon / 100
 
         return (self.df_current_data['close'][symbol] > ma_band_epsilon)
-
-    def sort_list_symbols(self, lst_symbols):
-        print("symbol list: ", lst_symbols)
-        df = pd.DataFrame(index=lst_symbols, columns=['atr'])
-        for symbol in lst_symbols:
-            df.at[symbol, 'atr'] = self.df_current_data['atr_1'][symbol]
-        df.sort_values(by=['atr'], inplace=True, ascending=False)
-        lst_symbols = df.index.to_list()
-        print("sorted symbols with atr: ", lst_symbols)
-        return lst_symbols
 
 
 

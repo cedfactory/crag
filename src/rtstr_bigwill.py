@@ -1,14 +1,10 @@
-from . import rtdp, rtstr, rtctrl
+from . import rtdp, rtstr
 import pandas as pd
 
 class StrategyBigWill(rtstr.RealTimeStrategy):
 
     def __init__(self, params=None):
         super().__init__(params)
-
-        self.rtctrl = rtctrl.rtctrl(params=params)
-        self.rtctrl.set_list_open_position_type(self.get_lst_opening_type())
-        self.rtctrl.set_list_close_position_type(self.get_lst_closing_type())
 
         self.zero_print = True
 
@@ -102,13 +98,3 @@ class StrategyBigWill(rtstr.RealTimeStrategy):
         return (self.df_current_data['ao'][symbol] > self.AO_Threshold
                 and self.df_current_data['stoch_rsi'][symbol] < self.stochOverBought) \
                or self.df_current_data['willr'][symbol] < self.willOverSold
-
-    def sort_list_symbols(self, lst_symbols):
-        print("symbol list: ", lst_symbols)
-        df = pd.DataFrame(index=lst_symbols, columns=['ao'])
-        for symbol in lst_symbols:
-            df.at[symbol, 'ao'] = self.df_current_data['ao'][symbol]
-        df.sort_values(by=['ao'], inplace=True, ascending=False)
-        lst_symbols = df.index.to_list()
-        print("sorted symbols with AO: ", lst_symbols)
-        return lst_symbols

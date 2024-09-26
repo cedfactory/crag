@@ -1,13 +1,9 @@
-from . import rtdp, rtstr, rtctrl
+from . import rtdp, rtstr
 
 class StrategyVMC(rtstr.RealTimeStrategy):
 
     def __init__(self, params=None):
         super().__init__(params)
-
-        self.rtctrl = rtctrl.rtctrl(params=params)
-        self.rtctrl.set_list_open_position_type(self.get_lst_opening_type())
-        self.rtctrl.set_list_close_position_type(self.get_lst_closing_type())
 
         self.zero_print = True
 

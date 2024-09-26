@@ -1,0 +1,38 @@
+<configuration>
+    <strategy id="StrategyIntervalsGeneric" name="StrategyIntervalsGeneric">
+        <params candle_stick="released"
+                max_position="1"
+                sl="0"
+                tp="0"
+                global_sl="-50"
+                global_tp="20"
+                trailer_tp="0"
+                trailer_delta_tp="0"
+                trailer_global_tp="0"
+                trailer_global_delta_tp="0"
+                trailer_sl="0"
+                high_volatility="False"
+                path_strategy_param="./param_intervals_trix_PEPE_XRP_test.csv"
+                nb_position_limits="1"
+                loggers="file=log"
+        />
+    </strategy>
+    <broker name="bitget">
+        <params exchange="bitget"
+                fdp_url_id="gc1"
+                account="subfortest2"
+                symbols="./symbols_PEPE_XRP.csv"
+                simulation="1"
+                intervals="1m"
+                orders="market"
+                reset_account="False"
+                reset_account_orders="False"
+                loggers="file=log"
+        />
+    </broker>
+    <crag id="breakout_long_short_v2"
+          interval="60"
+          botId="subfortest2"
+          loggers="console"
+    />
+</configuration>

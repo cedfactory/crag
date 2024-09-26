@@ -1,4 +1,4 @@
-from . import rtdp, rtstr, rtctrl
+from . import rtdp, rtstr
 import math
 import pandas as pd
 import numpy as np
@@ -9,6 +9,7 @@ import copy
 import os
 import glob
 
+import pprint
 from . import utils
 from src import logger
 
@@ -17,13 +18,12 @@ class StrategyBreakoutTradingGenericV2(rtstr.RealTimeStrategy):
     def __init__(self, params=None):
         super().__init__(params)
 
-        self.rtctrl = rtctrl.rtctrl(params=params)
-        self.rtctrl.set_list_open_position_type(self.get_lst_opening_type())
-        self.rtctrl.set_list_close_position_type(self.get_lst_closing_type())
-
-        self.side = "long"
+        self.side = ""
+        self.id = ""
         if params:
+            self.id = params.get("id", self.id)
             self.side = params.get("type", self.side)
+            self.lst_symbols = [params.get("strategy_symbol", self.lst_symbols)]
         else:
             exit(5)
 
@@ -47,40 +47,14 @@ class StrategyBreakoutTradingGenericV2(rtstr.RealTimeStrategy):
         self.self_execute_trade_recorder_not_active = True
 
     def get_data_description(self):
-        ds = rtdp.DataDescription()
-        ds.symbols = self.lst_symbols
-
-        ds.fdp_features = {
-            "ema10": {"indicator": "ema", "id": "10", "window_size": 10}
-        }
-
-        ds.features = self.get_feature_from_fdp_features(ds.fdp_features)
-        ds.interval = self.strategy_interval
-        self.log("strategy: " + self.get_info())
-        self.log("strategy features: " + str(ds.features))
+        ds = {}
         return ds
 
     def get_info(self):
         return "StrategyBreakoutTradingGenericV2"
 
-    def condition_for_opening_long_position(self, symbol):
-        return False
-
-    def condition_for_opening_short_position(self, symbol):
-        return False
-
-    def condition_for_closing_long_position(self, symbol):
-        return False
-
-    def condition_for_closing_short_position(self, symbol):
-        return False
-
-    def sort_list_symbols(self, lst_symbols):
-        self.log("symbol list: ", lst_symbols)
-        return lst_symbols
-
-    def need_broker_current_state(self):
-        return True
+    def get_strategy_type(self):
+        return "CONTINUE"
 
     def set_multiple_strategy(self):
         self.mutiple_strategy = True
@@ -142,13 +116,13 @@ class StrategyBreakoutTradingGenericV2(rtstr.RealTimeStrategy):
             lst_order_to_execute = self.grid.get_order_list(symbol)
         del df_price
 
-        self.iter_set_broker_current_state += 1
+        # self.iter_set_broker_current_state += 1
 
         return lst_order_to_execute
 
     def print_debug_grid(self, symbol):
         lst_trend = ["up", "down"]
-        exclude_columns = ['changes', 'previous_side', 'cross_checked', 'unknown', 'status']
+        exclude_columns = ['unknown', 'status']
 
         # Initialize backup_grid if it's None
         if self.backup_grid is None:
@@ -232,8 +206,8 @@ class StrategyBreakoutTradingGenericV2(rtstr.RealTimeStrategy):
 
     def set_normalized_grid_price(self, lst_symbol_plc_endstp):
         for price_plc in lst_symbol_plc_endstp:
-            self.grid.normalize_grid_price(price_plc['symbol'], price_plc['pricePlace'], price_plc['priceEndStep'], price_plc['sizeMultiplier'])
-        del lst_symbol_plc_endstp
+            if price_plc['symbol'] in self.lst_symbols:
+                self.grid.normalize_grid_price(price_plc['symbol'], price_plc['pricePlace'], price_plc['priceEndStep'], price_plc['sizeMultiplier'])
 
     def get_info_msg_status(self):
         return ""
@@ -267,7 +241,7 @@ class StrategyBreakoutTradingGenericV2(rtstr.RealTimeStrategy):
         # cash = 10000 # CEDE GRID SCENARIO
         self.df_grid_buying_size = pd.concat([self.df_grid_buying_size, df_symbol_size])
         self.df_grid_buying_size['margin'] = None
-        for symbol in df_symbol_size['symbol'].tolist():
+        for symbol in self.lst_symbols:
             dol_per_grid = self.grid_margin / self.nb_grid
             size = dol_per_grid
             if (self.get_grid_buying_min_size(symbol) <= (size / self.grid.get_max_price_in_grid())) \
@@ -325,7 +299,6 @@ class GridPosition():
         self.grid_low = grid_low
         self.nb_grid = nb_grid
         self.lst_symbols = lst_symbols
-        self.str_lst_symbol = ' '.join(map(str, lst_symbols))
         self.percent_per_grid = percent_per_grid
 
         self.lst_recoded_trigger_executed = []
@@ -377,20 +350,19 @@ class GridPosition():
 
         # self.lst_grid_values = np.linspace(self.grid_high, self.grid_low, self.nb_grid + 1, endpoint=True).tolist()
 
-        self.columns = ["grid_id", "close_grid_id", "position",
-                        "side", "changes", "previous_side",
+        self.columns = ["grid_id", "position",
+                        "side",
                         "orderId_trigger_long", "status_trigger_long", "trigger_long",
                         "orderId_trailer_long", "status_trailer_long", "trailer_long",
                         "status_long",
                         "orderId_trigger_short", "status_trigger_short", "trigger_short",
                         "orderId_trailer_short", "status_trailer_short", "trailer_short",
                         "status_short",
-                        "status",
-                        "cross_checked", "unknown"]
+                        "status", "unknown"]
         grid_break_out = {key: pd.DataFrame(columns=self.columns) for key in self.lst_trend}
         self.grid = {key: grid_break_out for key in self.lst_symbols}
         self.max_position = 0
-        for symbol in lst_symbols:
+        for symbol in self.lst_symbols:
             for trend in self.lst_trend:
                 self.grid[symbol][trend]["position"] = self.dct_lst_grid_values[trend]
                 print(self.grid[symbol][trend]["position"].to_list())
@@ -399,20 +371,17 @@ class GridPosition():
                 self.max_position = max(self.max, self.max_position)
 
                 self.grid[symbol][trend]["grid_id"] = self.grid[symbol][trend].index
-                sequence = self.grid[symbol][trend].index.tolist()[1:] + [-1]
-                self.grid[symbol][trend]['close_grid_id'] = sequence
-                del sequence
                 for col in ["status_trigger_long", "status_trailer_long",
                             "status_trigger_short", "status_trailer_short",
                             "status_long", "status_short", "status"]:
                     self.grid[symbol][trend][col] = "empty"
                 for col in ["orderId_trigger_long", "orderId_trailer_long",
                             "orderId_trigger_short", "orderId_trailer_short",
-                            "side", "changes", "previous_side"]:
+                            "side"]:
                     self.grid[symbol][trend][col] = ""
                 for col in ["trigger_long", "trailer_long",
                             "trigger_short", "trailer_short",
-                            "cross_checked", "unknown"]:
+                            "unknown"]:
                     self.grid[symbol][trend][col] = False
 
     def log(self, msg, header="", attachments=[]):
@@ -439,17 +408,13 @@ class GridPosition():
         for trend in self.lst_trend:
             df = self.grid[symbol][trend]
 
-            df['previous_side'] = df['side']
             df.loc[df['position'] > self.current_price, 'side'] = self.side_mapping["up"]
             df.loc[df['position'] < self.current_price, 'side'] = self.side_mapping["down"]
             df.loc[df['position'] == self.current_price, 'side'] = "on_edge"
 
             differences = df['position'].diff().dropna()
-            diff = differences.mean() / 2
-            df.loc[(df['position'] >= self.current_price - diff) & (df['position'] <= self.current_price + diff), 'side'] = "on_edge"
-
-            # Compare if column1 and column2 are the same
-            df['changes'] = df['previous_side'] != df['side']
+            diff = differences.mean() / 3
+            df.loc[(df['position'] >= self.current_price - abs(diff)) & (df['position'] <= self.current_price + abs(diff)), 'side'] = "on_edge"
 
         del symbol
         del df
@@ -1287,14 +1252,7 @@ class GridPosition():
                                                                              & condition_trigger_trend
                                                                              & condition_trigger_plan].copy()
 
-
-
-
             self.trend_data[trend]['df_executed_trigger_debug'] = self.trend_data[trend]['df_executed_trigger']
-
-
-
-
 
             self.trend_data[trend]['nb_executed_trigger'] = len(self.trend_data[trend]['df_executed_trigger']) + len(lst_fast_trigger_triggered_order_id)
             self.trend_data[trend]['lst_gridId_executed_trigger'] = list(map(int, self.trend_data[trend]['df_executed_trigger']["gridId"].to_list())) + lst_fast_trigger_triggered_grid_id

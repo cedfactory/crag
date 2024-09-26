@@ -13,7 +13,7 @@ from . import utils
 class RealTimeStrategy(metaclass=ABCMeta):
 
     def __init__(self, params=None):
-        self.df_symbols = None
+        self.df_strategy_param = None
         self.lst_symbols = []
         self.SL = 0              # Stop Loss %
         self.TP = 0              # Take Profit %
@@ -48,6 +48,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
         self.tradingview_condition = False
         self.short_and_long = False
         self.strategy_interval = 0
+        self.strategy_str_interval = ""
         self.candle_stick = "released"  # last released from broker vs alive
         self.high_volatility_protection = False
         self.BTC_volatility_protection = False
@@ -63,32 +64,28 @@ class RealTimeStrategy(metaclass=ABCMeta):
         self.scenario_mode = False
 
         if params:
-            self.strategy_interval = params.get("strategy_interval", self.strategy_interval)
-            if isinstance(self.strategy_interval, str):
-                self.strategy_interval = int(self.strategy_interval)
             self.candle_stick = params.get("candle_stick", self.candle_stick)
             self.MAX_POSITION = params.get("max_position", self.MAX_POSITION)
             if isinstance(self.MAX_POSITION, str):
                 self.MAX_POSITION = int(self.MAX_POSITION)
-            symbols = params.get("symbols", "")
-            self.multi_param = params.get("multi_param", "")
-            if isinstance(self.multi_param, str) \
-                    and len(self.multi_param) > 0:
-                self.multi_param = ast.literal_eval(self.multi_param)
+            symbols = params.get("path_strategy_param", "")
             if symbols != "" and path.exists("./symbols/"+symbols):
-                self.df_symbols = pd.read_csv("./symbols/"+symbols)
-                self.lst_symbols = self.df_symbols['symbol'].tolist()
-                if self.multi_param:
-                    self.df_symbol_param = pd.read_csv("./symbols/"+symbols)
-                    self.df_symbol_param.set_index('symbol', drop=True, inplace=True)
-                else:
-                    self.df_symbol_param = pd.DataFrame()  # empty df could be None ....
-            else:
-                self.lst_symbols = symbols.split(",")
+                self.df_strategy_param = pd.read_csv("./symbols/"+symbols)
+                self.lst_symbols = self.df_strategy_param['symbol'].tolist()
+                self.lst_symbols = list(dict.fromkeys(self.lst_symbols))
             self.nb_position_limits = 1
             self.nb_position_limits = params.get("nb_position_limits", self.nb_position_limits)
             if isinstance(self.nb_position_limits, str):
                 self.nb_position_limits = int(self.nb_position_limits)
+
+            self.trix_period = 0
+            self.stoch_rsi_period = 0
+
+            if "margin" in params:
+                self.margin = [params.get("margin", self.margin)]
+                if isinstance(self.margin, str):
+                    self.margin = int(self.margin)
+
             self.grid_high = params.get("grid_high", self.grid_high)
             if isinstance(self.grid_high, str):
                 if len(self.grid_high) > 0:
@@ -200,8 +197,6 @@ class RealTimeStrategy(metaclass=ABCMeta):
         self.close_short = self.str_short_long_position.get_close_short()
         self.no_position = self.str_short_long_position.get_no_position()
 
-        self.position_recorder = PositionRecorder(self.lst_symbols, self.MAX_POSITION)
-
         self.df_long_short_record = ShortLongPosition(self.lst_symbols, self.str_short_long_position)
         if self.trigger_trailer_TP:
             self.df_trailer_TP = TrailerTP(self.lst_symbols, self.trailer_TP, self.trailer_delta_TP)
@@ -229,17 +224,6 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
     def get_rtctrl(self):
         return self.rtctrl
-
-    def get_margin_mode_and_leverages(self):
-        if not isinstance(self.df_symbols, pd.DataFrame):
-            return None
-
-        columns = self.df_symbols.columns.values
-        if "margin_mode" not in columns or "leverage_long" not in columns or "leverage_short" not in columns:
-            return None
-
-        df_symbols = self.df_symbols[["symbol", "leverage_long", "leverage_short", "margin_mode"]]
-        return df_symbols
 
     @abstractmethod
     def get_data_description(self):
@@ -283,20 +267,22 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
     def condition_for_buying(self, symbol):
         result = False
-        if self.condition_for_opening_long_position(symbol):
+        open_long = self.condition_for_opening_long_position(symbol)
+        open_short = self.condition_for_opening_short_position(symbol)
+
+        if (open_long and open_short)\
+                or (not open_long and not open_short):
+            self.open_position_failed(symbol)
+            result = False
+        elif open_long:
             print('============= OPEN LONG =============')
             self.open_long_position(symbol)
             result = True
+        elif open_short:
+            print('============= OPEN SHORT =============')
+            self.open_short_position(symbol)
+            result = True
 
-        if self.condition_for_opening_short_position(symbol):
-            if result:
-                # SHORT and LONG on the same step can't be processed
-                self.open_position_failed(symbol)
-                result = False
-            else:
-                print('============= OPEN SHORT =============')
-                self.open_short_position(symbol)
-                result = True
         return result
 
     def condition_for_closing_long_position(self, symbol):
@@ -337,7 +323,6 @@ class RealTimeStrategy(metaclass=ABCMeta):
     def get_df_buying_symbols(self):
         data = {'symbol':[], 'stimulus':[], 'size':[], 'percent':[], 'gridzone':[], 'pos_type':[]}
         lst_symbols = self.df_current_data.index.to_list()
-        lst_symbols = self.sort_list_symbols(lst_symbols)
         self.total_postion_requested = 0
         for symbol in lst_symbols:
             if ((not self.is_open_type_short_or_long(symbol)) or self.authorize_multi_transaction_for_symbols()) \
@@ -436,25 +421,14 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
         return df_result
 
-    def update(self, current_datetime, current_trades, broker_cash, broker_cash_borrowed, prices_symbols, record_info, final_date, df_balance):
-        if self.rtctrl:
-            self.rtctrl.update_rtctrl(current_datetime, current_trades, broker_cash, broker_cash_borrowed, prices_symbols, final_date, df_balance)
-            self.rtctrl.display_summary_info(record_info)
+    def get_lst_symbols(self):
+        return self.lst_symbols
 
     def get_nb_envelope_to_purchase(self, symbol):
         return 1
 
     def get_nb_symbol_position_engaged(self, symbol):
         return self.get_nb_symbol_position_engaged(symbol)
-
-    def get_nb_position_engaged(self):
-        return self.position_recorder.get_total_position_engaged()
-
-    def set_nb_increase_symbol_position_engaged(self, nb_position, symbol):
-        self.position_recorder.set_increase_position_record(nb_position, symbol)
-
-    def reset_position_recorder_for_symbol(self, symbol):
-        self.position_recorder.reset_position_record(symbol)
 
     def get_grid_buying_min_size(self, symbol):
         row_index = self.df_grid_buying_size.index[self.df_grid_buying_size['symbol'] == symbol].tolist()
@@ -601,7 +575,6 @@ class RealTimeStrategy(metaclass=ABCMeta):
             return 0, 0, 0
 
         size = self.rtctrl.df_rtctrl.loc[self.rtctrl.df_rtctrl['symbol'] == symbol, "size"].values[0]
-        self.reset_position_recorder_for_symbol(symbol)
 
         if self.rtctrl.wallet_cash > 0:
             percent = size * self.rtctrl.prices_symbols[symbol] * 100 / self.rtctrl.wallet_cash
@@ -802,9 +775,6 @@ class RealTimeStrategy(metaclass=ABCMeta):
         if self.trigger_trailer_SL:
             self.df_trailer_SL.set_trailer_turned_off(symbol)
 
-    def sort_list_symbols(self, lst_symbols):
-        return lst_symbols
-
     def trigger_high_volatility_protection(self):
         return self.high_volatility_protection
 
@@ -996,8 +966,8 @@ class StrOpenClosePosition():
         return self.string["noposition"]
 
     # Specific for Grid
-    def need_broker_current_state(self):
-        return False
+    def get_strategy_type(self):
+        return ""
 
     # Specific for Grid
     def set_broker_current_state(self, current_state, df_price):
@@ -1257,41 +1227,3 @@ class TrailerGlobalSL():
         print("-------------------- GLOBAL DEBUG - ROI: ", roi,
               " - STATUS: ", self.get_trailer_status(),
               " - TP: ", self.get_trailer_SL())
-
-class PositionRecorder():
-    def __init__(self, lst_symbols, max_position):
-        self.df_position_record = pd.DataFrame(columns=["nb_position_engaged"],
-                                               index=lst_symbols)
-        self.df_position_record["nb_position_engaged"] = 0
-
-        self.max_position = max_position
-
-    def set_increase_position_record(self, nb, symbol):
-        self.df_position_record.at[symbol, "nb_position_engaged"] += nb
-        if self.df_position_record.at[symbol, "nb_position_engaged"] > self.max_position:
-            self.df_position_record.at[symbol, "nb_position_engaged"] = self.max_position
-            return False
-        else:
-            return True
-
-    def set_decrease_position_record(self, nb, symbol):
-        self.df_position_record.at[symbol, "nb_position_engaged"] -= nb
-        if self.df_position_record.at[symbol, "nb_position_engaged"] < 0:
-            self.df_position_record.at[symbol, "nb_position_engaged"] = 0
-            return False
-        else:
-            return True
-
-    def reset_position_record(self, symbol):
-        self.df_position_record.at[symbol, "nb_position_engaged"] = 0
-
-    def get_nb_symbol_position_engaged(self, symbol):
-        return self.df_position_record.at[symbol, "nb_position_engaged"]
-
-    def get_total_position_engaged(self):
-        return self.df_position_record["nb_position_engaged"].sum()
-
-    def update_position_recorder(self, lst_positions):
-        for symbol in lst_positions:
-            self.set_increase_position_record(1, symbol)
-

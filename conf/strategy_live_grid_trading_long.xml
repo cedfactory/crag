@@ -1,9 +1,0 @@
-<configuration>
-    <strategy id="strategygridtradinglong" name="StrategyGridTradingLong">
-        <params symbols="./symbols_df_sltp_XRP_usdt.csv" strategy_interval="3600" multi_param="False" candle_stick="released" max_position="1" sl="0" tp="0" global_sl="-50" global_tp="20" trailer_tp="0" trailer_delta_tp="0" trailer_global_tp="0" trailer_global_delta_tp="0" trailer_sl="0" high_volatility="False" grid_high="0.75" grid_low="0.56" percent_per_grid="0.4" nb_grid="10" grid_margin="1000"/>
-    </strategy>
-    <broker name="bitget">
-        <params exchange="bitget" fdp_url_id="gc1" account="subfortest1" simulation="1" intervals="1h" orders="market" reset_account="True" reset_account_orders="False"/>
-    </broker>
-    <crag id="grid" interval="3600" botId="ayato"/>
-</configuration>

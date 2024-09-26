@@ -1,4 +1,4 @@
-from . import rtdp, rtstr, rtctrl
+from . import rtdp, rtstr
 import math
 import pandas as pd
 import numpy as np
@@ -11,13 +11,12 @@ class StrategyGridTradingGenericV2(rtstr.RealTimeStrategy):
     def __init__(self, params=None):
         super().__init__(params)
 
-        self.rtctrl = rtctrl.rtctrl(params=params)
-        self.rtctrl.set_list_open_position_type(self.get_lst_opening_type())
-        self.rtctrl.set_list_close_position_type(self.get_lst_closing_type())
-
-        self.side = "long"
+        self.side = ""
+        self.id = ""
         if params:
+            self.id = params.get("id", self.id)
             self.side = params.get("type", self.side)
+            self.lst_symbols = [params.get("strategy_symbol", self.lst_symbols)]
         else:
             exit(5)
 
@@ -56,24 +55,8 @@ class StrategyGridTradingGenericV2(rtstr.RealTimeStrategy):
     def get_info(self):
         return "StrategyGridTradingGenericV2"
 
-    def condition_for_opening_long_position(self, symbol):
-        return False
-
-    def condition_for_opening_short_position(self, symbol):
-        return False
-
-    def condition_for_closing_long_position(self, symbol):
-        return False
-
-    def condition_for_closing_short_position(self, symbol):
-        return False
-
-    def sort_list_symbols(self, lst_symbols):
-        self.log("symbol list: ", lst_symbols)
-        return lst_symbols
-
-    def need_broker_current_state(self):
-        return True
+    def get_strategy_type(self):
+        return "CONTINUE"
 
     def set_multiple_strategy(self):
         self.mutiple_strategy = True
@@ -147,7 +130,7 @@ class StrategyGridTradingGenericV2(rtstr.RealTimeStrategy):
         del df_current_states
         del df_price
 
-        self.iter_set_broker_current_state += 1
+        # self.iter_set_broker_current_state += 1
 
         return lst_order_to_execute
 
@@ -193,6 +176,64 @@ class StrategyGridTradingGenericV2(rtstr.RealTimeStrategy):
         self.grid.set_grid_buying_size(self.df_grid_buying_size)
         for symbol in self.lst_symbols:
             self.grid.cross_check_buying_size(symbol, self.get_grid_buying_min_size(symbol))
+
+    def set_df_buying_size(self, df_symbol_size, cash):
+        if not isinstance(df_symbol_size, pd.DataFrame):
+            return
+        # cash = 10000 # CEDE GRID SCENARIO
+        self.df_grid_buying_size = pd.concat([self.df_grid_buying_size, df_symbol_size])
+        self.df_grid_buying_size['margin'] = None
+
+        for symbol in self.lst_symbols:
+            dol_per_grid = self.grid_margin / (self.nb_grid + 1)
+            size = dol_per_grid / ((self.grid_high + self.grid_low )/2)
+            size_high = dol_per_grid / self.grid_high
+            size_low = dol_per_grid / self.grid_low
+            size_high = utils.normalize_size(size_high,
+                                             self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol,
+                                                                          "sizeMultiplier"].values[0])
+            size_low = utils.normalize_size(size_low,
+                                            self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol,
+                                                                         "sizeMultiplier"].values[0])
+            if (self.get_grid_buying_min_size(symbol) <= size_high) \
+                    and (self.get_grid_buying_min_size(symbol) <= size_low) \
+                    and (dol_per_grid > 5) \
+                    and (cash >= self.grid_margin):
+                size = (size_high + size_low) / 2
+                size = utils.normalize_size(size,
+                                           self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol,
+                                                                        "sizeMultiplier"].values[0])
+                self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "strategy_id"] = self.strategy_id
+                self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "buyingSize"] = size    # CEDE: Average size
+                self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "margin"] = self.grid_margin
+                self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == symbol, "maxSizeToBuy"] = self.nb_grid
+                msg = "**" + symbol + "**\n"
+                msg += "**cash: " + str(round(cash, 2)) + "**\n"
+                msg += "**grid_margin: " + str(round(self.grid_margin, 2)) + "**\n"
+                msg += "**nb grid: " + str(self.nb_grid) + "**\n"
+                msg += "**steps: " + str((self.grid_high - self.grid_low) / self.nb_grid) + "**\n"
+                msg += "**amount buying > 5 usd: " + str(round(size * self.grid_low, 2)) + "**\n"
+                msg += "**buying size: " + str(size) + " - $" + str(size * (self.grid_high + self.grid_low )/2) + "**\n"
+                msg += "**min size: " + str(self.get_grid_buying_min_size(symbol)) + " - $" + str(self.get_grid_buying_min_size(symbol) * (self.grid_high + self.grid_low )/2) + "**\n"
+                msg += "**strategy verified" + "**\n"
+                self.log(msg, "GRID SETUP")
+            else:
+                msg = "**" + symbol + "**\n"
+                msg += "**cash: " + str(round(cash, 2)) + "**\n"
+                msg += "**grid_margin: " + str(round(self.grid_margin, 2)) + "**\n"
+                msg += "**nb grid: " + str(self.nb_grid) + "**\n"
+                msg += "**steps: " + str((self.grid_high - self.grid_low) / self.nb_grid) + "**\n"
+                msg += "**amount buying > 5 usd: " + str(round(size * self.grid_low, 2)) + "**\n"
+                msg += "**buying size: " + str(size) + " - $" + str(size * (self.grid_high + self.grid_low )/2) + "**\n"
+                msg += "**min size: " + str(self.get_grid_buying_min_size(symbol)) + " - $" + str(self.get_grid_buying_min_size(symbol) * (self.grid_high + self.grid_low )/2) + "**\n"
+                msg += "**strategy stopped : ERROR NOT ENOUGH $ FOR GRID - INCREASE MARGIN OR REDUCE GRID SIZE **\n"
+                self.log(msg, "GRID SETUP FAILED")
+                print(msg)
+                print("GRID SETUP FAILED")
+                print("set_df_buying_size")
+                exit(2)
+        return self.df_grid_buying_size
+
 
 class GridPosition():
     def __init__(self, side, lst_symbols, grid_high, grid_low, nb_grid, percent_per_grid,
@@ -406,6 +447,10 @@ class GridPosition():
     def set_current_price(self, price):
         self.current_price = price
 
+    def get_max_price_in_grid(self, symbol):
+        self.max_position = max(self.grid[symbol]["position"].to_list())
+        return self.max_position
+
     def update_unknown_status(self, symbol, df_current_state_all):
         df_grid = self.grid[symbol]
         if df_grid['unknown'].any():
@@ -538,21 +583,25 @@ class GridPosition():
             fake_position = df_grid_filtered_open_long["grid_id"].max() if self.grid_side == "long" else df_grid_filtered_open_long["grid_id"].min()
             for n in range(0, len(lst_open_long_triggered_below), 1):
                 long_fake_triggered = fake_position + n if self.grid_side == "long" else fake_position - n
-                open_long_triggered.append(long_fake_triggered)
-                close_fake_grid_id = df_grid.loc[df_grid['grid_id'] == long_fake_triggered, 'close_grid_id'].values[0]
-                close_grid_id_list.append(close_fake_grid_id)
-                df_grid.loc[df_grid['grid_id'] == long_fake_triggered, 'changes'] = False
-                # Check and update the status for long_fake_triggered
-                if not df_grid.loc[df_grid['grid_id'] == long_fake_triggered, 'status'].empty:
-                    status_long = df_grid.loc[df_grid['grid_id'] == long_fake_triggered, 'status'].values[0]
-                    if status_long != "pending" and status_long != "engaged":
-                        df_grid.loc[df_grid['grid_id'] == long_fake_triggered, 'status'] = "on_hold"
+                if long_fake_triggered != -1:
+                    open_long_triggered.append(long_fake_triggered)
+                    try:
+                        close_fake_grid_id = df_grid.loc[df_grid['grid_id'] == long_fake_triggered, 'close_grid_id'].values[0]
+                    except:
+                        print("toto")
+                    close_grid_id_list.append(close_fake_grid_id)
+                    df_grid.loc[df_grid['grid_id'] == long_fake_triggered, 'changes'] = False
+                    # Check and update the status for long_fake_triggered
+                    if not df_grid.loc[df_grid['grid_id'] == long_fake_triggered, 'status'].empty:
+                        status_long = df_grid.loc[df_grid['grid_id'] == long_fake_triggered, 'status'].values[0]
+                        if status_long != "pending" and status_long != "engaged":
+                            df_grid.loc[df_grid['grid_id'] == long_fake_triggered, 'status'] = "on_hold"
 
-                # Check and update the status for close_fake_grid_id
-                if not df_grid.loc[df_grid['grid_id'] == close_fake_grid_id, 'status'].empty:
-                    status_close = df_grid.loc[df_grid['grid_id'] == close_fake_grid_id, 'status'].values[0]
-                    if status_close != "pending" and status_close != "engaged":
-                        df_grid.loc[df_grid['grid_id'] == close_fake_grid_id, 'status'] = "pending"
+                    # Check and update the status for close_fake_grid_id
+                    if not df_grid.loc[df_grid['grid_id'] == close_fake_grid_id, 'status'].empty:
+                        status_close = df_grid.loc[df_grid['grid_id'] == close_fake_grid_id, 'status'].values[0]
+                        if status_close != "pending" and status_close != "engaged":
+                            df_grid.loc[df_grid['grid_id'] == close_fake_grid_id, 'status'] = "pending"
 
         close_grid_id_list = close_grid_id_list + lst_close_long
         open_long_triggered = open_long_triggered + lst_open_long_triggered
@@ -585,28 +634,30 @@ class GridPosition():
         lst_order_grid_id = lst_open_long + close_grid_id_list
         lst_order = []
         for grid_id, linked_position in zip(lst_order_grid_id, lst_linked):
-            order_to_execute = {}
-            order_to_execute["strategy_id"] = self.strategy_id
-            order_to_execute["symbol"] = symbol
-            order_to_execute["linked_position"] = linked_position
-            if df_grid.loc[df_grid["grid_id"] == grid_id, 'side'].values[0] == "open_long":
-                self.clear_orderId(symbol, grid_id)
-                order_to_execute["type"] = "OPEN_LONG_ORDER"
-            elif df_grid.loc[df_grid["grid_id"] == grid_id, 'side'].values[0] == "close_long":
-                order_to_execute["type"] = "CLOSE_LONG_ORDER"
-            elif df_grid.loc[df_grid["grid_id"] == grid_id, 'side'].values[0] == "open_short":
-                self.clear_orderId(symbol, grid_id)
-                order_to_execute["type"] = "OPEN_SHORT_ORDER"
-            elif df_grid.loc[df_grid["grid_id"] == grid_id, 'side'].values[0] == "close_short":
-                order_to_execute["type"] = "CLOSE_SHORT_ORDER"
-            if "type" in order_to_execute:
-                order_to_execute["price"] = df_grid.loc[df_grid["grid_id"] == grid_id, 'position'].values[0]
-                order_to_execute["grid_id"] = grid_id
-                order_to_execute["gross_size"] = df_grid.loc[df_grid["grid_id"] == grid_id, 'size'].values[0]
-                order_to_execute["trade_status"] = "pending"
-                df_grid.loc[df_grid["grid_id"] == grid_id, 'status'] = 'pending'
-                lst_order.append(order_to_execute)
-            del order_to_execute
+            if grid_id != -1:
+                order_to_execute = {}
+                order_to_execute["strategy_id"] = self.strategy_id
+                order_to_execute["symbol"] = symbol
+                order_to_execute["linked_position"] = linked_position
+
+                if df_grid.loc[df_grid["grid_id"] == grid_id, 'side'].values[0] == "open_long":
+                    self.clear_orderId(symbol, grid_id)
+                    order_to_execute["type"] = "OPEN_LONG_ORDER"
+                elif df_grid.loc[df_grid["grid_id"] == grid_id, 'side'].values[0] == "close_long":
+                    order_to_execute["type"] = "CLOSE_LONG_ORDER"
+                elif df_grid.loc[df_grid["grid_id"] == grid_id, 'side'].values[0] == "open_short":
+                    self.clear_orderId(symbol, grid_id)
+                    order_to_execute["type"] = "OPEN_SHORT_ORDER"
+                elif df_grid.loc[df_grid["grid_id"] == grid_id, 'side'].values[0] == "close_short":
+                    order_to_execute["type"] = "CLOSE_SHORT_ORDER"
+                if "type" in order_to_execute:
+                    order_to_execute["price"] = df_grid.loc[df_grid["grid_id"] == grid_id, 'position'].values[0]
+                    order_to_execute["grid_id"] = grid_id
+                    order_to_execute["gross_size"] = df_grid.loc[df_grid["grid_id"] == grid_id, 'size'].values[0]
+                    order_to_execute["trade_status"] = "pending"
+                    df_grid.loc[df_grid["grid_id"] == grid_id, 'status'] = 'pending'
+                    lst_order.append(order_to_execute)
+                del order_to_execute
 
         sorting_order = ['OPEN_LONG_ORDER', 'OPEN_SHORT_ORDER', 'CLOSE_LONG_ORDER', 'CLOSE_SHORT_ORDER']
         sorted_list = sorted(lst_order, key=lambda x: sorting_order.index(x['type']))
@@ -788,16 +839,6 @@ class GridPosition():
             exit(44)
         return
 
-    def get_buying_market_order(self, symbol, size, price):
-        order_to_execute = {}
-        order_to_execute["symbol"] = symbol
-        order_to_execute["gross_size"] = size
-        order_to_execute["type"] = "OPEN_LONG"   # OPEN_SHORT for short_grid
-        order_to_execute["price"] = price
-        order_to_execute["gross_size"] = size
-        order_to_execute["grid_id"] = -1
-        return order_to_execute
-
     def get_grid_info(self, symbol):
         self.dct_status_info = {}
         return self.dct_status_info
@@ -851,11 +892,6 @@ class GridPosition():
             df_current_state.rename(columns={'lst_orderId': 'orderId'}, inplace=True)
             df_current_state.rename(columns={'nb_position': 'leverage'}, inplace=True)
             df_current_state.rename(columns={'position': 'price'}, inplace=True)
-
-            lst_lst_orderId = df_current_state["orderId"].to_list()
-            for lst_orderId in lst_lst_orderId:
-                if len(lst_orderId) > 1:
-                    print("toto")
 
             columns_to_drop = ['close_grid_id', 'triggered_by', 'previous_side', 'previous_status', 'changes', 'cross_checked', 'on_edge']
             df_current_state.drop(columns=columns_to_drop, inplace=True)

@@ -11,8 +11,10 @@ default_features = ["open", "close", "high", "low", "volume"]
 
 class DataDescription():
     def __init__(self):
+        self.strategy_id = ""
+        self.strategy_name = ""
         self.symbols = default_symbols
-        self.features = default_features
+        self.fdp_features = default_features
         self.interval = "1d"
         self.candle_stick = "released"
 
@@ -63,6 +65,60 @@ class RealTimeDataProvider(IRealTimeDataProvider):
             pass
         else:
             pass
+
+    def get_lst_current_data(self, lst_data_description, fdp_url_id):
+        lst_ds_result = []
+        for data_description in lst_data_description:
+            symbols = ','.join(data_description.symbols)
+            symbols = symbols.replace('/', '_')
+
+            interval = data_description.str_interval
+
+            # MODIF CEDE: TEST
+            # sim_current_date = self.get_current_datetime()
+            # sim_current_date = sim_current_date.replace(second=0, microsecond=0)
+            # sim_current_date = None
+            # params = { "service":"last", "exchange":"binance", "symbol":symbols, "interval": interval, "start": str(sim_current_date),"indicators": data_description.fdp_features}
+
+            params = {
+                "service": "last",
+                "exchange": "bitget",
+                "symbol": symbols,
+                "interval": interval,
+                "candle_stick": data_description.candle_stick,
+                "start": None,
+                "indicators": data_description.fdp_features}
+
+            response_json = utils.fdp_request_post("last", params, fdp_url_id)
+
+            data = {feature: [] for feature in data_description.features}
+            data["symbol"] = []
+
+            if response_json["status"] == "ok":
+                for symbol in data_description.symbols:
+                    formatted_symbol = symbol.replace('/', '_')
+                    if response_json["result"][formatted_symbol]["status"] == "ko":
+                        print("[RealTimeDataProvider:get_current_data] !!!! no data for ", symbol)
+                        continue
+                    df = pd.read_json(response_json["result"][formatted_symbol]["info"])
+                    columns = list(df.columns)
+                    data["symbol"].append(symbol)
+                    for feature in data_description.features:
+                        if feature not in columns:
+                            print("FDP MISSING FEATURE COLUMN")
+                            return None
+                        if len(df[feature]) > 0:
+                            data[feature].append(df[feature].iloc[-1])
+                        else:
+                            print("FDP MISSING FEATURE VALUE")
+                            return None
+
+            df_result = pd.DataFrame(data)
+            df_result.set_index("symbol", inplace=True)
+            data_description.current_data = df_result.copy()
+            lst_ds_result.append(data_description)
+
+        return lst_ds_result
 
     def get_current_data(self, data_description, fdp_url_id):
 

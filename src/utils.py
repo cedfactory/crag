@@ -14,6 +14,10 @@ import string
 import math
 
 
+def create_directory(self, directory_path):
+    if not os.path.exists(directory_path):
+        os.makedirs(directory_path)
+
 def normalize_price(amount, pricePlace, priceEndStep):
     pricePlace = float(pricePlace)
     priceEndStep = float(priceEndStep)
@@ -242,6 +246,9 @@ def fdp_request_post(url, params, fdp_id):
     final_result = {}
 
     fdp_url = settings_helper.get_fdp_url_info(fdp_id).get("url", None)
+
+    fdp_url = "http://192.168.1.205:5000/" # CEDE DEBUG
+
     if not fdp_url or fdp_url == "":
         return {"status":"ko", "info":"fdp url not found"}
 

@@ -7,7 +7,7 @@ import csv
 from datetime import datetime
 import datetime
 
-from . import rtdp, rtstr, utils, rtctrl
+from . import rtdp, rtstr, utils
 
 # ref:
 # https://www.dutchalgotrading.com/strategies/the-slope-is-dope-trading-bot-strategy-is-it-profitable-or-not/
@@ -16,10 +16,6 @@ class StrategySlopeIsDope(rtstr.RealTimeStrategy):
 
     def __init__(self, params=None):
         super().__init__(params)
-
-        self.rtctrl = rtctrl.rtctrl(params=params)
-        self.rtctrl.set_list_open_position_type(self.get_lst_opening_type())
-        self.rtctrl.set_list_close_position_type(self.get_lst_closing_type())
 
         self.zero_print = True
 
