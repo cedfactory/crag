@@ -12,7 +12,7 @@
                 trailer_global_delta_tp="0"
                 trailer_sl="0"
                 high_volatility="False"
-                path_strategy_param="./param_continue_grid_breakout_PEPE_XRP_test.csv"
+                path_strategy_param="./param_continue_breakout_PEPE_XRP_test.csv"
                 nb_position_limits="1"
                 loggers="file=log"
         />
@@ -37,3 +37,4 @@
     />
 </configuration>
 
+                <!-- path_strategy_param="./param_continue_grid_breakout_PEPE_XRP_test.csv" -->

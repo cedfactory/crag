@@ -36,6 +36,8 @@ class BrokerBitGet(broker.Broker):
 
         self.df_grid_id_match = pd.DataFrame(columns=["orderId", "grid_id", "strategy_id", "trend"])
 
+        self.lock = threading.Lock()
+        self.lock_place_trigger_order_v2 = threading.Lock()
 
         self.execute_timer = None
         self.iter_execute_orders = 0
@@ -113,6 +115,7 @@ class BrokerBitGet(broker.Broker):
             df_buying_size.at[index, 'buyingSize'] = normalized_size
         return df_buying_size
 
+    """
     @authentication_required
     def execute_trade(self, trade):
         self.log("!!!!!!! EXECUTE THE TRADE !!!!!!!")
@@ -253,6 +256,7 @@ class BrokerBitGet(broker.Broker):
         del msg
         locals().clear()
         return trade.success
+    """
 
     def check_validity_order(self, order):
         # CEDE avoid empty dict field: from order -> trade
@@ -273,10 +277,13 @@ class BrokerBitGet(broker.Broker):
         del gridId
 
     def add_gridId_orderId(self, gridId, orderId, strategyId, trend=None):
-        self.lock = threading.Lock()
+        # self.lock = threading.Lock()
         with self.lock:
-            self.df_grid_id_match.loc[len(self.df_grid_id_match)] = [orderId, gridId, strategyId, trend]
-            self.df_grid_id_match = self.df_grid_id_match.drop_duplicates()
+            try:
+                self.df_grid_id_match.loc[len(self.df_grid_id_match)] = [orderId, gridId, strategyId, trend]
+                self.df_grid_id_match = self.df_grid_id_match.reset_index(drop=True)
+            except:
+                exit(555) # DEBUG
 
     def clear_gridId_orderId(self, lst_orderId):
         if False \
@@ -360,7 +367,7 @@ class BrokerBitGet(broker.Broker):
             trigger_price = str(self.normalize_price(symbol, float(trigger_price)))
             msg += "{} size: {} trigger_price: {}".format(order_side, amount, trigger_price) + "\n"
 
-            self.lock_place_trigger_order_v2 = threading.Lock()
+            # self.lock_place_trigger_order_v2 = threading.Lock()
             with self.lock_place_trigger_order_v2:
                 transaction = self._place_trigger_order_v2(symbol,  planType="normal_plan", triggerPrice=trigger_price,
                                                            marginCoin="USDT", size=amount, side=side,
@@ -379,10 +386,7 @@ class BrokerBitGet(broker.Broker):
         if "msg" in transaction and transaction["msg"] == "success" and "data" in transaction:
             orderId = transaction["data"]["orderId"]
             strategy_id = trigger["strategy_id"]
-            if self.catch_429_status():
-                self.add_429_orderId(orderId)
-                self.reset_status_429()
-            self.add_gridId_orderId(grid_id, orderId, strategy_id, trend=trend)
+            self.add_gridId_orderId(grid_id, orderId, strategy_id, trend)
             transaction_failure = False
         else:
             transaction_failure = True
@@ -513,28 +517,6 @@ class BrokerBitGet(broker.Broker):
 
             for future in futures:
                 lst_result_triggers.append(future.result())
-
-            if len(self.get_429_lst_orderId()) > 0:
-                self.reset_429()
-                all_in_triggers_raised = False
-                while not all_in_triggers_raised:
-                    order_ids = [item['orderId'] for item in lst_result_triggers]
-                    triggers_raised = self.get_triggers().copy()
-                    try:
-                       lst_triggers_raised = triggers_raised["orderId"].to_list()
-                    except:
-                        print(triggers_raised.to_string())
-                        exit(88) # CEDE DEBUG
-                    all_in_triggers_raised = all(order_id in lst_triggers_raised for order_id in order_ids)
-                for trigger_orderId in lst_triggers_raised:
-                    if not self.check_orderId_record_status(trigger_orderId):
-                        order_item = next((item for item in lst_result_triggers if item['orderId'] == trigger_orderId), None)
-                        if order_item is not None \
-                                and order_item["trade_status"] == "SUCCESS":
-                            self.add_gridId_orderId(order_item["grid_id"], trigger_orderId, order_item["strategy_id"])
-                        else:
-                            exit(123) # CEDE DEBUG
-
         return lst_result_triggers
 
     def execute_lst_sltp_trailling_orders(self, lst_orders):

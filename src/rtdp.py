@@ -125,12 +125,7 @@ class RealTimeDataProvider(IRealTimeDataProvider):
         symbols = ','.join(data_description.symbols)
         symbols = symbols.replace('/','_')
 
-        # adapt the interval according to the frequency given to crag (todo : the interval should be provided by the strategy itself)
-        interval = "1d"
-        if data_description.interval <= 60 * 60:
-            interval = "1h"
-        if data_description.interval <= 60:
-            interval = "1m"
+        interval = data_description.interval
 
         # MODIF CEDE: TEST
         sim_current_date = self.get_current_datetime()

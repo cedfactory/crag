@@ -188,10 +188,6 @@ class Broker(metaclass = ABCMeta):
         pass
 
     @abstractmethod
-    def execute_trade(self, trade):
-        pass
-
-    @abstractmethod
     def export_history(self, target):
         pass
 

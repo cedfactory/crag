@@ -366,11 +366,11 @@ class MainPanel(wx.Panel):
             mytrade.symbol = symbol
             mytrade.gross_size = gross_size
             if side == "long":
-                mytrade.type = "CLOSE_LONG"
+                mytrade.type = "close_long"
             else:
-                mytrade.type = "CLOSE_SHORT"
+                mytrade.type = "close_short"
             print("close position : ", mytrade.symbol, " / ", mytrade.gross_size)
-            my_broker.execute_trade(mytrade)
+            my_broker.execute_open_order(mytrade)
             self.update_positions(my_broker)
 
     def on_close_all_positions(self, event):
@@ -390,9 +390,9 @@ class MainPanel(wx.Panel):
             mytrade.symbol = symbol
             open_close = ""
             if self.panel_positions.rb_open.GetValue(): # open
-                open_close = "OPEN"
+                open_close = "open"
             elif self.panel_positions.rb_close.GetValue():
-                open_close = "CLOSE"
+                open_close = "close"
             else:
                 print("open limit order : open or close ???")
                 return
@@ -404,11 +404,12 @@ class MainPanel(wx.Panel):
                 print("open position : amount or size ???")
                 return
             if side == "long":
-                mytrade.type = open_close+"_LONG"
+                mytrade.type = open_close + "_long"
             else:
-                mytrade.type = open_close+"_SHORT"
+                mytrade.type = open_close + "_short"
+
             print("open position : ", mytrade.symbol, " / ", mytrade.gross_size)
-            my_broker.execute_trade(mytrade)
+            my_broker.execute_open_order(mytrade)
             self.update_positions(my_broker)
 
     def on_cancel_limit_order(self, event):
@@ -490,6 +491,7 @@ class MainPanel(wx.Panel):
                 mytrade.type = open_close+"_LONG_ORDER"
             else:
                 mytrade.type = open_close+"_SHORT_ORDER"
+            mytrade.type = mytrade.type.lower()
             mytrade.price = self.panel_orders.price.GetValue()
             print("open limit order : ", mytrade.symbol, " / ", mytrade.gross_size, " / ", mytrade.price)
 
@@ -497,7 +499,7 @@ class MainPanel(wx.Panel):
             if self.panel_orders.checkbox_trigger.GetValue():
                 mytrade.trigger_price = self.panel_orders.trigger_price.GetValue()
 
-            my_broker.execute_trade(mytrade)
+            my_broker.execute_open_order(mytrade)
             self.update_orders(my_broker)
 
 
