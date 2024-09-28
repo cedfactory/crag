@@ -11,7 +11,7 @@ class TestCrag:
         configuration_file = utils.write_file("./test/generated/crag.xml", '''<root>
             <strategy name="StrategyUnknown" />
             <broker name="binance">
-                <params account="test_bot" simulation="1"/>
+                <params account="test_bot" />
             </broker>
             <crag interval="20" />
         </root>''')
@@ -30,7 +30,7 @@ class TestCrag:
         configuration_file = utils.write_file("./test/generated/crag.xml", '''<configuration>
             <strategy name="StrategySuperReversal" />
             <broker name="fake_broker">
-                <params account="test_bot" simulation="1" />
+                <params account="test_bot" />
             </broker>
             <crag interval="20" />
         </configuration>''')
@@ -51,7 +51,7 @@ class TestCrag:
         configuration_file = utils.write_file("./test/generated/crag.xml", '''<configuration>
             <strategy name="StrategyUnknown" />
             <broker name="binance">
-                <params account="test_bot" simulation="1" />
+                <params account="test_bot" />
             </broker>
             <crag interval="20" />
         </configuration>''')
@@ -72,7 +72,7 @@ class TestCrag:
         configuration_file = utils.write_file("./test/generated/crag.xml", '''<configuration>
             <strategy name="StrategyGridTradingLong" />
             <broker name="simulator">
-                <params account="test_bot" simulation="1" reset_account="False" reset_account_orders="False"/>
+                <params account="test_bot" reset_account="False" reset_account_orders="False"/>
             </broker>
             <crag interval="20" loggers="console;file=output.log;discordBot=botId"/>
         </configuration>''')
@@ -97,7 +97,7 @@ class TestCrag:
                 <params symbols="BTC/USD" grid_df_params="../test/data/multigrid_df_params.csv"/>
             </strategy>
             <broker name="bitget">
-                <params exchange="bitget" account="test_bot" leverage="3" simulation="1" reset_account="False"/>
+                <params exchange="bitget" account="test_bot" leverage="3" reset_account="False"/>
             </broker>
             <crag interval="20" />
         </configuration>''')

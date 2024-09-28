@@ -14,7 +14,6 @@ class SimBroker(broker.Broker):
         self.start_date = ""
         self.end_date = ""
         self.intervals = ""
-        self.orders = "market"
         if params:
             self.name = params.get("name", self.name)
             self.cash = params.get("cash", self.cash)
@@ -23,7 +22,6 @@ class SimBroker(broker.Broker):
             self.start_date = params.get("start_date", self.start_date)
             self.end_date = params.get("end_date", self.end_date)
             self.intervals = params.get("intervals", self.intervals)
-            self.orders = params.get("orders", self.orders)
 
     def ready(self):
         return True

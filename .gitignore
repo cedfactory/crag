@@ -132,6 +132,4 @@ dmypy.json
 .idea/
 
 *~
-/conf/accounts.xml
-/conf/discord_bots.xml
-/conf/mail_bots.xml
+/conf/settings.xml

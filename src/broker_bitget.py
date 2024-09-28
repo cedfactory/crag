@@ -11,7 +11,6 @@ class BrokerBitGet(broker.Broker):
     def __init__(self, params = None):
         super().__init__(params)
         self.rtdp = rtdp.RealTimeDataProvider(params)
-        self.simulation = False
         self.name = ""
         self.exchange_name = "bitget"
         self.chase_limit = False
@@ -23,11 +22,6 @@ class BrokerBitGet(broker.Broker):
             self.zero_print = params.get("zero_print", self.zero_print)
             if isinstance(self.zero_print, str):
                 self.zero_print = self.zero_print == "True" # convert to boolean
-            self.simulation = params.get("simulation", self.simulation)
-            if self.simulation == 0 or self.simulation == "0":
-                self.simulation = False
-            if self.simulation == 1 or self.simulation == "1":
-                self.simulation = True
 
         #if not self._authentification():
         #    print("[BrokerBitGet] : Problem encountered during authentification")
