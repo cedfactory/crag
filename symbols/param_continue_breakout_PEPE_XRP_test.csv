@@ -1,3 +1,3 @@
-﻿id,name,symbol,type,grid_high,grid_low,percent_per_grid,nb_grid,grid_margin
-breakout_1,StrategyBreakoutTradingGenericV2,PEPE,,0.0000098,0.0000082,0.2,10,500
-breakout_2,StrategyBreakoutTradingGenericV2,XRP,,0.60,0.56,0.2,10,500
+﻿id,name,symbol,type,grid_high,grid_low,percent_per_grid,nb_grid,nb_position_limits,grid_margin
+breakout_1,StrategyBreakoutTradingGenericV2,PEPE,,0.0000098,0.0000082,0.2,10,1,500
+breakout_2,StrategyBreakoutTradingGenericV2,XRP,,0.60,0.56,0.2,10,1,500

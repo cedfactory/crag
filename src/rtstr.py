@@ -38,7 +38,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
         self.trailer_global_SL = 0
         self.trigger_global_trailer_SL = False
         self.drawdown_SL = 0
-        self.MAX_POSITION = 5    # Asset Overall Percent Size
+        self.MAX_POSITION = 1    # Asset Overall Percent Size
         self.buying_size = 0
         self.zero_print = True
         self.loggers = [ logger.LoggerConsole() ]
@@ -59,18 +59,11 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
         if params:
             self.candle_stick = params.get("candle_stick", self.candle_stick)
-            self.MAX_POSITION = params.get("max_position", self.MAX_POSITION)
-            if isinstance(self.MAX_POSITION, str):
-                self.MAX_POSITION = int(self.MAX_POSITION)
             symbols = params.get("path_strategy_param", "")
             if symbols != "" and path.exists("./symbols/"+symbols):
                 self.df_strategy_param = pd.read_csv("./symbols/"+symbols)
                 self.lst_symbols = self.df_strategy_param['symbol'].tolist()
                 self.lst_symbols = list(dict.fromkeys(self.lst_symbols))
-            self.nb_position_limits = 1
-            self.nb_position_limits = params.get("nb_position_limits", self.nb_position_limits)
-            if isinstance(self.nb_position_limits, str):
-                self.nb_position_limits = int(self.nb_position_limits)
 
             self.trix_period = 0
             self.stoch_rsi_period = 0

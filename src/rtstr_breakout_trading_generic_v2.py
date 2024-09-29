@@ -23,6 +23,7 @@ class StrategyBreakoutTradingGenericV2(rtstr.RealTimeStrategy):
         self.nb_grid = 0
         self.grid_margin = 0
         self.percent_per_grid = 0
+        self.nb_position_limits = 1
         self.side = ""
         self.id = ""
         if params:
@@ -64,6 +65,12 @@ class StrategyBreakoutTradingGenericV2(rtstr.RealTimeStrategy):
                     self.grid_margin = float(self.grid_margin)
                 elif len(self.grid_margin) == 0:
                     self.grid_margin = 0
+            self.nb_position_limits = params.get("nb_position_limits", self.nb_position_limits)
+            if isinstance(self.nb_position_limits, str):
+                if len(self.nb_position_limits) > 0:
+                    self.nb_position_limits = float(self.nb_position_limits)
+                elif len(self.nb_position_limits) == 0:
+                    self.nb_position_limits = 0
         else:
             exit(5)
 

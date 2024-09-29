@@ -1,7 +1,7 @@
-﻿id,name,symbol,type,grid_high,grid_low,percent_per_grid,nb_grid,grid_margin
-long_1,StrategyGridTradingGenericV2,PEPE,long,0.0000098,0.0000082,0,40,250
-short_1,StrategyGridTradingGenericV2,PEPE,short,0.0000098,0.0000082,0,40,250
-long_2,StrategyGridTradingGenericV2,XRP,long,0.60,0.56,0,40,250
-short_2,StrategyGridTradingGenericV2,XRP,short,0.60,0.56,0,40,250
-breakout_1,StrategyBreakoutTradingGenericV2,PEPE,,0.0000098,0.0000082,0.2,3,500
-breakout_2,StrategyBreakoutTradingGenericV2,XRP,,0.60,0.56,0.2,3,500
+﻿id,name,symbol,type,grid_high,grid_low,percent_per_grid,nb_grid,nb_position_limits,grid_margin
+long_1,StrategyGridTradingGenericV2,PEPE,long,0.0000098,0.0000082,0,40,1,250
+short_1,StrategyGridTradingGenericV2,PEPE,short,0.0000098,0.0000082,0,40,1,250
+long_2,StrategyGridTradingGenericV2,XRP,long,0.60,0.56,0,40,1,250
+short_2,StrategyGridTradingGenericV2,XRP,short,0.60,0.56,0,40,1,250
+breakout_1,StrategyBreakoutTradingGenericV2,PEPE,,0.0000098,0.0000082,0.2,3,1,500
+breakout_2,StrategyBreakoutTradingGenericV2,XRP,,0.60,0.56,0.2,3,1,500

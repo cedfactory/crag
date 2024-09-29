@@ -1,7 +1,6 @@
 <configuration>
     <strategy id="StrategyIntervalsGeneric" name="StrategyIntervalsGeneric">
         <params candle_stick="released"
-                max_position="1"
                 sl="0"
                 tp="0"
                 global_sl="-50"
@@ -13,7 +12,6 @@
                 trailer_sl="0"
                 high_volatility="False"
                 path_strategy_param="./param_intervals_trix_PEPE_XRP_test.csv"
-                nb_position_limits="1"
                 loggers="file=log"
         />
     </strategy>
