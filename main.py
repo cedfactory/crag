@@ -151,7 +151,7 @@ def check_crag():
             <params symbols="XRP" grid_df_params="./test/data/multigrid_df_params.csv"/>
         </strategy>
         <broker name="bitget">
-            <params exchange="bitget" account="bitget_ayato" leverage="2" simulation="1" reset_account="False" reset_account_orders="False"/>
+            <params exchange="bitget" account="bitget_ayato" leverage="2" reset_account="False" reset_account_orders="False"/>
         </broker>
         <crag interval="20" />
     </configuration>''')

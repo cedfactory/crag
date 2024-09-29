@@ -4,7 +4,7 @@ import wx.lib.agw.floatspin as FS
 import sys
 
 from src.utils import settings_helper
-from src import broker_helper,broker_bitget_api,utils,trade
+from src import broker_helper, broker_bitget_api, utils
 
 g_selected_symbols = ["XRP", "BTC", "ETH", "SOL", "PEPE"]
 
@@ -470,13 +470,13 @@ class MainPanel(wx.Panel):
             side = self.panel_orders.sides.GetString(self.panel_orders.sides.GetSelection()) # "long" or "short"
             my_broker.set_symbol_leverage(my_broker._get_symbol(symbol), int(leverage), side)
 
-            mytrade = trade.Trade()
+            mytrade = lambda: None
             mytrade.symbol = symbol
             open_close = ""
             if self.panel_orders.rb_open.GetValue(): # open
-                open_close = "OPEN"
+                open_close = "open"
             elif self.panel_orders.rb_close.GetValue():
-                open_close = "CLOSE"
+                open_close = "close"
             else:
                 print("open limit order : open or close ???")
                 return
@@ -488,10 +488,9 @@ class MainPanel(wx.Panel):
                 print("open limit order : amount or size ???")
                 return
             if side == "long":
-                mytrade.type = open_close+"_LONG_ORDER"
+                mytrade.type = open_close+"_long"
             else:
-                mytrade.type = open_close+"_SHORT_ORDER"
-            mytrade.type = mytrade.type.lower()
+                mytrade.type = open_close+"_short"
             mytrade.price = self.panel_orders.price.GetValue()
             print("open limit order : ", mytrade.symbol, " / ", mytrade.gross_size, " / ", mytrade.price)
 
