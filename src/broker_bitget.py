@@ -88,13 +88,24 @@ class BrokerBitGet(broker.Broker):
         self.iter_set_open_orders_gridId = 0
 
     @authentication_required
-    def set_margin_mode_and_leverages(self, df_margin_mode_leverages):
-        for index, row in df_margin_mode_leverages.iterrows():
+    def set_margin_mode_and_leverages(self):
+        for index, row in self.df_symbols.iterrows():
             symbol = row["symbol"]
-            self.set_symbol_margin(symbol, row["margin_mode"])
-            self.set_symbol_leverage(symbol, row["leverage_long"], "long")
-            self.set_symbol_leverage(symbol, row["leverage_short"], "short")
-        del df_margin_mode_leverages
+            if "margin_mode" in row:
+                self.set_symbol_margin(symbol, row["margin_mode"])
+                self.set_symbol_margin(symbol, row["margin_mode"])
+            if "leverage_long" in row:
+                if row["leverage_long"] != 0:
+                    self.set_symbol_leverage(symbol, row["leverage_long"], "long")
+                else:
+                    cross_margin_leverage, long_leverage, short_leverage = self.get_account_symbol_leverage(symbol)
+                    self.df_symbols.at[index, "leverage_long"] = long_leverage
+            if "leverage_short" in row:
+                if row["leverage_short"] != 0:
+                    self.set_symbol_leverage(symbol, row["leverage_short"], "short")
+                else:
+                    cross_margin_leverage, long_leverage, short_leverage = self.get_account_symbol_leverage(symbol)
+                    self.df_symbols.at[index, "leverage_short"] = short_leverage
 
     def normalize_grid_df_buying_size_size(self, df_buying_size):
         if not isinstance(df_buying_size, pd.DataFrame) \

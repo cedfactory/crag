@@ -118,7 +118,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         if isinstance(self.df_symbols, pd.DataFrame):
             self.df_symbols["symbol_original"] = self.df_symbols["symbol"]
             self.df_symbols["symbol"] = self.df_symbols.apply(lambda row: self._get_symbol(row["symbol"]), axis=1)
-            self.set_margin_mode_and_leverages(self.df_symbols)
+            self.set_margin_mode_and_leverages()
 
         return
         # initialize the websocket client

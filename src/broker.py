@@ -54,10 +54,12 @@ class Broker(metaclass = ABCMeta):
                 except BaseException as err:
                     self.reset_account_orders = True
 
-            str_symbols = params.get("symbols", None)
-            if str_symbols and path.exists("./symbols/"+str_symbols):
-                self.df_symbols = pd.read_csv("./symbols/"+str_symbols)
-                #self.lst_symbols = self.df_symbols['symbol'].tolist()
+            symbols = params.get("symbols", None)
+            if symbols and isinstance(symbols, str) and path.exists("./symbols/"+symbols):
+                    self.df_symbols = pd.read_csv("./symbols/"+symbols)
+                    #self.lst_symbols = self.df_symbols['symbol'].tolist()
+            elif isinstance(symbols, dict):
+                self.df_symbols = pd.DataFrame(symbols)
 
         self.cash_borrowed = 10
         self.rtdp = None
