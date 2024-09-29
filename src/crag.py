@@ -37,7 +37,6 @@ class Crag:
         self.broker = None
         self.rtstr = None
         self.working_directory = None
-        self.interval = 1
         self.logger = None
         self.loggers = []
         self.start_date = ""
@@ -114,7 +113,6 @@ class Crag:
                 self.minimal_portfolio_value = self.original_portfolio_value
                 self.maximal_portfolio_value = self.original_portfolio_value
             self.rtstr = params.get("rtstr", self.rtstr)
-            self.interval = params.get("interval", self.interval)
             self.logger_discord = params.get("logger", self.logger)
             self.loggers = params.get("loggers", self.loggers)
             self.working_directory = params.get("working_directory", self.working_directory)
@@ -129,7 +127,7 @@ class Crag:
         if self.broker:
             self.final_datetime = self.broker.get_final_datetime()
             self.start_date, self.end_date, _ = self.broker.get_info() # CEDE To be confirmed
-        self.export_filename = "sim_broker_history" + "_" + self.strategy_name + "_" + str(self.start_date) + "_" + str(self.end_date) + "_" + str(self.interval) + ".csv"
+        self.export_filename = "sim_broker_history" + "_" + self.strategy_name + "_" + str(self.start_date) + "_" + str(self.end_date) + ".csv"
         self.backup_filename = self.id + "_crag_backup.pickle"
 
         if not self.working_directory:

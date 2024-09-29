@@ -20,14 +20,12 @@
                 fdp_url_id="gc1"
                 account="subfortest2"
                 symbols="./symbols_PEPE_XRP.csv"
-                intervals="1m"
                 reset_account="False"
                 reset_account_orders="False"
                 loggers="file=log"
         />
     </broker>
     <crag id="breakout_long_short_v2"
-          interval="60"
           botId="subfortest2"
           loggers="console"
     />

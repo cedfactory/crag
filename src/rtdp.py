@@ -46,17 +46,12 @@ class RealTimeDataProvider(IRealTimeDataProvider):
     def __init__(self, params = None):
         self.start = None
         self.end = None
-        self.intervals = None
 
         if params:
             self.start = params.get("start_date", self.start)
             self.end = params.get("end_date", self.end)
-            self.intervals = params.get("intervals", self.intervals)
 
-        if self.start != None and self.end != None:
-            self.scheduler = chronos.Chronos(self.start, self.end, self.intervals)
-        else:
-            self.scheduler = chronos.Chronos()
+        self.scheduler = chronos.Chronos()
         pass
 
     def tick(self):
@@ -73,12 +68,6 @@ class RealTimeDataProvider(IRealTimeDataProvider):
             symbols = symbols.replace('/', '_')
 
             interval = data_description.str_interval
-
-            # MODIF CEDE: TEST
-            # sim_current_date = self.get_current_datetime()
-            # sim_current_date = sim_current_date.replace(second=0, microsecond=0)
-            # sim_current_date = None
-            # params = { "service":"last", "exchange":"binance", "symbol":symbols, "interval": interval, "start": str(sim_current_date),"indicators": data_description.fdp_features}
 
             params = {
                 "service": "last",
@@ -172,12 +161,6 @@ class RealTimeDataProvider(IRealTimeDataProvider):
             ]
             ds.features = {"close": None,
                            }
-            if self.intervals == "1d":
-                ds.interval = 60 * 60 * 24
-            elif self.intervals == "1h":
-                ds.interval = 60 * 60
-            elif self.intervals == "1m":
-                ds.interval = 60
             df_price = self.get_current_data(ds)
             return df_price.loc[df_price.index == symbol, 'close'].iloc[0]
         else:

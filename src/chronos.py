@@ -30,10 +30,7 @@ class Chronos():
         return self.master_position
 
     def get_current_time(self):
-        if self.start_date != None and self.end_date != None:
-            return self.master_time
-        else:
-            return datetime.now()
+        return datetime.now()
 
     def get_df_range_time(self):
         df_datetime = pd.DataFrame({'timestamp': pd.date_range(start=self.start_date, end=self.end_date, freq=self.interval)})
