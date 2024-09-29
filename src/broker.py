@@ -25,8 +25,8 @@ def create_df_prices():
 
 class Broker(metaclass = ABCMeta):
     
-    def __init__(self, params = None):
-        self.loggers = [ logger.LoggerConsole() ]
+    def __init__(self, params=None):
+        self.loggers = [] #[ logger.LoggerConsole() ]
         self.df_symbols = None
         self.cash = 10
         self.fdp_url_id = "localhost:5000"
@@ -87,7 +87,9 @@ class Broker(metaclass = ABCMeta):
             return self.df_symbols.loc[self.df_symbols["symbol"] == symbol, "leverage_short"].values[0]
         return None
 
-    def log(self, msg, header="", attachments=[]):
+    def log(self, msg, header="", attachments=None):
+        if attachments is None:
+            attachments = []
         for iter_logger in self.loggers:
             iter_logger.log(msg, header=header, author=type(self).__name__, attachments=attachments)
 
@@ -122,7 +124,6 @@ class Broker(metaclass = ABCMeta):
         return None
 
     def get_portfolio_value(self):
-        # todo : to implement
         return self.cash
 
     def get_current_datetime(self, format=None):

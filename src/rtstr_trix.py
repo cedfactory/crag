@@ -3,7 +3,7 @@ import json
 
 from . import rtdp, rtstr
 
-import utils
+from . import utils
 
 class StrategyTrix(rtstr.RealTimeStrategy):
 

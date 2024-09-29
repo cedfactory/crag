@@ -1,7 +1,7 @@
 from datetime import datetime
 import pandas as pd
 import matplotlib.pyplot as plt
-import utils
+from . import utils
 import os
 from pathlib import Path
 import shutil

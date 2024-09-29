@@ -1,5 +1,4 @@
-import utils
-from . import broker,rtdp,utils
+from . import broker, rtdp, utils
 import pandas as pd
 import re
 import json

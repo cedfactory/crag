@@ -18,12 +18,52 @@ class StrategyBreakoutTradingGenericV2(rtstr.RealTimeStrategy):
     def __init__(self, params=None):
         super().__init__(params)
 
+        self.grid_high = 0
+        self.grid_low = 0
+        self.nb_grid = 0
+        self.grid_margin = 0
+        self.percent_per_grid = 0
         self.side = ""
         self.id = ""
         if params:
             self.id = params.get("id", self.id)
             self.side = params.get("type", self.side)
             self.lst_symbols = [params.get("strategy_symbol", self.lst_symbols)]
+
+            self.grid_high = params.get("grid_high", self.grid_high)
+            if isinstance(self.grid_high, str):
+                if len(self.grid_high) > 0:
+                    self.grid_high = float(self.grid_high)
+                elif len(self.grid_high) == 0:
+                    self.grid_high = 0
+            self.grid_low = params.get("grid_low", self.grid_low)
+            if isinstance(self.grid_low, str):
+                if len(self.grid_low) > 0:
+                    self.grid_low = float(self.grid_low)
+                elif len(self.grid_low) == 0:
+                    self.grid_low = 0
+            if self.grid_high < self.grid_low:
+                tmp = self.grid_low
+                self.grid_low = self.grid_high
+                self.grid_high = tmp
+            self.nb_grid = params.get("nb_grid", self.nb_grid)
+            if isinstance(self.nb_grid, str):
+                if len(self.nb_grid) > 0:
+                    self.nb_grid = int(self.nb_grid)
+                elif len(self.nb_grid) == 0:
+                    self.nb_grid = 0
+            self.percent_per_grid = params.get("percent_per_grid", self.percent_per_grid)
+            if isinstance(self.percent_per_grid, str):
+                if len(self.percent_per_grid) > 0:
+                    self.percent_per_grid = float(self.percent_per_grid)
+                elif len(self.percent_per_grid) == 0:
+                    self.percent_per_grid = 0
+            self.grid_margin = params.get("grid_margin", self.grid_margin)
+            if isinstance(self.grid_margin, str):
+                if len(self.grid_margin) > 0:
+                    self.grid_margin = float(self.grid_margin)
+                elif len(self.grid_margin) == 0:
+                    self.grid_margin = 0
         else:
             exit(5)
 
