@@ -347,11 +347,12 @@ class BrokerBitGet(broker.Broker):
         if tp != "":
             stopSurplusTriggerType = "mark_price"
 
-
-        clientOid = self.clientOIdprovider.get_name(symbol,
-                                                    trigger["type"]
-                                                    + "__" + str(trigger["grid_id"]) + "__"
-                                                    + "--" + str(trigger["strategy_id"]) + "--")
+        side = trigger["type"]
+        if "grid_id" in trigger:
+            side = side + "__" + str(trigger["grid_id"]) + "__"
+        if "strategy_id" in trigger:
+            side = side + "--" + str(trigger["strategy_id"]) + "--"
+        clientOid = self.clientOIdprovider.get_name(symbol, side)
 
         if "OPEN" in order_side and "LONG" in order_side:
             trade_side = 'Open'
@@ -389,8 +390,9 @@ class BrokerBitGet(broker.Broker):
 
         if "msg" in transaction and transaction["msg"] == "success" and "data" in transaction:
             orderId = transaction["data"]["orderId"]
-            strategy_id = trigger["strategy_id"]
-            self.add_gridId_orderId(grid_id, orderId, strategy_id, trend)
+            if "strategy_id" in trigger:
+                strategy_id = trigger["strategy_id"]
+                self.add_gridId_orderId(grid_id, orderId, strategy_id, trend)
             transaction_failure = False
         else:
             transaction_failure = True
