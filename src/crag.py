@@ -47,7 +47,6 @@ class Crag:
         self.maximal_portfolio_value = 0
         self.minimal_portfolio_variation = 0
         self.maximal_portfolio_variation = 0
-        self.previous_usdt_equity = 0
         self.maximal_portfolio_date = ""
         self.id = str(utils.get_random_id())
         self.high_volatility_sleep_duration = 0
@@ -295,8 +294,8 @@ class Crag:
                 if lst_interval:
                     print("############################ ", lst_interval, " ############################")
                     self.step(lst_interval)
-            # Here you can add a small time delay, for example 100ms, if needed to prevent 100% CPU usage
-            # time.sleep(0.1)  # Optional, if you need to reduce CPU usage
+                if '5m' in lst_interval:
+                    print("usdt_equity: ", self.usdt_equity)
 
     def step(self, lst_interval):
         self.usdt_equity = self.usdt_equity_thread
@@ -326,7 +325,10 @@ class Crag:
             self.rtstr.update_executed_trade_status(lst_trades_to_execute_result)
             lst_stat = self.rtstr.get_strategy_stats(["1m"])
 
-
+            for stat in lst_stat:
+                if isinstance(stat, str):
+                    stat = stat.replace('_', ' ').replace(',', '').replace('{', '').replace('}', '').replace('"', '').strip()
+                    self.log_discord(stat.upper(), "STRATEGY STAT:")
 
             msg = ""
             msg += "current cash = ${}\n".format(utils.KeepNDecimals(self.broker.get_cash(), 2))
@@ -350,61 +352,47 @@ class Crag:
 
             unrealised_PL_long = 0
             unrealised_PL_short = 0
-            lst_symbol_position = self.broker.get_lst_symbol_position()
 
-            self.log("lst_symbol_position {}".format(lst_symbol_position)) # CEDE DEBUG
+            df_open_positions = self.broker.get_open_position()
+            df_open_positions['symbol'] = df_open_positions['symbol'].str.replace('_UMCBL', '')
+            df_open_positions.rename(columns={'holdSide': 'side'}, inplace=True)
+            df_open_positions.rename(columns={'leverage': 'lev'}, inplace=True)
+            df_open_positions.rename(columns={'total': 'tot'}, inplace=True)
+            df_open_positions.rename(columns={'usdtEquity': 'equ'}, inplace=True)
+            df_open_positions.rename(columns={'marketPrice': 'price'}, inplace=True)
+            df_open_positions.rename(columns={'unrealizedPL': 'PL'}, inplace=True)
+            df_open_positions.rename(columns={'liquidationPrice': 'liq'}, inplace=True)
 
-            if len(lst_symbol_position) > 0:
-                msg = "end step with {} open position\n".format(len(lst_symbol_position))
-                df_open_positions = pd.DataFrame(columns=["symb", "type", "size", "eq", "PL", "PL%"])
-                for symbol in lst_symbol_position:
-                    symbol_equity = self.broker.get_symbol_usdtEquity(symbol)
-                    symbol_unrealizedPL = self.broker.get_symbol_unrealizedPL(symbol)
-                    if (symbol_equity - symbol_unrealizedPL) == 0:
-                        symbol_unrealizedPL_percent = 0
-                    else:
-                        symbol_unrealizedPL_percent = symbol_unrealizedPL * 100 / (symbol_equity - symbol_unrealizedPL)
+            if len(df_open_positions) > 0:
+                msg = "end step with {} open position\n".format(len(df_open_positions))
+                df_open_positions = df_open_positions.drop(columns=['marginCoin', 'achievedProfits'])
+                df = df_open_positions.copy()
+                df = df[["symbol", "side", "lev", "tot"]]
+                msg_df = df.to_string(index=False) + "\n"
+                df = df_open_positions.copy()
+                df = df[["symbol", "side", "equ"]]
+                msg_df += df.to_string(index=False) + "\n"
+                df = df_open_positions.copy()
+                df = df[["symbol", "side", "price"]]
+                msg_df += df.to_string(index=False) + "\n"
+                df = df_open_positions.copy()
+                df = df[["symbol", "side", "PL", "liq"]]
+                msg_df += df.to_string(index=False) + "\n"
 
-                    total = self.broker.get_symbol_total(symbol)
-                    dec_total = utils.calculate_decimal_places(total)
-                    dec_unrealizedPL = utils.calculate_decimal_places(symbol_unrealizedPL)
-                    dec_unrealizedPL_percent = utils.calculate_decimal_places(symbol_unrealizedPL_percent)
-
-                    list_row = [self.broker.get_coin_from_symbol(symbol),
-                                self.broker.get_symbol_holdSide(symbol).upper(),
-                                utils.KeepNDecimals(total, dec_total),
-                                utils.KeepNDecimals(symbol_equity, 1),
-                                utils.KeepNDecimals(symbol_unrealizedPL, dec_unrealizedPL),
-                                utils.KeepNDecimals(symbol_unrealizedPL_percent, dec_unrealizedPL_percent)
-                                ]
-                    df_open_positions.loc[len(df_open_positions)] = list_row
-
-                    if self.broker.get_symbol_holdSide(symbol).upper() == "LONG":
-                        unrealised_PL_long += symbol_unrealizedPL
-                    else:
-                        unrealised_PL_short += symbol_unrealizedPL
-
-                if len(df_open_positions) > 0:
-                    # self.log_discord(df_open_positions, msg)
-                    self.log_discord(df_open_positions.to_string().upper(), msg)
-                else:
-                    msg = "no open position\n"
-                    self.log_discord(msg.upper(), "no open position".upper())
+                self.log_discord(msg_df.upper(), msg)
             else:
                 msg = "no open position\n"
                 self.log_discord(msg.upper(), "no open position".upper())
 
             current_date = self.broker.get_current_datetime("%Y/%m/%d %H:%M:%S")
-            msg = "end step current time : {}\n".format(current_date)
-            msg += "equity at start : $ {} ({})\n".format(utils.KeepNDecimals(self.original_portfolio_value, 2), self.start_date)
+            msg = "current time : {}\n".format(current_date)
+            msg += "equity at start : $ {} \n".format(utils.KeepNDecimals(self.original_portfolio_value, 2))
+            msg += "start date : {}\n".format(self.start_date)
             msg += "unrealized PL LONG : ${}\n".format(utils.KeepNDecimals(unrealised_PL_long, 2))
             msg += "unrealized PL SHORT : ${}\n".format(utils.KeepNDecimals(unrealised_PL_short, 2))
             msg += "global unrealized PL : ${} / %{}\n".format(utils.KeepNDecimals(self.broker.get_global_unrealizedPL(), 2),
                                                                utils.KeepNDecimals(self.broker.get_global_unrealizedPL() * 100 / self.original_portfolio_value, 2))
-            msg += "current cash = {}\n".format(utils.KeepNDecimals(self.broker.get_cash(), 2))
             usdt_equity = self.usdt_equity
-            if self.previous_usdt_equity == 0:
-                self.previous_usdt_equity = usdt_equity
             variation_percent = utils.get_variation(self.original_portfolio_value, usdt_equity)
             msg += "total SL TP: ${} / %{}\n".format(utils.KeepNDecimals(self.total_SL_TP, 2),
                                                      utils.KeepNDecimals(self.total_SL_TP_percent, 2))
@@ -412,18 +400,12 @@ class Crag:
                                                       utils.KeepNDecimals(self.actual_drawdown_percent, 2))
             msg += "account equity : ${} / %{}\n".format(utils.KeepNDecimals(usdt_equity, 2),
                                                        utils.KeepNDecimals(variation_percent, 2))
-            variation_percent = utils.get_variation(self.previous_usdt_equity, usdt_equity)
-            msg += "previous equity : ${} / ${} / %{}".format(utils.KeepNDecimals(self.previous_usdt_equity, 2),
-                                                                       utils.KeepNDecimals(usdt_equity - self.previous_usdt_equity, 2),
-                                                                       utils.KeepNDecimals(variation_percent, 2))
         else:
             msg = "no trade completed" + "\n"
             msg += "account equity = ${}".format(utils.KeepNDecimals(self.usdt_equity, 2))
-            msg += "current cash = ${}\n".format(utils.KeepNDecimals(self.broker.get_cash(), 2))
             msg += "original value : ${}\n".format(utils.KeepNDecimals(self.original_portfolio_value, 2))
             variation_percent = utils.get_variation(self.original_portfolio_value, self.usdt_equity)
             msg += "variation = ${}".format(utils.KeepNDecimals(variation_percent, 2))
-        self.previous_usdt_equity = self.usdt_equity
         self.log_discord(msg.upper(), "end step".upper())
 
     def export_history(self, target=None):
@@ -719,87 +701,6 @@ class Crag:
             # self.execute_timer.set_end_time("crag", "udpate_strategy_with_broker", "udpate_strategy_with_broker_current_state_live", self.state_live)
             # self.state_live += 1
 
-    def prepare_and_send_log_for_discord(self, msg, broker_current_state):
-        current_datetime = datetime.today().strftime("%Y/%m/%d - %H:%M:%S")
-        msg = current_datetime + "\n" + msg
-        usdt_equity = self.usdt_equity
-        # wallet_equity = self.broker.get_wallet_equity()
-        msg += "# STATUS EQUITY:" + "\n"
-        # msg += "WALLET EQUITY: " + str(round(wallet_equity, 2)) + " - PNL: " + str(round(self.broker.get_global_unrealizedPL(), 2)) + "\n"
-        msg += "**USDT: " + str(round(usdt_equity, 2)) + " %: " + str(
-            round(self.total_SL_TP * 100 / self.original_portfolio_value, 2)) + "**\n"
-        msg += "**INITIAL: " + str(round(self.original_portfolio_value, 2)) + " $: " + str(
-            round(self.total_SL_TP, 2)) + "**\n"
-        msg += "MAX: " + str(round(self.maximal_portfolio_value, 2)) \
-               + " $: " + str(round(self.maximal_portfolio_value - self.original_portfolio_value, 2)) \
-               + " %: " + str(
-            round((self.maximal_portfolio_value - self.original_portfolio_value) * 100 / self.original_portfolio_value,
-                  2)) + "\n"
-        msg += "MIN: " + str(round(self.minimal_portfolio_value, 2)) \
-               + " $: " + str(round(self.minimal_portfolio_value - self.original_portfolio_value, 2)) \
-               + " %: " + str(
-            round((self.minimal_portfolio_value - self.original_portfolio_value) * 100 / self.original_portfolio_value,
-                  2)) + "\n"
-        lst_usdt_symbols = self.broker.get_lst_symbol_position()
-        if len(self.symbols) == len(lst_usdt_symbols):
-            for symbol, usdt_symbol in zip(self.symbols, lst_usdt_symbols):
-                total, available, leverage, averageOpenPrice, marketPrice, unrealizedPL, liquidation, side = self.broker.get_symbol_data(
-                    usdt_symbol)
-                if self.init_market_price == 0:
-                    self.init_market_price = marketPrice
-                price_delta = (marketPrice - self.init_market_price) * 100 / self.init_market_price
-                msg += "# SYMBOL " + symbol + " :\n"
-                msg += "**market: " + str(round(marketPrice, 4)) + "**\n"
-                msg += "**init: " + str(round(self.init_market_price, 4)) + " %: " + str(round(price_delta, 2)) + "**\n"
-                if (self.market_price_max == 0) \
-                        and (self.market_price_min == 0):
-                    self.market_price_max = marketPrice
-                    self.market_price_min = marketPrice
-                else:
-                    self.market_price_max = max(self.market_price_max, marketPrice)
-                    market_price_max_percent = (
-                                                           self.market_price_max - self.init_market_price) * 100 / self.init_market_price
-                    self.market_price_min = min(self.market_price_min, marketPrice)
-                    market_price_min_percent = (
-                                                           self.market_price_min - self.init_market_price) * 100 / self.init_market_price
-                    msg += "max: " + str(round(self.market_price_max, 4)) + " %: " + str(
-                        round(market_price_max_percent, 2)) + "\n"
-                    msg += "min: " + str(round(self.market_price_min, 4)) + " %: " + str(
-                        round(market_price_min_percent, 2)) + "\n"
-                msg += "average: " + str(round(averageOpenPrice, 4)) + "\n"
-                msg += "EQUITY: " + str(round(total * averageOpenPrice, 2)) + " PNL: " + str(
-                    round(unrealizedPL, 2)) + "\n"
-                msg += "SIZE: " + str(round(total, 2)) + " leverage: " + str(round(leverage, 2)) + "\n"
-                msg += "side: " + side + " liquidation: " + str(round(liquidation, 2)) + "\n"
-        else:
-            if (len(self.symbols) != 0) and (len(lst_usdt_symbols) == 0):
-                for symbol in self.symbols:  # CEDE NOT WORKING FOR MULTI
-                    msg += "# SYMBOL " + symbol + " :\n"
-                    msg += "**no positions engaged" + "**\n"
-                    df_price = broker_current_state["prices"]
-                    price_for_symbol = df_price.loc[df_price['symbols'] == symbol, 'values'].values[0]
-                    msg += "**market price: " + str(round(price_for_symbol, 4)) + "**\n"
-            else:
-                self.log("ERROR LST SYMBOLS NOT MATCHING")
-                self.log("symbols {}".format(self.symbols))
-                self.log("lst_usdt_symbols {}".format(lst_usdt_symbols))
-                msg += "**ERROR LST SYMBOLS NOT MATCHING" + "**:\n"
-        msg += "# PERFORMANCE:" + "\n"
-        msg += "CRAG TIME: " + str(self.average_time_grid_strategy_overall) + "s\n"
-        msg += "GRID TIME: " + str(self.average_time_grid_strategy) + "s\n"
-        end_time = time.time()
-        msg += "DURATION: " + utils.format_duration(round((end_time - self.start_time_grid_strategy_init), 2)) + "\n"
-        delta_memory = self.memory_used_mb - self.init_memory_used_mb
-        if delta_memory >= 0:
-            msg += f"MEMORY: {self.memory_used_mb:.1f}MB" + " (+" + str(round(delta_memory, 1)) + ")\n"
-        else:
-            msg += f"MEMORY: {self.memory_used_mb:.1f}MB" + " (-" + str(round(abs(delta_memory), 1)) + ")\n"
-        msg += "iter: " + str(self.grid_iteration) + "\n"
-        msg += "byte/it: " + str(round(delta_memory / self.grid_iteration, 4)) + "\n"
-
-        msg = msg.upper()
-        self.log_discord(msg, "GRID STATUS")
-
     def udpate_strategy_with_broker_current_state_live(self):
         self.start_time_grid_strategy = time.time()
 
@@ -900,8 +801,6 @@ class Crag:
         self.broker.enable_cache()
 
         self.usdt_equity = self.usdt_equity_thread
-        if self.usdt_equity != self.usdt_equity_previous:
-            print(" self.usdt_equity: ", self.usdt_equity)
         self.usdt_equity_previous = self.usdt_equity
 
         self.total_SL_TP = self.usdt_equity - self.original_portfolio_value

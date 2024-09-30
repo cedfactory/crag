@@ -119,149 +119,6 @@ class BrokerBitGet(broker.Broker):
             df_buying_size.at[index, 'buyingSize'] = normalized_size
         return df_buying_size
 
-    """
-    @authentication_required
-    def execute_trade(self, trade):
-        self.log("!!!!!!! EXECUTE THE TRADE !!!!!!!")
-        if trade.time != None:
-            self.log("execute trade at: {}".format(trade.time))
-        trade.success = False
-        self.trade_symbol = self._get_symbol(trade.symbol)
-
-        #self.set_margin_and_leverage(self.trade_symbol)
-        self.clientOid = self.clientOIdprovider.get_name(self.trade_symbol, trade.type)
-
-        self.log("TRADE GROSS SIZE: {}".format(trade.gross_size))
-        trade.gross_size = self.normalize_size(self.trade_symbol, trade.gross_size)
-
-        self.log("TRADE GROSS SIZE NORMALIZED: {}".format(trade.gross_size))
-        if hasattr(trade, 'price'):
-            self.log("TRADE GROSS PRICE: {}".format(trade.price))
-            trade.price = self.normalize_price(self.trade_symbol, trade.price) # price not used yet
-            self.log("TRADE GROSS PRICE NORMALIZED: {}".format(trade.price))
-
-        if trade.gross_size == 0:
-            self.log('transaction failed ", trade.type, " : ' + self.trade_symbol + ' - gross_size: ' + str(trade.gross_size))
-
-        trigger_params = None
-        if hasattr(trade, "trigger_price"):
-            trigger_params = {}
-            trigger_params["trigger_price"] = trade.trigger_price
-        if trade.type in ["OPEN_LONG", "OPEN_SHORT", "OPEN_LONG_ORDER", "OPEN_SHORT_ORDER", "CLOSE_LONG_ORDER", "CLOSE_SHORT_ORDER"]:
-            if trade.type == "OPEN_LONG":
-                self.log("{} size: {}".format(trade.type, trade.gross_size))
-                transaction = self._open_long_position(self.trade_symbol, trade.gross_size, self.clientOid)
-            elif trade.type == "OPEN_SHORT":
-                self.log("{} size: {}".format(trade.type, trade.gross_size))
-                transaction = self._open_short_position(self.trade_symbol, trade.gross_size, self.clientOid)
-            elif trade.type == "OPEN_LONG_ORDER":
-                self.log("{} size: {} price: {}".format(trade.type, trade.gross_size, trade.price))
-                transaction = self._open_long_order(self.trade_symbol, trade.gross_size, self.clientOid, trade.price, trigger_params)
-            elif trade.type == "OPEN_SHORT_ORDER":
-                self.log("{} size: {} price: {}".format(trade.type, trade.gross_size, trade.price))
-                transaction = self._open_short_order(self.trade_symbol, trade.gross_size, self.clientOid, trade.price, trigger_params)
-            elif trade.type == "CLOSE_LONG_ORDER":
-                self.log("{} size: {} price: {}".format(trade.type, trade.gross_size, trade.price))
-                transaction = self._close_long_order(self.trade_symbol, trade.gross_size, self.clientOid, trade.price, trigger_params)
-            elif trade.type == "CLOSE_SHORT_ORDER":
-                self.log("{} size: {} price: {}".format(trade.type, trade.gross_size, trade.price))
-                transaction = self._close_short_order(self.trade_symbol, trade.gross_size, self.clientOid, trade.price, trigger_params)
-            else:
-                transaction = {"msg": "failure"}
-
-            self.log(str(transaction))
-            if "msg" in transaction and transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
-                trade.success = True
-                trade.orderId = transaction["data"]["orderId"]
-                trade.clientOid = transaction["data"]["clientOid"]
-                if "_ORDER" in trade.type:
-                    trade.symbol_price = trade.price
-                    trade.tradeId = trade.orderId
-                else:
-                    trade.tradeId, trade.symbol_price, trade.gross_price, trade.gross_size, trade.buying_fee = self.get_order_fill_detail(self.trade_symbol, trade.orderId)
-                    trade.net_price = trade.gross_price
-                    trade.bought_gross_price = trade.gross_price
-                trade.net_size = trade.gross_size
-                trade.buying_price = trade.symbol_price
-
-                self.log("request " + trade.type + ": " + self.trade_symbol + " gross_size: " + str(trade.gross_size))
-                self.log(trade.type + ": " + self.trade_symbol + " gross_size: " + str(trade.gross_size))
-                if hasattr(trade, 'gross_price') and hasattr(trade, 'buying_fee'):
-                    self.log(" price: " + str(trade.gross_price) + " fee: " + str(trade.buying_fee))
-            else:
-                self.log("Something went wrong inside execute_trade : " + str(transaction))
-
-            if  "data" in transaction:
-                transaction["data"].clear()
-                del transaction["data"]
-            transaction.clear()
-            del transaction
-
-        elif trade.type == "CLOSE_LONG":
-            trade.gross_size = self.get_symbol_total(self.trade_symbol)
-            transaction = self._close_long_position(self.trade_symbol, trade.gross_size, self.clientOid)
-            if "msg" in transaction and transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
-                trade.success = True
-                trade.orderId = transaction["data"]["orderId"]
-                trade.clientOid = transaction["data"]["clientOid"]
-                self.log('request CLOSE_LONG: ' + self.trade_symbol + ' gross_size: ' + str(trade.gross_size))
-                trade.tradeId, trade.symbol_price, trade.gross_price, trade.gross_size, trade.selling_fee = self.get_order_fill_detail(self.trade_symbol, trade.orderId)
-                self.log('CLOSE_LONG: ' + self.trade_symbol + ' gross_size: ' + str(trade.gross_size) + ' price: ' + str(trade.gross_price) + ' fee: ' + str(trade.selling_fee))
-                # CEDE to be confirmed : selling_fee is selling_fee + buying_fee or just selling_fee
-                trade.net_size = trade.gross_size
-                trade.net_price = trade.gross_price
-                if hasattr(trade, "bought_gross_price"):
-                   # trade.roi = 100 * (trade.gross_price - trade.bought_gross_price - trade.selling_fee - trade.buying_fee) / trade.bought_gross_price
-                   trade.roi = utils.get_variation(trade.bought_gross_price, trade.gross_price)
-            if "data" in transaction:
-                transaction["data"].clear()
-                del transaction["data"]
-            transaction.clear()
-            del transaction
-
-        elif trade.type == "CLOSE_SHORT":
-            trade.gross_size = self.get_symbol_total(self.trade_symbol)
-            transaction = self._close_short_position(self.trade_symbol, trade.gross_size, self.clientOid)
-            if transaction["msg"] == "success" and "data" in transaction and "orderId" in transaction["data"]:
-                trade.success = True
-                trade.orderId = transaction["data"]["orderId"]
-                trade.clientOid = transaction["data"]["clientOid"]
-                self.log('request CLOSE_SHORT: ' + self.trade_symbol + ' gross_size: ' + str(trade.gross_size))
-                trade.tradeId, trade.symbol_price, trade.gross_price, trade.gross_size, trade.selling_fee = self.get_order_fill_detail(self.trade_symbol, trade.orderId)
-                self.log('CLOSE_SHORT: ' + self.trade_symbol + ' gross_size: ' + str(trade.gross_size) + ' price: ' + str(trade.gross_price) + ' fee: ' + str(trade.selling_fee))
-                trade.net_size = trade.gross_size
-                trade.net_price = trade.gross_price
-                if hasattr(trade, "bought_gross_price"):
-                    # trade.roi = 100 * (-1) * (trade.gross_price - trade.bought_gross_price - trade.selling_fee - trade.buying_fee) / trade.bought_gross_price
-                    trade.roi = (-1) * utils.get_variation(trade.bought_gross_price, trade.gross_price)
-            if "data" in transaction:
-                transaction["data"].clear()
-                del transaction["data"]
-            transaction.clear()
-            del transaction
-
-        if not trade.success:
-            msg = 'trade failed: ' + trade.symbol
-            msg += " - " + trade.type
-            if hasattr(trade, 'price'):
-                msg += " - " + str(trade.price)
-            msg += " - " + str(trade.gross_size) + '\n'
-            self.log('transaction failed : ' + trade.symbol + " - type: " + trade.type + ' - gross_size: ', str(trade.gross_size))
-            self.log("!!!!!!! EXECUTE THE TRADE FAILED !!!!!!!")
-        else:
-            msg = trade.symbol
-            msg += " - " + trade.type
-            if hasattr(trade, 'price'):
-                msg += " - " + str(trade.price)
-            msg += " - " + str(trade.gross_size) + '\n'
-            self.log('transaction success : ' + trade.symbol + " - type: " + trade.type + ' - gross_size: ' + str(trade.gross_size))
-            self.log("!!!!!!! EXECUTE THE TRADE COMPLETED !!!!!!!")
-        self.log_trade = self.log_trade + msg.upper()
-        del msg
-        locals().clear()
-        return trade.success
-    """
-
     def check_validity_order(self, order):
         # CEDE avoid empty dict field: from order -> trade
         lst_key = ["time", "success", "orderId", "clientOid", "tradeId", "symbol_price", "gross_price",
@@ -756,27 +613,28 @@ class BrokerBitGet(broker.Broker):
         return lst_result_open_orders
 
     def execute_open_order(self, trade):
-        if trade.type in ["open_long", "open_short", "close_long", "close_short"]:
-            clientOid = self.clientOIdprovider.get_name(trade.symbol, trade["type"])
-            trigger_price = self.get_values([trade.symbol])
-            value = trigger_price.loc[trigger_price["symbols"] == trade.symbol, "values"].values[0]
-            if trade.type == "open_long":
-                size = trade.amount / value
-                size = utils.normalize_size(size, self.get_sizeMultiplier(trade.symbol))
-                transaction = self._open_long_position(trade.symbol, size, clientOid)
+        if trade["type"] in ["open_long", "open_short", "close_long", "close_short"]:
+            symbol = trade["symbol"]
+            clientOid = self.clientOIdprovider.get_name(symbol, trade["type"])
+            trigger_price = self.get_values([trade["symbol"]])
+            value = trigger_price.loc[trigger_price["symbols"] == symbol, "values"].values[0]
+            if trade["type"] == "open_long":
+                size = trade["amount"] / value
+                size = utils.normalize_size(size, self.get_sizeMultiplier(symbol))
+                transaction = self._open_long_position(self._get_symbol(symbol), size, clientOid)
                 trade["size"] = size
                 trade["buying_price"] = value
-            elif trade.type == "open_short":
-                size = trade.amount / value
-                size = utils.normalize_size(size, self.get_sizeMultiplier(trade.symbol))
-                transaction = self._open_short_position(trade.symbol, size, clientOid)
+            elif trade["type"] == "open_short":
+                size = trade["amount"] / value
+                size = utils.normalize_size(size, self.get_sizeMultiplier(symbol))
+                transaction = self._open_short_position(self._get_symbol(symbol), size, clientOid)
                 trade["size"] = size
                 trade["buying_price"] = value
-            elif trade.type == "close_long":
-                transaction = self._close_long_position(trade.symbol, trade.size, clientOid)
+            elif trade["type"] == "close_long":
+                transaction = self._close_long_position(self._get_symbol(symbol), trade["size"], clientOid)
                 trade["selling_price"] = value
-            elif trade.type == "close_short":
-                transaction = self._close_short_position(trade.symbol, trade.size, clientOid)
+            elif trade["type"] == "close_short":
+                transaction = self._close_short_position(self._get_symbol(symbol), trade["size"], clientOid)
                 trade["selling_price"] = value
 
             if "msg" in transaction \
@@ -792,6 +650,7 @@ class BrokerBitGet(broker.Broker):
 
     @authentication_required
     def execute_orders(self, lst_orders):
+        lst_orders = [order for order in lst_orders if order != None]
         if len(lst_orders) == 0:
             # self.execute_timer.set_time_to_zero("broker", "execute_orders", "execute_batch_orders", self.iter_execute_orders)
             self.iter_execute_orders += 1

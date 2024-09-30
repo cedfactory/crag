@@ -30,10 +30,11 @@ class StrategyIntervalsGeneric(rtstr.RealTimeStrategy):
                     "id": row["id"],
                     "strategy_symbol": row["symbol"],
                     "name": row["name"],
+                    "margin": row["margin"],
                     "interval": row["interval"],
                     "type": row["type"],
                     "trix_period": row["trix_period"],
-                    "stoch_rsi_period": row["stoch_rsi_period"],
+                    "stoch_rsi_period": row["stoch_rsi_period"]
                 })
                 self.lst_symbols.append(row["symbol"])
 
@@ -130,11 +131,11 @@ class StrategyIntervalsGeneric(rtstr.RealTimeStrategy):
         return lst_positions
 
     def get_strategy_stats(self, lst_intervals):
-        lst_stats = []
+        lst_msg_stats = []
         for strategy in self.lst_strategy:
             if strategy.get_interval() in lst_intervals:
-                lst_stats.extend(strategy.get_strategy_stats())
-        return lst_stats
+                lst_msg_stats.append(strategy.get_strategy_stat())
+        return lst_msg_stats
 
 
 

@@ -8,6 +8,8 @@ from os import path
 from datetime import datetime, timedelta
 from src import logger
 
+import open_positions
+
 from . import utils
 
 class RealTimeStrategy(metaclass=ABCMeta):
@@ -67,11 +69,6 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
             self.trix_period = 0
             self.stoch_rsi_period = 0
-
-            if "margin" in params:
-                self.margin = [params.get("margin", self.margin)]
-                if isinstance(self.margin, str):
-                    self.margin = int(self.margin)
 
             self.SL = float(params.get("sl", self.SL))
             self.TP = float(params.get("tp", self.TP))
