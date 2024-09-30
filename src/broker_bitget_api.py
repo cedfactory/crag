@@ -679,12 +679,13 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         return result
 
     @authentication_required
-    def _cancel_Plan_Order_v2(self, symbol, marginCoin, lst_orderId):
+    def _cancel_Plan_Order_v2(self, symbol, marginCoin, lst_order_id):
         orderIdList = []
-        for orderid in lst_orderId:
-            if orderid != '':
+        for order_id in lst_order_id:
+            if order_id != "":
                 cancel_orderId = {
-                    "orderId": orderid
+                    "orderId": order_id,
+                    "clientOid": ""
                 }
                 orderIdList.append(cancel_orderId)
         if len(orderIdList) == 0:
