@@ -16,6 +16,26 @@ class RedirectText(object):
     def write(self,string):
         self.out.WriteText(string)
 
+
+class PanelSymbols(wx.Panel):
+    def __init__(self, parent, main):
+        wx.Panel.__init__(self, parent)
+
+        main_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.SetSizer(main_sizer)
+
+        self.main = main
+
+        # Symbols
+        self.symbols = wx.ListCtrl(
+            self, size=(570, 200),
+            style=wx.LC_REPORT | wx.BORDER_SUNKEN
+        )
+        self.symbols.InsertColumn(0, 'Symbol', width=130)
+        self.symbols.InsertColumn(2, 'Leverage long', width=100)
+        self.symbols.InsertColumn(1, 'Leverage short', width=100)
+        main_sizer.Add(self.symbols, 0, wx.ALL | wx.EXPAND, 5)
+
 class PanelPositions(wx.Panel):
     def __init__(self, parent, main):
         wx.Panel.__init__(self, parent)
@@ -237,6 +257,8 @@ class MainPanel(wx.Panel):
         main_sizer.Add(sl1, 0, wx.ALL | wx.EXPAND, 5)
 
         self.notebook_broker_state = wx.Notebook(self)
+        self.panel_symbols = PanelSymbols(self.notebook_broker_state, self)
+        self.notebook_broker_state.AddPage(self.panel_symbols, "Symbols")
         self.panel_positions = PanelPositions(self.notebook_broker_state, self)
         self.notebook_broker_state.AddPage(self.panel_positions, "Positions")
         self.panel_orders = PanelOrders(self.notebook_broker_state, self)
@@ -301,6 +323,19 @@ class MainPanel(wx.Panel):
         print("usdt equity : ", usdt_equity)
         self.staticTextUsdtEquity.SetLabel("USDT Equity : " + usdt_equity)
 
+    def update_symbols(self, my_broker):
+        self.panel_symbols.symbols.DeleteAllItems()
+
+        if not my_broker:
+            print("no broker to update posi")
+            return
+
+        # update symbols
+        for symbol in g_selected_symbols:
+            cross_margin_leverage, long_leverage, short_leverage = my_broker.get_account_symbol_leverage(symbol)
+            self.panel_symbols.symbols.Append([symbol, long_leverage, short_leverage])
+
+
     def update_positions(self, my_broker):
         positions = []
         available = 0
@@ -349,6 +384,7 @@ class MainPanel(wx.Panel):
         my_broker = self.get_broker_from_selected_account()
         if my_broker:
             self.update_usdt_equity(my_broker)
+            self.update_symbols(my_broker)
             self.update_positions(my_broker)
             self.update_orders(my_broker)
             self.update_triggers(my_broker)
