@@ -397,7 +397,7 @@ class BrokerBitGet(broker.Broker):
         return lst_result_orders
 
     def execute_lst_cancel_orders(self, lst_orders):
-        if len(lst_orders) > 0:
+        if lst_orders and len(lst_orders) > 0:
             order_ids = [d['orderId'] for d in lst_orders]
             lst_success_orderIds = self.execute_list_cancel_orders(lst_orders[0]["symbol"], order_ids)
             for order in lst_orders:

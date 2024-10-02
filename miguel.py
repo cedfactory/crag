@@ -16,6 +16,26 @@ class RedirectText(object):
     def write(self,string):
         self.out.WriteText(string)
 
+
+class PanelSymbols(wx.Panel):
+    def __init__(self, parent, main):
+        wx.Panel.__init__(self, parent)
+
+        main_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.SetSizer(main_sizer)
+
+        self.main = main
+
+        # Symbols
+        self.symbols = wx.ListCtrl(
+            self, size=(570, 200),
+            style=wx.LC_REPORT | wx.BORDER_SUNKEN
+        )
+        self.symbols.InsertColumn(0, 'Symbol', width=130)
+        self.symbols.InsertColumn(2, 'Leverage long', width=100)
+        self.symbols.InsertColumn(1, 'Leverage short', width=100)
+        main_sizer.Add(self.symbols, 0, wx.ALL | wx.EXPAND, 5)
+
 class PanelPositions(wx.Panel):
     def __init__(self, parent, main):
         wx.Panel.__init__(self, parent)
@@ -186,6 +206,7 @@ class PanelTriggers(wx.Panel):
         self.triggers.InsertColumn(7, 'TriggerType', width=70)
         self.triggers.InsertColumn(8, 'MarginMode', width=90)
         self.triggers.InsertColumn(9, 'ClientOid', width=120)
+        self.triggers.InsertColumn(10, 'OrderId', width=130)
         main_sizer.Add(self.triggers, 0, wx.ALL | wx.EXPAND, 5)
 
         hsizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -236,6 +257,8 @@ class MainPanel(wx.Panel):
         main_sizer.Add(sl1, 0, wx.ALL | wx.EXPAND, 5)
 
         self.notebook_broker_state = wx.Notebook(self)
+        self.panel_symbols = PanelSymbols(self.notebook_broker_state, self)
+        self.notebook_broker_state.AddPage(self.panel_symbols, "Symbols")
         self.panel_positions = PanelPositions(self.notebook_broker_state, self)
         self.notebook_broker_state.AddPage(self.panel_positions, "Positions")
         self.panel_orders = PanelOrders(self.notebook_broker_state, self)
@@ -278,8 +301,13 @@ class MainPanel(wx.Panel):
         broker_name = account_info.get("broker", "")
         my_broker = None
         if broker_name == "bitget":
+            symbols = {
+                "symbol": ["BTC", "XRP", "ETH", "SOL", "PEPE"],
+                "leverage_long": [0, 0, 0, 0, 0],
+                "leverage_short": [0, 0, 0, 0, 0]
+            }
             my_broker = broker_bitget_api.BrokerBitGetApi(
-                {"account": selected_account, "reset_account": "False"})
+                {"account": selected_account, "symbols": symbols, "reset_account": "False"})
         return my_broker
 
     def update_usdt_equity(self, my_broker):
@@ -294,6 +322,19 @@ class MainPanel(wx.Panel):
         # update usdt equity
         print("usdt equity : ", usdt_equity)
         self.staticTextUsdtEquity.SetLabel("USDT Equity : " + usdt_equity)
+
+    def update_symbols(self, my_broker):
+        self.panel_symbols.symbols.DeleteAllItems()
+
+        if not my_broker:
+            print("no broker to update posi")
+            return
+
+        # update symbols
+        for symbol in g_selected_symbols:
+            cross_margin_leverage, long_leverage, short_leverage = my_broker.get_account_symbol_leverage(symbol)
+            self.panel_symbols.symbols.Append([symbol, long_leverage, short_leverage])
+
 
     def update_positions(self, my_broker):
         positions = []
@@ -337,12 +378,13 @@ class MainPanel(wx.Panel):
         self.panel_triggers.triggers.DeleteAllItems()
         if isinstance(triggers, pd.DataFrame):
             for index, row in triggers.iterrows():
-                self.panel_triggers.triggers.Append([row["planType"], row["symbol"], row["size"], row["side"], row["orderType"], row["price"], row["triggerPrice"], row["triggerType"], row["marginMode"], row["clientOid"]])
+                self.panel_triggers.triggers.Append([row["planType"], row["symbol"], row["size"], row["side"], row["orderType"], row["price"], row["triggerPrice"], row["triggerType"], row["marginMode"], row["clientOid"], row["orderId"]])
 
     def on_account(self, event):
         my_broker = self.get_broker_from_selected_account()
         if my_broker:
             self.update_usdt_equity(my_broker)
+            self.update_symbols(my_broker)
             self.update_positions(my_broker)
             self.update_orders(my_broker)
             self.update_triggers(my_broker)
@@ -470,36 +512,37 @@ class MainPanel(wx.Panel):
             side = self.panel_orders.sides.GetString(self.panel_orders.sides.GetSelection()) # "long" or "short"
             my_broker.set_symbol_leverage(my_broker._get_symbol(symbol), int(leverage), side)
 
-            mytrade = lambda: None
-            mytrade.symbol = symbol
+            mytrade = {}
+            mytrade["symbol"] = symbol
             open_close = ""
             if self.panel_orders.rb_open.GetValue(): # open
-                open_close = "open"
+                open_close = "OPEN"
             elif self.panel_orders.rb_close.GetValue():
-                open_close = "close"
+                open_close = "CLOSE"
             else:
                 print("open limit order : open or close ???")
                 return
             if self.panel_orders.rb_amount.GetValue(): # amount
-                mytrade.gross_size = self.panel_orders.amount.GetValue() / my_broker.get_value(mytrade.symbol)
+                mytrade["gross_size"] = self.panel_orders.amount.GetValue() / my_broker.get_value(mytrade["symbol"])
             elif self.panel_orders.rb_size.GetValue():
-                mytrade.gross_size = self.panel_orders.amount.GetValue()
+                mytrade["gross_size"] = self.panel_orders.amount.GetValue()
             else:
                 print("open limit order : amount or size ???")
                 return
             if side == "long":
-                mytrade.type = open_close+"_long"
+                mytrade["type"] = open_close+"_LONG"
             else:
-                mytrade.type = open_close+"_short"
-            mytrade.price = self.panel_orders.price.GetValue()
-            print("open limit order : ", mytrade.symbol, " / ", mytrade.gross_size, " / ", mytrade.price)
+                mytrade["type"] = open_close+"_SHORT"
+            mytrade["price"] = self.panel_orders.price.GetValue()
+            print("open limit order : ", mytrade["symbol"], " / ", mytrade["gross_size"], " / ", mytrade["price"])
 
             # trigger
             if self.panel_orders.checkbox_trigger.GetValue():
-                mytrade.trigger_price = self.panel_orders.trigger_price.GetValue()
+                mytrade["trigger_price"] = self.panel_orders.trigger_price.GetValue()
 
-            my_broker.execute_open_order(mytrade)
-            self.update_orders(my_broker)
+            #my_broker.execute_open_order(mytrade)
+            my_broker.execute_trigger(mytrade)
+            self.update_triggers(my_broker)
 
 
 
@@ -508,9 +551,11 @@ class MainPanel(wx.Panel):
         if index == -1:
             return
         symbol = self.panel_triggers.triggers.GetItem(index, col=1).GetText()
+        order_id = self.panel_triggers.triggers.GetItem(index, col=10).GetText()
+        print("cancel open order : ", order_id)
 
         my_broker = self.get_broker_from_selected_account()
-        #my_broker.cancel_order(symbol, marginCoin, orderId)
+        my_broker.execute_list_cancel_orders(symbol, [order_id])
         self.update_triggers(my_broker)
 
     def on_cancel_all_triggers(self, event):
