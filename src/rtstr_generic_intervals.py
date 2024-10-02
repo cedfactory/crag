@@ -33,8 +33,11 @@ class StrategyIntervalsGeneric(rtstr.RealTimeStrategy):
                     "margin": row["margin"],
                     "interval": row["interval"],
                     "type": row["type"],
-                    "trix_period": row["trix_period"],
-                    "stoch_rsi_period": row["stoch_rsi_period"]
+                    "trix_length": row["trix_length"],
+                    "trix_signal_length": row["trix_signal_length"],
+                    "trix_signal_type": row["trix_signal_type"],
+                    "long_ma_length": row["long_ma_length"],
+                    "window_size": row["window_size"]
                 })
                 self.lst_symbols.append(row["symbol"])
 

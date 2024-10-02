@@ -13,19 +13,27 @@ class StrategyTrix(rtstr.RealTimeStrategy):
         self.strategy_id = utils.generate_random_id(4)
         self.df_current_data = pd.DataFrame()
 
-
         self.side = ""
         self.id = ""
         self.symbol = ""
         self.margin = 0
+        self.trix_length = 0
+        self.trix_window_size = 0
+        self.trix_signal_length = 0
+        self.trix_signal_type = 0
+        self.long_ma_length = 0
+        self.window_size = 1
         if params:
             self.id = params.get("id", self.id)
             self.lst_symbols = [params.get("strategy_symbol", self.lst_symbols)]
             self.symbol = params.get("strategy_symbol", self.symbol)
             self.margin = params.get("margin", self.margin)
             self.strategy_str_interval = params.get("interval", self.strategy_str_interval)
-            self.trix_period = params.get("trix_period", self.trix_period)
-            self.stoch_rsi_period = params.get("stoch_rsi_period", self.stoch_rsi_period)
+            self.trix_length = params.get("trix_length", self.trix_length)
+            self.trix_signal_length = params.get("trix_signal_length", self.trix_signal_length)
+            self.trix_signal_type = params.get("trix_signal_type", self.trix_signal_type)
+            self.long_ma_length = params.get("long_ma_length", self.long_ma_length)
+            self.window_size = params.get("window_size", self.window_size)
         else:
             exit(5)
 
@@ -51,10 +59,20 @@ class StrategyTrix(rtstr.RealTimeStrategy):
         ds.symbols = self.lst_symbols
         ds.fdp_features = {
             "close": {},
-            "trix_histo_id1" : {"indicator": "trix_histo", "trix_window_size": self.trix_period, "window_size": self.trix_period, "id": "1",
-                                "output": ["trix_histo", "stoch_rsi"]},
-            "stoch_rsi": {"indicator": "stoch_rsi", "stoch_rsi_window_size": self.stoch_rsi_period, "window_size": self.stoch_rsi_period, "id": "1",
-                          "output": ["trix_histo", "stoch_rsi"]}
+            "trix_id1" : {"indicator": "trix",
+                          "trix_length": self.trix_length,
+                          "trix_signal_length": self.trix_signal_length,
+                          "trix_signal_type": self.trix_signal_type,
+                          "long_ma_length": self.long_ma_length,
+                          "window_size": self.window_size,
+                          "id": "1",
+                          "output": ["trix",
+                                     "trix_signal",
+                                     "trix_hist",
+                                     "long_ma"]
+                          },
+            # "stoch_rsi": {"indicator": "stoch_rsi", "stoch_rsi_window_size": self.stoch_rsi_period, "window_size": self.stoch_rsi_period, "id": "1",
+            #               "output": ["trix_histo", "stoch_rsi"]}
         }
 
         ds.features = self.get_feature_from_fdp_features(ds.fdp_features)
@@ -104,18 +122,18 @@ class StrategyTrix(rtstr.RealTimeStrategy):
         return lst_order
 
     def condition_for_opening_long_position(self, symbol):
-        return self.df_current_data['trix_histo_1'][symbol] > 0 \
-               and self.df_current_data['stoch_rsi_1'][symbol] < 0.8
+        return (self.df_current_data["trix_hist_1"][symbol] > 0) \
+               and (self.df_current_data["close"][symbol] > self.df_current_data["long_ma_1"][symbol])
 
     def condition_for_opening_short_position(self, symbol):
-        return self.df_current_data['trix_histo_1'][symbol] < 0 \
-               and self.df_current_data['stoch_rsi_1'][symbol] > 0.2
+        return (self.df_current_data["trix_hist_1"][symbol] < 0) \
+               and (self.df_current_data["close"][symbol] < self.df_current_data["long_ma_1"][symbol])
 
     def condition_for_closing_long_position(self, symbol):
-        return False
+        return (self.df_current_data["trix_hist_1"][symbol] < 0)
 
     def condition_for_closing_short_position(self, symbol):
-        return False
+        return (self.df_current_data["trix_hist_1"][symbol] > 0)
 
     def update_executed_trade_status(self, lst_order):
         self.positions.validate_market_order(lst_order)

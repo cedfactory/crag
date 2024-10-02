@@ -1,3 +1,3 @@
-﻿id,name,symbol,interval,type,trix_period,stoch_rsi_period,margin
-trix_1,StrategyTrix,PEPE,1m,,21,14,20
-trix_2,StrategyTrix,XRP,1m,,21,14,20
+﻿id,name,symbol,interval,type,trix_length,trix_signal_length,trix_signal_type,long_ma_length,window_size,margin
+trix_1,StrategyTrix,PEPE,1m,,19,15,sma,200,200,20
+trix_2,StrategyTrix,XRP,1m,,21,9,ema,200,200,20
