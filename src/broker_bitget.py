@@ -619,7 +619,7 @@ class BrokerBitGet(broker.Broker):
             trigger_price = self.get_values([trade["symbol"]])
             value = trigger_price.loc[trigger_price["symbols"] == symbol, "values"].values[0]
             if trade["type"] == "open_long":
-                leverage = self.get_leverage_long(symbol)
+                leverage = self.get_leverage_long(self._get_symbol(symbol))
                 if trade["amount"] == None:
                     size = trade["gross_size"]
                 else:
@@ -630,7 +630,7 @@ class BrokerBitGet(broker.Broker):
                 trade["size"] = size
                 trade["buying_price"] = value
             elif trade["type"] == "open_short":
-                leverage = self.get_leverage_short(symbol)
+                leverage = self.get_leverage_short(self._get_symbol(symbol))
                 if trade["amount"] == None:
                     size = trade["gross_size"]
                 else:
