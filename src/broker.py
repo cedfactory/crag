@@ -173,7 +173,7 @@ class Broker(metaclass = ABCMeta):
     def execute_reset_account(self):
         pass
 
-    def execute_orders(self, lst_orders):
+    def execute_trades(self, lst_orders):
         pass
 
     def reset_current_postion(self, current_state):

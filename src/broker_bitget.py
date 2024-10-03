@@ -33,7 +33,7 @@ class BrokerBitGet(broker.Broker):
         self.lock_place_trigger_order_v2 = threading.Lock()
 
         self.execute_timer = None
-        self.iter_execute_orders = 0
+        self.iter_execute_trades = 0
         self.iter_set_open_orders_gridId = 0
 
     def authentication_required(fn):
@@ -84,7 +84,7 @@ class BrokerBitGet(broker.Broker):
             del self.execute_timer
         self.execute_timer = execute_timer
 
-        self.iter_execute_orders = 0
+        self.iter_execute_trades = 0
         self.iter_set_open_orders_gridId = 0
 
     @authentication_required
@@ -535,7 +535,7 @@ class BrokerBitGet(broker.Broker):
                 order["trade_status"] = "UNKNOWN"
         return lst_orders
 
-    def execute_orders_scenario(self, lst_orders):
+    def execute_trades_scenario(self, lst_orders):
         if lst_orders is None:
             return []
         if len(lst_orders) == 0:
@@ -649,11 +649,11 @@ class BrokerBitGet(broker.Broker):
         return trade
 
     @authentication_required
-    def execute_orders(self, lst_orders):
+    def execute_trades(self, lst_orders):
         lst_orders = [order for order in lst_orders if order != None]
         if len(lst_orders) == 0:
-            # self.execute_timer.set_time_to_zero("broker", "execute_orders", "execute_batch_orders", self.iter_execute_orders)
-            self.iter_execute_orders += 1
+            # self.execute_timer.set_time_to_zero("broker", "execute_trades", "execute_batch_orders", self.iter_execute_trades)
+            self.iter_executetrades += 1
             return
 
         lst_result_open_orders = []
@@ -696,12 +696,12 @@ class BrokerBitGet(broker.Broker):
         elif len(lst_orders) >= 1:
             lst_result_orders = self.execute_batch_orders(lst_orders)
 
-        # self.execute_timer.set_start_time("broker", "execute_orders", "execute_batch_orders", self.iter_execute_orders)
+        # self.execute_timer.set_start_time("broker", "execute_trades", "execute_batch_orders", self.iter_execute_trades)
         del lst_triggers
         del lst_orders
         del max_batch_size
         locals().clear()
-        self.iter_execute_orders += 1
+        self.iter_execute_trades += 1
 
         return lst_result_orders \
                + lst_result_triggers_orders \

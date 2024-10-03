@@ -321,7 +321,7 @@ class Crag:
         # execute strategy trades
         lst_trades_to_execute = self.rtstr.get_lst_trade(lst_interval)
         if len(lst_trades_to_execute) > 0:
-            lst_trades_to_execute_result = self.broker.execute_orders(lst_trades_to_execute)
+            lst_trades_to_execute_result = self.broker.execute_trades(lst_trades_to_execute)
             self.rtstr.update_executed_trade_status(lst_trades_to_execute_result)
             lst_stat = self.rtstr.get_strategy_stats(["1m"])
 
@@ -611,7 +611,7 @@ class Crag:
             self.start_time_grid_strategy = time.time()
             broker_current_state = self.get_current_state_from_csv(input_dir, cpt, df_scenario_results_global, df_grid_global)
             lst_orders_to_execute = self.rtstr.set_broker_current_state(broker_current_state)
-            lst_orders_to_execute = self.broker.execute_orders_scenario(lst_orders_to_execute)
+            lst_orders_to_execute = self.broker.execute_trades_scenario(lst_orders_to_execute)
             self.rtstr.update_executed_trade_status(lst_orders_to_execute)
             self.rtstr.print_grid()
             self.rtstr.save_grid_scenario(input_dir, cpt)
@@ -757,11 +757,11 @@ class Crag:
 
         self.log("output lst_orders_to_execute: {}".format(lst_orders_to_execute))
 
-        # self.execute_timer.set_start_time("crag", "current_state_live", "execute_orders", self.current_state_live)
+        # self.execute_timer.set_start_time("crag", "current_state_live", "execute_trades", self.current_state_live)
         if len(lst_orders_to_execute) > 0:
-            lst_orders_to_execute_result = self.broker.execute_orders(lst_orders_to_execute)
+            lst_orders_to_execute_result = self.broker.execute_trades(lst_orders_to_execute)
             self.rtstr.update_executed_trade_status(lst_orders_to_execute)
-        # self.execute_timer.set_end_time("crag", "current_state_live", "execute_orders", self.current_state_live)
+        # self.execute_timer.set_end_time("crag", "current_state_live", "execute_trades", self.current_state_live)
 
         del lst_orders_to_execute
 
