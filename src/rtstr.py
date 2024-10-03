@@ -8,8 +8,6 @@ from os import path
 from datetime import datetime, timedelta
 from src import logger
 
-import open_positions
-
 from . import utils
 
 class RealTimeStrategy(metaclass=ABCMeta):
