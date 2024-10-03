@@ -658,6 +658,18 @@ class BrokerBitGet(broker.Broker):
 
         return trade
 
+    def execute_limit_orders(self, lst_orders):
+        lst_result_orders = []
+        max_batch_size = 49
+        if len(lst_orders) > max_batch_size:
+            sub_lst_orders = utils.split_list(lst_orders, max_batch_size)
+            print("orders bach over max_batch_size")
+            for lst in sub_lst_orders:
+                lst_result_orders += self.execute_batch_orders(lst)
+        elif len(lst_orders) >= 1:
+            lst_result_orders = self.execute_batch_orders(lst_orders)
+        return lst_result_orders
+
     @authentication_required
     def execute_trades(self, lst_orders):
         lst_orders = [order for order in lst_orders if order != None]
@@ -696,20 +708,11 @@ class BrokerBitGet(broker.Broker):
         self.execute_cancel_sltp_orders(lst_cancel_sltp_orders)
         lst_orders = [order for order in lst_orders if not ("type" in order) or order["type"] != "CANCEL_SLTP"]
 
-        lst_result_orders = []
-        max_batch_size = 49
-        if len(lst_orders) > max_batch_size:
-            sub_lst_orders = utils.split_list(lst_orders, max_batch_size)
-            print("orders bach over max_batch_size")
-            for lst in sub_lst_orders:
-                lst_result_orders += self.execute_batch_orders(lst)
-        elif len(lst_orders) >= 1:
-            lst_result_orders = self.execute_batch_orders(lst_orders)
+        lst_result_orders = self.execute_limit_orders(lst_orders)
 
         # self.execute_timer.set_start_time("broker", "execute_trades", "execute_batch_orders", self.iter_execute_trades)
         del lst_triggers
         del lst_orders
-        del max_batch_size
         locals().clear()
         self.iter_execute_trades += 1
 
