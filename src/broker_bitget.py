@@ -598,12 +598,12 @@ class BrokerBitGet(broker.Broker):
         if len(lst_cancel_sltp_orders) > 0:
             self.execute_lst_cancel_sltp_orders(lst_cancel_sltp_orders)
 
-    def execute_lst_open_orders(self, lst_open_orders):
+    def execute_lst_orders(self, lst_open_orders):
         lst_result_open_orders = []
         with ThreadPoolExecutor() as executor:
             futures = []
             for open_order in lst_open_orders:
-                futures.append(executor.submit(self.execute_open_order, open_order))
+                futures.append(executor.submit(self.execute_order, open_order))
 
             wait(futures, timeout=1000, return_when=ALL_COMPLETED)
 
@@ -612,20 +612,26 @@ class BrokerBitGet(broker.Broker):
 
         return lst_result_open_orders
 
-    def execute_open_order(self, trade):
+    def execute_order(self, trade):
         if trade["type"] in ["open_long", "open_short", "close_long", "close_short"]:
             symbol = trade["symbol"]
             clientOid = self.clientOIdprovider.get_name(symbol, trade["type"])
             trigger_price = self.get_values([trade["symbol"]])
             value = trigger_price.loc[trigger_price["symbols"] == symbol, "values"].values[0]
             if trade["type"] == "open_long":
-                size = trade["amount"] / value
+                if trade["amount"] == None:
+                    size = trade["gross_size"]
+                else:
+                    size = trade["amount"] / value
                 size = utils.normalize_size(size, self.get_sizeMultiplier(symbol))
                 transaction = self._open_long_position(self._get_symbol(symbol), size, clientOid)
                 trade["size"] = size
                 trade["buying_price"] = value
             elif trade["type"] == "open_short":
-                size = trade["amount"] / value
+                if trade["amount"] == None:
+                    size = trade["gross_size"]
+                else:
+                    size = trade["amount"] / value
                 size = utils.normalize_size(size, self.get_sizeMultiplier(symbol))
                 transaction = self._open_short_position(self._get_symbol(symbol), size, clientOid)
                 trade["size"] = size
@@ -659,7 +665,7 @@ class BrokerBitGet(broker.Broker):
         lst_result_open_orders = []
         lst_open_orders = [order for order in lst_orders if "trigger_type" in order and (order["trigger_type"] == "MARKET_OPEN_POSITION"
                                                                                          or order["trigger_type"] == "MARKET_CLOSE_POSITION")]
-        lst_result_open_orders = self.execute_lst_open_orders(lst_open_orders)
+        lst_result_open_orders = self.execute_lst_orders(lst_open_orders)
         lst_orders = [order for order in lst_orders if not ("trigger_type" in order) or (order["trigger_type"] != "MARKET_OPEN_POSITION"
                                                                                          and order["trigger_type"] != "MARKET_CLOSE_POSITION")]
 
