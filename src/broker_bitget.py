@@ -40,6 +40,17 @@ class BrokerBitGet(broker.Broker):
         state = self.__dict__.copy()
         state.pop('lock_df_grid_id_match', None)
         state.pop('lock_place_trigger_order_v2', None)
+
+        if 'lock_df_grid_id_match' not in state:
+            print("lock_df_grid_id_match has been removed from the state.")
+        else:
+            print("ERROR lock_df_grid_id_match still in state")
+
+        if 'lock_place_trigger_order_v2' not in state:
+            print("lock_place_trigger_order_v2 has been removed from the state.")
+        else:
+            print("ERROR lock_place_trigger_order_v2 still in state")
+
         return state
 
     def __setstate__(self, state):

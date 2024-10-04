@@ -421,7 +421,17 @@ class Crag:
         """
         with open(self.backup_filename, 'wb') as file:
             self.log("[crag::backup]", self.backup_filename)
-            pickle.dump(self, file)
+            try:
+                pickle.dump(self, file)
+            except:
+                print("pickle does not exist: ", file)
+                exit(876)
+
+            if os.path.exists(self.backup_filename):
+                print("File exists: ", self.backup_filename)
+            else:
+                print("File does not exist: ", self.backup_filename)
+
 
     def request_backup(self):
         delta_memory_used = round((utils.get_memory_usage() - self.init_master_memory) / (1024 * 1024), 2)
@@ -972,6 +982,12 @@ class Crag:
     def __getstate__(self):
         state = self.__dict__.copy()
         state.pop('lock_usdt_equity_thread', None)
+
+        if 'lock_usdt_equity_thread' not in state:
+            print("lock_usdt_equity_thread has been removed from the state.")
+        else:
+            print("ERROR lock_usdt_equity_thread still in state")
+
         return state
 
     def __setstate__(self, state):
