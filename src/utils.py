@@ -247,7 +247,8 @@ def fdp_request_post(url, params, fdp_id):
 
     fdp_url = settings_helper.get_fdp_url_info(fdp_id).get("url", None)
 
-    fdp_url = "http://192.168.1.205:5000/" # CEDE DEBUG
+    if False:
+        fdp_url = "http://192.168.1.205:5000/" # CEDE DEBUG
 
     if not fdp_url or fdp_url == "":
         return {"status":"ko", "info":"fdp url not found"}
