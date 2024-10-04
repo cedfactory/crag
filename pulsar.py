@@ -4,6 +4,7 @@ from src.toolbox import graph_helper
 from rich import print
 from datetime import datetime, timedelta
 import time
+import json
 import csv
 import pandas as pd
 
@@ -25,7 +26,14 @@ def get_time_from_datetime(dt):
     return current_time.split('.')[0]
 
 def encode_limit_orders(df_limit_orders):
-    return df_limit_orders[["symbol", "price", "side"]].to_json(double_precision=15).replace("\"", "\"\"")
+    df = df_limit_orders[["symbol", "price", "side"]]
+    df = df.astype('str')
+    json_data = df[["symbol", "price", "side"]].to_json()
+    str = json.dumps(json_data)
+    #json_data = json.loads(str)
+    #df = pd.read_json(json_data)
+    #print(df)
+    return str
 
 def generate_figure_limit_orders(df_account):
     fig = plt.figure(figsize=(10, 15))
@@ -61,7 +69,9 @@ def generate_figure_limit_orders(df_account):
 
         str_limit_orders = row["limit_orders"]
         if str_limit_orders != "":
-            df_limit_orders = pd.read_json(str_limit_orders)
+            json_data = json.loads(str_limit_orders[1:-1])
+            df_limit_orders = pd.read_json(json_data, precise_float=True)
+            df_limit_orders["price"] = df_limit_orders["price"].astype("Float64")
             if isinstance(df_limit_orders, pd.DataFrame):
                 for index2, row2 in df_limit_orders.iterrows():
                     if row2["side"] == "close_long":
