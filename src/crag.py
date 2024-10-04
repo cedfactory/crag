@@ -438,7 +438,7 @@ class Crag:
         self.safety_step_iterration += 1
         if self.reboot_exception \
                 or (delta_memory_used > 50) \
-                or (self.safety_step_iterration > 10000):
+                or (self.safety_step_iterration > 1000):
             memory_usage = round(utils.get_memory_usage() / (1024 * 1024), 1)
 
             # Current time
