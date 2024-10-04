@@ -140,6 +140,8 @@ class Crag:
         self.export_filename = os.path.join(self.working_directory, self.export_filename)
         self.backup_filename = os.path.join(self.working_directory, self.backup_filename)
 
+        self.lock_usdt_equity_thread = threading.Lock()
+
         self.last_execution = {
             '1m': None,
             '5m': None,
@@ -412,6 +414,7 @@ class Crag:
         self.broker.export_history(target)
 
     def backup(self):
+        """
         with open(self.backup_filename, 'wb') as file:
             self.log("[crag::backup]", self.backup_filename)
             dill.dump(self, file)
@@ -419,7 +422,6 @@ class Crag:
         with open(self.backup_filename, 'wb') as file:
             self.log("[crag::backup]", self.backup_filename)
             pickle.dump(self, file)
-        """
 
     def request_backup(self):
         delta_memory_used = round((utils.get_memory_usage() - self.init_master_memory) / (1024 * 1024), 2)
@@ -791,9 +793,11 @@ class Crag:
     def update_status_for_TPSL(self):
         while True:
             usdt_equity_thread = self.broker.get_usdt_equity()
-            self.lock_usdt_equity_thread = threading.Lock()
             with self.lock_usdt_equity_thread:
-                self.usdt_equity_thread = usdt_equity_thread
+                try:
+                    self.usdt_equity_thread = usdt_equity_thread
+                except:
+                    exit(628)
             time.sleep(2)
 
     def safety_step(self):
@@ -964,3 +968,12 @@ class Crag:
             self.execute_timer.set_master_cycle(self.reboot_iter)
             self.broker.set_execute_time_recorder(self.execute_timer)
             self.rtstr.set_execute_time_recorder(self.execute_timer)
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state.pop('lock_usdt_equity_thread', None)
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.lock_usdt_equity_thread = threading.Lock()

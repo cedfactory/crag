@@ -29,12 +29,23 @@ class BrokerBitGet(broker.Broker):
 
         self.df_grid_id_match = pd.DataFrame(columns=["orderId", "grid_id", "strategy_id", "trend"])
 
-        self.lock = threading.Lock()
+        self.lock_df_grid_id_match = threading.Lock()
         self.lock_place_trigger_order_v2 = threading.Lock()
 
         self.execute_timer = None
         self.iter_execute_trades = 0
         self.iter_set_open_orders_gridId = 0
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state.pop('lock_df_grid_id_match', None)
+        state.pop('lock_place_trigger_order_v2', None)
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.lock_df_grid_id_match = threading.Lock()
+        self.lock_place_trigger_order_v2 = threading.Lock()
 
     def authentication_required(fn):
         """decoration for methods that require authentification"""
@@ -138,8 +149,7 @@ class BrokerBitGet(broker.Broker):
         del gridId
 
     def add_gridId_orderId(self, gridId, orderId, strategyId, trend=None):
-        # self.lock = threading.Lock()
-        with self.lock:
+        with self.lock_df_grid_id_match:
             try:
                 self.df_grid_id_match.loc[len(self.df_grid_id_match)] = [orderId, gridId, strategyId, trend]
                 self.df_grid_id_match = self.df_grid_id_match.reset_index(drop=True)
@@ -229,7 +239,6 @@ class BrokerBitGet(broker.Broker):
             trigger_price = str(self.normalize_price(symbol, float(trigger_price)))
             msg += "{} size: {} trigger_price: {}".format(order_side, amount, trigger_price) + "\n"
 
-            # self.lock_place_trigger_order_v2 = threading.Lock()
             with self.lock_place_trigger_order_v2:
                 transaction = self._place_trigger_order_v2(symbol,  planType="normal_plan", triggerPrice=trigger_price,
                                                            marginCoin="USDT", size=amount, side=side,
