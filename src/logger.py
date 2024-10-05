@@ -225,13 +225,19 @@ class LoggerFile(ILogger):
                 # gzip current log file
                 #with open(self.filename, "rb") as f_in, gzip.open(self.filename+".gz", "wb") as f_out:
                 #    f_out.writelines(f_in)
-                os.remove(self.filename)
+                try:
+                    os.remove(self.filename)
+                except Exception as e:
+                    print("!!! can't remove", self.filename)
 
                 # remove old file
                 if self.current_id >= 3:
                     old_filename = self._get_filename(self.current_id - 3)
                     if os.path.isfile(old_filename):
-                        os.remove(old_filename)
+                        try:
+                            os.remove(old_filename)
+                        except Exception as e:
+                            print("!!! can't remove", self.filename)
 
                 self.current_id += 1
                 self.filename = self._get_current_filename()
