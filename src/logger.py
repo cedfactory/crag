@@ -223,8 +223,8 @@ class LoggerFile(ILogger):
         if self.filename != "":
             if self._get_current_filesize() > self.max_size:
                 # gzip current log file
-                with open(self.filename, "rb") as f_in, gzip.open(self.filename+".gz", "wb") as f_out:
-                    f_out.writelines(f_in)
+                #with open(self.filename, "rb") as f_in, gzip.open(self.filename+".gz", "wb") as f_out:
+                #    f_out.writelines(f_in)
                 os.remove(self.filename)
 
                 # remove old file
