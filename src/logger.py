@@ -8,6 +8,7 @@ from . import utils
 from .toolbox import settings_helper
 import json
 import gzip
+import threading
 
 # for LoggerConsole
 from rich import print
@@ -208,6 +209,8 @@ class LoggerFile(ILogger):
         else:
             pathlib.Path(self.filename).touch()
 
+        self.lock_LoggerFile = threading.Lock()
+
     def _get_filename(self, n):
         return "{}{:04d}.log".format(self.filename_base, n)
 
@@ -220,32 +223,54 @@ class LoggerFile(ILogger):
         return 0
 
     def log(self, msg, header="", author="", attachments=[]):
-        if self.filename != "":
-            if self._get_current_filesize() > self.max_size:
-                # gzip current log file
-                with open(self.filename, "rb") as f_in, gzip.open(self.filename+".gz", "wb") as f_out:
-                    f_out.writelines(f_in)
-                os.remove(self.filename)
+        with self.lock_LoggerFile:
+            if self.filename != "":
+                if self._get_current_filesize() > self.max_size:
+                    # gzip current log file
+                    #with open(self.filename, "rb") as f_in, gzip.open(self.filename+".gz", "wb") as f_out:
+                    #    f_out.writelines(f_in)
+                    try:
+                        os.remove(self.filename)
+                    except Exception as e:
+                        print("!!! can't remove", self.filename)
 
-                # remove old file
-                if self.current_id >= 3:
-                    old_filename = self._get_filename(self.current_id - 3)
-                    if os.path.isfile(old_filename):
-                        os.remove(old_filename)
+                    # remove old file
+                    if self.current_id >= 3:
+                        old_filename = self._get_filename(self.current_id - 3)
+                        if os.path.isfile(old_filename):
+                            try:
+                                os.remove(old_filename)
+                            except Exception as e:
+                                print("!!! can't remove", self.filename)
 
-                self.current_id += 1
-                self.filename = self._get_current_filename()
-            with open(self.filename, "a", encoding="utf-8") as f:
-                content = ""
-                now = datetime.now()
-                current_time = now.strftime("%Y/%m/%d %H:%M:%S.%f")
-                content = content + "[{}] ".format(current_time)
-                if author != "":
-                    content = content + "[{}] ".format(author)
-                if header != "":
-                    content = content + "[{}] ".format(header)
-                content = content + msg + "\n"
-                f.write(content)
+                    self.current_id += 1
+                    self.filename = self._get_current_filename()
+                with open(self.filename, "a", encoding="utf-8") as f:
+                    content = ""
+                    now = datetime.now()
+                    current_time = now.strftime("%Y/%m/%d %H:%M:%S.%f")
+                    content = content + "[{}] ".format(current_time)
+                    if author != "":
+                        content = content + "[{}] ".format(author)
+                    if header != "":
+                        content = content + "[{}] ".format(header)
+                    content = content + msg + "\n"
+                    f.write(content)
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state.pop('lock_LoggerFile', None)
+
+        if 'lock_LoggerFile' not in state:
+            print("lock_LoggerFile has been removed from the state.")
+        else:
+            print("ERROR lock_LoggerFile still in state")
+
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.lock_LoggerFile = threading.Lock()
 
 class LoggerDiscordBot(ILogger):
     def __init__(self, params=None):
@@ -257,6 +282,8 @@ class LoggerDiscordBot(ILogger):
             self.channel_id = params.get("channel_id", self.channel_id)
             self.token = params.get("token", self.token)
             self.webhook = params.get("webhook", self.webhook)
+
+        self.lock_DiscordBot = threading.Lock()
 
     @staticmethod
     def _prepare_data_to_post(msg, header, author):
@@ -347,10 +374,26 @@ class LoggerDiscordBot(ILogger):
         locals().clear()
 
     def log(self, msg, header="", author="", attachments=[]):
-        if self.webhook != "":
-            self.log_webhook(msg, header, author, attachments)
+        with self.lock_DiscordBot:
+            if self.webhook != "":
+                self.log_webhook(msg, header, author, attachments)
+            else:
+                self.log_post(msg, header, author, attachments)
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state.pop('lock_DiscordBot', None)
+
+        if 'lock_DiscordBot' not in state:
+            print("lock_DiscordBot has been removed from the state.")
         else:
-            self.log_post(msg, header, author, attachments)
+            print("ERROR lock_DiscordBot still in state")
+
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.lock_DiscordBot = threading.Lock()
 
 
 class LoggerTelegramBot(ILogger):
@@ -363,6 +406,8 @@ class LoggerTelegramBot(ILogger):
             self.id = params.get("id", self.id)
             self.token = params.get("token", self.token)
             self.chat_id = params.get("chat_id", self.chat_id)
+
+        self.lock_TelegramBot = threading.Lock()
 
     def log(self, msg, header="", author="", attachments=[], extra={}):
         response = None
@@ -429,4 +474,20 @@ class LoggerTelegramBot(ILogger):
         return None
 
     def log_info(self, msg, header="", author="", attachments=None):
-        self.log(msg, header, author, attachments)
+        with self.lock_TelegramBot:
+            self.log(msg, header, author, attachments)
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state.pop('lock_TelegramBot', None)
+
+        if 'lock_TelegramBot' not in state:
+            print("lock_TelegramBot has been removed from the state.")
+        else:
+            print("ERROR lock_TelegramBot still in state")
+
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.lock_TelegramBot = threading.Lock()
