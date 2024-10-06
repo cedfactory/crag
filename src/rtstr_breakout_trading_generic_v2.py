@@ -74,7 +74,7 @@ class StrategyBreakoutTradingGenericV2(rtstr.RealTimeStrategy):
         else:
             exit(5)
 
-        self.zero_print = False
+        self.zero_print = True
         self.strategy_id = utils.generate_random_id(4)
         self.grid = GridPosition(self.side,
                                  self.lst_symbols,
@@ -1068,7 +1068,8 @@ class GridPosition():
         del df
 
     def print_grid(self):
-        # if not self.zero_print:
+        if self.zero_print:
+            return
         for symbol in self.lst_symbols:
             df_grid = self.grid[symbol]
             self.log("\n" + df_grid.to_string(index=False))
