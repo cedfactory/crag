@@ -19,6 +19,43 @@ class RedirectText(object):
         self.out.WriteText(string)
 
 
+class DataFrameSymbolsController(DataFrameController):
+    def __init__(self, parent):
+        super(DataFrameSymbolsController, self).__init__(parent)
+        self.broker = None
+
+    def update_broker(self, my_broker):
+        self.broker = my_broker
+        self.df_leverages = self.broker.get_account_symbols_leverage(g_selected_symbols)
+        self.set_dataframe(self.df_leverages)
+
+
+    def on_value_changed(self, event):
+        item = event.GetItem()
+        row = self.ItemToRow(item)
+
+        # get the index of the modified column
+        col = event.GetColumn()
+
+        # get the new value
+        new_value = self.GetValue(row, col)
+        print(f"line {row}, column {col} => {new_value}")
+
+        # update the dataframe
+        self.df_leverages.iloc[row, col] = new_value
+        print(self.df_leverages)
+
+        # update the broker
+        symbol = self.df_leverages.iloc[row, 0]
+        leverage = int(new_value)
+        hold = None
+        if col == 2:
+            hold = "long"
+        elif col == 3:
+            hold = "short"
+        if hold:
+            self.broker.set_account_symbol_leverage(symbol, leverage, hold)
+
 class PanelSymbols(wx.Panel):
     def __init__(self, parent, main):
         wx.Panel.__init__(self, parent)
@@ -322,8 +359,7 @@ class MainPanel(wx.Panel):
             return
 
         # update symbols
-        df_leverages = my_broker.get_account_symbols_leverage(g_selected_symbols)
-        self.panel_symbols.set_dataframe(df_leverages)
+        self.panel_symbols.update_broker(my_broker)
 
     def update_positions(self, my_broker):
         positions = []

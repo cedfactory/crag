@@ -11,18 +11,6 @@ class DataFrameController(dv.DataViewListCtrl):
 
         self.df = None  # dataframe
 
-        '''
-        # add columns
-        for index, col_name in enumerate(self.df.columns):
-            editable_renderer = dv.DataViewTextRenderer(mode=dv.DATAVIEW_CELL_EDITABLE)
-            column = dv.DataViewColumn(col_name, editable_renderer, index, width=80)
-            self.AppendColumn(column)
-
-        self.Bind(dv.EVT_DATAVIEW_ITEM_VALUE_CHANGED, self.on_value_changed)
-
-        # fill the controller with data from dataframe
-        self.populate_list(self.df)
-        '''
         self.Centre()
         self.Show(True)
 
