@@ -5,6 +5,7 @@ import sys
 
 from src.utils import settings_helper
 from src import broker_helper, broker_bitget_api, utils
+from src.toolbox.wx_helper import DataFrameController
 
 g_selected_symbols = ["XRP", "BTC", "ETH", "SOL", "PEPE"]
 
@@ -28,14 +29,11 @@ class PanelSymbols(wx.Panel):
         self.main = main
 
         # Symbols
-        self.symbols = wx.ListCtrl(
-            self, size=(570, 200),
-            style=wx.LC_REPORT | wx.BORDER_SUNKEN
-        )
-        self.symbols.InsertColumn(0, 'Symbol', width=130)
-        self.symbols.InsertColumn(2, 'Leverage long', width=100)
-        self.symbols.InsertColumn(1, 'Leverage short', width=100)
-        main_sizer.Add(self.symbols, 0, wx.ALL | wx.EXPAND, 5)
+        self.dfc_symbols = DataFrameController(self)
+        main_sizer.Add(self.dfc_symbols, 1, wx.EXPAND | wx.ALL, 10)
+
+    def set_dataframe(self, dataframe):
+        self.dfc_symbols.set_dataframe(dataframe)
 
 class PanelPositions(wx.Panel):
     def __init__(self, parent, main):
@@ -89,11 +87,6 @@ class PanelPositions(wx.Panel):
 
         self.amount = FS.FloatSpin(self, -1, size=wx.Size(70, -1), min_val=0, increment=0.1, value=0., digits=3, agwStyle=FS.FS_LEFT)
         hsizer.Add(self.amount, 0, wx.ALL | wx.CENTER, 5)
-        # TOREMOVE
-        # staticLeverage = wx.StaticText(self, label="Leverage", style=wx.ALIGN_LEFT)
-        # hsizer.Add(staticLeverage, 0, wx.ALL | wx.CENTER, 5)
-        # self.leverage = FS.FloatSpin(self, -1, size=wx.Size(40, -1), min_val=1, increment=1, value=2, digits=0, agwStyle=FS.FS_LEFT)
-        # hsizer.Add(self.leverage, 0, wx.ALL | wx.CENTER, 5)
         self.sides = wx.ComboBox(self, choices=["long", "short"])
         self.sides.SetSelection(0)
         hsizer.Add(self.sides, 0, wx.ALL | wx.CENTER, 5)
@@ -158,11 +151,6 @@ class PanelOrders(wx.Panel):
 
         self.amount = FS.FloatSpin(self, -1, size=wx.Size(60, -1), min_val=0, increment=0.1, value=0., digits=3, agwStyle=FS.FS_LEFT)
         hsizer.Add(self.amount, 0, wx.ALL | wx.CENTER, 5)
-        # TOREMOVE
-        # staticLeverage = wx.StaticText(self, label="Leverage", style=wx.ALIGN_LEFT)
-        # hsizer.Add(staticLeverage, 0, wx.ALL | wx.CENTER, 5)
-        # self.leverage = FS.FloatSpin(self, -1, size=wx.Size(40, -1), min_val=1, increment=1, value=2, digits=0, agwStyle=FS.FS_LEFT)
-        # hsizer.Add(self.leverage, 0, wx.ALL | wx.CENTER, 5)
         staticPrice = wx.StaticText(self, label="Price", style = wx.ALIGN_LEFT)
         hsizer.Add(staticPrice,0, wx.ALL | wx.CENTER, 5)
         self.price = FS.FloatSpin(self, -1, size=wx.Size(60, -1), min_val=0, increment=0.1, value=0., digits=3, agwStyle=FS.FS_LEFT)
@@ -326,17 +314,16 @@ class MainPanel(wx.Panel):
         print("usdt equity : ", usdt_equity)
         self.staticTextUsdtEquity.SetLabel("USDT Equity : " + usdt_equity)
 
-    def update_symbols(self, my_broker):
-        self.panel_symbols.symbols.DeleteAllItems()
+        return True
 
+    def update_symbols(self, my_broker):
         if not my_broker:
-            print("no broker to update posi")
+            print("no broker to update symbols")
             return
 
         # update symbols
-        for symbol in g_selected_symbols:
-            cross_margin_leverage, long_leverage, short_leverage = my_broker.get_account_symbol_leverage(symbol)
-            self.panel_symbols.symbols.Append([symbol, str(long_leverage), str(short_leverage)])
+        df_leverages = my_broker.get_account_symbols_leverage(g_selected_symbols)
+        self.panel_symbols.set_dataframe(df_leverages)
 
     def update_positions(self, my_broker):
         positions = []
@@ -427,9 +414,6 @@ class MainPanel(wx.Panel):
         if my_broker and self.panel_positions.symbols.GetSelection() >= 0:
             symbol = self.panel_positions.symbols.GetString(self.panel_positions.symbols.GetSelection())
             side = self.panel_positions.sides.GetString(self.panel_positions.sides.GetSelection()) # "long" or "short"
-            # TOREMOVE
-            # leverage = self.panel_positions.leverage.GetValue()
-            # my_broker.set_symbol_leverage(my_broker._get_symbol(symbol), int(leverage), side)
 
             mytrade = {}
             mytrade["symbol"] = symbol
@@ -512,9 +496,6 @@ class MainPanel(wx.Panel):
         if my_broker and self.panel_orders.symbols.GetSelection() >= 0:
             symbol = self.panel_orders.symbols.GetString(self.panel_orders.symbols.GetSelection())
             side = self.panel_orders.sides.GetString(self.panel_orders.sides.GetSelection()) # "long" or "short"
-            # TOREMOVE
-            # leverage = self.panel_orders.leverage.GetValue()
-            # my_broker.set_symbol_leverage(my_broker._get_symbol(symbol), int(leverage), side)
 
             mytrade = {}
             mytrade["symbol"] = symbol
