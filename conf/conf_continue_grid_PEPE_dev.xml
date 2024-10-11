@@ -26,7 +26,6 @@
         />
     </broker>
     <crag id="breakout_long_short_v2"
-          iterration="10000"
           botId="subfortest2"
           loggers="console"
     />
