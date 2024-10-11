@@ -1,4 +1,4 @@
 ﻿id,name,symbol,type,grid_high,grid_low,percent_per_grid,nb_grid,nb_position_limits,grid_margin
-long_1,StrategyGridTradingGenericV2,PEPE,long,0.000013,0.0000066,0,10,1,100
-short_1,StrategyGridTradingGenericV2,PEPE,short,0.000013,0.0000066,0,10,1,100
-breakout_1,StrategyBreakoutTradingGenericV2,PEPE,long,0.000013,0.0000066,0.5,3,1,100
+long_1,StrategyGridTradingGenericV2,PEPE,long,0.00001148,0.0000083,0,45,1,260
+short_1,StrategyGridTradingGenericV2,PEPE,short,0.00001148,0.0000083,0,45,1,260
+breakout_1,StrategyBreakoutTradingGenericV2,PEPE,long,0.00001148,0.0000083,0.5,3,1,250

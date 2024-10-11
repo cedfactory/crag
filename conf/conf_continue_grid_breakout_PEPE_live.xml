@@ -18,7 +18,7 @@
     <broker name="bitget">
         <params exchange="bitget"
                 fdp_url_id="gc1"
-                account="subfortest1"
+                account="subfortest2"
                 symbols="./symbols_PEPE_XRP.csv"
                 reset_account="False"
                 reset_account_orders="False"
@@ -26,7 +26,7 @@
         />
     </broker>
     <crag id="grid_breakout_pepe"
-          botId="subfortest1"
+          botId="subfortest2"
           loggers="console"
     />
 </configuration>
