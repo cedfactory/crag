@@ -862,6 +862,13 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         return result
 
     @authentication_required
+    def _batch_orders_api_V2(self, symbol, marginCoin, batch_order):
+        params = {'symbol': symbol,  "productType": "usdt-futures", "marginMode": "crossed", 'marginCoin': marginCoin, 'orderList': batch_order}
+
+        return self.orderV2Api.batchPlaceOrder(params)
+
+
+    @authentication_required
     def _batch_cancel_orders_api(self, symbol, marginCoin, lst_ordersIds):
 
         result = self.orderApi.cancel_batch_orders(symbol, marginCoin, lst_ordersIds)

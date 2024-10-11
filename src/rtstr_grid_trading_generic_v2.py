@@ -158,7 +158,6 @@ class StrategyGridTradingGenericV2(rtstr.RealTimeStrategy):
                 self.grid.cross_check_with_current_state(symbol, df_current_state)
                 self.grid.update_grid_side(symbol)
             lst_order_to_execute = self.grid.get_order_list(symbol)
-            self.grid.set_to_pending_execute_order(symbol, lst_order_to_execute)
             lst_order_to_execute = self.grid.filter_lst_close_execute_order(symbol, lst_order_to_execute)
 
 
@@ -759,24 +758,6 @@ class GridPosition():
                 elif order["trade_status"] == "UNKNOWN":
                     df_grid.loc[df_grid["grid_id"] == grid_id, "unknown"] = True
         self.update_nb_position_limits(df_grid)
-
-    def set_to_pending_execute_order(self, symbol, lst_order_to_execute):
-        """
-        df = self.grid[symbol]
-        for placed_order in lst_order_to_execute:
-            grid_id = placed_order["grid_id"]
-            mask = df['grid_id'] == grid_id
-            test_mask = mask.any()
-            if test_mask:
-                del test_mask
-                id = mask.idxmax()
-                df.at[id , 'status'] = 'pending'
-                df.at[id, 'orderId'] = ''
-            del mask
-            del id
-        del df
-        """
-        return
 
     def clear_orderId(self, symbol, grid_id):
         df = self.grid[symbol]

@@ -11,7 +11,7 @@
                 trailer_global_delta_tp="0"
                 trailer_sl="0"
                 high_volatility="False"
-                path_strategy_param="./param_continue_grid_breakout_PEPE_live.csv"
+                path_strategy_param="./param_continue_grid_PEPE_dev_2.csv"
                 loggers="file=log"
         />
     </strategy>
@@ -26,6 +26,7 @@
         />
     </broker>
     <crag id="breakout_long_short_v2"
+          iterration="10000"
           botId="subfortest2"
           loggers="console"
     />

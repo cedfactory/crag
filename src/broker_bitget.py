@@ -29,6 +29,11 @@ class BrokerBitGet(broker.Broker):
 
         self.df_grid_id_match = pd.DataFrame(columns=["orderId", "grid_id", "strategy_id", "trend"])
 
+        self.df_sltp_waiting_db = pd.DataFrame(columns=['strategy_id', 'symbol',
+                                                        'trigger_type', 'type', 'price',
+                                                        'grid_id', 'gross_size', 'TP',
+                                                        'trade_status', 'orderId'])
+
         self.lock_df_grid_id_match = threading.Lock()
         self.lock_place_trigger_order_v2 = threading.Lock()
 
@@ -555,6 +560,147 @@ class BrokerBitGet(broker.Broker):
                 order["trade_status"] = "UNKNOWN"
         return lst_orders
 
+    @authentication_required
+    def execute_batch_orders_V2(self, lst_orders):
+        lst_success_trade = []
+        lst_failed_trade = []
+
+        lst_symbols_unique = list(set(order['symbol'] for order in lst_orders))
+        lst_orders_by_symbol = [[order for order in lst_orders if order['symbol'] == symbol] for symbol in lst_symbols_unique]
+
+        for lst_orders_symbol in lst_orders_by_symbol:
+            if len(lst_orders_symbol) > 0:
+                symbol = self._get_symbol_v2(lst_orders_symbol[0]["symbol"])
+                symbol_v1 = self._get_symbol(lst_orders_symbol[0]["symbol"])
+                lst_orderList = []
+                for order in lst_orders_symbol:
+                    if order["type"] == 'OPEN_LONG_ORDER':
+                        side = "buy"
+                        tradeSide = "Open"
+                        leverage = self.get_leverage_long(symbol_v1)
+                        order['order_side'] = side
+                        order['order_posSide'] = 'long'
+                        order['order_tradeSide'] = 'close'
+                    elif order["type"] == 'OPEN_SHORT_ORDER':
+                        side = "sell"
+                        tradeSide = "Open"
+                        leverage = self.get_leverage_short(symbol_v1)
+                        order['order_side'] = side
+                        order['order_posSide'] = 'short'
+                        order['order_tradeSide'] = 'close'
+
+                    clientOid = self.clientOIdprovider.get_name(symbol,
+                                                                order["type"]
+                                                                + "__" + str(order["grid_id"]) + "__"
+                                                                + "--" + str(order["strategy_id"]) + "--")
+
+                    size = utils.normalize_size(order["gross_size"] * leverage,
+                                                self.get_sizeMultiplier(symbol_v1))
+                    orderParam = {
+                        "size": str(size),
+                        "price": str(order["price"]),
+                        "side": side,
+                        "tradeSide": tradeSide,
+                        "orderType": "limit",
+                        "force": "gtc",
+                        "clientOid": str(clientOid),
+                        "reduceOnly": "YES",
+                        "presetStopSurplusPrice": str(order["TP"]),
+                    }
+
+                    tp = self.normalize_price(self._get_symbol(symbol), order["TP"]) if "TP" in order and order["TP"] else None
+                    sl = self.normalize_price(self._get_symbol(symbol), order["SL"]) if "SL" in order and order["SL"] else None
+                    # Convert tp and sl to string format without scientific notation
+                    if tp is not None:
+                        # tp = format(tp, '.8f')  # Adjust the number of decimal places as needed
+                        orderParam["presetStopSurplusPrice"] = tp
+                        order["TP"] = tp
+                    if sl is not None:
+                        # sl = format(sl, '.8f')  # Adjust the number of decimal places as needed
+                        orderParam["presetStopLossPrice"] = sl
+                        order["SL"] = sl
+                    lst_orderList.append(orderParam)
+
+            msg = "!!!!! EXECUTE BATCH LIMIT ORDER x" + str(len(lst_orderList)) + " !!!!!" + "\n"
+            try:
+                transaction = self._batch_orders_api_V2(symbol, "USDT", lst_orderList)
+            except (exceptions.BitgetAPIException, Exception) as e:
+                transaction = None
+
+            # Convert each dictionary to a string with newline character and concatenate them
+            keys_to_exclude = ['orderType', 'timeInForceValue', 'clientOid']  # List of keys you want to exclude
+            result_string = '\n'.join([
+                json.dumps({k: v for k, v in orderParam.items() if k not in keys_to_exclude}).replace('"', '')
+                # Remove all double quotes
+                for orderParam in lst_orderList
+            ])
+            result_string = result_string.replace("{", "")
+            result_string = result_string.replace("}", "")
+            result_string = result_string.replace(",", "")
+            msg += result_string + "\n"
+
+            if transaction != None:
+                if "msg" in transaction and transaction["msg"] == "success" and "data" in transaction and 'successList' in transaction["data"]:
+                    if len(transaction["data"]["successList"]) > 0:
+                        if len(transaction["data"]["successList"]) != len(lst_orderList):
+                            msg += "SUCCESS TRADE:" + str(len(transaction["data"]["successList"])) + " / " + str(len(lst_orderList)) + "\n"
+                            failed_trade = len(lst_orderList) - len(transaction["data"]["successList"])
+                        else:
+                            failed_trade = 0
+                    for orderInfo in transaction["data"]["successList"]:
+                        orderId = orderInfo["orderId"]
+                        gridId = [int(num) for num in re.findall(r'__(\d+)__', orderInfo["clientOid"])]
+                        strategyId = orderInfo["clientOid"].split('--')[1]
+                        self.add_gridId_orderId(gridId[0], orderId, strategyId, trend=None)
+                        lst_success_trade.append({"orderId": orderId, "gridId": gridId[0], "strategyId": strategyId})
+                        if failed_trade != 0:
+                            msg += "success gridId: " + str(gridId[0]) + "\n"
+
+                    if len(transaction["data"]["failureList"]) > 0:
+                        msg += "FAILED TRADE: " + str(len(transaction["data"]["failureList"])) + "\n"
+                        for failureInfo in transaction["data"]["failureList"]:
+                            gridId = [int(num) for num in re.findall(r'__(\d+)__', failureInfo["clientOid"])]
+                            lst_failed_trade.append({"orderId": None, "gridId": gridId[0]})
+                            msg += "failure gridId: " + str(gridId[0]) + "\n"
+                            msg += "errorCode: " + failureInfo["errorCode"] + "\n"
+                            msg += "errorMsg" + failureInfo["errorMsg"] + "\n"
+                else:
+                    msg += "TRADE BATCH FAILED" + "\n"
+                    if "data" in transaction and "failureList" in transaction["data"]:
+                        if len(transaction["data"]["failureList"]) > 0:
+                            msg += "FAILED TRADE: " + str(len(transaction["data"]["failureList"])) + " / " + str(len(lst_orderList)) + "\n"
+                            for failureInfo in transaction["data"]["failureList"]:
+                                gridId = [int(num) for num in re.findall(r'__(\d+)__', failureInfo["clientOid"])]
+                                strategyId = failureInfo["clientOid"].split('--')[1]
+                                lst_failed_trade.append({"orderId": None, "gridId": gridId[0], "strategyId": strategyId})
+                                msg += "failure gridId: " + str(gridId[0]) + "\n"
+                                msg += "errorCode: " + failureInfo["errorCode"] + "\n"
+                                msg += "errorMsg" + failureInfo["errorMsg"] + "\n"
+
+                self.log_trade = self.log_trade + msg.upper()
+                del msg
+
+        success_trade_dict = {trade["gridId"]: trade["orderId"] for trade in lst_success_trade}
+
+        if transaction == None:
+            success_trade_dict = {}
+            lst_failed_trade = []
+
+        # Process each order in lst_orders
+        for order in lst_orders:
+            grid_id = order["grid_id"]
+            if grid_id in success_trade_dict:
+                order["trade_status"] = "SUCCESS"
+                order["orderId"] = success_trade_dict[grid_id]
+                order["symbol_v2"] = self._get_symbol_v2(order["symbol"])
+                self.record_to_sltp_waiting_db(order)
+            elif grid_id in lst_failed_trade:
+                order["trade_status"] = "FAILED"
+                order["orderId"] = None
+            else:
+                order["trade_status"] = "UNKNOWN"
+        return lst_orders
+
     def execute_trades_scenario(self, lst_orders):
         if lst_orders is None:
             return []
@@ -640,7 +786,7 @@ class BrokerBitGet(broker.Broker):
             value = trigger_price.loc[trigger_price["symbols"] == symbol, "values"].values[0]
             if trade["type"] == "open_long":
                 leverage = self.get_leverage_long(self._get_symbol(symbol))
-                if trade["amount"] == None:
+                if trade.get("amount") is None:
                     size = trade["gross_size"]
                 else:
                     size = trade["amount"] / value
@@ -651,7 +797,7 @@ class BrokerBitGet(broker.Broker):
                 trade["buying_price"] = value
             elif trade["type"] == "open_short":
                 leverage = self.get_leverage_short(self._get_symbol(symbol))
-                if trade["amount"] == None:
+                if trade.get("amount") is None:
                     size = trade["gross_size"]
                 else:
                     size = trade["amount"] / value
@@ -678,23 +824,27 @@ class BrokerBitGet(broker.Broker):
 
         return trade
 
-    def execute_limit_orders(self, lst_orders):
+    def execute_limit_orders(self, lst_orders, v2):
         lst_result_orders = []
         max_batch_size = 49
+
+        # If lst_orders exceeds max_batch_size, split into sublists and execute in batches
         if len(lst_orders) > max_batch_size:
             sub_lst_orders = utils.split_list(lst_orders, max_batch_size)
-            print("orders bach over max_batch_size")
+            execute_func = self.execute_batch_orders_V2 if v2 else self.execute_batch_orders
             for lst in sub_lst_orders:
-                lst_result_orders += self.execute_batch_orders(lst)
-        elif len(lst_orders) >= 1:
-            lst_result_orders = self.execute_batch_orders(lst_orders)
+                lst_result_orders += execute_func(lst)
+        # For smaller or single batch orders
+        elif lst_orders:
+            execute_func = self.execute_batch_orders_V2 if v2 else self.execute_batch_orders
+            lst_result_orders = execute_func(lst_orders)
+
         return lst_result_orders
 
     @authentication_required
     def execute_trades(self, lst_orders):
         lst_orders = [order for order in lst_orders if order != None]
         if len(lst_orders) == 0:
-            # self.execute_timer.set_time_to_zero("broker", "execute_trades", "execute_batch_orders", self.iter_execute_trades)
             self.iter_executetrades += 1
             return
 
@@ -728,9 +878,12 @@ class BrokerBitGet(broker.Broker):
         self.execute_cancel_sltp_orders(lst_cancel_sltp_orders)
         lst_orders = [order for order in lst_orders if not ("type" in order) or order["type"] != "CANCEL_SLTP"]
 
-        lst_result_orders = self.execute_limit_orders(lst_orders)
+        lst_limit_orders_sltp = [order for order in lst_orders if "trigger_type" in order and order["trigger_type"] == "LIMIT_ORDER_SLTP"]
+        self.execute_limit_orders(lst_limit_orders_sltp, True)
+        lst_orders = [order for order in lst_orders if not ("trigger_type" in order) or order["trigger_type"] != "LIMIT_ORDER_SLTP"]
 
-        # self.execute_timer.set_start_time("broker", "execute_trades", "execute_batch_orders", self.iter_execute_trades)
+        lst_result_orders = self.execute_limit_orders(lst_orders, False)
+
         del lst_triggers
         del lst_orders
         locals().clear()
@@ -740,7 +893,8 @@ class BrokerBitGet(broker.Broker):
                + lst_result_triggers_orders \
                + lst_result_sltp_trailling_orders \
                + lst_result_cancel_orders \
-               + lst_result_open_orders
+               + lst_result_open_orders \
+               + lst_limit_orders_sltp
 
     def set_open_orders_gridId(self, df_open_orders):
         df_open_orders["gridId"] = None
@@ -840,6 +994,32 @@ class BrokerBitGet(broker.Broker):
             df_open_orders["reduceOnly"] = df_open_orders["reduceOnly"].astype(bool)
         return df_open_orders
 
+    def record_to_sltp_waiting_db(self, order):
+        self.df_sltp_waiting_db = pd.concat([self.df_sltp_waiting_db, pd.DataFrame([order])], ignore_index=True)
+
+    def remove_orderId_from_sltp_waiting_db(self, order_id):
+        self.df_sltp_waiting_db = self.df_sltp_waiting_db[self.df_sltp_waiting_db['orderId'] != order_id]
+        self.df_sltp_waiting_db.reset_index(drop=True, inplace=True)
+
+    def get_gridId_from_sltp_waiting_db(self, trigger):
+        # Filter rows in df_sltp_waiting_db that match the criteria
+        matching_rows = self.df_sltp_waiting_db[
+            (self.df_sltp_waiting_db['symbol_v2'] == trigger['symbol']) &
+            (self.df_sltp_waiting_db['gross_size'] == float(trigger['size'])) &
+            (self.df_sltp_waiting_db['order_side'] == trigger['side']) &
+            (self.df_sltp_waiting_db['order_posSide'] == trigger['posSide']) &
+            (self.df_sltp_waiting_db['order_tradeSide'] == trigger['tradeSide']) &
+            (self.df_sltp_waiting_db['TP'] == float(trigger['triggerPrice'])) &
+            (trigger['planType'] == 'profit_plan')
+            ]
+
+        # If a match is found, return grid_id and strategy_id
+        if not matching_rows.empty:
+            return matching_rows.iloc[0]['grid_id'], matching_rows.iloc[0]['strategy_id'], trigger['orderId']
+
+        # Return None if no match is found
+        return None, None, None
+
     def _build_df_triggers(self, triggers):
         df_triggers = pd.DataFrame(columns=["planType", "symbol", "size", "side", "orderId", "orderType", "clientOid",
                                             "price", "triggerPrice", "triggerType", "marginMode",
@@ -848,6 +1028,14 @@ class BrokerBitGet(broker.Broker):
         for i in range(len(triggers)):
             data = triggers[i]
             grid_id = self.get_gridId_from_orderId(data["orderId"])
+            if grid_id == None:
+                grid_id, strategyId, orderId = self.get_gridId_from_sltp_waiting_db(data)
+                if not(grid_id is None
+                       and strategyId is None
+                       and orderId is None):
+                    self.add_gridId_orderId(grid_id, orderId, strategyId, None)
+                    self.remove_orderId_from_sltp_waiting_db(orderId)
+
             if grid_id == None:
                 grid_id = 0
                 strategyId = None

@@ -13,6 +13,20 @@ import random
 import string
 import math
 
+def dict_to_string(d):
+    return '\n'.join(f"{key}: {value}" for key, value in d.items())
+
+def dicts_are_equal(dict1, dict2):
+    # First, check if both dictionaries have the same keys
+    if dict1.keys() != dict2.keys():
+        return False
+
+    # Then, check if the values corresponding to each key are the same
+    for key in dict1:
+        if dict1[key] != dict2[key]:
+            return False
+
+    return True
 
 def create_directory(self, directory_path):
     if not os.path.exists(directory_path):

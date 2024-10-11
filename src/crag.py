@@ -102,7 +102,6 @@ class Crag:
         self.average_duration_reboot = 0
         self.max_duration_reboot = 0
         self.min_duration_reboot = 0
-
         self.dump_perf_dir = "./dump_timer"
 
         if params:
@@ -434,11 +433,11 @@ class Crag:
 
 
     def request_backup(self):
-        delta_memory_used = round((utils.get_memory_usage() - self.init_master_memory) / (1024 * 1024), 2)
         self.safety_step_iterration += 1
+        delta_memory_used = round((utils.get_memory_usage() - self.init_master_memory) / (1024 * 1024), 2)
         if self.reboot_exception \
                 or (delta_memory_used > 50) \
-                or (self.safety_step_iterration > 1000):
+                or (self.safety_step_iterration > 10000):
             memory_usage = round(utils.get_memory_usage() / (1024 * 1024), 1)
 
             # Current time
@@ -758,12 +757,10 @@ class Crag:
         broker_current_state.clear()
         del broker_current_state
 
-        # self.execute_timer.set_start_time("crag", "current_state_live", "get_info_msg_status", self.current_state_live)
-
         self.msg_rtstr = self.rtstr.get_info_msg_status()
-        self.rtstr.record_status()
-
-        # self.execute_timer.set_end_time("crag", "current_state_live", "get_info_msg_status", self.current_state_live)
+        # self.rtstr.record_status()
+        if self.msg_rtstr != "":
+            self.log_discord(self.msg_rtstr, "strategy status")
 
         del self.msg_rtstr
 
