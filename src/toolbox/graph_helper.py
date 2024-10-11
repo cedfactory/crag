@@ -74,7 +74,7 @@ dataframe
 ]df, lst_columns, df2=None, lst_columns2=None
 '''
 def export_graph(filename, title, dataframe_infos):
-    plt.subplots()
+    #plt.subplots()
     fig = plt.figure(figsize=(10, 4))
 
     ax = plt.gca()

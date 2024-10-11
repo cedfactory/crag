@@ -1434,6 +1434,25 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         return dct_account['data']['crossMarginLeverage'], dct_account['data']['fixedLongLeverage'], dct_account['data']['fixedShortLeverage']
 
     @authentication_required
+    def get_account_symbols_leverage(self, lst_symbols, marginCoin="USDT"):
+        df_leverages = pd.DataFrame(columns=["symbol", "crossMarginLeverage", "fixedLongLeverage", "fixedShortLeverage"])
+
+        with ThreadPoolExecutor() as executor:
+            futures = []
+            for symbol in lst_symbols:
+                futures.append(executor.submit(self.get_account_symbol_leverage, symbol, marginCoin))
+
+            wait(futures, timeout=1000, return_when=ALL_COMPLETED)
+
+            for index, future in enumerate(futures):
+                result = future.result()
+                symbol = lst_symbols[index]
+                df_leverages.loc[len(df_leverages)] = [symbol, result[0], result[1], result[2]]
+
+        return df_leverages
+
+
+    @authentication_required
     def set_account_symbol_leverage(self, symbol, leverage, hold="long"):
         n_attempts = 3
         dct_account = None

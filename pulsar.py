@@ -35,29 +35,12 @@ def encode_limit_orders(df_limit_orders):
     #print(df)
     return str
 
-def generate_figure_limit_orders(df_account):
+def generate_figure_limit_orders(df_account, side="long"):
     fig = plt.figure(figsize=(10, 15))
 
     ax = plt.gca()
     xfmt = mdates.DateFormatter("%d-%m-%Y %H:%M:%S.%f")
     ax.xaxis.set_major_formatter(xfmt)
-
-    '''
-    timestamps = []
-    usdt_equities = []
-    for index, row in df_account.iterrows():
-        timestamp = datetime.fromtimestamp(float(row["timestamp"]))
-        timestamps.append(timestamp)
-
-        usdt_equity = row["usdt_equity"]
-        usdt_equities.append(usdt_equity)
-
-        str_limit_orders = row["limit_orders"]
-        if str_limit_orders != "":
-            df_limit_orders = pd.read_json(str_limit_orders)
-
-    plt.scatter(timestamps, usdt_equities, marker="_", color="#000000", label="Current price")
-    '''
 
     # limit orders
     xSell = []
@@ -74,14 +57,14 @@ def generate_figure_limit_orders(df_account):
             df_limit_orders["price"] = df_limit_orders["price"].astype("Float64")
             if isinstance(df_limit_orders, pd.DataFrame):
                 for index2, row2 in df_limit_orders.iterrows():
-                    if row2["side"] == "close_long":
+                    if row2["side"] == "close_" + side:
                         xSell.append(timestamp)
                         ySell.append(float(row2["price"]))
-                    elif row2["side"] == "open_long":
+                    elif row2["side"] == "open_" + side:
                         xBuy.append(timestamp)
                         yBuy.append(float(row2["price"]))
-    plt.scatter(xSell, ySell, s=400, marker="_", color="red", label="Close long")
-    plt.scatter(xBuy, yBuy, s=400, marker="_", color="blue", label="Open long ")
+    plt.scatter(xSell, ySell, s=400, marker="_", color="red", label="Close " + side)
+    plt.scatter(xBuy, yBuy, s=400, marker="_", color="blue", label="Open " + side)
 
     plt.legend()
 
@@ -96,6 +79,7 @@ class Agent:
         self.message1_id = "-1"
         self.message2_id = "-1"
         self.message3_id = "-1"
+        self.message4_id = "-1"
 
 def _usage():
     usage = "pulsar <pulsar.csv>"
@@ -120,6 +104,7 @@ if __name__ == '__main__':
                     agent.message1_id = row[2]
                     agent.message2_id = row[3]
                     agent.message3_id = row[4]
+                    agent.message4_id = row[5]
                     agents.append(agent)
         else:
             _usage()
@@ -188,12 +173,20 @@ if __name__ == '__main__':
             except Exception as e:
                 console.log("Problem while sending message with " + agent.bot_id)
 
+        if agent.message4_id == "-1":
+            response = agent.bot.log("grid", attachments=["pulsar.png"])
+            try:
+                agent.message4_id = str(response["result"]["message_id"])
+                update_csv = True
+            except Exception as e:
+                console.log("Problem while sending message with " + agent.bot_id)
+
     if update_csv:
         with open(file_path, "w", newline="") as file:
             writer = csv.writer(file)
-            writer.writerow(["bot_id", "account_id", "message1_id", "message2_id", "message3_id"])
+            writer.writerow(["bot_id", "account_id", "message1_id", "message2_id", "message3_id", "message4_id"])
             for agent in agents:
-                writer.writerow([agent.bot_id, agent.account_id, agent.message1_id, agent.message2_id, agent.message3_id])
+                writer.writerow([agent.bot_id, agent.account_id, agent.message1_id, agent.message2_id, agent.message3_id, agent.message4_id])
 
     while True:
         for agent in agents:
@@ -228,13 +221,14 @@ if __name__ == '__main__':
 
             response = agent.bot.log(message, extra=extra)
 
-            # message 2
-            extra["message_id"] = agent.message2_id
+            # message 4
+            extra["message_id"] = agent.message4_id
             timestamp_begin = (now - timedelta(hours=72)).timestamp()
             df_filtered = agent.df_account.loc[agent.df_account["timestamp"] > timestamp_begin]
 
-            graph_helper.export_graph("pulsar_history.png", agent.account_id,
+            fig = graph_helper.export_graph("pulsar_history.png", agent.account_id,
                                       [{"dataframe": df_filtered, "plots": [{"column": "usdt_equity", "label": "USDT equity"}]}])
+            plt.close(fig)
 
             response = agent.bot.log(message, attachments=["pulsar_history.png"], extra=extra)
             if response and "ok" in response and response["ok"] and "result" in response:
@@ -243,10 +237,16 @@ if __name__ == '__main__':
                 elif isinstance(response["result"], list):
                     message_id = [res["message_id"] for res in response["result"]]
 
+            # message 2
+            generate_figure_limit_orders(agent.df_account, "long")
+            extra["message_id"] = agent.message2_id
+            message = current_time + "\n" + "<b>" + agent.broker.account["id"] + "</b>" + " : limit orders long"
+            response = agent.bot.log(message, attachments=["pulsar_current_state.png"], extra=extra)
+
             # message 3
-            generate_figure_limit_orders(agent.df_account)
+            generate_figure_limit_orders(agent.df_account, "short")
             extra["message_id"] = agent.message3_id
-            message = current_time + "\n" + "<b>" + agent.broker.account["id"] + "</b>" + " : current state"
+            message = current_time + "\n" + "<b>" + agent.broker.account["id"] + "</b>" + " : limit orders short"
             response = agent.bot.log(message, attachments=["pulsar_current_state.png"], extra=extra)
 
         time.sleep(60*5)  # 5min
