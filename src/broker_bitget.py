@@ -1002,6 +1002,9 @@ class BrokerBitGet(broker.Broker):
         self.df_sltp_waiting_db.reset_index(drop=True, inplace=True)
 
     def get_gridId_from_sltp_waiting_db(self, trigger):
+        if trigger['planType'] != 'profit_plan':
+            return None, None, None
+
         # Filter rows in df_sltp_waiting_db that match the criteria
         matching_rows = self.df_sltp_waiting_db[
             (self.df_sltp_waiting_db['symbol_v2'] == trigger['symbol']) &
