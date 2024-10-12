@@ -19,13 +19,13 @@
         <params exchange="bitget"
                 fdp_url_id="gc1"
                 account="subfortest1"
-                symbols="./symbols_PEPE_XRP_DOGE_BONK.csv"
+                symbols="./symbols_PEPE_XRP_DOGE.csv"
                 reset_account="False"
                 reset_account_orders="False"
                 loggers="file=log"
         />
     </broker>
-    <crag id="grid_breakout_pepe"
+    <crag id="grid_breakout_doge"
           botId="subfortest1"
           loggers="console"
     />
