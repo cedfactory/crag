@@ -424,10 +424,12 @@ class GridPosition():
         df.loc[df['position'] == self.current_price, 'side'] = "on_edge"
 
         differences = df['position'].diff().dropna()
+        """
         diff = differences.mean() / 3
         df.loc[(df['position'] >= self.current_price - abs(diff))
                & (df['position'] <= self.current_price + abs(diff)), 'side'] = "on_edge"
-
+        """
+        
     # Function to find the index of the closest value in an array
     def find_closest(self, value, array):
         if self.abs is not None:
