@@ -619,6 +619,7 @@ class BrokerBitGet(broker.Broker):
                         # sl = format(sl, '.8f')  # Adjust the number of decimal places as needed
                         orderParam["presetStopLossPrice"] = sl
                         order["SL"] = sl
+                    # order["gross_size"] = size
                     lst_orderList.append(orderParam)
 
             msg = "!!!!! EXECUTE BATCH LIMIT ORDER x" + str(len(lst_orderList)) + " !!!!!" + "\n"
@@ -1008,7 +1009,7 @@ class BrokerBitGet(broker.Broker):
         # Filter rows in df_sltp_waiting_db that match the criteria
         matching_rows = self.df_sltp_waiting_db[
             (self.df_sltp_waiting_db['symbol_v2'] == trigger['symbol']) &
-            (self.df_sltp_waiting_db['gross_size'] == float(trigger['size'])) &
+            # (self.df_sltp_waiting_db['gross_size'] == float(trigger['size'])) &
             (self.df_sltp_waiting_db['order_side'] == trigger['side']) &
             (self.df_sltp_waiting_db['order_posSide'] == trigger['posSide']) &
             (self.df_sltp_waiting_db['order_tradeSide'] == trigger['tradeSide']) &

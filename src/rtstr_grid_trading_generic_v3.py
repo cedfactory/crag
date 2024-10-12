@@ -499,6 +499,9 @@ class GridPosition():
             self.current_state[self.grid_side]["lst_TP_orders_order_id_side"] = []
             self.grid['orderId_TP'] = "empty"
 
+        print(self.grid.to_string())  # CEDE DEBUG
+        print("\n") # CEDE DEBUG
+
         def update_status(row):
             if row['orderId'] == "empty" and row['orderId_TP'] == "empty":
                 if row['status'] == "empty" and row['side'] in ["open_long", "open_short"]:
