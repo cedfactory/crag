@@ -298,43 +298,11 @@ class GridPosition():
 
         self.zero_print = debug_mode
         self.loggers = loggers
-        self.trend = "FLAT"
-        self.grid_position = []
-        self.dct_status_info = {}
-        self.previous_grid_position = []
         self.current_price = None
-        self.diff_position = 0
-        self.diff_close_position = 0
-        self.diff_open_position = 0
-        self.top_grid = False
-        self.bottom_grid = False
-        self.previous_top_grid = False
-        self.previous_bottom_grid = False
         self.percent_per_grid = percent_per_grid
         self.steps = 0
-        self.previous_grid_uniq_position = None
-        self.grid_uniq_position = None
-        self.max_position = 0
-        self.min_position = 0
-        self.grid_move = False
         self.msg = ""
         self.df_grid_string = ""
-        self.abs = None
-        self.closest = None
-
-        self.max_grid_close_order = -1
-        self.min_grid_close_order = -1
-        self.nb_close_missing = -1
-        self.buying_size = 0
-
-        self.remaining_close_to_be_open = 0
-
-        self.max_grid_open_order = -1
-        self.min_grid_open_order = -1
-        self.nb_open_missing = -1
-
-        self.nb_open_selected_to_be_open = 0
-        self.nb_close_selected_to_be_open = 0
 
         self.current_state = {}
 
@@ -359,7 +327,7 @@ class GridPosition():
         self.columns = ["grid_id", "close_grid_id",
                         "position", "close_position",
                         "side", "size", "dol_per_grid",
-                        "orderId", "orderId_TP", "status",
+                        "status", "orderId"
                         ]
 
         # self.grid = {key: pd.DataFrame(columns=self.columns) for key in self.lst_symbols}
@@ -379,15 +347,13 @@ class GridPosition():
         self.grid["orderId"] = "empty"
         self.grid["side"] = ""
         self.grid["orderId"] = "empty"
-        self.grid["orderId_TP"] = "empty"
-        self.grid["status"] = "empty"
-
-        self.nb_open_positions = 0
-
-        self.total_position_opened = 0
-        self.total_position_closed = 0
 
         self.nb_position_limits = nb_position_limits
+        for i in range(self.nb_position_limits):
+            column_name = f"orderId_TP_{i}"
+            self.grid[column_name] = "empty"
+
+        self.grid["status"] = "empty"
 
         self.stats = {
             "startegy": strategy_name,
@@ -424,23 +390,10 @@ class GridPosition():
         df.loc[df['position'] == self.current_price, 'side'] = "on_edge"
 
         differences = df['position'].diff().dropna()
-        """
-        diff = differences.mean() / 3
+
+        diff = differences.mean() / 4
         df.loc[(df['position'] >= self.current_price - abs(diff))
                & (df['position'] <= self.current_price + abs(diff)), 'side'] = "on_edge"
-        """
-        
-    # Function to find the index of the closest value in an array
-    def find_closest(self, value, array):
-        if self.abs is not None:
-            del self.abs
-        if self.closest is not None:
-            del self.closest
-        self.abs = array - value
-        self.abs = np.abs(self.abs)
-        self.closest = self.abs.argmin()
-        # closest = np.abs(array - value).argmin()
-        # return closest
 
     def update_orders_id_status(self, symbol, df_current_state, df_open_triggers):
         self.current_state = {}
@@ -465,14 +418,13 @@ class GridPosition():
         if not df_open_triggers.empty:
             df_open_triggers = df_open_triggers[df_open_triggers["symbol"] == symbol]
             df_open_triggers = df_open_triggers.loc[df_open_triggers['strategyId'] == self.strategy_id]
+            df_open_triggers = df_open_triggers[df_open_triggers['planType'] == 'profit_plan']
 
-            condition_tp = df_open_triggers["planType"] == "profit_plan"
             condition_open = df_open_triggers['planStatus'] != 'executed'
             condition_not_canceled = df_open_triggers['planStatus'] != 'cancelled'
             condition_side_sltp = df_open_triggers['side'] == self.side_mapping_sltp.get(self.grid_side, None)
 
-            df_open_triggers_side = df_open_triggers[condition_tp
-                                                     & condition_open
+            df_open_triggers_side = df_open_triggers[condition_open
                                                      & condition_not_canceled
                                                      & condition_side_sltp]
 
@@ -480,34 +432,51 @@ class GridPosition():
             self.current_state[self.grid_side]["lst_TP_orders_order_id_side"] = df_open_triggers_side["orderId"].to_list()
 
             order_id_list_TP = self.current_state[self.grid_side]["lst_TP_orders_order_id_side"]
-            before_update = self.grid[self.grid['orderId_TP'] != 'empty'].shape[0]
-            self.grid['orderId_TP'] = self.grid['orderId_TP'].apply(lambda x: "empty" if x not in order_id_list_TP else x)
-            after_update = self.grid[self.grid['orderId_TP'] != 'empty'].shape[0]
+
+            tp_columns = [f"orderId_TP_{i}" for i in range(self.nb_position_limits)]
+            all_empty_rows = self.grid[tp_columns].apply(lambda row: (row == 'empty').all(), axis=1)
+            before_update = all_empty_rows.sum()
+
+            for i in range(self.nb_position_limits):
+                column_name = f"orderId_TP_{i}"
+                # Apply the logic to each dynamically created column
+                self.grid[column_name] = self.grid[column_name].apply(lambda x: "empty" if x not in order_id_list_TP else x
+                )
+
+            tp_columns = [f"orderId_TP_{i}" for i in range(self.nb_position_limits)]
+            any_not_empty_rows = self.grid[tp_columns].apply(lambda row: (row != 'empty').any(), axis=1)
+            after_update = any_not_empty_rows.sum()
+
             if before_update - after_update > 0:
                 self.stats["total_closed"] += before_update - after_update
 
             for _, row in df_open_triggers_side.iterrows():
                 order_id = row['orderId']
                 grid_id = row['gridId']
-                # Check if the orderId is not in self.grid["orderId_TP"]
-                if order_id not in self.grid['orderId_TP'].values:
-                    # Find the index of the row in self.grid where orderId_TP needs to be updated
-                    index = self.grid[self.grid['grid_id'] == grid_id].index
-                    # Update orderId_TP with the gridId from df_open_triggers_side
-                    self.grid.loc[index, 'orderId_TP'] = order_id
-                    self.stats["total_triggered"] += 1
+                # Find the index of the row in self.grid where grid_id matches
+                index = self.grid[self.grid['grid_id'] == grid_id].index
+                if not index.empty:  # Ensure that the index is not empty
+                    # Loop through orderId_TP_0 to orderId_TP_{self.nb_position_limits - 1}
+                    for i in range(self.nb_position_limits):
+                        column_name = f'orderId_TP_{i}'
+                        # Check if the current column is empty
+                        if self.grid.loc[index, column_name].iloc[0] == 'empty':
+                            # Update the first empty orderId_TP column with the order_id
+                            self.grid.loc[index, column_name] = order_id
+                            self.stats["total_triggered"] += 1
+                            break  # Exit the loop once the order_id is added
         else:
             self.current_state[self.grid_side]["lst_TP_orders_order_id"] = []
             self.current_state[self.grid_side]["lst_TP_orders_order_id_side"] = []
-            self.grid['orderId_TP'] = "empty"
-
-        print(self.grid.to_string())  # CEDE DEBUG
-        print("\n") # CEDE DEBUG
+            for i in range(self.nb_position_limits):
+                column_name = f'orderId_TP_{i}'
+                self.grid[column_name] = "empty"
 
         def update_status(row):
-            if row['orderId'] == "empty" and row['orderId_TP'] == "empty":
-                if row['status'] == "empty" and row['side'] in ["open_long", "open_short"]:
-                    return "missing_order"
+            # Check if all 'orderId_TP_n' columns are "empty"
+            all_tp_empty = all(row[f'orderId_TP_{i}'] == "empty" for i in range(self.nb_position_limits))
+
+            if row['orderId'] == "empty" and all_tp_empty:
                 return "empty"
             else:
                 return "engaged"
@@ -516,7 +485,11 @@ class GridPosition():
         self.grid['status'] = self.grid.apply(update_status, axis=1)
 
         self.stats["nb_open_order"] = self.grid[self.grid['orderId'] != 'empty'].shape[0]
-        self.stats["nb_open_tp"] = self.grid[self.grid['orderId_TP'] != 'empty'].shape[0]
+        tp_columns = [f"orderId_TP_{i}" for i in range(self.nb_position_limits)]
+        self.stats["nb_open_tp"] = self.grid[self.grid[tp_columns].ne('empty').any(axis=1)].shape[0]
+
+        print(self.grid.to_string())  # CEDE DEBUG
+        print("\n") # CEDE DEBUG
 
     def confirm_orderId(self, symbol, grid_id_engaged, list_orderId):
         df_grid = self.grid
@@ -525,10 +498,6 @@ class GridPosition():
 
     def set_current_price(self, price):
         self.current_price = price
-
-    def get_max_price_in_grid(self):
-        self.max_position = max(self.grid["position"].to_list())
-        return self.max_position
 
     def get_order_list(self, symbol):
         """
@@ -670,17 +639,6 @@ class GridPosition():
             print(f"Exiting because buying_min_size for {symbol} has a value less than buying_min_size {buying_min_size}.")
             exit(44)
         return
-
-    def get_grid_info(self, symbol):
-        self.dct_status_info = {}
-        return self.dct_status_info
-
-    def dct_change_status(self):
-        if self.grid_move:
-           self.grid_move = False
-           return True
-        else:
-            return False
 
     def dct_status_info_to_txt(self, symbol):
         del self.msg
