@@ -35,6 +35,16 @@ def encode_limit_orders(df_limit_orders):
     #print(df)
     return str
 
+def encode_triggers(df_triggers):
+    #df = df_triggers[["symbol", "price", "side"]]
+    df = df_triggers.astype('str')
+    json_data = df.to_json()
+    str = json.dumps(json_data)
+    #json_data = json.loads(str)
+    #df = pd.read_json(json_data)
+    #print(df)
+    return str
+
 def generate_figure_limit_orders(df_account):
     fig = plt.figure(figsize=(10, 15))
 
@@ -71,7 +81,6 @@ def generate_figure_limit_orders(df_account):
     plt.savefig("pulsar_limit_orders.png")
     plt.close(fig)
 
-'''
 def generate_figure_triggers(df_account):
     fig = plt.figure(figsize=(10, 15))
 
@@ -87,27 +96,26 @@ def generate_figure_triggers(df_account):
     for index, row in df_account.iterrows():
         timestamp = datetime.fromtimestamp(float(row["timestamp"]))
 
-        str_limit_orders = row["limit_orders"]
-        if str_limit_orders != "":
-            json_data = json.loads(str_limit_orders[1:-1])
-            df_limit_orders = pd.read_json(json_data, precise_float=True)
-            df_limit_orders["price"] = df_limit_orders["price"].astype("Float64")
-            if isinstance(df_limit_orders, pd.DataFrame):
-                for index2, row2 in df_limit_orders.iterrows():
-                    if row2["side"] == "close_":
+        str_triggers = row["triggers"]
+        if str_triggers != "":
+            json_data = json.loads(str_triggers[1:-1])
+            df_triggers = pd.read_json(json_data, precise_float=True)
+            df_triggers["triggerPrice"] = df_triggers["triggerPrice"].astype("Float64")
+            if isinstance(df_triggers, pd.DataFrame):
+                for index2, row2 in df_triggers.iterrows():
+                    if row2["side"] == "sell":
                         xSell.append(timestamp)
-                        ySell.append(float(row2["price"]))
-                    elif row2["side"] == "open_":
+                        ySell.append(float(row2["triggerPrice"]))
+                    elif row2["side"] == "buy":
                         xBuy.append(timestamp)
-                        yBuy.append(float(row2["price"]))
-    plt.scatter(xSell, ySell, s=400, marker="_", color="red", label="Close " + side)
-    plt.scatter(xBuy, yBuy, s=400, marker="_", color="blue", label="Open " + side)
+                        yBuy.append(float(row2["triggerPrice"]))
+    plt.scatter(xSell, ySell, s=400, marker="_", color="red", label="sell")
+    plt.scatter(xBuy, yBuy, s=400, marker="_", color="blue", label="buy")
 
     plt.legend()
 
-    plt.savefig("pulsar_limit_orders.png")
+    plt.savefig("pulsar_triggers.png")
     plt.close(fig)
-'''
 
 class Agent:
     def __init__(self):
@@ -184,6 +192,7 @@ if __name__ == '__main__':
             agent.df_account['usdt_equity'] = agent.df_account['usdt_equity'].astype(float)
             #agent.df_account["usdt_equity"] = agent.df_account.to_numeric(agent.df_account["usdt_equity"], errors='coerce')
             agent.df_account["limit_orders"] = agent.df_account["limit_orders"].fillna("")
+            agent.df_account["triggers"] = agent.df_account["triggers"].fillna("")
 
         update_csv = False
         if agent.message1_id == "-1":
@@ -244,11 +253,17 @@ if __name__ == '__main__':
             str_limit_orders = ""
             if not current_state["open_orders"].empty:
                 str_limit_orders = "\""+encode_limit_orders(current_state["open_orders"])+"\""
+
+            str_triggers = ""
+            if not current_state["triggers"].empty:
+                str_triggers = "\""+encode_triggers(current_state["triggers"])+"\""
+
             agent.df_account.loc[len(agent.df_account)] = [
                 agent.account_id,
                 float(current_timestamp),
                 float(usdt_equity),
-                str_limit_orders]
+                str_limit_orders,
+                str_triggers]
             agent.df_account.to_csv(agent.datafile, index=False)
 
             extra = {}
@@ -281,9 +296,9 @@ if __name__ == '__main__':
             response = agent.bot.log(message, attachments=["pulsar_limit_orders.png"], extra=extra)
 
             # message 3
-            generate_figure_limit_orders(agent.df_account)
+            generate_figure_triggers(agent.df_account)
             extra["message_id"] = agent.message3_id
-            message = current_time + "\n" + "<b>" + agent.broker.account["id"] + "</b>" + " : limit orders"
-            response = agent.bot.log(message, attachments=["pulsar_limit_orders.png"], extra=extra)
+            message = current_time + "\n" + "<b>" + agent.broker.account["id"] + "</b>" + " : triggers"
+            response = agent.bot.log(message, attachments=["pulsar_triggers.png"], extra=extra)
 
         time.sleep(60*5)  # 5min
