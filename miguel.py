@@ -66,11 +66,11 @@ class PanelSymbols(wx.Panel):
         self.main = main
 
         # Symbols
-        self.dfc_symbols = DataFrameController(self)
+        self.dfc_symbols = DataFrameSymbolsController(self)
         main_sizer.Add(self.dfc_symbols, 1, wx.EXPAND | wx.ALL, 10)
 
-    def set_dataframe(self, dataframe):
-        self.dfc_symbols.set_dataframe(dataframe)
+    def update_broker(self, my_broker):
+        self.dfc_symbols.update_broker(my_broker)
 
 class PanelPositions(wx.Panel):
     def __init__(self, parent, main):
@@ -302,7 +302,7 @@ class MainPanel(wx.Panel):
         staticTextConsole = wx.StaticText(self,label = "Console", style = wx.ALIGN_LEFT)
         main_sizer.Add(staticTextConsole,0, wx.ALL | wx.EXPAND, 5)
 
-        self.log = wx.TextCtrl(self, -1, size=(200, 150), style=wx.TE_MULTILINE|wx.TE_READONLY|wx.HSCROLL)
+        self.log = wx.TextCtrl(self, -1, size=(200, 200), style=wx.TE_MULTILINE|wx.TE_READONLY|wx.HSCROLL)
         main_sizer.Add(self.log,0, wx.ALL | wx.EXPAND, 5)
         sys.stdout = RedirectText(self.log)
 
@@ -424,20 +424,20 @@ class MainPanel(wx.Panel):
         if index == -1:
             return
         symbol = self.panel_positions.positions.GetItem(index, col=0).GetText()
-        gross_size = float(self.panel_positions.positions.GetItem(index, col=1).GetText())
+        size = float(self.panel_positions.positions.GetItem(index, col=5).GetText())
         side = self.panel_positions.positions.GetItem(index, col=2).GetText()
 
         my_broker = self.get_broker_from_selected_account()
         if my_broker:
             mytrade = {}
             mytrade["symbol"] = symbol
-            mytrade["gross_size"] = gross_size
+            mytrade["size"] = size
             if side == "long":
                 mytrade["type"] = "close_long"
             else:
                 mytrade["type"] = "close_short"
-            print("close position : ", mytrade["symbol"], " / ", mytrade["gross_size"])
-            my_broker.execute_open_order(mytrade)
+            print("close position : ", mytrade["symbol"], " / ", mytrade["size"])
+            my_broker.execute_order(mytrade)
             self.update_positions(my_broker)
 
     def on_close_all_positions(self, event):
@@ -461,9 +461,11 @@ class MainPanel(wx.Panel):
             else:
                 print("open limit order : open or close ???")
                 return
-            if self.panel_positions.rb_amount.GetValue(): # amount
-                mytrade["gross_size"] = self.panel_positions.amount.GetValue() / my_broker.get_value(mytrade["symbol"])
+            if self.panel_positions.rb_amount.GetValue():  # amount
+                mytrade["amount"] = self.panel_positions.amount.GetValue()
+                mytrade["gross_size"] = None
             elif self.panel_positions.rb_size.GetValue():
+                mytrade["amount"] = None
                 mytrade["gross_size"] = self.panel_positions.amount.GetValue()
             else:
                 print("open position : amount or size ???")
@@ -473,8 +475,8 @@ class MainPanel(wx.Panel):
             else:
                 mytrade["type"] = open_close + "_short"
 
-            print("open position : ", mytrade["symbol"], " / ", mytrade["gross_size"])
-            my_broker.execute_open_order(mytrade)
+            # print("open position : ", mytrade["symbol"], " / ", mytrade["gross_size"])
+            my_broker.execute_order(mytrade)
             self.update_positions(my_broker)
 
     def on_cancel_limit_order(self, event):
@@ -543,29 +545,33 @@ class MainPanel(wx.Panel):
             else:
                 print("open limit order : open or close ???")
                 return
-            if self.panel_orders.rb_amount.GetValue(): # amount
-                mytrade["gross_size"] = self.panel_orders.amount.GetValue() / my_broker.get_value(mytrade["symbol"])
+            if self.panel_orders.rb_amount.GetValue():  # amount
+                mytrade["amount"] = self.panel_orders.amount.GetValue()
+                mytrade["gross_size"] = None
             elif self.panel_orders.rb_size.GetValue():
+                mytrade["amount"] = None
                 mytrade["gross_size"] = self.panel_orders.amount.GetValue()
             else:
                 print("open limit order : amount or size ???")
                 return
             if side == "long":
-                mytrade["type"] = open_close+"_LONG"
+                mytrade["type"] = open_close+"_LONG_ORDER"
             else:
-                mytrade["type"] = open_close+"_SHORT"
+                mytrade["type"] = open_close+"_SHORT_ORDER"
             mytrade["price"] = self.panel_orders.price.GetValue()
             print("open limit order : ", mytrade["symbol"], " / ", mytrade["gross_size"], " / ", mytrade["price"])
 
             # trigger
             if self.panel_orders.checkbox_trigger.GetValue():
+                mytrade["trigger_type"] = "TRIGGER"
                 mytrade["trigger_price"] = self.panel_orders.trigger_price.GetValue()
 
-            #my_broker.execute_open_order(mytrade)
-            my_broker.execute_trigger(mytrade)
-            self.update_triggers(my_broker)
-
-
+            result = my_broker.execute_trades([mytrade])
+            print(result)
+            if self.panel_orders.checkbox_trigger.GetValue():
+                self.update_triggers(my_broker)
+            else:
+                self.update_orders(my_broker)
 
     def on_cancel_trigger(self, event):
         index = self.panel_triggers.triggers.GetFirstSelected()
@@ -588,7 +594,7 @@ class MainPanel(wx.Panel):
 class CragFrame(wx.Frame):
 
     def __init__(self):
-        wx.Frame.__init__(self, parent=None, title='Miguel',pos=wx.DefaultPosition,size=(700, 700), style= wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX)
+        wx.Frame.__init__(self, parent=None, title='Miguel',pos=wx.DefaultPosition,size=(700, 750), style= wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX)
         self.panel = MainPanel(self)
         self.create_menu()
         self.Show()
