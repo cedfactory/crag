@@ -35,7 +35,7 @@ def encode_limit_orders(df_limit_orders):
     #print(df)
     return str
 
-def generate_figure_limit_orders(df_account, side="long"):
+def generate_figure_limit_orders(df_account):
     fig = plt.figure(figsize=(10, 15))
 
     ax = plt.gca()
@@ -57,10 +57,47 @@ def generate_figure_limit_orders(df_account, side="long"):
             df_limit_orders["price"] = df_limit_orders["price"].astype("Float64")
             if isinstance(df_limit_orders, pd.DataFrame):
                 for index2, row2 in df_limit_orders.iterrows():
-                    if row2["side"] == "close_" + side:
+                    if row2["side"] == "open_long":
                         xSell.append(timestamp)
                         ySell.append(float(row2["price"]))
-                    elif row2["side"] == "open_" + side:
+                    elif row2["side"] == "open_short":
+                        xBuy.append(timestamp)
+                        yBuy.append(float(row2["price"]))
+    plt.scatter(xSell, ySell, s=400, marker="_", color="red", label="Open long ")
+    plt.scatter(xBuy, yBuy, s=400, marker="_", color="blue", label="Open short")
+
+    plt.legend()
+
+    plt.savefig("pulsar_limit_orders.png")
+    plt.close(fig)
+
+'''
+def generate_figure_triggers(df_account):
+    fig = plt.figure(figsize=(10, 15))
+
+    ax = plt.gca()
+    xfmt = mdates.DateFormatter("%d-%m-%Y %H:%M:%S.%f")
+    ax.xaxis.set_major_formatter(xfmt)
+
+    # limit orders
+    xSell = []
+    ySell = []
+    xBuy = []
+    yBuy = []
+    for index, row in df_account.iterrows():
+        timestamp = datetime.fromtimestamp(float(row["timestamp"]))
+
+        str_limit_orders = row["limit_orders"]
+        if str_limit_orders != "":
+            json_data = json.loads(str_limit_orders[1:-1])
+            df_limit_orders = pd.read_json(json_data, precise_float=True)
+            df_limit_orders["price"] = df_limit_orders["price"].astype("Float64")
+            if isinstance(df_limit_orders, pd.DataFrame):
+                for index2, row2 in df_limit_orders.iterrows():
+                    if row2["side"] == "close_":
+                        xSell.append(timestamp)
+                        ySell.append(float(row2["price"]))
+                    elif row2["side"] == "open_":
                         xBuy.append(timestamp)
                         yBuy.append(float(row2["price"]))
     plt.scatter(xSell, ySell, s=400, marker="_", color="red", label="Close " + side)
@@ -68,9 +105,9 @@ def generate_figure_limit_orders(df_account, side="long"):
 
     plt.legend()
 
-    plt.savefig("pulsar_current_state.png")
+    plt.savefig("pulsar_limit_orders.png")
     plt.close(fig)
-
+'''
 
 class Agent:
     def __init__(self):
@@ -238,15 +275,15 @@ if __name__ == '__main__':
                     message_id = [res["message_id"] for res in response["result"]]
 
             # message 2
-            generate_figure_limit_orders(agent.df_account, "long")
+            generate_figure_limit_orders(agent.df_account)
             extra["message_id"] = agent.message2_id
-            message = current_time + "\n" + "<b>" + agent.broker.account["id"] + "</b>" + " : limit orders long"
-            response = agent.bot.log(message, attachments=["pulsar_current_state.png"], extra=extra)
+            message = current_time + "\n" + "<b>" + agent.broker.account["id"] + "</b>" + " : limit orders"
+            response = agent.bot.log(message, attachments=["pulsar_limit_orders.png"], extra=extra)
 
             # message 3
-            generate_figure_limit_orders(agent.df_account, "short")
+            generate_figure_limit_orders(agent.df_account)
             extra["message_id"] = agent.message3_id
-            message = current_time + "\n" + "<b>" + agent.broker.account["id"] + "</b>" + " : limit orders short"
-            response = agent.bot.log(message, attachments=["pulsar_current_state.png"], extra=extra)
+            message = current_time + "\n" + "<b>" + agent.broker.account["id"] + "</b>" + " : limit orders"
+            response = agent.bot.log(message, attachments=["pulsar_limit_orders.png"], extra=extra)
 
         time.sleep(60*5)  # 5min
