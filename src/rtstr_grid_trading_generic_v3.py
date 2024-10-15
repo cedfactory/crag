@@ -477,13 +477,16 @@ class GridPosition():
                 return "empty"
 
             # Check if all 'orderId_TP_n' columns are "empty"
-            # all_tp_empty = all(row[f'orderId_TP_{i}'] == "empty" for i in range(self.nb_position_limits))
+            all_tp_empty = all(row[f'orderId_TP_{i}'] == "empty" for i in range(self.nb_position_limits))
             all_tp_engaged = all(row[f'orderId_TP_{i}'] != "empty" for i in range(self.nb_position_limits))
 
             if row['orderId'] != "empty" or all_tp_engaged:
                 return "engaged"
 
             if row['orderId'] == "empty" and not all_tp_engaged:
+                return "missing_order"
+
+            if all_tp_empty or not all_tp_engaged:
                 return "missing_order"
 
             return "empty"
