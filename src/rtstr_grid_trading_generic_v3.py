@@ -521,23 +521,11 @@ class GridPosition():
             "linked_position": linked_position
         }
         """
-        # df_grid = self.grid
-        # condition_missing_order = df_grid['status'] == 'missing_order'
-        # df_grid = df_grid[condition_missing_order]
+        # Filter rows where 'status' is "missing_order"
+        missing_orders_df = self.grid[self.grid['status'] == "missing_order"]
 
-        lst_missing_orders = []
-
-        # Iterate over the rows and collect the desired information
-        for index, row in self.grid.iterrows():
-            if row['status'] == "missing_order":
-                order_dict = {
-                    'grid_id': row['grid_id'],
-                    'position': row['position'],
-                    'close_position': row['close_position'],
-                    'size': row['size'],
-                    'side': row['side']
-                }
-                lst_missing_orders.append(order_dict)
+        # Select relevant columns and convert the result to a list of dictionaries
+        lst_missing_orders = missing_orders_df[['grid_id', 'position', 'close_position', 'size', 'side']].to_dict(orient='records')
 
         lst_orders = []
         for order in lst_missing_orders:
