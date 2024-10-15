@@ -92,6 +92,7 @@ class Crag:
 
         self.resume = False
         self.safety_step_iterration = 0
+        self.safety_step_iterations_max = None
         self.sum_duration_safety_step = 0
         self.reboot_iter = 0
         self.reboot_exception = False
@@ -117,6 +118,7 @@ class Crag:
             self.id = params.get("id", self.id)
             self.working_directory = params.get("working_directory", self.working_directory)
             self.dump_perf_dir = self.dump_perf_dir + "_" + self.id
+            self.safety_step_iterations_max = params.get("safety_step_iterations_max", self.safety_step_iterations_max)
 
         self.zero_print = False
 
@@ -437,7 +439,7 @@ class Crag:
         delta_memory_used = round((utils.get_memory_usage() - self.init_master_memory) / (1024 * 1024), 2)
         if self.reboot_exception \
                 or (delta_memory_used > 50) \
-                or (self.safety_step_iterration > 10000):
+                or (self.safety_step_iterations_max and (self.safety_step_iterration > self.safety_step_iterations_max)):
             memory_usage = round(utils.get_memory_usage() / (1024 * 1024), 1)
 
             # Current time

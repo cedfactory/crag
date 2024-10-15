@@ -198,13 +198,24 @@ class BrokerBitGet(broker.Broker):
         order_side = trigger["type"]
         if not isinstance(order_side, str):
             order_side = str(order_side)
+        leverage = None
         if "LONG" in order_side:
             leverage = self.get_leverage_long(symbol)
         elif "SHORT" in order_side:
             leverage = self.get_leverage_short(symbol)
+        else:
+            return {
+                "trade_status": "FAILED",
+                "orderId": None
+            }
         sizeMultiplier = self.get_sizeMultiplier(symbol)
-        amount = utils.normalize_size(trigger["gross_size"] * leverage, sizeMultiplier)
+
+        if trigger["amount"] == None:
+            amount = utils.normalize_size(trigger["gross_size"] * leverage, sizeMultiplier)
+        else:
+            amount = trigger["amount"]
         amount = str(amount)
+
         trigger_price = trigger.get("trigger_price", None)
         if not isinstance(trigger_price, str):
             trigger_price = str(trigger_price)
@@ -231,10 +242,6 @@ class BrokerBitGet(broker.Broker):
             stopSurplusTriggerType = "mark_price"
 
         side = trigger["type"]
-        if "grid_id" in trigger:
-            side = side + "__" + str(trigger["grid_id"]) + "__"
-        if "strategy_id" in trigger:
-            side = side + "--" + str(trigger["strategy_id"]) + "--"
         clientOid = self.clientOIdprovider.get_name(symbol, side)
 
         if "OPEN" in order_side and "LONG" in order_side:
@@ -278,7 +285,7 @@ class BrokerBitGet(broker.Broker):
             transaction_failure = False
         else:
             transaction_failure = True
-            msg += "TRADE FAILED: {} size: {} trigger_price: {}".format(order_side, amount, trigger_price) + "\n"
+            msg += "TRADE FAILED: {} size: {} trigger_price: {} | {}".format(order_side, amount, trigger_price, transaction) + "\n"
         self.log_trade = self.log_trade + msg.upper()
 
         if not transaction_failure:
@@ -287,6 +294,7 @@ class BrokerBitGet(broker.Broker):
         elif transaction_failure:
             trigger["trade_status"] = "FAILED"
             trigger["orderId"] = None
+            trigger["msg"] = transaction
         else:
             trigger["trade_status"] = "UNKNOWN"
         del msg
@@ -469,8 +477,21 @@ class BrokerBitGet(broker.Broker):
                         side = "close_short"
                         leverage = self.get_leverage_short(symbol)
 
-                    clientOid = self.clientOIdprovider.get_name(symbol, order["type"] + "__" + str(order["grid_id"]) + "__" + "--" + str(order["strategy_id"]) + "--")
-                    size = utils.normalize_size(order["gross_size"] * leverage,
+                    type = order["type"]
+                    if "grid_id" in order:
+                        type = type + "__" + str(order["grid_id"]) + "__"
+                    if "strategy_id" in order:
+                        type = type + "--" + str(order["strategy_id"]) + "--"
+                    clientOid = self.clientOIdprovider.get_name(symbol, type)
+
+                    if order["amount"] == None:
+                        size = order["gross_size"]
+                    else:
+                        trigger_price = self.get_values([order["symbol"]])
+                        value = trigger_price.loc[trigger_price["symbols"] == self._get_coin(symbol), "values"].values[0]
+                        size = order["amount"] / value
+
+                    size = utils.normalize_size(size * leverage,
                                                 self.get_sizeMultiplier(symbol))
                     orderParam = {
                         "size": str(size),
@@ -508,21 +529,23 @@ class BrokerBitGet(broker.Broker):
                             failed_trade = len(lst_orderList) - len(transaction["data"]["orderInfo"])
                         else:
                             failed_trade = 0
-                    for orderInfo in transaction["data"]["orderInfo"]:
-                        orderId = orderInfo["orderId"]
-                        gridId = [int(num) for num in re.findall(r'__(\d+)__', orderInfo["clientOid"])]
-                        strategyId = orderInfo["clientOid"].split('--')[1]
-                        self.add_gridId_orderId(gridId[0], orderId, strategyId, trend=None)
-                        lst_success_trade.append({"orderId": orderId, "gridId": gridId[0], "strategyId": strategyId})
-                        if failed_trade != 0:
-                            msg += "success gridId: " + str(gridId[0]) + "\n"
+                    if "grid_id" in order and "strategy_id" in order:
+                        for orderInfo in transaction["data"]["orderInfo"]:
+                            orderId = orderInfo["orderId"]
+                            gridId = [int(num) for num in re.findall(r'__(\d+)__', orderInfo["clientOid"])]
+                            strategyId = orderInfo["clientOid"].split('--')[1]
+                            self.add_gridId_orderId(gridId[0], orderId, strategyId, trend=None)
+                            lst_success_trade.append({"orderId": orderId, "gridId": gridId[0], "strategyId": strategyId})
+                            if failed_trade != 0:
+                                msg += "success gridId: " + str(gridId[0]) + "\n"
 
                     if len(transaction["data"]["failure"]) > 0:
                         msg += "FAILED TRADE: " + str(len(transaction["data"]["failure"])) + "\n"
                         for failureInfo in transaction["data"]["failure"]:
-                            gridId = [int(num) for num in re.findall(r'__(\d+)__', failureInfo["clientOid"])]
-                            lst_failed_trade.append({"orderId": None, "gridId": gridId[0]})
-                            msg += "failure gridId: " + str(gridId[0]) + "\n"
+                            if "grid_id" in order and "strategy_id" in order:
+                                gridId = [int(num) for num in re.findall(r'__(\d+)__', failureInfo["clientOid"])]
+                                lst_failed_trade.append({"orderId": None, "gridId": gridId[0]})
+                                msg += "failure gridId: " + str(gridId[0]) + "\n"
                             msg += "errorCode: " + failureInfo["errorCode"] + "\n"
                             msg += "errorMsg" + failureInfo["errorMsg"] + "\n"
                 else:
@@ -531,10 +554,11 @@ class BrokerBitGet(broker.Broker):
                         if len(transaction["data"]["failure"]) > 0:
                             msg += "FAILED TRADE: " + str(len(transaction["data"]["failure"])) + " / " + str(len(lst_orderList)) + "\n"
                             for failureInfo in transaction["data"]["failure"]:
-                                gridId = [int(num) for num in re.findall(r'__(\d+)__', failureInfo["clientOid"])]
-                                strategyId = failureInfo["clientOid"].split('--')[1]
-                                lst_failed_trade.append({"orderId": None, "gridId": gridId[0], "strategyId": strategyId})
-                                msg += "failure gridId: " + str(gridId[0]) + "\n"
+                                if "grid_id" in order and "strategy_id" in order:
+                                    gridId = [int(num) for num in re.findall(r'__(\d+)__', failureInfo["clientOid"])]
+                                    strategyId = failureInfo["clientOid"].split('--')[1]
+                                    lst_failed_trade.append({"orderId": None, "gridId": gridId[0], "strategyId": strategyId})
+                                    msg += "failure gridId: " + str(gridId[0]) + "\n"
                                 msg += "errorCode: " + failureInfo["errorCode"] + "\n"
                                 msg += "errorMsg" + failureInfo["errorMsg"] + "\n"
 
@@ -548,16 +572,18 @@ class BrokerBitGet(broker.Broker):
             lst_failed_trade = []
 
         # Process each order in lst_orders
-        for order in lst_orders:
-            grid_id = order["grid_id"]
-            if grid_id in success_trade_dict:
-                order["trade_status"] = "SUCCESS"
-                order["orderId"] = success_trade_dict[grid_id]
-            elif grid_id in lst_failed_trade:
-                order["trade_status"] = "FAILED"
-                order["orderId"] = None
-            else:
-                order["trade_status"] = "UNKNOWN"
+        if "grid_id" in order and "strategy_id" in order:
+            for order in lst_orders:
+                grid_id = order["grid_id"]
+                if grid_id in success_trade_dict:
+                    order["trade_status"] = "SUCCESS"
+                    order["orderId"] = success_trade_dict[grid_id]
+                elif grid_id in lst_failed_trade:
+                    order["trade_status"] = "FAILED"
+                    order["orderId"] = None
+                else:
+                    order["trade_status"] = "UNKNOWN"
+
         return lst_orders
 
     @authentication_required
@@ -825,6 +851,7 @@ class BrokerBitGet(broker.Broker):
 
         return trade
 
+    @authentication_required
     def execute_limit_orders(self, lst_orders, v2):
         lst_result_orders = []
         max_batch_size = 49

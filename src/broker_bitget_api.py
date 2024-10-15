@@ -763,8 +763,8 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             except (exceptions.BitgetAPIException, Exception) as e:
                 if e.code == "429":
                     self.error_429["status"] = True
-                msg = getattr(e, "message", "")
-                self.log_api_failure("planApi.place_plan_v2", msg, n_attempts)
+                result = getattr(e, "message", "")
+                self.log_api_failure("planApi.place_plan_v2", result, n_attempts)
                 time.sleep(2)
                 n_attempts = n_attempts - 1
         n_attempts = False

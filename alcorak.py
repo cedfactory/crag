@@ -20,6 +20,10 @@ def start_strategy(strategy_configuration_file):
         print("Can't find id for crag")
         return
 
+    # inject safety_step_iterations_max
+    safety_step_iterations_max = 3000
+    configuration["crag"]["safety_step_iterations_max"] = safety_step_iterations_max
+
     command = []
     if g_os_platform == "Windows":
         command = ['cmd.exe', '/c', g_python_executable, "main.py", "--live", strategy_configuration_file]
@@ -37,7 +41,7 @@ def start_strategy(strategy_configuration_file):
             stdout=subprocess.PIPE)
         print(result)
 
-        # filtrer le slogs de ced
+        # filtrer les logs de ced
 
     print("[alcorak] result.returncode : ", result.returncode)
     print("[alcorak] backup_file : ", backup_file)
