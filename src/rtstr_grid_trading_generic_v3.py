@@ -473,15 +473,23 @@ class GridPosition():
                 self.grid[column_name] = "empty"
 
         def update_status(row):
-            # Check if all 'orderId_TP_n' columns are "empty"
-            all_tp_empty = all(row[f'orderId_TP_{i}'] == "empty" for i in range(self.nb_position_limits))
-
-            if row['orderId'] == "empty" and all_tp_empty:
+            if not row['side'] in ["open_long", "open_short"]:
                 return "empty"
-            else:
+
+            # Check if all 'orderId_TP_n' columns are "empty"
+            # all_tp_empty = all(row[f'orderId_TP_{i}'] == "empty" for i in range(self.nb_position_limits))
+            all_tp_engaged = all(row[f'orderId_TP_{i}'] != "empty" for i in range(self.nb_position_limits))
+
+            if row['orderId'] != "empty" or all_tp_engaged:
                 return "engaged"
 
+            if row['orderId'] == "empty" and not all_tp_engaged:
+                return "missing_order"
+
+            return "empty"
+
         # Apply the function to the dataframe
+        # In order to update status
         self.grid['status'] = self.grid.apply(update_status, axis=1)
 
         self.stats["nb_open_order"] = self.grid[self.grid['orderId'] != 'empty'].shape[0]
@@ -524,7 +532,7 @@ class GridPosition():
                     'position': row['position'],
                     'close_position': row['close_position'],
                     'size': row['size'],
-                    'side': row['side']  # Adding side to the dictionary
+                    'side': row['side']
                 }
                 lst_missing_orders.append(order_dict)
 
