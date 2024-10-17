@@ -105,6 +105,8 @@ class Crag:
         self.min_duration_reboot = 0
         self.dump_perf_dir = "./dump_timer"
 
+        self.infinit_loop = True
+
         if params:
             self.broker = params.get("broker", self.broker)
             if self.broker:
@@ -119,8 +121,11 @@ class Crag:
             self.working_directory = params.get("working_directory", self.working_directory)
             self.dump_perf_dir = self.dump_perf_dir + "_" + self.id
             self.safety_step_iterations_max = params.get("safety_step_iterations_max", self.safety_step_iterations_max)
+            self.infinit_loop = params.get("infinit_loop", self.infinit_loop)
 
         self.zero_print = False
+        if isinstance(self.infinit_loop, str):
+            self.infinit_loop = self.infinit_loop.lower() == "true"
 
         if self.rtstr:
             self.strategy_name = self.rtstr.get_info()
@@ -436,6 +441,9 @@ class Crag:
 
     def request_backup(self):
         self.safety_step_iterration += 1
+        if self.infinit_loop:
+            return
+
         delta_memory_used = round((utils.get_memory_usage() - self.init_master_memory) / (1024 * 1024), 2)
         if self.reboot_exception \
                 or (delta_memory_used > 50) \
