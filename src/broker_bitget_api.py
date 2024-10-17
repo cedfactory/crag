@@ -43,9 +43,6 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         self.enable_cache_data = False
         self.requests_cache = {}
 
-        self.error_429 = {"status": True,
-                          "lst_orderId": []}
-
         self.df_triggers_previous = pd.DataFrame(columns=["planType", "symbol", "size", "side",
                                                           "orderId", "orderType", "clientOid",
                                                           "price", "triggerPrice", "triggerType",
@@ -761,31 +758,13 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 self.success += 1
                 break
             except (exceptions.BitgetAPIException, Exception) as e:
-                if e.code == "429":
-                    self.error_429["status"] = True
                 result = getattr(e, "message", "")
-                self.log_api_failure("planApi.place_plan_v2", result, n_attempts)
+                self.log_api_failure("planApi.place_plan_v2", e, n_attempts)
                 time.sleep(2)
                 n_attempts = n_attempts - 1
         n_attempts = False
         locals().clear()
         return result
-
-    def catch_429_status(self):
-        return self.error_429["status"]
-
-    def reset_429(self):
-        self.error_429["status"] = False
-        self.error_429["lst_orderId"] = []
-
-    def reset_status_429(self):
-        self.error_429["status"] = False
-
-    def get_429_lst_orderId(self):
-        return self.error_429["lst_orderId"].copy()
-
-    def add_429_orderId(self, orderId):
-        self.error_429["lst_orderId"].append(orderId)
 
     # reference : https://www.bitget.com/api-doc/contract/plan/Place-Plan-Order
     @authentication_required
