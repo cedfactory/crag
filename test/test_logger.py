@@ -8,7 +8,7 @@ class TestLoggerFile:
     def test_logger_file_constructor(self):
         # context
         filename = "./test/log"
-        expected_filename = "./test/log000.log"
+        expected_filename = "./test/log0000.log"
         params = {"filename": filename}
         if os.path.isfile(expected_filename):
             os.remove(expected_filename)
@@ -23,7 +23,7 @@ class TestLoggerFile:
     def test_logger_file_get_current_filename(self):
         # context
         filename = "./test/log"
-        expected_filename = "./test/log000.log"
+        expected_filename = "./test/log0000.log"
         params = {"filename": filename}
         my_logger = logger.LoggerFile(params)
 
@@ -39,7 +39,7 @@ class TestLoggerFile:
     def test_logger_file_log(self):
         # context
         filename = "./test/log"
-        expected_filename = "./test/log000.log"
+        expected_filename = "./test/log0000.log"
         if os.path.isfile(expected_filename):
             os.remove(expected_filename)
         params = {"filename": filename}
@@ -51,7 +51,7 @@ class TestLoggerFile:
         # expectations
         assert (os.path.isfile(expected_filename))
         current_filesize = my_logger._get_current_filesize()
-        assert (current_filesize == 35)
+        assert (current_filesize == 28)
         with open(expected_filename) as f:
             lines = f.readlines()
             assert (len(lines) == 1)
@@ -64,8 +64,8 @@ class TestLoggerFile:
     def test_logger_file_log_new_file(self):
         # context
         filename = "./test/log"
-        expected_filename0 = "./test/log000.log"
-        expected_filename1 = "./test/log001.log"
+        expected_filename0 = "./test/log0000.log"
+        expected_filename1 = "./test/log0001.log"
         if os.path.isfile(expected_filename0):
             os.remove(expected_filename0)
         if os.path.isfile(expected_filename1):

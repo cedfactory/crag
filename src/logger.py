@@ -20,8 +20,6 @@ import os.path
 # for LoggerDiscordBot
 import requests
 import os
-import discord
-import xml.etree.cElementTree as ET
 
 
 def _initialize_crag_telegram_bot(botId=""):
@@ -178,10 +176,10 @@ class LoggerConsole(ILogger):
     def __init__(self, params=None):
         super().__init__(params)
 
-    def log(self, msg, header="", author="", attachments=[]):
+    def log(self, msg, header="", author="", attachments=None):
         content = ""
         now = datetime.now()
-        current_time = now.strftime("%Y/%m/%d %H:%M:%S.%f")
+        current_time = now.strftime("%Y/%m/%d %H:%M:%S")
         content = content + "[{}] ".format(current_time)
         if author != "":
             content = content + "[{}] ".format(author)
@@ -222,7 +220,7 @@ class LoggerFile(ILogger):
             return os.stat(self.filename).st_size
         return 0
 
-    def log(self, msg, header="", author="", attachments=[]):
+    def log(self, msg, header="", author="", attachments=None):
         with self.lock_LoggerFile:
             if self.filename != "":
                 if self._get_current_filesize() > self.max_size:
@@ -248,7 +246,7 @@ class LoggerFile(ILogger):
                 with open(self.filename, "a", encoding="utf-8") as f:
                     content = ""
                     now = datetime.now()
-                    current_time = now.strftime("%Y/%m/%d %H:%M:%S.%f")
+                    current_time = now.strftime("%Y/%m/%d %H:%M:%S")
                     content = content + "[{}] ".format(current_time)
                     if author != "":
                         content = content + "[{}] ".format(author)
@@ -300,31 +298,33 @@ class LoggerDiscordBot(ILogger):
         if isinstance(msg, list):
             data["embeds"] = [
                 {
-                    "title" : header,
-                    "color" : int('0xff5733', base=16),
+                    "title": header,
+                    "color": int('0xff5733', base=16),
                     "fields": []
                 }
             ]
             for str in msg:
                 new_msg = {
-                    "name" : str,
-                    "value" : "",
-                    "inline" : True
+                    "name": str,
+                    "value": "",
+                    "inline": True
                 }
                 data["embeds"][0]["fields"].append(new_msg)
         else:
             data["embeds"] = [
                 {
-                    "description" : msg,
-                    "title" : header,
-                    "color" : int('0xff5733', base=16)
+                    "description": msg,
+                    "title": header,
+                    "color": int('0xff5733', base=16)
                 }
             ]
 
         return data
 
-    def log_webhook(self, msg, header, author, attachments=[]):
+    def log_webhook(self, msg, header, author, attachments=None):
         # https://gist.github.com/Bilka2/5dd2ca2b6e9f3573e0c2defe5d3031b2
+        if attachments is None:
+            attachments = []
         data = self._prepare_data_to_post(msg, header, author)
 
         files = None
@@ -349,8 +349,10 @@ class LoggerDiscordBot(ILogger):
         del data
         locals().clear()
 
-    def log_post(self, msg, header="", author="", attachments=[]):
+    def log_post(self, msg, header="", author="", attachments=None):
         # https://stackoverflow.com/questions/69160500/discord-py-send-messages-outside-of-events
+        if attachments is None:
+            attachments = []
         if self.token is None or self.channel_id is None:
             return
 
@@ -373,7 +375,9 @@ class LoggerDiscordBot(ILogger):
         del r
         locals().clear()
 
-    def log(self, msg, header="", author="", attachments=[]):
+    def log(self, msg, header="", author="", attachments=None):
+        if attachments is None:
+            attachments = []
         with self.lock_DiscordBot:
             if self.webhook != "":
                 self.log_webhook(msg, header, author, attachments)
@@ -409,7 +413,11 @@ class LoggerTelegramBot(ILogger):
 
         self.lock_TelegramBot = threading.Lock()
 
-    def log(self, msg, header="", author="", attachments=[], extra={}):
+    def log(self, msg, header="", author="", attachments=None, extra=None):
+        if extra is None:
+            extra = {}
+        if attachments is None:
+            attachments = []
         response = None
         try:
             if self.id and self.token and self.chat_id:
