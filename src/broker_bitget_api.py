@@ -1033,18 +1033,19 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         if not symbol.endswith('USDT_UMCBL'):
             symbol += 'USDT_UMCBL'
         value = 0
-        n_attempts = 3
+        n_attempts = 300
         while n_attempts > 0:
             try:
                 # value = float(self.marketApi.market_price(symbol)["data"]["markPrice"])
                 value = float(self.marketApi.ticker(symbol)["data"]["last"])
-                self.success += 1
-                break
+                if value != 0:
+                    self.success += 1
+                    return value
             except (exceptions.BitgetAPIException, Exception) as e:
                 self.log_api_failure("marketApi.ticker", e, n_attempts)
-                time.sleep(0.2)
+                time.sleep(1.)
                 n_attempts = n_attempts - 1
-        return value
+        exit(123)
 
     @authentication_required
     def get_values(self, symbols):
