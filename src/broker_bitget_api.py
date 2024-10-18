@@ -277,7 +277,6 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 self.success += 1
                 break
             except (exceptions.BitgetAPIException, Exception) as e:
-
                 self.log_api_failure("orderV2Api.ordersPlanPending", e, n_attempts)
                 time.sleep(0.2)
                 n_attempts = n_attempts - 1
@@ -1277,20 +1276,6 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 time.sleep(0.2)
                 n_attempts = n_attempts - 1
         return result
-
-    @authentication_required
-    def get_order_current(self, symbol):
-        n_attempts = 3
-        while n_attempts > 0:
-            try:
-                current = self.orderApi.current(symbol)
-                self.success += 1
-                break
-            except (exceptions.BitgetAPIException, Exception) as e:
-                self.log_api_failure("orderApi.current", e, n_attempts)
-                time.sleep(0.2)
-                n_attempts = n_attempts - 1
-        return current
 
     @authentication_required
     def cancel_order(self, symbol, marginCoin, orderId):
