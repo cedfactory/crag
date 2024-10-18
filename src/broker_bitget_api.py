@@ -142,7 +142,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             dict_content = json.loads(content)
             dict_content_as_str = ' - '.join(f'{key}: {value}' for key, value in dict_content.items())
 
-        self.log("msg: " + json.dumps(dict_content_as_str))
+            self.log("msg: " + json.dumps(dict_content_as_str))
 
     def _authentification(self):
         return self.marketApi and self.accountApi and  self.positionApi and self.orderApi
@@ -666,6 +666,40 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 break
             except (exceptions.BitgetAPIException, Exception) as e:
                 self.log_api_failure("planApi.cancel_plan", e, n_attempts)
+                time.sleep(0.2)
+                n_attempts = n_attempts - 1
+        n_attempts = False
+        locals().clear()
+        return result
+
+    @authentication_required
+    def _cancel_Batch_Order_v2(self, symbol, lst_order_id):
+        orderIdList = []
+        for order_id in lst_order_id:
+            if order_id != "":
+                cancel_orderId = {
+                    "orderId": order_id
+                }
+                orderIdList.append(cancel_orderId)
+        if len(orderIdList) == 0:
+            return None
+
+        params = {
+            "symbol": self._get_symbol_v2(symbol),
+            "marginCoin": "USDT",
+            "productType": "USDT-FUTURES",
+            "orderIdList": orderIdList
+        }
+
+        result = {}
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                result = self.orderV2Api.batchCancelOrders(params)
+                self.success += 1
+                break
+            except (exceptions.BitgetAPIException, Exception) as e:
+                self.log_api_failure("orderV2Api.batchCancelOrders", e, n_attempts)
                 time.sleep(0.2)
                 n_attempts = n_attempts - 1
         n_attempts = False

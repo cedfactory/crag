@@ -854,7 +854,8 @@ class Crag:
                                                       utils.KeepNDecimals(self.actual_drawdown_percent, 2))
             self.log_discord(msg, "total SL TP")
 
-            self.broker.execute_reset_account()
+            lst_active_symbols = self.rtstr.get_lst_symbols()
+            self.broker.execute_reset_account(lst_active_symbols)
             return False
 
         if not self.rtstr.get_strategy_type() == "CONTINUE":

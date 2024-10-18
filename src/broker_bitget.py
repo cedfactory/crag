@@ -2,6 +2,7 @@ from . import broker, rtdp, utils
 import pandas as pd
 import re
 import json
+from collections import defaultdict
 from . bitget import exceptions
 from concurrent.futures import wait, ALL_COMPLETED, ThreadPoolExecutor
 import threading
@@ -210,7 +211,7 @@ class BrokerBitGet(broker.Broker):
             }
         sizeMultiplier = self.get_sizeMultiplier(symbol)
 
-        if trigger["amount"] == None:
+        if not "amount" in trigger or trigger["amount"] is None:
             amount = utils.normalize_size(trigger["gross_size"] * leverage, sizeMultiplier)
         else:
             amount = trigger["amount"]
@@ -430,9 +431,29 @@ class BrokerBitGet(broker.Broker):
         return lst_result_orders
 
     def execute_lst_cancel_orders(self, lst_orders):
+        if not lst_orders:
+            return []
+        symbol_groups = defaultdict(list)
+        for item in lst_orders:
+            symbol_groups[item["symbol"]].append(item)
+        # Convert to list of lists
+        lst_grouped_by_symbol = list(symbol_groups.values())
+
+        for lst_orders in lst_grouped_by_symbol:
+            order_ids = [d['orderId'] for d in lst_orders]
+            symbol = lst_orders[0]["symbol"]
+            lst_success_orderIds = self.execute_batch_cancel_orders(symbol, order_ids)
+            for order in lst_orders:
+                if order["orderId"] in lst_success_orderIds:
+                    order["trade_status"] = "SUCCESS"
+                else:
+                    order["trade_status"] = "FAILED"
+        return lst_orders
+
+    def execute_lst_cancel_plan_orders(self, lst_orders):
         if lst_orders and len(lst_orders) > 0:
             order_ids = [d['orderId'] for d in lst_orders]
-            lst_success_orderIds = self.execute_list_cancel_orders(lst_orders[0]["symbol"], order_ids)
+            lst_success_orderIds = self.execute_list_cancel_plan_orders(lst_orders[0]["symbol"], order_ids)
             for order in lst_orders:
                 if order["orderId"] in lst_success_orderIds:
                     order["trade_status"] = "SUCCESS"
@@ -740,21 +761,20 @@ class BrokerBitGet(broker.Broker):
                 if True:
                     order["trade_status"] = "SUCCESS"
                     order["orderId"] = "ORDER_ID_" + str(grid_id)
-                elif grid_id in lst_failed_trade:
-                    order["trade_status"] = "FAILED"
-                    order["orderId"] = None
-                else:
-                    order["trade_status"] = "MISSING"
             return lst_orders
 
     def execute_batch_cancel_orders(self, symbol, lst_ordersIds):
         result = None
         if symbol != "" and len(lst_ordersIds) > 0:
-            symbol = self._get_symbol(symbol)
-            result = self._batch_cancel_orders_api(symbol, "USDT", lst_ordersIds)
-        return result
+            result = self._cancel_Batch_Order_v2(symbol, lst_ordersIds)
+        if result == None:
+            return []
+        if result["msg"] == 'success':
+            success_order_ids = [d['orderId'] for d in result["data"]["successList"]]
 
-    def execute_list_cancel_orders(self, symbol, lst_ordersIds):
+        return success_order_ids
+
+    def execute_list_cancel_plan_orders(self, symbol, lst_ordersIds):
         success_order_ids = []
         if symbol != "" and len(lst_ordersIds) > 0:
             symbol = self._get_symbol(symbol)
@@ -804,6 +824,37 @@ class BrokerBitGet(broker.Broker):
                 lst_result_open_orders.append(future.result())
 
         return lst_result_open_orders
+
+    def execute_lst_close_positions(self, lst_close_positions):
+        if len(lst_close_positions) == 0:
+            return []
+        lst_result_close_positions = []
+        for close_position in lst_close_positions:
+            lst_result_close_positions.append(self.execute_close_position(close_position))
+
+        return lst_result_close_positions
+
+    @authentication_required
+    def execute_close_position(self, close_position):
+        symbol = close_position["symbol"]
+        size = close_position["total"]
+        holdSize = close_position["holdSide"]
+        if holdSize == 'long':
+            clientOid = self.clientOIdprovider.get_name(symbol, "close_long")
+            transaction = self._close_long_position(self._get_symbol(symbol), size, clientOid)
+        elif holdSize == 'short':
+            clientOid = self.clientOIdprovider.get_name(symbol, "close_short")
+            transaction = self._close_long_position(self._get_symbol(symbol), size, clientOid)
+
+        if "msg" in transaction \
+                and transaction["msg"] == "success" \
+                and "data" in transaction \
+                and "orderId" in transaction["data"]:
+            close_position["trade_status"] = "SUCCESS"
+        else:
+            close_position["trade_status"] = "FAILED"
+
+        return close_position
 
     def execute_order(self, trade):
         if trade["type"] in ["open_long", "open_short", "close_long", "close_short"]:
@@ -871,58 +922,66 @@ class BrokerBitGet(broker.Broker):
 
     @authentication_required
     def execute_trades(self, lst_orders):
-        lst_orders = [order for order in lst_orders if order != None]
-        if len(lst_orders) == 0:
-            self.iter_executetrades += 1
+        # Filter out None orders early
+        lst_orders = [order for order in lst_orders if order]
+
+        if not lst_orders:
+            self.iter_execute_trades += 1
             return
 
-        lst_result_open_orders = []
-        lst_open_orders = [order for order in lst_orders if "trigger_type" in order and (order["trigger_type"] == "MARKET_OPEN_POSITION"
-                                                                                         or order["trigger_type"] == "MARKET_CLOSE_POSITION")]
-        lst_result_open_orders = self.execute_lst_orders(lst_open_orders)
-        lst_orders = [order for order in lst_orders if not ("trigger_type" in order) or (order["trigger_type"] != "MARKET_OPEN_POSITION"
-                                                                                         and order["trigger_type"] != "MARKET_CLOSE_POSITION")]
+        # Helper function to handle order execution and filtering
+        def execute_and_filter(order_list, trigger_type, execution_method, additional_params=None):
+            filtered_orders = [order for order in order_list if order.get("trigger_type") == trigger_type]
+            result = execution_method(filtered_orders, *additional_params) if additional_params else execution_method(
+                filtered_orders)
+            return result, [order for order in order_list if order.get("trigger_type") != trigger_type]
 
-        lst_result_cancel_orders = []
-        lst_cancel_orders = [order for order in lst_orders if "trigger_type" in order and order["trigger_type"] == "CANCEL_TRIGGER"]
-        lst_result_cancel_orders = self.execute_lst_cancel_orders(lst_cancel_orders)
-        lst_orders = [order for order in lst_orders if not ("trigger_type" in order) or order["trigger_type"] != "CANCEL_TRIGGER"]
+        # Process each type of order
+        lst_result_open_orders, lst_orders = execute_and_filter(lst_orders, "MARKET_OPEN_POSITION",
+                                                                self.execute_lst_orders)
+        lst_result_close_positions, lst_orders = execute_and_filter(lst_orders, "CLOSE_POSITION",
+                                                                    self.execute_lst_close_positions)
+        lst_result_cancel_plan_orders, lst_orders = execute_and_filter(lst_orders, "CANCEL_TRIGGER",
+                                                                       self.execute_lst_cancel_plan_orders)
+        lst_result_cancel_orders, lst_orders = execute_and_filter(lst_orders, "CANCEL_ORDER",
+                                                                  self.execute_lst_cancel_orders)
+        lst_result_triggers_orders, lst_orders = execute_and_filter(lst_orders, "TRIGGER",
+                                                                    self.execute_lst_triggers)
+        lst_result_sltp_trailing_orders, lst_orders = execute_and_filter(lst_orders, "SL_TP_TRAILER",
+                                                                         self.execute_lst_sltp_trailling_orders)
 
-        lst_result_triggers_orders = []
-        lst_triggers = [order for order in lst_orders if "trigger_type" in order and order["trigger_type"] == "TRIGGER"]
-        lst_result_triggers_orders = self.execute_lst_triggers(lst_triggers)
-        lst_orders = [order for order in lst_orders if not ("trigger_type" in order) or order["trigger_type"] != "TRIGGER"]
-
-        lst_result_sltp_trailling_orders = []
-        lst_sltp_trailing_orders = [order for order in lst_orders if "trigger_type" in order and order["trigger_type"] == "SL_TP_TRAILER"]
-        lst_result_sltp_trailling_orders = self.execute_lst_sltp_trailling_orders(lst_sltp_trailing_orders)
-        lst_orders = [order for order in lst_orders if not ("trigger_type" in order) or order["trigger_type"] != "SL_TP_TRAILER"]
-
-        lst_record_missing_orders = [order for order in lst_orders if "type" in order and order["type"] == "RECORD_DATA"]
+        # Handle RECORD_DATA and CANCEL_SLTP separately
+        lst_record_missing_orders = [order for order in lst_orders if order.get("type") == "RECORD_DATA"]
         self.execute_record_missing_orders(lst_record_missing_orders)
-        lst_orders = [order for order in lst_orders if not ("type" in order) or order["type"] != "RECORD_DATA"]
+        lst_orders = [order for order in lst_orders if order.get("type") != "RECORD_DATA"]
 
-        lst_cancel_sltp_orders = [order for order in lst_orders if "type" in order and order["type"] == "CANCEL_SLTP"]
+        lst_cancel_sltp_orders = [order for order in lst_orders if order.get("type") == "CANCEL_SLTP"]
         self.execute_cancel_sltp_orders(lst_cancel_sltp_orders)
-        lst_orders = [order for order in lst_orders if not ("type" in order) or order["type"] != "CANCEL_SLTP"]
+        lst_orders = [order for order in lst_orders if order.get("type") != "CANCEL_SLTP"]
 
-        lst_limit_orders_sltp = [order for order in lst_orders if "trigger_type" in order and order["trigger_type"] == "LIMIT_ORDER_SLTP"]
-        self.execute_limit_orders(lst_limit_orders_sltp, True)
-        lst_orders = [order for order in lst_orders if not ("trigger_type" in order) or order["trigger_type"] != "LIMIT_ORDER_SLTP"]
+        # Process LIMIT_ORDER_SLTP orders with an additional argument
+        lst_limit_orders_sltp, lst_orders = execute_and_filter(lst_orders, "LIMIT_ORDER_SLTP",
+                                                               self.execute_limit_orders, [True])
 
+        # Finally, execute any remaining orders as regular limit orders
         lst_result_orders = self.execute_limit_orders(lst_orders, False)
 
-        del lst_triggers
+        # Clean up and increment counter
         del lst_orders
         locals().clear()
         self.iter_execute_trades += 1
 
-        return lst_result_orders \
-               + lst_result_triggers_orders \
-               + lst_result_sltp_trailling_orders \
-               + lst_result_cancel_orders \
-               + lst_result_open_orders \
-               + lst_limit_orders_sltp
+        # Return the combined results
+        return (
+                lst_result_open_orders +
+                lst_result_close_positions +
+                lst_result_triggers_orders +
+                lst_result_sltp_trailing_orders +
+                lst_result_cancel_plan_orders +
+                lst_result_cancel_orders +
+                lst_limit_orders_sltp +
+                lst_result_orders
+        )
 
     def set_open_orders_gridId(self, df_open_orders):
         df_open_orders["gridId"] = None
@@ -1108,45 +1167,44 @@ class BrokerBitGet(broker.Broker):
         return df_orders
 
     @authentication_required
-    def execute_reset_account(self):
-        df_positions = self.get_open_position()
-        original_df_positions = df_positions
-        #return original_df_positions
+    def execute_reset_account(self, lst_symbols=None):
+        if lst_symbols is None or len(lst_symbols) == 0:
+            lst_symbols = self.df_symbols["symbol"].tolist()
+            lst_symbols = [symbol.split('USDT')[0] for symbol in lst_symbols]
+        while True:
+            current_state = self.get_current_state(lst_symbols)
+            if current_state['success']:
+                break
 
-        if len(df_positions) == 0:
-            usdtEquity = self.get_account_equity()
-            self.log("reset - no position - account already cleared")
-            self.log('equity USDT: {}'.format(usdtEquity))
-            return original_df_positions
+        df_open_orders = current_state['open_orders']
+        df_triggers = current_state['triggers']
+        df_positions = current_state['open_positions']
 
-        original_df_positions = df_positions
+        df_open_orders["trigger_type"] = "CANCEL_ORDER"
+        lst_dct_orders = df_open_orders.to_dict(orient="records")
 
-        for symbol in df_positions['symbol'].tolist():
-            size = df_positions.loc[(df_positions['symbol'] == symbol), "total"].values[0]
-            holdSize = df_positions.loc[(df_positions['symbol'] == symbol), "holdSide"].values[0]
-            if holdSize == 'long':
-                clientOid = self.clientOIdprovider.get_name(symbol, "close_long")
-                transaction = self._close_long_position(symbol, size, clientOid)
-            elif holdSize == 'short':
-                clientOid = self.clientOIdprovider.get_name(symbol, "close_short")
-                transaction = self._close_long_position(symbol, size, clientOid)
-            if "msg" in transaction \
-                    and transaction["msg"] == "success" \
-                    and "data" in transaction \
-                    and "orderId" in transaction["data"]:
-                usdtEquity = df_positions.loc[(df_positions['symbol'] == symbol), "usdtEquity"].values[0]
-                self.log('reset - close ' + str(holdSize) + 'position - symbol: ' + symbol + ' value: ' + str(size) + ' - $' + str(usdtEquity))
+        df_triggers["trigger_type"] = "CANCEL_TRIGGER"
+        lst_dct_triggers = df_triggers.to_dict(orient="records")
 
-        df_positions = self.get_open_position()
-        if len(df_positions) != 0:
-            self.log("reset - failure")
-            exit(532)
-        else:
-            usdtEquity = self.get_account_equity()
-            self.log('reset - account cleared')
-            self.log('equity USDT: {}'.format(usdtEquity))
+        df_positions["trigger_type"] = "CLOSE_POSITION"
+        lst_dct_positions = df_positions.to_dict(orient="records")
 
-        return original_df_positions
+        lst_closure = lst_dct_orders + lst_dct_triggers + lst_dct_positions
+        lst_trade_status = self.execute_trades(lst_closure)
+
+        for trade in lst_trade_status:
+            if trade["trade_status"] == "FAILED":
+                print(", ".join(f"{key}: {value}" for key, value in trade.items()))
+
+        all_success = all(trade["trade_status"] == "SUCCESS" for trade in lst_trade_status)
+        if all_success:
+            print("RESET ACCOUNT SUCCESS")
+
+        usdtEquity = self.get_account_equity()
+        self.log('reset - account cleared')
+        self.log('equity USDT: {}'.format(usdtEquity))
+
+        return lst_trade_status
 
     @authentication_required
     def get_symbol_unrealizedPL(self, symbol):

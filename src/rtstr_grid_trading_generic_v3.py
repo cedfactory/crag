@@ -96,6 +96,9 @@ class StrategyGridTradingGenericV3(rtstr.RealTimeStrategy):
     def get_info(self):
         return "StrategyGridTradingGenericV3"
 
+    def get_symbol(self):
+        return self.symbol
+
     def get_strategy_type(self):
         return "CONTINUE"
 

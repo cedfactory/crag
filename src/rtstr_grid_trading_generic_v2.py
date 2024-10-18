@@ -23,6 +23,7 @@ class StrategyGridTradingGenericV2(rtstr.RealTimeStrategy):
             self.id = params.get("id", self.id)
             self.side = params.get("type", self.side)
             self.lst_symbols = [params.get("strategy_symbol", self.lst_symbols)]
+            self.symbol = params.get("strategy_symbol", self.lst_symbols)
 
             self.grid_high = params.get("grid_high", self.grid_high)
             if isinstance(self.grid_high, str):
@@ -104,6 +105,9 @@ class StrategyGridTradingGenericV2(rtstr.RealTimeStrategy):
 
     def get_strategy_type(self):
         return "CONTINUE"
+
+    def get_symbol(self):
+        return self.symbol
 
     def set_multiple_strategy(self):
         self.mutiple_strategy = True
