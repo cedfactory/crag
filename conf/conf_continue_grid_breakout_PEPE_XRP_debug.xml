@@ -21,7 +21,6 @@
                 account="subfortest2"
                 symbols="./symbols_PEPE_XRP.csv"
                 reset_account="False"
-                reset_account_orders="False"
                 loggers="file=log"
         />
     </broker>

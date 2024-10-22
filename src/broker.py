@@ -31,7 +31,6 @@ class Broker(metaclass = ABCMeta):
         self.cash = 10
         self.fdp_url_id = "localhost:5000"
         self.reset_account = True  # Reset account default behavior
-        self.reset_account_orders = True  # Reset account orders default behavior
         if params:
             loggers = params.get("loggers", self.loggers)
             if isinstance(loggers, str):
@@ -43,21 +42,11 @@ class Broker(metaclass = ABCMeta):
             self.fdp_url_id = params.get("fdp_url_id", self.fdp_url_id)
             self.reset_account = params.get("reset_account", self.reset_account)
             if isinstance(self.reset_account, str):
-                try:
-                    self.reset_account = ast.literal_eval(self.reset_account)
-                except BaseException as err:
-                    self.reset_account = True
-            self.reset_account_orders = params.get("reset_account_orders", self.reset_account)
-            if isinstance(self.reset_account_orders, str):
-                try:
-                    self.reset_account_orders = ast.literal_eval(self.reset_account_orders)
-                except BaseException as err:
-                    self.reset_account_orders = True
+                self.reset_account = self.reset_account.lower() == "true"
 
             symbols = params.get("symbols", None)
             if symbols and isinstance(symbols, str) and path.exists("./symbols/"+symbols):
                     self.df_symbols = pd.read_csv("./symbols/"+symbols)
-                    #self.lst_symbols = self.df_symbols['symbol'].tolist()
             elif isinstance(symbols, dict):
                 self.df_symbols = pd.DataFrame(symbols)
 

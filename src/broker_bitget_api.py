@@ -19,7 +19,7 @@ import os, shutil
 import json
 import pandas as pd
 import numpy as np
-from concurrent.futures import wait, ALL_COMPLETED, ThreadPoolExecutor
+from concurrent.futures import wait, ALL_COMPLETED, ThreadPoolExecutor, as_completed
 import gc
 
 class BrokerBitGetApi(broker_bitget.BrokerBitGet):
@@ -91,13 +91,6 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             #self.log('list symbols perpetual/USDT: {}'.format(self.df_market["baseCoin"].tolist()))
 
         # reset account
-        if self.reset_account_orders:
-            lst_symbols = ["XRP", "BTC", "ETH", "PEPE"] # CEDE WARNING risky if list not up to date
-            self.cancel_all_orders(lst_symbols)
-            orders_check = self.get_open_orders(lst_symbols)
-            if len(orders_check) > 0:
-                self.log("WARNING: " + str(orders_check))
-                exit(10)
         if self.reset_account:
             self.log('reset account requested')
             self.execute_reset_account()
@@ -105,7 +98,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             self.set_boot_status_to_reseted()
             positions_check = self.get_open_position()
             if len(positions_check) > 0:
-                self.log("WARNING: " + str(orders_check))
+                self.log("WARNING: " + str(positions_check))
                 exit(10)
         else:
             self.log('reset account not requested')
@@ -1747,3 +1740,101 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     def get_cache_status(self):
         return self.enable_cache_data
+
+    def process_data(self, result):
+        # data = json.loads(result)
+
+        # Step 3: Process the data (convert timestamp, format numbers, etc.)
+        processed_data = []
+        for entry in result:
+            timestamp = int(entry[0])  # Convert the timestamp from string to integer
+            open_price = float(entry[1])
+            high_price = float(entry[2])
+            low_price = float(entry[3])
+            close_price = float(entry[4])
+
+            # Create a dictionary or any structure you need
+            processed_entry = {
+                "timestamp": timestamp,
+                "open": open_price,
+                "high": high_price,
+                "low": low_price,
+                "close": close_price
+            }
+
+            # Append to the list of processed data
+            processed_data.append(processed_entry)
+
+        df_result = pd.DataFrame(processed_data)
+        return df_result
+
+    def fetch_candles(self, symbol, granularity, start_time, end_time):
+        """
+        Fetch candles for a specific time range.
+        """
+        try:
+            response = self.marketApi.candles(self._get_symbol(symbol), str(granularity), str(int(start_time)), str(int(end_time)))
+            # response.raise_for_status()
+            data = self.process_data(response)
+            # data = response.json()
+            return data
+        except Exception as e:
+            print(f"Error fetching data for time range {start_time} - {end_time}: {e}")
+            return []
+
+    def divide_time_ranges(self, start_time, end_time, granularity, max_limit=100):
+        """
+        Divide the total time range into chunks based on the maximum limit per request.
+        """
+        ranges = []
+        convert = {
+            "5m": 60*5
+        }
+        delta = convert[granularity] * 1000 * max_limit  # Convert granularity to milliseconds
+
+        current_start = start_time
+        while current_start < end_time:
+            current_end = min(current_start + delta, end_time)
+            ranges.append((current_start, current_end))
+            current_start = current_end + convert[granularity] * 1000  # Move to the next interval without overlap
+        return ranges
+
+    def fetch_historical_data_multithreaded(self, symbol, granularity, start_time, end_time, max_workers=5):
+        """
+        Fetch historical data using multithreading.
+        """
+        # Divide the total time range into smaller ranges
+        time_ranges = self.divide_time_ranges(start_time, end_time, granularity)
+
+        data_frames = []
+        convert = {
+            "5m": 60*5
+        }
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Dictionary to hold future objects and their corresponding time ranges
+            future_to_time_range = {executor.submit(self.fetch_candles, symbol, granularity, tr[0], tr[1]): tr for tr in
+                                    time_ranges}
+
+            for future in as_completed(future_to_time_range):
+                tr = future_to_time_range[future]
+                try:
+                    data = future.result()
+                    if isinstance(data, pd.DataFrame) and not data.empty:
+                        data_frames.append(data)
+                        print(f"Fetched {len(data)} records for time range {tr}")
+                    else:
+                        print(f"No data returned for time range {tr}")
+                except Exception as exc:
+                    print(f"Generated an exception for time range {tr}: {exc}")
+
+        if data_frames:
+            all_data = pd.concat(data_frames, ignore_index=True)
+        else:
+            all_data = pd.DataFrame()
+
+        # Remove duplicates and sort the data by timestamp
+        # unique_data = {item[0]: item for item in all_data}
+        # sorted_data = [unique_data[key] for key in sorted(unique_data.keys(), key=int)]
+        sorted_data = all_data.sort_values(by='timestamp').reset_index(drop=True)
+        return sorted_data

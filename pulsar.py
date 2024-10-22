@@ -13,6 +13,7 @@ import matplotlib.dates as mdates
 
 g_os_platform = platform.system()
 g_python_executable = ""
+delta_window = 72
 
 def get_now():
     return datetime.now()
@@ -48,6 +49,11 @@ def encode_triggers(df_triggers):
 def generate_figure_limit_orders(df_account):
     fig = plt.figure(figsize=(10, 15))
 
+    now = get_now()
+    timestamp_begin = (now - timedelta(hours=delta_window)).timestamp()
+    df_filtered = df_account.loc[df_account["timestamp"] > timestamp_begin]
+    df_filtered = df_filtered[df_filtered['limit_orders'].ne(df_filtered['limit_orders'].shift())].reset_index(drop=True)
+
     ax = plt.gca()
     xfmt = mdates.DateFormatter("%d-%m-%Y %H:%M:%S.%f")
     ax.xaxis.set_major_formatter(xfmt)
@@ -57,7 +63,7 @@ def generate_figure_limit_orders(df_account):
     ySell = []
     xBuy = []
     yBuy = []
-    for index, row in df_account.iterrows():
+    for index, row in df_filtered.iterrows():
         timestamp = datetime.fromtimestamp(float(row["timestamp"]))
 
         str_limit_orders = row["limit_orders"]
@@ -84,6 +90,15 @@ def generate_figure_limit_orders(df_account):
 def generate_figure_triggers(df_account):
     fig = plt.figure(figsize=(10, 15))
 
+    now = get_now()
+    timestamp_begin = (now - timedelta(hours=delta_window)).timestamp()
+    df_filtered = df_account.loc[df_account["timestamp"] > timestamp_begin]
+    # Filter out consecutive duplicate rows based on the 'triggers' column
+    # Step 1: Compare 'triggers' column with its shifted version to identify changes
+    # Step 2: Keep rows where the current 'triggers' value is not equal to the previous value
+    # Step 3: Reset the index to remove gaps from dropped rows
+    df_filtered = df_filtered[df_filtered['triggers'].ne(df_filtered['triggers'].shift())].reset_index(drop=True)
+
     ax = plt.gca()
     xfmt = mdates.DateFormatter("%d-%m-%Y %H:%M:%S.%f")
     ax.xaxis.set_major_formatter(xfmt)
@@ -93,7 +108,7 @@ def generate_figure_triggers(df_account):
     ySell = []
     xBuy = []
     yBuy = []
-    for index, row in df_account.iterrows():
+    for index, row in df_filtered.iterrows():
         timestamp = datetime.fromtimestamp(float(row["timestamp"]))
 
         str_triggers = row["triggers"]
@@ -134,6 +149,7 @@ if __name__ == '__main__':
     console = logger.LoggerConsole()
 
     agents = []
+    active_symbols = []
 
     file_path = ""
     if len(sys.argv) == 2:
@@ -144,12 +160,23 @@ if __name__ == '__main__':
                 next(csvreader)
                 for row in csvreader:
                     agent = Agent()
-                    agent.bot_id = row[0]
-                    agent.account_id = row[1]
-                    agent.message1_id = row[2]
-                    agent.message2_id = row[3]
-                    agent.message3_id = row[4]
-                    agent.message4_id = row[5]
+                    agent.bot_id = row[0].strip()
+                    agent.account_id = row[1].strip()
+                    symbols_field = row[2].strip()
+                    agent.message1_id = row[3].strip()
+                    agent.message2_id = row[4].strip()
+                    agent.message3_id = row[5].strip()
+                    agent.message4_id = row[6].strip()
+
+                    # Parse the symbols_field to extract symbols with True status
+                    active_symbols = []
+                    symbols = symbols_field.split('/')
+                    for symbol_status in symbols:
+                        if ':' in symbol_status:
+                            symbol, status = symbol_status.split(':', 1)
+                            if status.strip().lower() == 'true':
+                                active_symbols.append(symbol.strip())
+                    agent.symbols = active_symbols
                     agents.append(agent)
         else:
             _usage()
@@ -185,7 +212,7 @@ if __name__ == '__main__':
         console.log("Account {} initialized".format(account_id))
 
         agent.datafile = "pulsar_" + account_id + "_data.csv"
-        agent.df_account = pd.DataFrame(columns=["account", "timestamp", "usdt_equity", "limit_orders"])
+        agent.df_account = pd.DataFrame(columns=["account", "timestamp", "usdt_equity", "limit_orders", "triggers"])
         if os.path.exists(agent.datafile):
             agent.df_account = pd.read_csv(agent.datafile, sep=",")
             agent.df_account['timestamp'] = agent.df_account['timestamp'].astype(float)
@@ -247,7 +274,7 @@ if __name__ == '__main__':
             else:
                 usdt_equity = str(utils.KeepNDecimals(usdt_equity, 2))
 
-            current_state = agent.broker.get_current_state(["PEPE"])
+            current_state = agent.broker.get_current_state(agent.symbols)
 
             # save new data
             str_limit_orders = ""
@@ -275,11 +302,17 @@ if __name__ == '__main__':
 
             # message 4
             extra["message_id"] = agent.message4_id
-            timestamp_begin = (now - timedelta(hours=72)).timestamp()
+            timestamp_begin = (now - timedelta(hours=delta_window)).timestamp()
             df_filtered = agent.df_account.loc[agent.df_account["timestamp"] > timestamp_begin]
 
             fig = graph_helper.export_graph("pulsar_history.png", agent.account_id,
                                       [{"dataframe": df_filtered, "plots": [{"column": "usdt_equity", "label": "USDT equity"}]}])
+
+            for symbol in agent.symbols:
+                now = get_now()
+                start_time = (now - timedelta(hours=delta_window)).timestamp() * 1000
+                candles = agent.broker.fetch_historical_data_multithreaded(symbol, "5m", start_time, now.timestamp() * 1000, 5)
+
             plt.close(fig)
 
             response = agent.bot.log(message, attachments=["pulsar_history.png"], extra=extra)
@@ -301,4 +334,4 @@ if __name__ == '__main__':
             message = current_time + "\n" + "<b>" + agent.broker.account["id"] + "</b>" + " : triggers"
             response = agent.bot.log(message, attachments=["pulsar_triggers.png"], extra=extra)
 
-        time.sleep(60*5)  # 5min
+        time.sleep(1)  # 5min

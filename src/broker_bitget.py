@@ -1190,6 +1190,9 @@ class BrokerBitGet(broker.Broker):
         lst_dct_positions = df_positions.to_dict(orient="records")
 
         lst_closure = lst_dct_orders + lst_dct_triggers + lst_dct_positions
+        if len(lst_closure) == 0:
+            print("RESET ACCOUNT - NO POSITION OPEN")
+            return []
         lst_trade_status = self.execute_trades(lst_closure)
 
         for trade in lst_trade_status:
