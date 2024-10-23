@@ -90,6 +90,8 @@ class StrategyBreakoutTradingGenericV3(rtstr.RealTimeStrategy):
         self.backup_grid = None
 
         self.self_execute_trade_recorder_not_active = True
+        # self.grid.activate_SLTP()
+        self.grid.desactivate_SLTP()
 
     def get_data_description(self):
         ds = {}
@@ -233,7 +235,7 @@ class StrategyBreakoutTradingGenericV3(rtstr.RealTimeStrategy):
                             f.write(df_to_save.to_string())  # Write full DataFrame to file
                             f.write("\n---\n")  # Add a separator line
                         except:
-                            print("toto")
+                            print("error print_debug_grid")
 
             # Update the backup after processing
             self.backup_grid = copy.deepcopy(self.grid.grid)
@@ -283,13 +285,11 @@ class StrategyBreakoutTradingGenericV3(rtstr.RealTimeStrategy):
 
         minBuyingSize = self.df_grid_buying_size.loc[self.df_grid_buying_size["symbol"] == self.symbol, "minBuyingSize"].values[0]
         dol_per_grid = self.grid_margin / self.nb_grid
-        size = dol_per_grid
+        self.set_breakout_grid_buying_size(dol_per_grid)
+        size = self.grid.get_min_size()
         if (self.get_grid_buying_min_size(self.symbol) <= (size / self.grid.get_max_price_in_grid())) \
                 and (size > minBuyingSize) and \
                 (cash >= self.grid_margin):
-
-            self.set_breakout_grid_buying_size(dol_per_grid)
-
             self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == self.symbol, "strategy_id"] = self.strategy_id
             self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == self.symbol, "buyingSize"] = size
             self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == self.symbol, "margin"] = self.grid_margin
@@ -364,6 +364,7 @@ class GridPosition():
         self.df_grid_string = ""
         self.abs = None
         self.closest = None
+        self.SLTP_activated = True
 
         self.previous_nb_open_positions = 0
 
@@ -400,6 +401,7 @@ class GridPosition():
         grid_break_out = {key: pd.DataFrame(columns=self.columns) for key in self.lst_trend}
         self.grid = {key: grid_break_out for key in [self.symbol]}
         self.max_position = 0
+        self.min_size = None
         for trend in self.lst_trend:
             self.grid[self.symbol][trend]["position"] = self.dct_lst_grid_values[trend]
             print(self.grid[self.symbol][trend]["position"].to_list())
@@ -420,8 +422,6 @@ class GridPosition():
                         "trigger_short", "trailer_short"]:
                 self.grid[self.symbol][trend][col] = False
 
-        print("toto")
-
     def log(self, msg, header="", attachments=[]):
         if self.zero_print:
             return
@@ -435,6 +435,20 @@ class GridPosition():
 
     def get_max_price_in_grid(self):
         return self.max_position
+
+    def activate_SLTP(self):
+        self.SLTP_activated = True
+
+    def desactivate_SLTP(self):
+        self.SLTP_activated = False
+
+    def get_min_size(self):
+        for trend in self.lst_trend:
+            if self.min_size is None:
+                self.min_size = min(self.grid[self.symbol][trend]["buying_size"].to_list())
+            else:
+                self.min_size = min(self.min_size, min(self.grid[self.symbol][trend]["buying_size"].to_list()))
+        return self.min_size
 
     def get_opposite_trend(self, trend):
         return "down" if trend == "up" else "up"
@@ -682,9 +696,10 @@ class GridPosition():
                 lst_order_long = self.get_order_trigger_list(symbol, df_grid, trend, lst_grid_free_spot_long)
                 lst_of_lst_order += lst_order_long
 
-        # if not self.SLTP_desactivated:
+
         lst_of_lst_order += self.lst_of_data_record
-        lst_of_lst_order += self.lst_cancel_order_sltp # CEDE to be confirmed
+        if self.SLTP_activated:
+            lst_of_lst_order += self.lst_cancel_order_sltp # CEDE to be confirmed
 
         return lst_of_lst_order
 
@@ -735,18 +750,17 @@ class GridPosition():
                 "trigger_type": "TRIGGER"
             }
             side = df_grid.loc[df_grid["grid_id"] == grid_id, 'side'].values[0]
-            if side == "trigger_long":
-                order_to_execute["type"] = "OPEN_LONG_ORDER"
+            # Assign the order type based on the side
+            order_to_execute["type"] = "OPEN_LONG_ORDER" if side == "trigger_long" else "OPEN_SHORT_ORDER"
+
+            if self.SLTP_activated:
                 if trend == "up":
-                    order_to_execute["SL"] = self.grid_high
+                    # Determine whether to set Stop-Loss (SL) or Take-Profit (TP)
+                    key = "SL" if side == "trigger_long" else "TP"
+                    order_to_execute[key] = self.grid_high
                 elif trend == "down":
-                    order_to_execute["TP"] = self.grid_low
-            elif side == "trigger_short":
-                order_to_execute["type"] = "OPEN_SHORT_ORDER"
-                if trend == "up":
-                    order_to_execute["TP"] = self.grid_high
-                elif trend == "down":
-                    order_to_execute["SL"] = self.grid_low
+                    key = "TP" if side == "trigger_long" else "SL"
+                    order_to_execute[key] = self.grid_low
 
             if "type" in order_to_execute:
                 order_to_execute["trigger_price"] = df_grid.loc[df_grid["grid_id"] == grid_id, 'position'].values[0]
@@ -882,8 +896,6 @@ class GridPosition():
                 self.lst_grid_free_spot_long = [grid_id for grid_id in lst_grid_free_spot_long if grid_id >= trigger_grid_id_min_long]
 
             self.nb_free_spot_long = len(self.lst_grid_free_spot_long)
-            if self.nb_free_spot_long > 0:
-                print("toto")
 
             # free_spot_short
             df_grid_free_spot_short = df_grid[condition_0
@@ -1084,7 +1096,10 @@ class GridPosition():
 
         combined_condition = (condition_sl | condition_tp) & condition_trend & condition_strategyid
 
-        lst_order_Ids_new_SL_TP = df_open_triggers.loc[combined_condition, 'orderId'].tolist()
+        if self.SLTP_activated:
+            lst_order_Ids_new_SL_TP = df_open_triggers.loc[combined_condition, 'orderId'].tolist()
+        else:
+            lst_order_Ids_new_SL_TP = []
 
         # Update strategyId for the SL condition
         df_open_triggers.loc[combined_condition, 'strategyId'] = self.strategy_id
