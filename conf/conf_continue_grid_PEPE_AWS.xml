@@ -11,7 +11,7 @@
                 trailer_global_delta_tp="0"
                 trailer_sl="0"
                 high_volatility="False"
-                path_strategy_param="./param_continue_breakout_PEPE_AWS.csv"
+                path_strategy_param="./param_continue_grid_PEPE_AWS.csv"
                 loggers="file=log"
         />
     </strategy>
@@ -20,11 +20,11 @@
                 fdp_url_id="gc1"
                 account="subfortest1"
                 symbols="./symbols_PEPE.csv"
-                reset_account="False"
+                reset_account="True"
                 loggers="file=log"
         />
     </broker>
-    <crag id="breakout_pepe"
+    <crag id="grid_pepe"
           botId="subfortest1"
           loggers="console"
     />

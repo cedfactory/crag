@@ -502,9 +502,6 @@ class GridPosition():
         tp_columns = [f"orderId_TP_{i}" for i in range(self.nb_position_limits)]
         self.stats["nb_open_tp"] = self.grid[self.grid[tp_columns].ne('empty').any(axis=1)].shape[0]
 
-        print(self.grid.to_string())  # CEDE DEBUG
-        print("\n") # CEDE DEBUG
-
     def confirm_orderId(self, symbol, grid_id_engaged, list_orderId):
         df_grid = self.grid
         lst_orderId_from_grid = df_grid.loc[df_grid['grid_id'] == grid_id_engaged, "lst_orderId"].values[0]
