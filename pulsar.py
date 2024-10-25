@@ -257,9 +257,10 @@ if __name__ == '__main__':
     if update_csv:
         with open(file_path, "w", newline="") as file:
             writer = csv.writer(file)
-            writer.writerow(["bot_id", "account_id", "message1_id", "message2_id", "message3_id", "message4_id"])
+            writer.writerow(["bot_id", "account_id", "symbols", "message1_id", "message2_id", "message3_id", "message4_id"])
             for agent in agents:
-                writer.writerow([agent.bot_id, agent.account_id, agent.message1_id, agent.message2_id, agent.message3_id, agent.message4_id])
+                symbols = "/".join(f"{crypto}:true" for crypto in agent.symbols)
+                writer.writerow([agent.bot_id, agent.account_id, symbols, agent.message1_id, agent.message2_id, agent.message3_id, agent.message4_id])
 
     while True:
         for agent in agents:
