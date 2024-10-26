@@ -1112,6 +1112,9 @@ class BrokerBitGet(broker.Broker):
             # Return None if no match is found
             return None, None, None
 
+    def is_empty_db(self):
+        return self.df_sltp_waiting_db.empty
+
     def _build_df_triggers(self, triggers):
         df_triggers = pd.DataFrame(columns=["planType", "symbol", "size", "side", "orderId", "orderType", "clientOid",
                                             "price", "triggerPrice", "triggerType", "marginMode",
@@ -1120,7 +1123,7 @@ class BrokerBitGet(broker.Broker):
         for i in range(len(triggers)):
             data = triggers[i]
             grid_id = self.get_gridId_from_orderId(data["orderId"])
-            if grid_id == None and not self.df_sltp_waiting_db.empty:
+            if grid_id == None and not self.is_empty_db():
                 grid_id, strategyId, orderId = self.get_gridId_from_sltp_waiting_db(data)
                 if not(grid_id is None
                        and strategyId is None
