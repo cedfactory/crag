@@ -1120,7 +1120,7 @@ class BrokerBitGet(broker.Broker):
         for i in range(len(triggers)):
             data = triggers[i]
             grid_id = self.get_gridId_from_orderId(data["orderId"])
-            if grid_id == None:
+            if grid_id == None and not self.df_sltp_waiting_db.empty:
                 grid_id, strategyId, orderId = self.get_gridId_from_sltp_waiting_db(data)
                 if not(grid_id is None
                        and strategyId is None
