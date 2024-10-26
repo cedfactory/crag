@@ -37,6 +37,9 @@ class BrokerBitGet(broker.Broker):
 
         self.lock_df_grid_id_match = threading.Lock()
         self.lock_place_trigger_order_v2 = threading.Lock()
+        self.lock_df_sltp_waiting_db_record = threading.Lock()
+        self.lock_df_sltp_waiting_db_get = threading.Lock()
+        self.lock_df_sltp_waiting_db_remove = threading.Lock()
 
         self.execute_timer = None
         self.iter_execute_trades = 0
@@ -46,16 +49,9 @@ class BrokerBitGet(broker.Broker):
         state = self.__dict__.copy()
         state.pop('lock_df_grid_id_match', None)
         state.pop('lock_place_trigger_order_v2', None)
-
-        if 'lock_df_grid_id_match' not in state:
-            print("lock_df_grid_id_match has been removed from the state.")
-        else:
-            print("ERROR lock_df_grid_id_match still in state")
-
-        if 'lock_place_trigger_order_v2' not in state:
-            print("lock_place_trigger_order_v2 has been removed from the state.")
-        else:
-            print("ERROR lock_place_trigger_order_v2 still in state")
+        state.pop('lock_df_sltp_waiting_db_record', None)
+        state.pop('lock_df_sltp_waiting_db_get', None)
+        state.pop('lock_df_sltp_waiting_db_remove', None)
 
         return state
 
@@ -63,6 +59,9 @@ class BrokerBitGet(broker.Broker):
         self.__dict__.update(state)
         self.lock_df_grid_id_match = threading.Lock()
         self.lock_place_trigger_order_v2 = threading.Lock()
+        self.lock_df_sltp_waiting_db_record = threading.Lock()
+        self.lock_df_sltp_waiting_db_get = threading.Lock()
+        self.lock_df_sltp_waiting_db_remove = threading.Lock()
 
     def authentication_required(fn):
         """decoration for methods that require authentification"""
@@ -1082,33 +1081,36 @@ class BrokerBitGet(broker.Broker):
         return df_open_orders
 
     def record_to_sltp_waiting_db(self, order):
-        self.df_sltp_waiting_db = pd.concat([self.df_sltp_waiting_db, pd.DataFrame([order])], ignore_index=True)
+        with self.lock_df_sltp_waiting_db_record:
+            self.df_sltp_waiting_db = pd.concat([self.df_sltp_waiting_db, pd.DataFrame([order])], ignore_index=True)
 
     def remove_orderId_from_sltp_waiting_db(self, order_id):
-        self.df_sltp_waiting_db = self.df_sltp_waiting_db[self.df_sltp_waiting_db['orderId'] != order_id]
-        self.df_sltp_waiting_db.reset_index(drop=True, inplace=True)
+        with self.lock_df_sltp_waiting_db_remove:
+            self.df_sltp_waiting_db = self.df_sltp_waiting_db[self.df_sltp_waiting_db['orderId'] != order_id]
+            self.df_sltp_waiting_db.reset_index(drop=True, inplace=True)
 
     def get_gridId_from_sltp_waiting_db(self, trigger):
-        if trigger['planType'] != 'profit_plan':
+        with self.lock_df_sltp_waiting_db_get:
+            if trigger['planType'] != 'profit_plan':
+                return None, None, None
+
+            # Filter rows in df_sltp_waiting_db that match the criteria
+            matching_rows = self.df_sltp_waiting_db[
+                (self.df_sltp_waiting_db['symbol_v2'] == trigger['symbol']) &
+                # (self.df_sltp_waiting_db['gross_size'] == float(trigger['size'])) &
+                (self.df_sltp_waiting_db['order_side'] == trigger['side']) &
+                (self.df_sltp_waiting_db['order_posSide'] == trigger['posSide']) &
+                (self.df_sltp_waiting_db['order_tradeSide'] == trigger['tradeSide']) &
+                (self.df_sltp_waiting_db['TP'] == float(trigger['triggerPrice'])) &
+                (trigger['planType'] == 'profit_plan')
+                ]
+
+            # If a match is found, return grid_id and strategy_id
+            if not matching_rows.empty:
+                return matching_rows.iloc[0]['grid_id'], matching_rows.iloc[0]['strategy_id'], trigger['orderId']
+
+            # Return None if no match is found
             return None, None, None
-
-        # Filter rows in df_sltp_waiting_db that match the criteria
-        matching_rows = self.df_sltp_waiting_db[
-            (self.df_sltp_waiting_db['symbol_v2'] == trigger['symbol']) &
-            # (self.df_sltp_waiting_db['gross_size'] == float(trigger['size'])) &
-            (self.df_sltp_waiting_db['order_side'] == trigger['side']) &
-            (self.df_sltp_waiting_db['order_posSide'] == trigger['posSide']) &
-            (self.df_sltp_waiting_db['order_tradeSide'] == trigger['tradeSide']) &
-            (self.df_sltp_waiting_db['TP'] == float(trigger['triggerPrice'])) &
-            (trigger['planType'] == 'profit_plan')
-            ]
-
-        # If a match is found, return grid_id and strategy_id
-        if not matching_rows.empty:
-            return matching_rows.iloc[0]['grid_id'], matching_rows.iloc[0]['strategy_id'], trigger['orderId']
-
-        # Return None if no match is found
-        return None, None, None
 
     def _build_df_triggers(self, triggers):
         df_triggers = pd.DataFrame(columns=["planType", "symbol", "size", "side", "orderId", "orderType", "clientOid",

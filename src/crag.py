@@ -986,11 +986,6 @@ class Crag:
         state = self.__dict__.copy()
         state.pop('lock_usdt_equity_thread', None)
 
-        if 'lock_usdt_equity_thread' not in state:
-            print("lock_usdt_equity_thread has been removed from the state.")
-        else:
-            print("ERROR lock_usdt_equity_thread still in state")
-
         return state
 
     def __setstate__(self, state):
