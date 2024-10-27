@@ -55,7 +55,7 @@ def generate_figure_limit_orders(df_account):
     df_filtered = df_filtered[df_filtered['limit_orders'].ne(df_filtered['limit_orders'].shift())].reset_index(drop=True)
 
     ax = plt.gca()
-    xfmt = mdates.DateFormatter("%d-%m-%Y %H:%M:%S.%f")
+    xfmt = mdates.DateFormatter("%Y-%m-%d %H:%M")
     ax.xaxis.set_major_formatter(xfmt)
 
     # limit orders
@@ -83,6 +83,7 @@ def generate_figure_limit_orders(df_account):
     plt.scatter(xBuy, yBuy, s=400, marker="_", color="blue", label="Open short")
 
     plt.legend()
+    plt.xticks(rotation=25)
 
     plt.savefig("pulsar_limit_orders.png")
     plt.close(fig)
@@ -100,14 +101,18 @@ def generate_figure_triggers(df_account):
     df_filtered = df_filtered[df_filtered['triggers'].ne(df_filtered['triggers'].shift())].reset_index(drop=True)
 
     ax = plt.gca()
-    xfmt = mdates.DateFormatter("%d-%m-%Y %H:%M:%S.%f")
+    xfmt = mdates.DateFormatter("%Y-%m-%d %H:%M")
     ax.xaxis.set_major_formatter(xfmt)
 
     # limit orders
-    xSell = []
-    ySell = []
-    xBuy = []
-    yBuy = []
+    xNPSell = []
+    yNPSell = []
+    xNPBuy = []
+    yNPBuy = []
+    xPPSell = []
+    yPPSell = []
+    xPPBuy = []
+    yPPBuy = []
     for index, row in df_filtered.iterrows():
         timestamp = datetime.fromtimestamp(float(row["timestamp"]))
 
@@ -118,16 +123,28 @@ def generate_figure_triggers(df_account):
             df_triggers["triggerPrice"] = df_triggers["triggerPrice"].astype("Float64")
             if isinstance(df_triggers, pd.DataFrame):
                 for index2, row2 in df_triggers.iterrows():
-                    if row2["side"] == "sell":
-                        xSell.append(timestamp)
-                        ySell.append(float(row2["triggerPrice"]))
-                    elif row2["side"] == "buy":
-                        xBuy.append(timestamp)
-                        yBuy.append(float(row2["triggerPrice"]))
-    plt.scatter(xSell, ySell, s=400, marker="_", color="red", label="sell")
-    plt.scatter(xBuy, yBuy, s=400, marker="_", color="blue", label="buy")
+                    if row2["planType"] == "normal_plan":
+                        if row2["side"] == "sell":
+                            xNPSell.append(timestamp)
+                            yNPSell.append(float(row2["triggerPrice"]))
+                        elif row2["side"] == "buy":
+                            xNPBuy.append(timestamp)
+                            yNPBuy.append(float(row2["triggerPrice"]))
+                    elif row2["planType"] == "profit_plan":
+                        if row2["side"] == "sell":
+                            xPPSell.append(timestamp)
+                            yPPSell.append(float(row2["triggerPrice"]))
+                        elif row2["side"] == "buy":
+                            xPPBuy.append(timestamp)
+                            yPPBuy.append(float(row2["triggerPrice"]))
+
+    plt.scatter(xNPSell, yNPSell, s=400, marker="_", color="#4A90E2", label="Normal plan sell")
+    plt.scatter(xNPBuy, yNPBuy, s=400, marker="_", color="#FF8C42", label="Normal plan buy")
+    plt.scatter(xPPSell, yPPSell, s=400, marker="_", color="#A3D977", label="Profit plan sell")
+    plt.scatter(xPPBuy, yPPBuy, s=400, marker="_", color="#D977A3", label="Profit plan buy")
 
     plt.legend()
+    plt.xticks(rotation=25)
 
     plt.savefig("pulsar_triggers.png")
     plt.close(fig)
