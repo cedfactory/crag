@@ -436,9 +436,9 @@ class GridPosition():
 
             order_id_list_TP = self.current_state[self.grid_side]["lst_TP_orders_order_id_side"]
 
-            tp_columns = [f"orderId_TP_{i}" for i in range(self.nb_position_limits)]
-            all_empty_rows = self.grid[tp_columns].apply(lambda row: (row == 'empty').all(), axis=1)
-            before_update = all_empty_rows.sum()
+            # tp_columns = [f"orderId_TP_{i}" for i in range(self.nb_position_limits)]
+            # all_empty_rows = self.grid[tp_columns].apply(lambda row: (row == 'empty').all(), axis=1)
+            # before_update = all_empty_rows.sum()
 
             for i in range(self.nb_position_limits):
                 column_name = f"orderId_TP_{i}"
@@ -446,12 +446,9 @@ class GridPosition():
                 self.grid[column_name] = self.grid[column_name].apply(lambda x: "empty" if x not in order_id_list_TP else x
                 )
 
-            tp_columns = [f"orderId_TP_{i}" for i in range(self.nb_position_limits)]
-            any_not_empty_rows = self.grid[tp_columns].apply(lambda row: (row != 'empty').any(), axis=1)
-            after_update = any_not_empty_rows.sum()
-
-            if before_update - after_update > 0:
-                self.stats["total_closed"] += before_update - after_update
+            # tp_columns = [f"orderId_TP_{i}" for i in range(self.nb_position_limits)]
+            # any_not_empty_rows = self.grid[tp_columns].apply(lambda row: (row != 'empty').any(), axis=1)
+            # after_update = any_not_empty_rows.sum()
 
             for _, row in df_open_triggers_side.iterrows():
                 order_id = row['orderId']
@@ -468,6 +465,8 @@ class GridPosition():
                             self.grid.loc[index, column_name] = order_id
                             self.stats["total_triggered"] += 1
                             break  # Exit the loop once the order_id is added
+
+            self.stats["total_closed"] = self.stats["total_triggered"] - self.stats["nb_open_tp"]
         else:
             self.current_state[self.grid_side]["lst_TP_orders_order_id"] = []
             self.current_state[self.grid_side]["lst_TP_orders_order_id_side"] = []
