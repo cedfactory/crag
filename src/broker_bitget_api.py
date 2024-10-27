@@ -1227,7 +1227,13 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         self.df_account_open_position = self.get_open_position()
         self.df_account_open_position.rename(columns={'usdEquity': 'usdtEquity', 'total': 'size'}, inplace=True)
         self.df_account_open_position['equity'] = self.df_account_open_position['usdtEquity']
-        self.df_account_assets = pd.concat([df_account_assets, self.df_account_open_position])
+        # self.df_account_assets = pd.concat([df_account_assets, self.df_account_open_position])
+        if not self.df_account_open_position.empty:
+            # Concatenate the DataFrames
+            self.df_account_assets = pd.concat([df_account_assets, self.df_account_open_position])
+        else:
+            # If df_account_open_position is empty, just assign df_account_assets
+            self.df_account_assets = df_account_assets
         self.df_account_assets.reset_index(inplace=True, drop=True)
         del df_account_assets
 
