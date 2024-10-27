@@ -195,7 +195,9 @@ class Crag:
         for iter_logger in self.loggers:
             iter_logger.log(msg, header="["+self.id+"] "+header, author=type(self).__name__, attachments=attachments)
 
-    def log_discord(self, msg, header="", attachments=[]):
+    def log_discord(self, msg, header="", attachments=None):
+        if attachments is None:
+            attachments = []
         if self.logger_discord:
             self.logger_discord.log(msg, header="["+self.id+"] "+header, author=type(self).__name__, attachments=attachments)
 

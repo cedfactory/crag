@@ -341,6 +341,10 @@ class LoggerDiscordBot(ILogger):
             result.raise_for_status()
         except requests.exceptions.HTTPError as err:
             print(err)
+            print("msg :", msg)
+            print("header :", header)
+            print("author :", author)
+            print("attachments :", attachments)
         else:
             msg = "Payload delivered successfully, code {}.".format(result.status_code)
             #print(msg)
