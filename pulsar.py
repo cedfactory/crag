@@ -1,12 +1,12 @@
 import os, sys, platform
 from src import broker_bitget_api, logger, utils
-from src.toolbox import graph_helper
 from rich import print
 from datetime import datetime, timedelta
 import time
 import json
 import csv
 import pandas as pd
+import numpy as np
 
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
@@ -45,6 +45,67 @@ def encode_triggers(df_triggers):
     #df = pd.read_json(json_data)
     #print(df)
     return str
+
+def generate_figure_usdt_equity(agent, filename):
+    now = get_now()
+    timestamp_begin = (now - timedelta(hours=delta_window)).timestamp()
+    df = agent.df_account.loc[agent.df_account["timestamp"] > timestamp_begin]
+
+    fig = plt.figure(figsize=(10, 4))
+
+    ax = plt.gca()
+    xfmt = mdates.DateFormatter('%d-%m-%Y')
+    ax.xaxis.set_major_formatter(xfmt)
+
+    ymin = []
+    ymax = []
+
+    if df["timestamp"].dtype == np.float64 or df["timestamp"].dtype == np.int64:
+        dates = [datetime.fromtimestamp(ts) for ts in df["timestamp"]]
+    else:
+        dates = df["timestamp"]
+    datenums = mdates.date2num(dates)
+
+    for column_name in ["usdt_equity"]:
+        if not column_name:
+            continue
+        y = df[column_name]
+        ymin.append(min(y))
+        ymax.append(max(y))
+        column_label = "USDT equity"
+        ax.plot(datenums, y, label=column_label)
+        plt.fill_between(datenums, y, alpha=0.3)
+
+
+    y_min = min(ymin)
+    y_max = max(ymax)
+    margin = 0.1*(y_max-y_min)
+    y_min = y_min - margin
+    y_max = y_max + margin
+    if y_min == y_max:
+        y_max = y_min + 10
+    ax.set_ylim([y_min, y_max])
+
+    plt.title(agent.account_id)
+    plt.legend()
+    plt.xticks(rotation=25)
+    plt.subplots_adjust(bottom=0.2)
+
+    for symbol in agent.symbols:
+        start_time = (now - timedelta(hours=delta_window)).timestamp() * 1000
+        candles = agent.broker.fetch_historical_data_multithreaded(symbol, "5m", start_time, now.timestamp() * 1000, 5)
+        if candles["timestamp"].dtype == np.float64 or candles["timestamp"].dtype == np.int64:
+            dates = [datetime.fromtimestamp(ts/1000) for ts in candles["timestamp"]]
+        else:
+            dates = candles["timestamp"]
+        datenums = mdates.date2num(dates)
+        ax2 = ax.twinx()
+        ax2.plot(datenums, candles["close"], color="green", label=symbol)
+        ax2.set_ylabel(symbol, color="green")
+        ax2.tick_params(axis='y', labelcolor="green")
+
+    plt.savefig(filename)
+    plt.close(fig)
 
 def generate_figure_limit_orders(df_account):
     fig = plt.figure(figsize=(10, 15))
@@ -320,18 +381,8 @@ if __name__ == '__main__':
 
             # message 4
             extra["message_id"] = agent.message4_id
-            timestamp_begin = (now - timedelta(hours=delta_window)).timestamp()
-            df_filtered = agent.df_account.loc[agent.df_account["timestamp"] > timestamp_begin]
 
-            fig = graph_helper.export_graph("pulsar_history.png", agent.account_id,
-                                      [{"dataframe": df_filtered, "plots": [{"column": "usdt_equity", "label": "USDT equity"}]}])
-
-            for symbol in agent.symbols:
-                now = get_now()
-                start_time = (now - timedelta(hours=delta_window)).timestamp() * 1000
-                candles = agent.broker.fetch_historical_data_multithreaded(symbol, "5m", start_time, now.timestamp() * 1000, 5)
-
-            plt.close(fig)
+            generate_figure_usdt_equity(agent, "pulsar_history.png")
 
             response = agent.bot.log(message, attachments=["pulsar_history.png"], extra=extra)
             if response and "ok" in response and response["ok"] and "result" in response:
