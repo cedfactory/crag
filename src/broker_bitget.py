@@ -1008,10 +1008,11 @@ class BrokerBitGet(broker.Broker):
             del condition
             return grid_id
         else:
-            msg = "ERROR: BROKER ID NOT FOUND" + "\n"
-            msg += "ORDER ID: " + str(orderId) + "\n"
-            self.log_trade = self.log_trade + msg.upper()
-            del msg
+            # CEDE USED FOR DEBUG
+            # msg = "ERROR: BROKER ID NOT FOUND" + "\n"
+            # msg += "ORDER ID: " + str(orderId) + "\n"
+            # self.log_trade = self.log_trade + msg.upper()
+            # del msg
             del condition
             return None
 
