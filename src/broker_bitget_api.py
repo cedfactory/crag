@@ -1277,7 +1277,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                     marketPrice = 1.0
                 self.df_account_assets.at[idx, 'quoteCoin'] = coin
                 self.df_account_assets.at[idx, 'baseCoin'] = baseCoin
-                self.df_account_assets.at[idx, 'size'] = self.df_account_assets.at[idx, 'available']
+                self.df_account_assets.at[idx, 'size'] = float(self.df_account_assets.at[idx, 'available'])
                 self.df_account_assets.at[idx, 'actualPrice'] = marketPrice
 
         self.df_account_assets['symbol_broker'] = self.df_account_assets['symbol']
