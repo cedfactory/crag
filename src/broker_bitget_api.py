@@ -353,25 +353,26 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             self.plan_history_list = []
             self.add_plan_history(df_disappeared)
 
-            if self.plan_history_list:
-                df_plan_history = pd.concat(self.plan_history_list, ignore_index=True)
-                self.plan_history_list = []
+            if len(self.plan_history_list) == len(df_disappeared):
+                if self.plan_history_list:
+                    df_plan_history = pd.concat(self.plan_history_list, ignore_index=True)
+                    self.plan_history_list = []
 
-                df_plan_history = df_plan_history.sort_values(by='orderId')
-                df_disappeared = df_disappeared.sort_values(by='orderId')
+                    df_plan_history = df_plan_history.sort_values(by='orderId')
+                    df_disappeared = df_disappeared.sort_values(by='orderId')
 
-                if 'executeOrderId' in df_plan_history.columns and 'planStatus' in df_plan_history.columns:
-                    df_disappeared['executeOrderId'] = df_plan_history['executeOrderId'].tolist()
-                    df_disappeared['planStatus'] = df_plan_history['planStatus'].tolist()
+                    if 'executeOrderId' in df_plan_history.columns and 'planStatus' in df_plan_history.columns:
+                        df_disappeared['executeOrderId'] = df_plan_history['executeOrderId'].tolist()
+                        df_disappeared['planStatus'] = df_plan_history['planStatus'].tolist()
 
-                self.df_triggers_previous = df_triggers
-                df_triggers = pd.concat([df_triggers, df_disappeared], ignore_index=True)
+                    self.df_triggers_previous = df_triggers
+                    df_triggers = pd.concat([df_triggers, df_disappeared], ignore_index=True)
 
-                df_filtered = df_triggers[(df_triggers['planStatus'] == 'executed') & (df_triggers['executeOrderId'] != '')]
-                if len(df_filtered) > 0:
-                    df_filtered.apply(self.apply_func, axis=1)
-            else:
-                self.df_triggers_previous = df_triggers
+                    df_filtered = df_triggers[(df_triggers['planStatus'] == 'executed') & (df_triggers['executeOrderId'] != '')]
+                    if len(df_filtered) > 0:
+                        df_filtered.apply(self.apply_func, axis=1)
+                else:
+                    self.df_triggers_previous = df_triggers
         else:
             self.df_triggers_previous = df_triggers
 
