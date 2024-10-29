@@ -335,11 +335,8 @@ class LoggerDiscordBot(ILogger):
                 'file': (attachments[0], open(attachments[0], 'rb')),
             }
         # result = requests.post(self.webhook, json = data, files = files)
-        with requests.post(self.webhook, json = data, files = files) as result:
-            pass
-        result.close()
         try:
-            result = requests.post(self.webhook, json = data, files = files)
+            result = requests.post(self.webhook, json=data, files=files)
             result.raise_for_status()
             result.close()
         except requests.exceptions.HTTPError as err:
@@ -351,7 +348,6 @@ class LoggerDiscordBot(ILogger):
         else:
             msg = "Payload delivered successfully, code {}.".format(result.status_code)
             #print(msg)
-        del result
         del files
         del data
         locals().clear()
