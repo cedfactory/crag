@@ -19,6 +19,7 @@ import os.path
 
 # for LoggerDiscordBot
 import requests
+from requests.exceptions import ReadTimeout
 import os
 
 
@@ -338,7 +339,9 @@ class LoggerDiscordBot(ILogger):
             pass
         result.close()
         try:
+            result = requests.post(self.webhook, json = data, files = files)
             result.raise_for_status()
+            result.close()
         except requests.exceptions.HTTPError as err:
             print(err)
             print("msg :", msg)
