@@ -25,7 +25,7 @@
         />
     </broker>
     <crag id="breakout_pepe"
-          botId="subfortest1"
+          botId="ayato_sub1"
           loggers="console"
     />
 </configuration>
