@@ -1,2 +1,2 @@
 ﻿id,name,symbol,type,grid_high,grid_low,percent_per_grid,nb_grid,nb_position_limits,grid_margin
-breakout_1,StrategyBreakoutTradingGenericV3,PEPE,long,0.0000128,0.0000065,0.5,3,1,1500
+breakout_1,StrategyBreakoutTradingGenericV3,PEPE,long,0.0000128,0.0000065,0.5,3,1,200
