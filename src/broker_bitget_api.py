@@ -89,6 +89,8 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             self.df_market.drop( self.df_market[self.df_market['quoteCoin'] != 'USDT'].index, inplace=True)
             self.df_market.reset_index(drop=True)
             #self.log('list symbols perpetual/USDT: {}'.format(self.df_market["baseCoin"].tolist()))
+        else:
+            exit(2956)
 
         # reset account
         if self.reset_account:
@@ -1845,3 +1847,27 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         # sorted_data = [unique_data[key] for key in sorted(unique_data.keys(), key=int)]
         sorted_data = all_data.sort_values(by='timestamp').reset_index(drop=True)
         return sorted_data
+
+    # Function to get position history
+    def get_position_history(self, symbol, start_time, end_time, product_type='umcbl'):
+
+        response = self.positionApi.history_position(self._get_symbol(symbol),
+                                                     product_type,
+                                                     utils.to_unix_millis(start_time),
+                                                     utils.to_unix_millis(end_time))
+
+        # Process response
+        if response["msg"] == "success" and "data" in response and "list" in response["data"]:
+            df = pd.DataFrame(response["data"]["list"])
+
+            # Calculating total profit and number of positions
+            df['pnl'] = df['pnl'].astype(float)
+            df['netProfit'] = df['netProfit'].astype(float)
+            pnl = df['pnl'].sum()
+            netProfit = df['netProfit'].sum()
+            num_positions = len(df)
+
+            return pnl, netProfit, num_positions, df
+        else:
+            print(f"Error: {response.status_code}, {response.text}")
+            return None, None, None, None

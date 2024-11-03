@@ -43,3 +43,16 @@ class PositionApi(Client):
             return self._request_with_params(GET, MIX_ACCOUNT_V1_URL + '/account', params)
         else:
             return "pls check args"
+
+    def history_position(self, symbol, product_type, start_time, end_time):
+        if symbol:
+            params = {
+                "symbol": symbol,
+                'productType': product_type,
+                'startTime': start_time,
+                'endTime': end_time,
+                'pageSize': 100  # Number of records to fetch
+            }
+            return self._request_with_params(GET, '/api/mix/v1/position/history-position', params)
+        else:
+            return "pls check args"

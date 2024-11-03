@@ -13,6 +13,10 @@ import random
 import string
 import math
 
+
+def to_unix_millis(dt):
+    return int(dt.timestamp() * 1000)
+
 def dict_to_string(d):
     return '\n'.join(f"{key}: {value}" for key, value in d.items())
 
