@@ -1859,8 +1859,8 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         # Process response
         if response["msg"] == "success" and "data" in response and "list" in response["data"]:
             df = pd.DataFrame(response["data"]["list"])
-            df['ctime'] = pd.to_datetime(df['ctime'], unit='ms')
-            df['utime'] = pd.to_datetime(df['utime'], unit='ms')
+            #df['ctime'] = pd.to_datetime(df['ctime'], unit='ms')
+            #df['utime'] = pd.to_datetime(df['utime'], unit='ms')
 
             # Filter out rows where either 'ctime' or 'utime' is before start_time
             # df = df[(df['ctime'] >= start_time) & (df['utime'] >= start_time)]  # CEDE Not sure
