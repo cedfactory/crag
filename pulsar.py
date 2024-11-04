@@ -1,5 +1,6 @@
 import os, sys, platform
 from src import broker_bitget_api, logger, utils
+from src.toolbox import graph_helper
 from rich import print
 from datetime import datetime, timedelta
 import time
@@ -218,6 +219,7 @@ class Agent:
         self.message2_id = "-1"
         self.message3_id = "-1"
         self.message4_id = "-1"
+        self.message5_id = "-1"
 
 def _usage():
     usage = "pulsar <pulsar.csv>"
@@ -245,6 +247,7 @@ if __name__ == '__main__':
                     agent.message2_id = row[4].strip()
                     agent.message3_id = row[5].strip()
                     agent.message4_id = row[6].strip()
+                    agent.message5_id = row[7].strip()
 
                     # Parse the symbols_field to extract symbols with True status
                     active_symbols = []
@@ -332,6 +335,14 @@ if __name__ == '__main__':
             except Exception as e:
                 console.log("Problem while sending message with " + agent.bot_id)
 
+        if agent.message5_id == "-1":
+            response = agent.bot.log("grid", attachments=["pulsar.png"])
+            try:
+                agent.message5_id = str(response["result"]["message_id"])
+                update_csv = True
+            except Exception as e:
+                console.log("Problem while sending message with " + agent.bot_id)
+
     if update_csv:
         with open(file_path, "w", newline="") as file:
             writer = csv.writer(file)
@@ -355,6 +366,10 @@ if __name__ == '__main__':
 
             current_state = agent.broker.get_current_state(agent.symbols)
 
+            start_time = datetime(2024, 10, 28, 0, 0)  # October 29, 2024 at 18:00
+            end_time = datetime.now()
+            pnl, net_profit, num_positions, df_positions = agent.broker.get_position_history("PEPE", start_time, end_time)
+
             # save new data
             str_limit_orders = ""
             if not current_state["open_orders"].empty:
@@ -375,7 +390,11 @@ if __name__ == '__main__':
             extra = {}
             if agent.message1_id != "-1":
                 extra["message_id"] = agent.message1_id
-            message = current_time + "\n" + "<b>" + agent.broker.account["id"] + "</b>" + " : $ " + usdt_equity
+            message = current_time + "\n" + "<b>" + agent.broker.account["id"] + "</b>" + "\n"
+            message += "👉 usdt equity : $" + usdt_equity + "\n"
+            message += "👉 pnl : " + str(utils.KeepNDecimals(pnl, 2)) + "\n"
+            message += "👉 net profit : " + str(utils.KeepNDecimals(net_profit, 2)) + "\n"
+            message += "👉 # positions : " + str(num_positions)
 
             response = agent.bot.log(message, extra=extra)
 
@@ -402,5 +421,16 @@ if __name__ == '__main__':
             extra["message_id"] = agent.message3_id
             message = current_time + "\n" + "<b>" + agent.broker.account["id"] + "</b>" + " : triggers"
             response = agent.bot.log(message, attachments=["pulsar_triggers.png"], extra=extra)
+
+            # message 5
+            # Fetch OHLCV data from the specified start date
+            df = graph_helper.get_historical_ohlcv_2("PEPEUSDT", interval="1h", start_date="2024-10-29 18:00")
+
+            # Plot with mplfinance
+            graph_helper.plot_ohlcv_and_line_on_first_value("PEPE_history.png", df, "PEPE")
+
+            extra["message_id"] = agent.message5_id
+            message = "PEPE"
+            response = agent.bot.log(message, attachments=["PEPE_history.png"], extra=extra)
 
         time.sleep(1)  # 5min
