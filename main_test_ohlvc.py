@@ -81,7 +81,7 @@ def plot_with_mplfinance(df):
 
 
 # Usage
-symbol = 'BTCUSDT'  # Replace with the desired coin pair
+symbol = 'PEPEUSDT'  # Replace with the desired coin pair
 interval = '1h'  # 1-hour interval
 start_date = '2024-10-29 18:00'  # Start date and time for fetching data
 
