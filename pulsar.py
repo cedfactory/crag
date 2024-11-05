@@ -287,7 +287,7 @@ if __name__ == '__main__':
         params = {"exchange": "bitget", "account": account_id,
                   "reset_account": False, "reset_account_orders": False, "zero_print": False}
         agent.broker = broker_bitget_api.BrokerBitGetApi(params)
-        if agent.broker == None:
+        if agent.broker is None:
             console.log("💥 Broker {} failed".format(account_id))
             exit(1)
         console.log("Account {} initialized".format(account_id))
@@ -385,6 +385,13 @@ if __name__ == '__main__':
                 float(usdt_equity),
                 str_limit_orders,
                 str_triggers]
+
+            # filter to avoid to store too many data
+            now = get_now()
+            timestamp_begin = (now - timedelta(hours=delta_window)).timestamp()
+            agent.df_account.loc[agent.df_account["timestamp"] < timestamp_begin, "limit_orders"] = ""
+            agent.df_account.loc[agent.df_account["timestamp"] < timestamp_begin, "triggers"] = ""
+
             agent.df_account.to_csv(agent.datafile, index=False)
 
             extra = {}
