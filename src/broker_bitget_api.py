@@ -1859,6 +1859,9 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         # Process response
         if response["msg"] == "success" and "data" in response and "list" in response["data"]:
             df = pd.DataFrame(response["data"]["list"])
+            if not isinstance(df, pd.DataFrame) or not df.columns.isin(["pnl", "netProfit"]).any():
+                print("[get_position_history] df : ", df)
+                return None, None, None, None
             #df['ctime'] = pd.to_datetime(df['ctime'], unit='ms')
             #df['utime'] = pd.to_datetime(df['utime'], unit='ms')
 

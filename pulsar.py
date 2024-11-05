@@ -392,9 +392,10 @@ if __name__ == '__main__':
                 extra["message_id"] = agent.message1_id
             message = current_time + "\n" + "<b>" + agent.broker.account["id"] + "</b>" + "\n"
             message += "👉 usdt equity : $" + usdt_equity + "\n"
-            message += "👉 pnl : " + str(utils.KeepNDecimals(pnl, 2)) + "\n"
-            message += "👉 net profit : " + str(utils.KeepNDecimals(net_profit, 2)) + "\n"
-            message += "👉 # positions : " + str(num_positions)
+            if pnl and net_profit and num_positions:
+                message += "👉 pnl : " + str(utils.KeepNDecimals(pnl, 2)) + "\n"
+                message += "👉 net profit : " + str(utils.KeepNDecimals(net_profit, 2)) + "\n"
+                message += "👉 # positions : " + str(num_positions)
 
             response = agent.bot.log(message, extra=extra)
 
