@@ -433,10 +433,10 @@ if __name__ == '__main__':
             response = agent.bot.log(message, attachments=["pulsar_triggers.png"], extra=extra)
 
             # message 5
-            if len(agent.symbols) > 0:
+            if len(agent.symbols) > 0 and agent.start_date != "":
                 # Fetch OHLCV data from the specified start date
                 symbol = agent.symbols[0]
-                df = graph_helper.get_historical_ohlcv_2(symbol + "USDT", interval="1h", start_date=agent.start_date)
+                df = graph_helper.get_historical_ohlcv_2(symbol + "USDT", start_date=agent.start_date, interval="1h")
 
                 # Plot with mplfinance
                 graph_helper.plot_ohlcv_and_line_on_first_value("symbol_history.png", df, symbol)
