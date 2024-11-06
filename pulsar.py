@@ -243,11 +243,12 @@ if __name__ == '__main__':
                     agent.bot_id = row[0].strip()
                     agent.account_id = row[1].strip()
                     symbols_field = row[2].strip()
-                    agent.message1_id = row[3].strip()
-                    agent.message2_id = row[4].strip()
-                    agent.message3_id = row[5].strip()
-                    agent.message4_id = row[6].strip()
-                    agent.message5_id = row[7].strip()
+                    agent.start_date = row[3].strip()
+                    agent.message1_id = row[4].strip()
+                    agent.message2_id = row[5].strip()
+                    agent.message3_id = row[6].strip()
+                    agent.message4_id = row[7].strip()
+                    agent.message5_id = row[8].strip()
 
                     # Parse the symbols_field to extract symbols with True status
                     active_symbols = []
@@ -258,6 +259,7 @@ if __name__ == '__main__':
                             if status.strip().lower() == 'true':
                                 active_symbols.append(symbol.strip())
                     agent.symbols = active_symbols
+
                     agents.append(agent)
         else:
             _usage()
@@ -431,14 +433,16 @@ if __name__ == '__main__':
             response = agent.bot.log(message, attachments=["pulsar_triggers.png"], extra=extra)
 
             # message 5
-            # Fetch OHLCV data from the specified start date
-            df = graph_helper.get_historical_ohlcv_2("PEPEUSDT", interval="1h", start_date="2024-10-29 18:00")
+            if len(agent.symbols) > 0:
+                # Fetch OHLCV data from the specified start date
+                symbol = agent.symbols[0]
+                df = graph_helper.get_historical_ohlcv_2(symbol + "USDT", interval="1h", start_date=agent.start_date)
 
-            # Plot with mplfinance
-            graph_helper.plot_ohlcv_and_line_on_first_value("PEPE_history.png", df, "PEPE")
+                # Plot with mplfinance
+                graph_helper.plot_ohlcv_and_line_on_first_value("symbol_history.png", df, symbol)
 
-            extra["message_id"] = agent.message5_id
-            message = "PEPE"
-            response = agent.bot.log(message, attachments=["PEPE_history.png"], extra=extra)
+                extra["message_id"] = agent.message5_id
+                message = symbol + " since " + agent.start_date
+                response = agent.bot.log(message, attachments=["symbol_history.png"], extra=extra)
 
         time.sleep(1)  # 5min
