@@ -442,7 +442,9 @@ if __name__ == '__main__':
                 graph_helper.plot_ohlcv_and_line_on_first_value("symbol_history.png", df, symbol)
 
                 extra["message_id"] = agent.message5_id
-                message = symbol + " since " + agent.start_date
+                d_start_time = datetime.strptime(agent.start_date, '%Y-%m-%d %H:%M')
+                duration = (get_now() - d_start_time).days
+                message = symbol + " since " + agent.start_date + " (" + str(duration) + "d)"
                 response = agent.bot.log(message, attachments=["symbol_history.png"], extra=extra)
 
         time.sleep(1)  # 5min
