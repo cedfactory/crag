@@ -31,7 +31,7 @@ def get_historical_ohlc_data(symbol, past_days=None, interval=None):
 
     return D
 
-def get_historical_ohlcv_2(symbol, interval='1h', start_date='2024-10-29 18:00'):
+def get_historical_ohlcv_2(symbol, start_date, interval='1h'):
     """
     Fetch OHLCV data for a specific symbol and interval, starting from a specified date and time.
 

@@ -130,15 +130,20 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         self.failure += 1
         now = datetime.now()
         current_time = now.strftime("%H:%M:%S")
-        self.log(" current time = " + str(current_time) + " - failure:  " + function + "  - attempt: " + str(n_attempts))
+        self.log("💥 !!!!! Failure on: " + function)
+        self.log("current time = " + str(current_time) + "  - attempt: " + str(n_attempts))
         self.log("failure: " + str(self.failure) + " - success: " + str(self.success) + " - percentage failure: " + str(self.failure / (self.success + self.failure) * 100))
 
-        if hasattr(e, "content"):
-            content = e.content.decode('utf-8')
+        if hasattr(e, "message"):
+            message = e.message
+            self.log("message: " + message)
+
+        if hasattr(e, "response") and hasattr(e.response, "content"):
+            content = e.response.content.decode('utf-8')
             dict_content = json.loads(content)
             dict_content_as_str = ' - '.join(f'{key}: {value}' for key, value in dict_content.items())
 
-            self.log("msg: " + json.dumps(dict_content_as_str))
+            self.log("content: " + json.dumps(dict_content_as_str))
 
     def _authentification(self):
         return self.marketApi and self.accountApi and  self.positionApi and self.orderApi

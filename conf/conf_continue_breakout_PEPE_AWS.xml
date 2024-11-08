@@ -4,7 +4,7 @@
                 sl="0"
                 tp="0"
                 global_sl="0"
-                global_tp="33"
+                global_tp="0"
                 trailer_tp="0"
                 trailer_delta_tp="0"
                 trailer_global_tp="0"
@@ -25,7 +25,7 @@
         />
     </broker>
     <crag id="breakout_pepe"
-          botId="subfortest3"
+          botId="ayato_sub1"
           loggers="console"
     />
 </configuration>

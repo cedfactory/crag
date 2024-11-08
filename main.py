@@ -125,7 +125,16 @@ def crag_reboot(picklefilename):
     bot.export_status() # DEBUG CEDE
 
 def check_broker():
-    params = {"exchange": "bitget", "account": "bitget_ayato", "reset_account": False}
+    symbols = {
+        "symbol": ["BTC", "XRP", "ETH", "SOL", "PEPE"],
+        "leverage_long": [0, 0, 0, 0, 0],
+        "leverage_short": [0, 0, 0, 0, 0]
+    }
+    params = {"exchange": "bitget",
+              "account": "bitget_cl1",
+              "symbols": symbols,
+              "loggers": "file=log;console",
+              "reset_account": False}
     my_broker = broker_bitget_api.BrokerBitGetApi(params)
     my_logger = logger.LoggerConsole()
 
@@ -133,6 +142,15 @@ def check_broker():
     value = my_broker._get_coin("XRPUSDT_UMCBL")
     my_logger.log_time_stop("get_coin")
     print(value)
+
+    mytrade = {
+        "symbol": "BTC",
+        "gross_size": 0.00000333,
+        "type": "open_long"
+    }
+    #mytrade = my_broker.execute_order(mytrade)
+    print(mytrade)
+
 
 def check_fdp():
     fdp_url = settings_helper.get_fdp_url_info("gc1").get("url", None)
