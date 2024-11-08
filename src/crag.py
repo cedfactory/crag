@@ -849,7 +849,7 @@ class Crag:
                 or self.rtstr.condition_for_global_trailer_TP(self.total_SL_TP_percent) \
                 or self.rtstr.condition_for_global_trailer_SL(self.total_SL_TP_percent) \
                 or self.rtstr.condition_for_max_drawdown_SL(self.actual_drawdown_percent):
-            msg = "reset - total SL TP"
+            msg = "reset - total SL TP\n"
             msg += "total SL TP: ${} / %{}\n".format(utils.KeepNDecimals(self.total_SL_TP, 2),
                                                      utils.KeepNDecimals(self.total_SL_TP_percent, 2))
             msg += "max drawdown: ${} / %{}\n".format(utils.KeepNDecimals(self.drawdown, 2),

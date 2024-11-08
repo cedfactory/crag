@@ -25,8 +25,6 @@ class RealTimeStrategy(metaclass=ABCMeta):
         self.trigger_global_SL = False
         self.safety_TP = 100
         self.safety_SL = -30
-        self.global_safety_TP = 100
-        self.global_safety_SL = -30
         self.trailer_TP = 0
         self.trailer_delta_TP = 0
         self.trigger_trailer_TP = False
@@ -653,9 +651,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
 
     def condition_for_global_SLTP(self, global_unrealizedPL):
         return ((self.global_TP != 0) and (global_unrealizedPL >= self.global_TP)) \
-               or ((self.global_SL != 0) and (global_unrealizedPL <= self.global_SL)) \
-               or ((self.global_safety_TP != 0) and (global_unrealizedPL >= self.global_safety_TP)) \
-               or ((self.global_safety_SL != 0) and (global_unrealizedPL <= self.global_safety_SL))
+               or ((self.global_SL != 0) and (global_unrealizedPL <= self.global_SL))
 
     def condition_for_max_drawdown_SL(self, drawdown_SL_percent):
         return ((not self.trigger_high_volatility_protection()) and (self.drawdown_SL != 0) and (drawdown_SL_percent <= self.drawdown_SL))

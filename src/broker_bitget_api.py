@@ -90,6 +90,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             self.df_market.reset_index(drop=True)
             #self.log('list symbols perpetual/USDT: {}'.format(self.df_market["baseCoin"].tolist()))
         else:
+            print("error df_market")
             exit(2956)
 
         # reset account
