@@ -1191,38 +1191,46 @@ class BrokerBitGet(broker.Broker):
             if current_state['success']:
                 break
 
-        df_open_orders = current_state['open_orders']
-        df_triggers = current_state['triggers']
-        df_positions = current_state['open_positions']
+        while True:
+            df_open_orders = current_state['open_orders']
+            df_triggers = current_state['triggers']
+            df_positions = current_state['open_positions']
 
-        df_open_orders["trigger_type"] = "CANCEL_ORDER"
-        lst_dct_orders = df_open_orders.to_dict(orient="records")
+            df_open_orders["trigger_type"] = "CANCEL_ORDER"
+            lst_dct_orders = df_open_orders.to_dict(orient="records")
 
-        df_triggers["trigger_type"] = "CANCEL_TRIGGER"
-        lst_dct_triggers = df_triggers.to_dict(orient="records")
+            df_triggers["trigger_type"] = "CANCEL_TRIGGER"
+            lst_dct_triggers = df_triggers.to_dict(orient="records")
 
-        df_positions["trigger_type"] = "CLOSE_POSITION"
-        lst_dct_positions = df_positions.to_dict(orient="records")
+            df_positions["trigger_type"] = "CLOSE_POSITION"
+            lst_dct_positions = df_positions.to_dict(orient="records")
 
-        lst_closure = lst_dct_orders + lst_dct_triggers + lst_dct_positions
-        if len(lst_closure) == 0:
-            print("RESET ACCOUNT - NO POSITION OPEN")
-            return []
-        lst_trade_status = self.execute_trades(lst_closure)
+            lst_closure = lst_dct_orders + lst_dct_triggers + lst_dct_positions
+            if len(lst_closure) == 0:
+                print("RESET ACCOUNT - NO POSITION OPEN")
+                return []
+            lst_trade_status = self.execute_trades(lst_closure)
 
-        for trade in lst_trade_status:
-            if trade["trade_status"] == "FAILED":
-                print(", ".join(f"{key}: {value}" for key, value in trade.items()))
+            for trade in lst_trade_status:
+                if trade["trade_status"] == "FAILED":
+                    print(", ".join(f"{key}: {value}" for key, value in trade.items()))
 
-        all_success = all(trade["trade_status"] == "SUCCESS" for trade in lst_trade_status)
-        if all_success:
-            print("RESET ACCOUNT SUCCESS")
+            all_success = all(trade["trade_status"] == "SUCCESS" for trade in lst_trade_status)
+            if all_success:
+                print("RESET ACCOUNT SUCCESS")
 
-        usdtEquity = self.get_account_equity()
-        self.log('reset - account cleared')
-        self.log('equity USDT: {}'.format(usdtEquity))
+            usdtEquity = self.get_account_equity()
+            self.log('reset - account cleared')
+            self.log('equity USDT: {}'.format(usdtEquity))
 
-        return lst_trade_status
+            while True:
+                current_state = self.get_current_state(lst_symbols)
+                if current_state['success']:
+                    break
+            if len(current_state['open_orders']) == 0 \
+                    and len(current_state['triggers']) == 0 \
+                    and len(current_state['open_positions']) == 0:
+                return lst_trade_status
 
     @authentication_required
     def get_symbol_unrealizedPL(self, symbol):
