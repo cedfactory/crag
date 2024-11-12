@@ -18,8 +18,7 @@ def git_pull():
 
 #
 def source_activate():
-	if g_os_platform == "Windows":
-		return True
+	return True
 
 	command = ["source", ".venv/bin/activate"]
 	try:
@@ -30,16 +29,17 @@ def source_activate():
 	return True
 
 #
-def launch_strategy(xmlfile):
+def launch_strategy(xml_file):
 	command = []
-	log_file = "alcorak_" + xmlfile + ".log"
+	log_file = "alcorak_" + xml_file + ".log"
 	if g_os_platform == "Windows":
-		command = "start /B python -u alcorak.py --start {} > {}".format(xmlfile, log_file)
+		command = "start /B python -u alcorak.py --start {} > {}".format(xml_file, log_file)
+		print("command : ", command)
 		os.system(command)
 	elif g_os_platform == "Linux":
-		command = ["nohup", g_python_executable, "alcorak.py", "--start", xmlfile, ">", log_file, "&"]
-		result = subprocess.run(command, stdout=subprocess.PIPE)
-		print(result)
+		command = "source .venv/bin/activate && nohup python alcorak.py --start {} > {} &".format(xml_file, log_file)
+		print("command : ", command)
+		subprocess.Popen(command, stdout=subprocess.PIPE, shell=True, executable="/bin/bah")
 
 #
 def select_strategy_to_start():
