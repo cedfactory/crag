@@ -37,9 +37,10 @@ def launch_strategy(xml_file):
 		print("command : ", command)
 		os.system(command)
 	elif g_os_platform == "Linux":
-		command = "source .venv/bin/activate && nohup python alcorak.py --start {} > {} &".format(xml_file, log_file)
+		#command = "source .venv/bin/activate && nohup python alcorak.py --start {} > {} &".format(xml_file, log_file)
+		command = "nohup python alcorak.py --start {} > {} &".format(xml_file, log_file)
 		print("command : ", command)
-		subprocess.Popen(command, stdout=subprocess.PIPE, shell=True, executable="/bin/bah")
+		subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
 
 #
 def select_strategy_to_start():
