@@ -46,7 +46,7 @@ def select_strategy_to_start():
 	directory = os.getcwd()
 	strategies = []
 	for file_name in os.listdir(directory+"/conf"):
-		if file_name.endswith('.xml'):
+		if file_name.endswith('AWS.xml'):
 			strategies.append(file_name)
 
 	print("Available strategies")
