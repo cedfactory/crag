@@ -1,7 +1,7 @@
 import pytest
 import os
 import csv
-from src import broker_simulation,trade
+from src import broker_simulation
 
 class TestSimBroker:
 
@@ -49,7 +49,7 @@ class TestSimBroker:
         fake_trade.wallet_roi = 1
         fake_trade.commission = fake_trade.net_price * 0.04
         fake_trade.gross_price = fake_trade.net_price + fake_trade.commission
-        fake_trade.gridzone = -1 # TO RESTORE : trade shouldn not contains this last element (gridzone)
+        fake_trade.gridzone = -1 # TO RESTORE : trade should not contains this last element (gridzone)
         return fake_trade
 
     def test_execute_trade_ok(self):

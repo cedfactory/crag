@@ -1,10 +1,27 @@
 import pytest
-from . import test_rtctrl
-from src import rtstr, strategies
-import pandas as pd
+from src import rtstr
+
+def get_current_trades_sample():
+    current_trades_content = [
+        {'type':'SELL', 'symbol':'symbol1', 'size':1, 'buying_fee':0.1, 'gross_price':10},
+        {'type':'BUY', 'symbol':'symbol2', 'size':2, 'buying_fee':0.2, 'gross_price':20},
+        {'type':'BUY', 'symbol':'symbol2', 'size':3, 'buying_fee':0.3, 'gross_price':30},
+        {'type':'BUY', 'symbol':'symbol3', 'size':4, 'buying_fee':0.4, 'gross_price':40}
+        ]
+    current_trades = []
+    for content in current_trades_content:
+        current_trade = trade.Trade()
+        current_trade.type = content["type"]
+        current_trade.symbol = content["symbol"]
+        current_trade.net_size = content["size"]
+        current_trade.buying_fee = content["buying_fee"]
+        current_trade.gross_price = content["gross_price"]
+        current_trades.append(current_trade)
+
+    return current_trades
 
 def update_rtctrl(rtstr):
-    current_trades = test_rtctrl.get_current_trades_sample()
+    current_trades = get_current_trades_sample()
 
     # action
     prices_symbols = {'symbol1': 0.01, 'symbol2': 0.02, 'symbol3': 0.03, 'symbol4': 0.04}

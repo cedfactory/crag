@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch
 import pandas as pd
-from src import rtstr_grid_trading_long, rtdp
+from src import rtstr_grid_trading_generic_v3, rtdp
 from src import crag, crag_helper
 from src import broker
 from . import test_rtstr, utils
@@ -40,7 +40,7 @@ class TestRTSTRGridTradingLong:
 
     def test_constructor(self):
         # action
-        strategy = rtstr_grid_trading_long.StrategyGridTradingLong()
+        strategy = rtstr_grid_trading_generic_v3.StrategyGridTradingLong()
 
         # expectations
         assert (strategy.SL == 0)
@@ -50,7 +50,7 @@ class TestRTSTRGridTradingLong:
 
     def test_get_data_description(self, mocker):
         # context
-        strategy = rtstr_grid_trading_long.StrategyGridTradingLong()
+        strategy = rtstr_grid_trading_generic_v3.StrategyGridTradingLong()
 
         # action
         ds = strategy.get_data_description()
@@ -69,7 +69,7 @@ class TestRTSTRGridTradingLong:
 
     def test_get_df_buying_symbols(self):
         # context
-        strategy = rtstr_grid_trading_long.StrategyGridTradingLong()
+        strategy = rtstr_grid_trading_generic_v3.StrategyGridTradingLong()
         data = {"index": [0, 1], "symbol": ["BTC/USD", "ETH/USD"], "ema_10": [50, 50]}
         strategy = self._initialize_current_data(strategy, data)
 
@@ -83,7 +83,7 @@ class TestRTSTRGridTradingLong:
 
     def test_get_df_buying_symbols_with_rtctrl(self):
         # context
-        strategy = rtstr_grid_trading_long.StrategyGridTradingLong()
+        strategy = rtstr_grid_trading_generic_v3.StrategyGridTradingLong()
         data = {"index": [0, 1], "symbol": ["BTC/USD", "ETH/USD"], "ema_10": [50, 50]}
         strategy = self._initialize_current_data(strategy, data)
         strategy.rtctrl.init_cash_value = 100
@@ -100,7 +100,7 @@ class TestRTSTRGridTradingLong:
 
     def test_get_df_selling_symbols(self):
         # context
-        strategy = rtstr_grid_trading_long.StrategyGridTradingLong()
+        strategy = rtstr_grid_trading_generic_v3.StrategyGridTradingLong()
         lst_symbols = ["BTC/USD", "ETH/USD"]
         data = {"index": [0, 1], "symbol": lst_symbols, "ema_10": [50, 50]}
         strategy = self._initialize_current_data(strategy, data)
