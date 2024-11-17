@@ -132,9 +132,38 @@ def select_strategy_to_stop():
 	p.wait()
 	print(f"Process terminated.")
 
-def usage():
-	print("start / running / stop / quit ???")
+def display_os_stats():
 
+	print("Large files :")
+	size_in_mb = 1
+	size_in_bytes = size_in_mb * 1024 * 1024
+	current_directory = os.getcwd()
+	for file in os.listdir(current_directory):
+		if not file.endswith("csv"):
+			continue
+
+		filepath = os.path.join(current_directory, file)
+		if os.path.isfile(filepath):
+			try:
+				file_size = os.path.getsize(filepath)
+				if file_size > size_in_bytes:
+					print("{} - {:.2f} Mo".format(filepath, file_size / (1024 * 1024)))
+			except OSError as e:
+				print("Error with {}: {}".format(filepath, e))
+
+	print("")
+	print("Disk usage :")
+	path = "/"
+	if g_os_platform == "Windows":
+		path = "C:\\"
+	disk_info = psutil.disk_usage(path)
+	print(f"  Espace total: {disk_info.total / (1024 ** 3):.2f} Go")
+	print(f"  Espace utilisé: {disk_info.used / (1024 ** 3):.2f} Go")
+	print(f"  Espace disponible: {disk_info.free / (1024 ** 3):.2f} Go")
+
+
+def usage():
+	print("start / running / stop / stats / quit ???")
 
 if __name__ == "__main__":
 	print('''
@@ -154,9 +183,8 @@ if __name__ == "__main__":
 	- 'start' to start a strategy
 	- 'running' to display the running python processes
 	- 'stop' to stop a running strategy
+	- 'stats' to display large files and memory info
 	- 'quit' to quit''')
-	#TODO :
-	# - system : taille des logs de plus de 1Mo & taille available
 	action = input("> ").strip().lower()
 	print("\n")
 	
@@ -170,6 +198,9 @@ if __name__ == "__main__":
 
 	elif action == "stop":
 		xmlfile = select_strategy_to_stop()
+
+	elif action == "stats":
+		display_os_stats()
 
 	elif action == "quit":
 		pass
