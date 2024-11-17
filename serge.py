@@ -75,50 +75,65 @@ def select_strategy_to_start():
 	
 	return strategies[id]
 
-def select_strategy_to_stop():
+def get_python_processes():
 	current_pid = os.getpid()
-	pids = []
-	i = 0
+	processes = []
 	for process in psutil.process_iter(['pid', 'name', 'cmdline']):
 		if not 'name' in process.info:
 			continue
 		try:
 			if 'python' in process.info['name']:
 				if int(process.info['pid']) != current_pid:
-					print(f"{i} : Command {' '.join(process.info['cmdline'])}")
-					pids.append(process.info['pid'])
-					i += 1
+					processes.append({"pid": process.info['pid'],
+								"command": ' '.join(process.info['cmdline'])})
 		except (psutil.NoSuchProcess, psutil.AccessDenied):
 			# Skip processes that may have terminated or where access is restricted
 			continue
-	
-	if len(pids) == 0:
+
+	return processes
+
+def display_python_processes():
+	processes = get_python_processes()
+	if len(processes) == 0:
+		print("No python process")
+		return
+
+	for index, process in enumerate(processes):
+		print("{} : Command {}".format(index, process["command"]))
+
+def select_strategy_to_stop():
+	processes = get_python_processes()
+	if len(processes) == 0:
 		print("No python process to kill. Bye.")
 		return
 
-	pid = -2
+	for index, process in enumerate(processes):
+		print("{} : Command {}".format(index, process["command"]))
+
+
+	id = -2
 	print("Select the process to stop (-1 to quit)")
-	while pid < -1 or pid >= len(pids):
+	while id < -1 or id >= len(processes):
 		try:
-			pid_str = input("> ").strip().lower()
-			pid = int(pid_str)
-			if pid == -1:
+			id_str = input("> ").strip().lower()
+			id = int(id_str)
+			if id == -1:
 				return
 		except ValueError:
-			print(f"! Error: '{pid_str}' is not a valid integer.")
+			print(f"! Error: '{id_str}' is not a valid integer.")
 		except TypeError:
 			print("! Error: The input type is invalid, cannot convert to integer.")
-		if pid < 0 or pid >= len(pids):
+		if id < 0 or id >= len(processes):
 			print(f"! Error: select a valid id by its index.")
 
 
-	p = psutil.Process(pids[pid])
+	p = psutil.Process(processes[id]["pid"])
 	p.terminate()
 	p.wait()
 	print(f"Process terminated.")
 
 def usage():
-	print("start or stop ???")
+	print("start / running / stop / quit ???")
 
 
 if __name__ == "__main__":
@@ -135,7 +150,13 @@ if __name__ == "__main__":
 	print("# Python executable :", g_python_executable)
 	print("\n")
 	
-	print("Available actions :\n- 'start' to start a strategy\n- 'stop' to stop a running strategy")
+	print('''Available actions :
+	- 'start' to start a strategy
+	- 'running' to display the running python processes
+	- 'stop' to stop a running strategy
+	- 'quit' to quit''')
+	#TODO :
+	# - system : taille des logs de plus de 1Mo & taille available
 	action = input("> ").strip().lower()
 	print("\n")
 	
@@ -143,8 +164,15 @@ if __name__ == "__main__":
 		xmlfile = select_strategy_to_start()
 		if xmlfile != "":
 			git_pull() and source_activate() and launch_strategy(xmlfile)
-		
+
+	elif action == "running":
+		display_python_processes()
+
 	elif action == "stop":
 		xmlfile = select_strategy_to_stop()
+
+	elif action == "quit":
+		pass
+
 	else:
 		usage()
