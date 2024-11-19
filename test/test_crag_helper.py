@@ -70,7 +70,7 @@ class TestCrag:
     def test_parse_loggers(self):
         # context : create the configuration file
         configuration_file = utils.write_file("./test/generated/crag.xml", '''<configuration>
-            <strategy name="StrategyGridTradingLong" />
+            <strategy name="StrategyDummyTest" />
             <broker name="simulator">
                 <params account="test_bot" reset_account="False" reset_account_orders="False"/>
             </broker>

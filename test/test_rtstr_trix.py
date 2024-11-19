@@ -6,17 +6,17 @@ class TestRTSTRTrix:
 
     def test_constructor(self):
         # action
-        strategy = rtstr_trix.StrategyTrix()
+        strategy = rtstr_trix.StrategyTrix(params={"id": "trix1"})
 
         # expectations
         assert(strategy.SL == 0)
         assert(strategy.TP == 0)
-        assert(strategy.MAX_POSITION == 5)
+        assert(strategy.MAX_POSITION == 1)
         assert(strategy.match_full_position == False)
 
     def test_get_data_description(self, mocker):
         # context
-        strategy = rtstr_trix.StrategyTrix()
+        strategy = rtstr_trix.StrategyTrix(params={"id": "trix1"})
 
         # action
         ds = strategy.get_data_description()
@@ -34,7 +34,7 @@ class TestRTSTRTrix:
 
     def test_get_df_buying_symbols(self):
         # context
-        strategy = rtstr_trix.StrategyTrix()
+        strategy = rtstr_trix.StrategyTrix(params={"id": "trix1"})
         data = {"index":[0, 1, 2, 3], "symbol":["BTC/USD", "ETH/USD", "BNB/USD", "SUSHI/USD"], "TRIX_HISTO":[1, 1.1, -1, -1.1], "STOCH_RSI":[0.7, 0.9, 0.7, 0.9]}
         strategy = self._initialize_current_data(strategy, data)
 
@@ -53,7 +53,7 @@ class TestRTSTRTrix:
         return # TODO : reactivate the test
 
         # context
-        strategy = rtstr_trix.StrategyTrix()
+        strategy = rtstr_trix.StrategyTrix(params={"id": "trix1"})
         lst_symbols = ["BTC/USD", "ETH/USD", "BNB/USD", "SUSHI/USD"]
         data = {"index":[0, 1, 2, 3], "symbol":lst_symbols, "TRIX_HISTO":[-1, -1.1, 1, 1.1], "STOCH_RSI":[0.3, 0.1, 0.3, 0.1]}
         strategy = self._initialize_current_data(strategy, data)

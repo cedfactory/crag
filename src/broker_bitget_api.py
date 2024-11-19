@@ -73,8 +73,8 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         self.current_state = {}
         self.df_prices = pd.DataFrame()
 
+        self.marketApi = market.MarketApi(api_key, api_secret, api_password, use_server_time=False, first=False)
         if api_key != "" and api_secret != "" and api_password != "":
-            self.marketApi = market.MarketApi(api_key, api_secret, api_password, use_server_time=False, first=False)
             self.accountApi = account.AccountApi(api_key, api_secret, api_password, use_server_time=False, first=False)
             self.positionApi = position.PositionApi(api_key, api_secret, api_password, use_server_time=False, first=False)
             self.orderApi = order.OrderApi(api_key, api_secret, api_password, use_server_time=False, first=False)
@@ -1184,7 +1184,6 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 df.loc[len(df)] = lst_info_symbol
         return df
 
-    @authentication_required
     def get_future_market(self):
         """
         productType
