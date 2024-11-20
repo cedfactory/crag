@@ -1863,6 +1863,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                                                              product_type,
                                                              utils.to_unix_millis(start_time),
                                                              utils.to_unix_millis(end_time))
+                break
             except (exceptions.BitgetAPIException, Exception) as e:
                 self.log_api_failure("positionApi.all_position", e, 0)
                 time.sleep(0.2)
