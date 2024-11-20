@@ -1180,7 +1180,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                                     float(market['locked']),
                                     float(market['btcEquity']),
                                     unrealizedPL,
-                                    0, 0, "", "", "", 0, 0, 0, 0, 0, 0, 0]
+                                    0., 0., "", "", "", 0., 0., 0., 0., 0., 0., 0.]
                 df.loc[len(df)] = lst_info_symbol
         return df
 
