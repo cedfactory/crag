@@ -64,7 +64,7 @@ class StrategyIntervalsGeneric(rtstr.RealTimeStrategy):
         lst_ds = []
         for strategy in self.lst_strategy:
             ds_strategy = strategy.get_data_description()
-            lst_ds.append(ds_strategy)
+            lst_ds.extend(ds_strategy)
 
         return lst_ds
 
