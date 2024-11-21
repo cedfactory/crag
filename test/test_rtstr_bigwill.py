@@ -18,7 +18,7 @@ class TestRTSTRBigWill:
         
         assert(strategy.SL == 0)
         assert(strategy.TP == 0)
-        assert(strategy.MAX_POSITION == 5)
+        assert(strategy.MAX_POSITION == 1)
         assert(strategy.match_full_position == False)
 
     def test_get_data_description(self, mocker):

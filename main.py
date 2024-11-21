@@ -125,6 +125,9 @@ def crag_reboot(picklefilename):
     bot.export_status() # DEBUG CEDE
 
 def check_broker():
+    my_logger = logger.LoggerConsole()
+    my_logger.log("CHECK BROKER")
+
     symbols = {
         "symbol": ["BTC", "XRP", "ETH", "SOL", "PEPE"],
         "leverage_long": [0, 0, 0, 0, 0],
@@ -133,23 +136,32 @@ def check_broker():
     params = {"exchange": "bitget",
               "account": "bitget_cl1",
               "symbols": symbols,
-              "loggers": "file=log;console",
+              #"loggers": "file=console",
               "reset_account": False}
+
+    my_logger.log_time_start("constructor")
     my_broker = broker_bitget_api.BrokerBitGetApi(params)
-    my_logger = logger.LoggerConsole()
+    my_logger.log_time_stop("constructor")
 
     my_logger.log_time_start("get_coin")
-    value = my_broker._get_coin("XRPUSDT_UMCBL")
+    coin = my_broker._get_coin("XRPUSDT_UMCBL")
     my_logger.log_time_stop("get_coin")
-    print(value)
+    my_logger.log("coin : " + coin)
 
+    my_logger.log_time_start("get_value")
+    value = my_broker.get_value("XRP")
+    my_logger.log_time_stop("get_value")
+    my_logger.log("value : " + str(value))
+
+    '''
     mytrade = {
         "symbol": "BTC",
         "gross_size": 0.00000333,
         "type": "open_long"
     }
-    #mytrade = my_broker.execute_order(mytrade)
+    mytrade = my_broker.execute_order(mytrade)
     print(mytrade)
+    '''
 
 
 def check_fdp():
@@ -165,7 +177,7 @@ def check_fdp():
 
 def check_crag():
     configuration_file = write_file("./crag.xml", '''<configuration>
-        <strategy name="StrategyGridTradingLong">
+        <strategy name="StrategyDummyTest">
             <params symbols="XRP" grid_df_params="./test/data/multigrid_df_params.csv"/>
         </strategy>
         <broker name="bitget">
@@ -205,7 +217,7 @@ if __name__ == '__main__':
     if len(sys.argv) >= 2:
         if len(sys.argv) > 1 and (sys.argv[1] == "--check"):
             check_broker()
-            check_fdp()
+            #check_fdp()
             #check_crag()
         elif len(sys.argv) > 2 and (sys.argv[1] == "--simulation"):
             crag_simulation(sys.argv[2])

@@ -73,8 +73,8 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         self.current_state = {}
         self.df_prices = pd.DataFrame()
 
+        self.marketApi = market.MarketApi(api_key, api_secret, api_password, use_server_time=False, first=False)
         if api_key != "" and api_secret != "" and api_password != "":
-            self.marketApi = market.MarketApi(api_key, api_secret, api_password, use_server_time=False, first=False)
             self.accountApi = account.AccountApi(api_key, api_secret, api_password, use_server_time=False, first=False)
             self.positionApi = position.PositionApi(api_key, api_secret, api_password, use_server_time=False, first=False)
             self.orderApi = order.OrderApi(api_key, api_secret, api_password, use_server_time=False, first=False)
@@ -1180,11 +1180,10 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                                     float(market['locked']),
                                     float(market['btcEquity']),
                                     unrealizedPL,
-                                    0, 0, "", "", "", 0, 0, 0, 0, 0, 0, 0]
+                                    0., 0., "", "", "", 0., 0., 0., 0., 0., 0., 0.]
                 df.loc[len(df)] = lst_info_symbol
         return df
 
-    @authentication_required
     def get_future_market(self):
         """
         productType
@@ -1856,14 +1855,22 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     # Function to get position history
     def get_position_history(self, symbol, start_time, end_time, product_type='umcbl'):
-
-        response = self.positionApi.history_position(self._get_symbol(symbol),
-                                                     product_type,
-                                                     utils.to_unix_millis(start_time),
-                                                     utils.to_unix_millis(end_time))
+        response = None
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                response = self.positionApi.history_position(self._get_symbol(symbol),
+                                                             product_type,
+                                                             utils.to_unix_millis(start_time),
+                                                             utils.to_unix_millis(end_time))
+                break
+            except (exceptions.BitgetAPIException, Exception) as e:
+                self.log_api_failure("positionApi.all_position", e, 0)
+                time.sleep(0.2)
+                n_attempts = n_attempts - 1
 
         # Process response
-        if response["msg"] == "success" and "data" in response and "list" in response["data"]:
+        if "msg" in response and response["msg"] == "success" and "data" in response and "list" in response["data"]:
             df = pd.DataFrame(response["data"]["list"])
             if not isinstance(df, pd.DataFrame) or not df.columns.isin(["pnl", "netProfit"]).any():
                 print("[get_position_history] df : ", df)

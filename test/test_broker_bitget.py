@@ -1,5 +1,4 @@
 import pytest
-import os
 from src import broker_bitget_api
 
 

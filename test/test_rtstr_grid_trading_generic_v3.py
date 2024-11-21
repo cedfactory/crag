@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch
 import pandas as pd
-from src import rtstr_grid_trading_long, rtdp
+from src import rtstr_grid_trading_generic_v3, rtdp
 from src import crag, crag_helper
 from src import broker
 from . import test_rtstr, utils
@@ -40,17 +40,17 @@ class TestRTSTRGridTradingLong:
 
     def test_constructor(self):
         # action
-        strategy = rtstr_grid_trading_long.StrategyGridTradingLong()
+        strategy = rtstr_grid_trading_generic_v3.StrategyGridTradingGenericV3(params={"id": "grid1", "grid_low":"1.", "grid_high":"5.", "nb_grid":"5", "type":"long"})
 
         # expectations
         assert (strategy.SL == 0)
         assert (strategy.TP == 0)
-        assert (strategy.MAX_POSITION == 5)
+        assert (strategy.MAX_POSITION == 1)
         assert (strategy.match_full_position == False)
 
     def test_get_data_description(self, mocker):
         # context
-        strategy = rtstr_grid_trading_long.StrategyGridTradingLong()
+        strategy = rtstr_grid_trading_generic_v3.StrategyGridTradingGenericV3(params={"id": "grid1", "grid_low":"1.", "grid_high":"5.", "nb_grid":"5", "type":"long"})
 
         # action
         ds = strategy.get_data_description()
@@ -69,7 +69,7 @@ class TestRTSTRGridTradingLong:
 
     def test_get_df_buying_symbols(self):
         # context
-        strategy = rtstr_grid_trading_long.StrategyGridTradingLong()
+        strategy = rtstr_grid_trading_generic_v3.StrategyGridTradingGenericV3(params={"id": "grid1", "grid_low":"1.", "grid_high":"5.", "nb_grid":"5", "type":"long"})
         data = {"index": [0, 1], "symbol": ["BTC/USD", "ETH/USD"], "ema_10": [50, 50]}
         strategy = self._initialize_current_data(strategy, data)
 
@@ -83,7 +83,7 @@ class TestRTSTRGridTradingLong:
 
     def test_get_df_buying_symbols_with_rtctrl(self):
         # context
-        strategy = rtstr_grid_trading_long.StrategyGridTradingLong()
+        strategy = rtstr_grid_trading_generic_v3.StrategyGridTradingGenericV3(params={"id": "grid1", "grid_low":"1.", "grid_high":"5.", "nb_grid":"5", "type":"long"})
         data = {"index": [0, 1], "symbol": ["BTC/USD", "ETH/USD"], "ema_10": [50, 50]}
         strategy = self._initialize_current_data(strategy, data)
         strategy.rtctrl.init_cash_value = 100
@@ -100,7 +100,7 @@ class TestRTSTRGridTradingLong:
 
     def test_get_df_selling_symbols(self):
         # context
-        strategy = rtstr_grid_trading_long.StrategyGridTradingLong()
+        strategy = rtstr_grid_trading_generic_v3.StrategyGridTradingGenericV3(params={"id": "grid1", "grid_low":"1.", "grid_high":"5.", "nb_grid":"5", "type":"long"})
         lst_symbols = ["BTC/USD", "ETH/USD"]
         data = {"index": [0, 1], "symbol": lst_symbols, "ema_10": [50, 50]}
         strategy = self._initialize_current_data(strategy, data)
@@ -124,7 +124,7 @@ class TestRTSTRGridTradingLong:
 
         # create the configruation file
         filename = utils.write_file("./test/generated/crag.xml", '''<configuration>
-            <strategy name="StrategyGridTradingLong">
+            <strategy name="StrategyDummyTest">
                 <params symbols="BTC/USD" grid_df_params="./test/data/multigrid_df_params.csv"
                 sl="0" tp="0" global_sl="0" global_tp="0" global_safety_TP="0" global_safety_SL="0"
                 grid_high="130" grid_low="100" percent_per_grid="0.4" nb_grid="5" grid_margin="500"/>

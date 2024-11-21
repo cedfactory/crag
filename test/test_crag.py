@@ -1,6 +1,5 @@
 import pytest
-import pandas as pd
-from src import crag,broker_simulation,trade
+from src import crag,broker_simulation
 from . import utils
 from src import crag_helper
 import os
