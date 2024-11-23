@@ -28,6 +28,7 @@ class StrategyTrix(rtstr.RealTimeStrategy):
             self.lst_symbols = [params.get("strategy_symbol", self.lst_symbols)]
             self.symbol = params.get("strategy_symbol", self.symbol)
             self.margin = params.get("margin", self.margin)
+            self.side = params.get("side", self.side)
             self.strategy_str_interval = params.get("interval", self.strategy_str_interval)
             self.trix_length = params.get("trix_length", self.trix_length)
             self.trix_signal_length = params.get("trix_signal_length", self.trix_signal_length)
@@ -39,6 +40,11 @@ class StrategyTrix(rtstr.RealTimeStrategy):
 
         self.positions = open_positions.OpenPositions(self.symbol, self.strategy_id, self.get_info())
         self.zero_print = True
+
+        if self.side in ["long", "short"]:
+            self.side = [self.side.upper()]
+        elif self.side in ["both", ""]:
+            self.side = ["LONG", "SHORT"]
 
         self.mutiple_strategy = False
 
@@ -71,8 +77,6 @@ class StrategyTrix(rtstr.RealTimeStrategy):
                                      "trix_hist",
                                      "long_ma"]
                           },
-            # "stoch_rsi": {"indicator": "stoch_rsi", "stoch_rsi_window_size": self.stoch_rsi_period, "window_size": self.stoch_rsi_period, "id": "1",
-            #               "output": ["trix_histo", "stoch_rsi"]}
         }
 
         ds.features = self.get_feature_from_fdp_features(ds.fdp_features)
@@ -101,23 +105,24 @@ class StrategyTrix(rtstr.RealTimeStrategy):
         self.mutiple_strategy = True
 
     def get_lst_trade(self):
-        open_long = self.condition_for_opening_long_position(self.symbol)
-        open_short = self.condition_for_opening_short_position(self.symbol)
-        close_long = self.condition_for_closing_long_position(self.symbol)
-        close_short = self.condition_for_closing_short_position(self.symbol)
+        open_long = close_long = open_short = close_short = False
+
+        if "LONG" in self.side:
+            open_long = self.condition_for_opening_long_position(self.symbol)
+            close_long = self.condition_for_closing_long_position(self.symbol)
+        if "SHORT" in self.side:
+            open_short = self.condition_for_opening_short_position(self.symbol)
+            close_short = self.condition_for_closing_short_position(self.symbol)
+
         nb_open_total_position = self.positions.get_nb_open_total_position()
         lst_order = []
-        if open_long \
-            and nb_open_total_position == 0:
+        if open_long and nb_open_total_position == 0:
             lst_order.append(self.positions.create_open_market_order(self.margin, "open_long", "MARKET_OPEN_POSITION"))
-        if open_short \
-            and nb_open_total_position == 0:
+        if open_short and nb_open_total_position == 0:
             lst_order.append(self.positions.create_open_market_order(self.margin, "open_short", "MARKET_OPEN_POSITION"))
-        if close_long \
-                and self.positions.get_nb_open_long_position() > 0:
+        if close_long and self.positions.get_nb_open_long_position() > 0:
             lst_order.append(self.positions.create_close_market_order("close_long"))
-        if close_short \
-                and self.positions.get_nb_open_short_position() > 0:
+        if close_short and self.positions.get_nb_open_short_position() > 0:
             lst_order.append(self.positions.create_close_market_order("close_short"))
         return lst_order
 

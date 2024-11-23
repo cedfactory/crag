@@ -32,7 +32,7 @@ class StrategyIntervalsGeneric(rtstr.RealTimeStrategy):
                     "name": row["name"],
                     "margin": row["margin"],
                     "interval": row["interval"],
-                    "type": row["type"],
+                    "side": row["side"],
                     "trix_length": row["trix_length"],
                     "trix_signal_length": row["trix_signal_length"],
                     "trix_signal_type": row["trix_signal_type"],
