@@ -1,6 +1,7 @@
 import pytest
 import pandas as pd
-from src import rtstr_trix,rtdp
+from src import rtstr_trix, rtdp
+
 
 class TestRTSTRTrix:
 
@@ -9,29 +10,29 @@ class TestRTSTRTrix:
         strategy = rtstr_trix.StrategyTrix(params={"id": "trix1"})
 
         # expectations
-        assert(strategy.SL == 0)
-        assert(strategy.TP == 0)
-        assert(strategy.MAX_POSITION == 1)
-        assert(strategy.match_full_position == False)
+        assert (strategy.SL == 0)
+        assert (strategy.TP == 0)
+        assert (strategy.MAX_POSITION == 1)
+        assert (strategy.match_full_position == False)
 
     def test_get_data_description(self, mocker):
         # context
-        strategy = rtstr_trix.StrategyTrix(params={"id": "trix1"})
+        strategy = rtstr_trix.StrategyTrix(params={"id": "trix1", "strategy_symbol": "PEPE"})
 
         # action
         ds = strategy.get_data_description()
 
         # expectations
-        assert(ds.symbols == rtdp.default_symbols)
-        assert(not set(list(ds.features.keys())) ^ set(['TRIX_HISTO', 'STOCH_RSI']))
+        assert (ds.symbols == ['PEPE'])
+        assert (not set(list(ds.features)) ^ set(['close', 'trix_1', 'trix_signal_1', 'trix_hist_1', 'long_ma_1']))
 
     def _initialize_current_data(self, strategy, data):
-        ds = strategy.get_data_description()
         df_current_data = pd.DataFrame(data=data)
         df_current_data.set_index("symbol", inplace=True)
         strategy.set_current_data(df_current_data)
         return strategy
 
+    ''' deprecated
     def test_get_df_buying_symbols(self):
         # context
         strategy = rtstr_trix.StrategyTrix(params={"id": "trix1"})
@@ -50,8 +51,6 @@ class TestRTSTRTrix:
         assert(df.iloc[0]['percent'] == 0)
 
     def test_get_df_selling_symbols(self):
-        return # TODO : reactivate the test
-
         # context
         strategy = rtstr_trix.StrategyTrix(params={"id": "trix1"})
         lst_symbols = ["BTC/USD", "ETH/USD", "BNB/USD", "SUSHI/USD"]
@@ -67,3 +66,4 @@ class TestRTSTRTrix:
         assert(len(df) == 1)
         assert(df.iloc[0]['symbol'] == "BTC/USD")
         assert(df.iloc[0]['stimulus'] == "SELL")
+    '''

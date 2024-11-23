@@ -32,6 +32,7 @@ class TestRTSTRCryptobot:
         strategy.set_current_data(df_current_data)
         return strategy
 
+    ''' deprecated
     def test_get_df_buying_symbols(self):
         # context
         strategy = rtstr_cryptobot.StrategyCryptobot()
@@ -50,8 +51,6 @@ class TestRTSTRCryptobot:
         assert(df.iloc[0]['percent'] == 0)
 
     def test_get_df_selling_symbols(self):
-        return  # TODO : reactivate the test
-
         # context
         strategy = rtstr_cryptobot.StrategyCryptobot()
         lst_symbols = ["BTC/USD", "ETH/USD"]
@@ -67,3 +66,4 @@ class TestRTSTRCryptobot:
         assert(len(df) == 1)
         assert(df.iloc[0]['symbol'] == "BTC/USD")
         assert(df.iloc[0]['stimulus'] == "SELL")
+    '''

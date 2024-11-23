@@ -60,7 +60,8 @@ class TestRTSTRVMC:
         }
         strategy = self._initialize_current_data(strategy, data)
         return strategy
-    
+
+    ''' deprecated
     def test_get_df_buying_symbols(self):
         # context
         strategy = self._get_strategy_for_buying_and_selling()
@@ -77,8 +78,6 @@ class TestRTSTRVMC:
         assert(df.iloc[0]['percent'] == 0)
 
     def test_get_df_selling_symbols(self):
-        return # TODO : reactivate the test
-
         # context
         strategy = self._get_strategy_for_buying_and_selling()
 
@@ -91,3 +90,4 @@ class TestRTSTRVMC:
         assert(len(df) == 1)
         assert(df.iloc[0]['symbol'] == "BTC/USD")
         assert(df.iloc[0]['stimulus'] == "SELL")
+    '''

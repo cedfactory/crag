@@ -278,7 +278,7 @@ class StrategyGridTradingGenericV3(rtstr.RealTimeStrategy):
         return self.df_grid_buying_size
 
 
-class GridPosition():
+class GridPosition:
     def __init__(self, strategy_name, side, symbol, grid_high, grid_low, nb_grid, percent_per_grid,
                  nb_position_limits, strategy_id, debug_mode=True, loggers=[]):
         self.grid_side = side

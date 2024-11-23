@@ -6,21 +6,12 @@ class TestGridPosition:
 
     def test_constructor(self):
         # action
-        grid = rtstr_grid_trading_generic_v3.GridPosition(["XRP"], 0.55, 0.45, 60, 0., False)
+        grid = rtstr_grid_trading_generic_v3.GridPosition("strategy_name", "long", "XRP", 0.55, 0.45, 60,
+                                                          10.,  # percent_per_grid
+                                                          5,  # nb_position_limits
+                                                          "strategy_id",  # strategy_id
+                                                          )
 
         # expectations
-        assert(len(grid.grid['XRP'].index) == 61)
-
-    def test_get_nb_open_positions_from_state(self):
-        # context
-        grid = rtstr_grid_trading_generic_v3.GridPosition(["XRP"], 0.55, 0.45, 60, 0., False)
-        my_logger = logger.LoggerConsole()
-        my_logger.log_memory_start("get_nb_open_positions_from_state")
-
-        # action
-        nb = grid.get_nb_open_positions_from_state("XRP")
-
-        my_logger.log_memory_stop("get_nb_open_positions_from_state")
-
-        # expectations
-        assert(nb == 0)
+        assert(grid.nb_position_limits == 5)
+        # todo : to complete

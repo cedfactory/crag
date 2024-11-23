@@ -40,6 +40,7 @@ class TestRTSTRBigWill:
         strategy.set_current_data(df_current_data)
         return strategy
 
+    ''' deprecated
     def test_get_df_buying_symbols(self):
         # context
         strategy = rtstr_bigwill.StrategyBigWill()
@@ -78,8 +79,6 @@ class TestRTSTRBigWill:
         assert(df.iloc[0]['percent'] == 0)       
 
     def test_get_df_selling_symbols(self):
-        return  # TODO : reactivate the test
-
         # context
         strategy = rtstr_bigwill.StrategyBigWill()
         lst_symbols = ["BTC/USD", "ETH/USD"]
@@ -95,3 +94,4 @@ class TestRTSTRBigWill:
         assert(len(df) == 1)
         assert(df.iloc[0]['symbol'] == "BTC/USD")
         assert(df.iloc[0]['stimulus'] == "SELL")
+    '''

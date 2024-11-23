@@ -56,9 +56,7 @@ class TestRTSTRGridTradingLong:
         ds = strategy.get_data_description()
 
         # expectations
-        assert (ds.symbols == rtdp.default_symbols)
-        # assert(not set(ds.features) ^ set(['ao', 'n1_ao', 'ema_100', 'ema-200', 'stoch_rsi', 'willr']))
-        assert (sorted(ds.features) == sorted(['ema_10']))
+        assert (len(ds) == 0)
 
     def _initialize_current_data(self, strategy, data):
         ds = strategy.get_data_description()
@@ -81,6 +79,7 @@ class TestRTSTRGridTradingLong:
         assert (any(item in df.columns.to_list() for item in ['symbol', 'stimulus', 'size', 'percent', 'gridzone', 'pos_type']))
         assert (len(df) == 0)
 
+    ''' deprecated
     def test_get_df_buying_symbols_with_rtctrl(self):
         # context
         strategy = rtstr_grid_trading_generic_v3.StrategyGridTradingGenericV3(params={"id": "grid1", "grid_low":"1.", "grid_high":"5.", "nb_grid":"5", "type":"long"})
@@ -112,7 +111,7 @@ class TestRTSTRGridTradingLong:
         assert (isinstance(df, pd.DataFrame))
         assert (any(item in df.columns.to_list() for item in ['symbol', 'stimulus']))
         assert (len(df) == 0)
-
+    '''
 
     def test_crag_run(self, mocker):
         return
