@@ -1,6 +1,6 @@
 import pytest
 from src import broker_bitget_api
-
+from . import utils
 
 class TestBrokerBitget:
 
@@ -12,6 +12,7 @@ class TestBrokerBitget:
         # expectations
         assert (my_broker.get_min_order_amount("XRP") == 0.)
 
+    @pytest.mark.skipif(utils.detect_environment() != "local", reason="Need local execution")
     def test_get_current_state(self):
         # context
         params = {"exchange": "bitget", "account": "bitget_cl1", "reset_account": False, "reset_account_orders": False}

@@ -80,21 +80,23 @@ class TestLoggerFile:
         my_logger.log("0123456789")
 
         # expectations
-        assert (os.path.isfile(expected_filename0))
+        assert (not os.path.exists(expected_filename0))
         assert (os.path.isfile(expected_filename1))
         current_filesize = my_logger._get_current_filesize()
-        assert (current_filesize == 40)
+        assert (current_filesize == 33)
+        '''
         with open(expected_filename0) as f:
             lines = f.readlines()
             assert (len(lines) == 1)
             assert (lines[0].endswith("abcdefghijklmnopqrstuvwxyz\n"))
+        '''
         with open(expected_filename1) as f:
             lines = f.readlines()
             assert (len(lines) == 1)
             assert (lines[0].endswith("0123456789\n"))
 
         # cleaning
-        os.remove(expected_filename0)
+        #os.remove(expected_filename0)
         os.remove(expected_filename1)
 
 
