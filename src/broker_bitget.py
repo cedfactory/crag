@@ -302,6 +302,78 @@ class BrokerBitGet(broker.Broker):
         return trigger
 
     @authentication_required
+    def execute_open_sltp(self, order):
+        symbol = self.trade_symbol = self._get_symbol(order["symbol"])
+        order_side = order["holdSide"].upper()
+        if "LONG" in order_side:
+            leverage = self.get_leverage_long(symbol)
+        elif "SHORT" in order_side:
+            leverage = self.get_leverage_short(symbol)
+        sizeMultiplier = self.get_sizeMultiplier(symbol)
+
+        amount = utils.normalize_size(order["gross_size"] * leverage, sizeMultiplier)
+        # amount = utils.normalize_size(order["gross_size"], sizeMultiplier)            # CEDE Leverage issues
+
+        amount = str(amount)
+        trigger_price = order.get("trigger_price", None)
+        if not isinstance(trigger_price, str):
+            trigger_price = str(trigger_price)
+            initial_trigger_price = str(trigger_price)
+        execute_price = order.get("execute_price", None)
+        if not isinstance(execute_price, str):
+            execute_price = str(execute_price)
+        range_rate = order.get("range_rate", None)
+        if not isinstance(range_rate, str):
+            range_rate = str(range_rate)
+        grid_id = str(order.get("grid_id", ""))
+        if not isinstance(grid_id, str):
+            grid_id = str(grid_id)
+        strategy_id = str(order["strategy_id"])
+        plan_type = str(order["planType"])
+        hold_side = str(order["holdSide"])
+        range_rate = str(order["range_rate"])
+
+        clientOid = self.clientOIdprovider.get_name(symbol, hold_side)
+
+        if symbol and plan_type and trigger_price and execute_price and clientOid and hold_side and amount:
+            msg = "!!!!! EXECUTE TRAILLING TPSL ORDER !!!!!" + "\n"
+            msg += "{} size: {} sltp trailling price: {}".format(order_side, amount, trigger_price) + "\n"
+
+            transaction = self._place_TPSL_Order_v2(symbol,
+                                                    marginCoin="USDT", planType=plan_type,
+                                                    triggerPrice=trigger_price, triggerType="mark_price",
+                                                    executePrice=execute_price, holdSide=hold_side,
+                                                    size=amount, rangeRate='', clientOid=clientOid
+                                                    )
+            try:
+                orderId = transaction['data']['orderId']
+            except:
+                print("TPSL: FAILED")
+                pass
+
+        if "msg" in transaction and transaction["msg"] == "success" and "data" in transaction and len(transaction["data"]) > 0:
+            orderId = transaction["data"]["orderId"]
+            self.add_gridId_orderId(grid_id, orderId, strategy_id, trend="")
+            transaction_failure = False
+        else:
+            transaction_failure = True
+            msg += "TRADE FAILED: {} size: {} sltp_trigger_price: {}".format(order_side, amount, trigger_price) + "\n"
+        self.log_trade = self.log_trade + msg.upper()
+
+        if not transaction_failure:
+            order["trade_status"] = "SUCCESS"
+            order["orderId"] = orderId
+        elif transaction_failure:
+            order["trade_status"] = "FAILED"
+            order["orderId"] = None
+        else:
+            order["trade_status"] = "UNKNOWN"
+        del msg
+
+        return order
+
+
+    @authentication_required
     def execute_sltp_trailling(self, order):
         symbol = self.trade_symbol = self._get_symbol(order["symbol"])
         order_side = order["type"]
@@ -421,6 +493,20 @@ class BrokerBitGet(broker.Broker):
             futures = []
             for order in lst_orders:
                 futures.append(executor.submit(self.execute_sltp_trailling, order))
+
+            wait(futures, timeout=1000, return_when=ALL_COMPLETED)
+
+            for future in futures:
+                lst_result_orders.append(future.result())
+
+        return lst_result_orders
+
+    def execute_lst_open_sltp(self, lst_orders):
+        lst_result_orders = []
+        with ThreadPoolExecutor() as executor:
+            futures = []
+            for order in lst_orders:
+                futures.append(executor.submit(self.execute_open_sltp, order))
 
             wait(futures, timeout=1000, return_when=ALL_COMPLETED)
 
@@ -642,29 +728,28 @@ class BrokerBitGet(broker.Broker):
 
                     size = utils.normalize_size(order["gross_size"] * leverage,
                                                 self.get_sizeMultiplier(symbol_v1))
-                    orderParam = {
-                        "size": str(size),
-                        "price": str(order["price"]),
-                        "side": side,
-                        "tradeSide": tradeSide,
-                        "orderType": "limit",
-                        "force": "gtc",
-                        "clientOid": str(clientOid),
-                        "reduceOnly": "YES",
-                        "presetStopSurplusPrice": str(order["TP"]),
-                    }
-
-                    tp = self.normalize_price(self._get_symbol(symbol), order["TP"]) if "TP" in order and order["TP"] else None
-                    sl = self.normalize_price(self._get_symbol(symbol), order["SL"]) if "SL" in order and order["SL"] else None
-                    # Convert tp and sl to string format without scientific notation
-                    if tp is not None:
-                        # tp = format(tp, '.8f')  # Adjust the number of decimal places as needed
-                        orderParam["presetStopSurplusPrice"] = tp
-                        order["TP"] = tp
-                    if sl is not None:
-                        # sl = format(sl, '.8f')  # Adjust the number of decimal places as needed
-                        orderParam["presetStopLossPrice"] = sl
-                        order["SL"] = sl
+                    orderParam = {"size": str(size),
+                                  "price": str(order["price"]),
+                                  "side": side,
+                                  "tradeSide": tradeSide,
+                                  "orderType": "limit",
+                                  "force": "gtc",
+                                  "clientOid": str(clientOid),
+                                  "reduceOnly": "YES",
+                                  # "presetStopSurplusPrice": str(order["TP"])
+                                  }
+                    if order["TP"] != None or order["SL"] != None:
+                        tp = self.normalize_price(self._get_symbol(symbol), order["TP"]) if "TP" in order and order["TP"] else None
+                        sl = self.normalize_price(self._get_symbol(symbol), order["SL"]) if "SL" in order and order["SL"] else None
+                        # Convert tp and sl to string format without scientific notation
+                        if tp is not None:
+                            # tp = format(tp, '.8f')  # Adjust the number of decimal places as needed
+                            orderParam["presetStopSurplusPrice"] = tp
+                            order["TP"] = tp
+                        if sl is not None:
+                            # sl = format(sl, '.8f')  # Adjust the number of decimal places as needed
+                            orderParam["presetStopLossPrice"] = sl
+                            order["SL"] = sl
                     # order["gross_size"] = size
                     lst_orderList.append(orderParam)
 
@@ -946,6 +1031,10 @@ class BrokerBitGet(broker.Broker):
         # Process each type of order
         lst_result_open_orders, lst_orders = execute_and_filter(lst_orders, "MARKET_OPEN_POSITION",
                                                                 self.execute_lst_orders)
+
+        lst_result_close_orders, lst_orders = execute_and_filter(lst_orders, "MARKET_CLOSE_POSITION",
+                                                                 self.execute_lst_orders)
+
         lst_result_close_positions, lst_orders = execute_and_filter(lst_orders, "CLOSE_POSITION",
                                                                     self.execute_lst_close_positions)
         lst_result_cancel_plan_orders, lst_orders = execute_and_filter(lst_orders, "CANCEL_TRIGGER",
@@ -956,6 +1045,9 @@ class BrokerBitGet(broker.Broker):
                                                                     self.execute_lst_triggers)
         lst_result_sltp_trailing_orders, lst_orders = execute_and_filter(lst_orders, "SL_TP_TRAILER",
                                                                          self.execute_lst_sltp_trailling_orders)
+
+        lst_result_open_sltp, lst_orders = execute_and_filter(lst_orders, "OPEN_SL_TP",
+                                                              self.execute_lst_open_sltp)
 
         # Handle RECORD_DATA and CANCEL_SLTP separately
         lst_record_missing_orders = [order for order in lst_orders if order.get("type") == "RECORD_DATA"]
@@ -981,13 +1073,15 @@ class BrokerBitGet(broker.Broker):
         # Return the combined results
         return (
                 lst_result_open_orders +
+                lst_result_close_orders +
                 lst_result_close_positions +
                 lst_result_triggers_orders +
                 lst_result_sltp_trailing_orders +
                 lst_result_cancel_plan_orders +
                 lst_result_cancel_orders +
                 lst_limit_orders_sltp +
-                lst_result_orders
+                lst_result_orders +
+                lst_result_open_sltp
         )
 
     def set_open_orders_gridId(self, df_open_orders):

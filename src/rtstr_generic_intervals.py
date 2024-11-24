@@ -21,6 +21,8 @@ class StrategyIntervalsGeneric(rtstr.RealTimeStrategy):
         if path_strategy_param != "" and path.exists("./symbols/" + path_strategy_param):
             df_strategy_param = pd.read_csv("./symbols/" + path_strategy_param)
 
+        df_strategy_param = df_strategy_param.groupby("symbol").apply(utils.assign_grouped_id).reset_index(drop=True)
+
         lst_param_strategy = []
         init_params = params
         self.lst_symbols = []
@@ -33,6 +35,8 @@ class StrategyIntervalsGeneric(rtstr.RealTimeStrategy):
                     "margin": row["margin"],
                     "interval": row["interval"],
                     "side": row["side"],
+                    "grouped": row["grouped"],
+                    "grouped_id": row["grouped_id"],
                     "trix_length": row["trix_length"],
                     "trix_signal_length": row["trix_signal_length"],
                     "trix_signal_type": row["trix_signal_type"],
@@ -45,10 +49,10 @@ class StrategyIntervalsGeneric(rtstr.RealTimeStrategy):
 
         self.lst_strategy = []
         available_strategies = rtstr.RealTimeStrategy.get_strategies_list()
-        for grid_param in lst_param_strategy:
-            if grid_param["name"] in available_strategies:
-                combined_param_dict = {**init_params, **grid_param}
-                my_strategy = rtstr.RealTimeStrategy.get_strategy_from_name(grid_param["name"], combined_param_dict)
+        for param_strategy in lst_param_strategy:
+            if param_strategy["name"] in available_strategies:
+                combined_param_dict = {**init_params, **param_strategy}
+                my_strategy = rtstr.RealTimeStrategy.get_strategy_from_name(param_strategy["name"], combined_param_dict)
                 self.lst_strategy.append(my_strategy)
 
         self.set_multiple_strategy()
@@ -95,7 +99,7 @@ class StrategyIntervalsGeneric(rtstr.RealTimeStrategy):
         for strategy in self.lst_strategy:
             if strategy.get_interval() in lst_intervals:
                 lst_trade.extend(strategy.get_lst_trade())
-        return lst_trade
+        return utils.filtered_grouped_orders(lst_trade)
 
     def get_info(self):
         return "StrategyIntervalsGeneric"

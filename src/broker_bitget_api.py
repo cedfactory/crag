@@ -621,21 +621,22 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         return result
 
     @authentication_required
-    def _place_TPSL_Order_v2(self, symbol, marginCoin, productType, planType, triggerPrice,
+    def _place_TPSL_Order_v2(self, symbol, marginCoin, planType, triggerPrice,
                              triggerType, executePrice, holdSide, size, rangeRate, clientOid):
 
         params = {}
         params["symbol"] = self._get_symbol_v2(symbol)
         params["marginCoin"] = "USDT"
         params["productType"] = "USDT-FUTURES"
-        params["symbol"] = symbol
         params["planType"] = planType
         params["triggerPrice"] = triggerPrice
+        params["executePrice"] = executePrice
         params["triggerType"] = triggerType
         # params["executePrice"] = executePrice
         params["size"] = size
         params["holdSide"] = holdSide
-        params["rangeRate"] = rangeRate
+        if rangeRate != '':
+            params["rangeRate"] = rangeRate
         params["clienOid"] = clientOid
 
         result = {}
@@ -1521,7 +1522,9 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     def get_df_minimum_size(self, lst_symbols):
         lst = [self.get_minimum_size(symbol) for symbol in lst_symbols]
-        df = pd.DataFrame({'symbol': lst_symbols, 'minBuyingSize': lst,'buyingSize':lst})
+        lst_leverage_long = [self.get_leverage_long(self._get_symbol(symbol)) for symbol in lst_symbols]
+        lst_leverage_short = [self.get_leverage_short(self._get_symbol(symbol)) for symbol in lst_symbols]
+        df = pd.DataFrame({'symbol': lst_symbols, 'minBuyingSize': lst,'buyingSize': lst, 'leverage_long': lst_leverage_long, 'leverage_short': lst_leverage_short})
         return df
 
     def get_priceEndStep(self, symbol):

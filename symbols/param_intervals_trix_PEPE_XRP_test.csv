@@ -1,3 +1,8 @@
-﻿id,name,symbol,interval,type,trix_length,trix_signal_length,trix_signal_type,long_ma_length,window_size,margin
-trix_1,StrategyTrix,PEPE,1m,,19,15,sma,200,200,20
-trix_2,StrategyTrix,XRP,1m,,21,9,ema,200,200,20
+﻿id,name,symbol,interval,side,grouped,trix_length,trix_signal_length,trix_signal_type,long_ma_length,window_size,margin
+trix_1,StrategyTrix,PEPE,1m,short,True,19,15,sma,200,200,20
+trix_2,StrategyTrix,PEPE,1m,short,True,21,9,ema,200,200,20
+trix_3,StrategyTrix,XRP,1m,short,False,21,9,ema,200,200,20
+trix_4,StrategyTrix,DOGE,1m,short,False,21,9,ema,200,200,20
+trix_5,StrategyTrix,DOGE,1m,short,True,21,9,ema,200,200,20
+trix_6,StrategyTrix,DOGE,1m,short,True,21,9,ema,200,200,20
+trix_7,StrategyTrix,DOGE,1m,short,True,21,9,ema,200,200,20

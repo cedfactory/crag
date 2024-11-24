@@ -1,13 +1,15 @@
 import pandas as pd
 
 class OpenPositions():
-    def __init__(self, symbol, strategy_id, strategy_name):
+    def __init__(self, symbol, strategy_id, grouped_id, strategy_name, strategy_side):
         self.symbol = symbol
         self.strategy_id = strategy_id
+        self.grouped_id = grouped_id
         self.strategy_name = strategy_name
-        columns = ['symbol', 'strategy_id', 'trigger_type', 'strategy_name',
+        self.strategy_side = strategy_side
+        columns = ['symbol', 'strategy_id', "grouped_id", 'trigger_type', 'strategy_name',
                    'order_id', "order_id_closing", 'orderType',
-                   'amount', 'size', 'type',
+                   'amount', 'size', 'type', "trade_side",
                    'buying_price', 'selling_price', 'trade_status']
 
         self.open_position = pd.DataFrame(columns=columns)
@@ -17,6 +19,11 @@ class OpenPositions():
             "open_short": "open_short",
             "close_long": "close_long",
             "close_short": "close_short"
+        }
+
+        self.state_mapping_closing = {
+            "close_long": "CLOSE_LONG_ORDER",
+            "close_short": "CLOSE_SHORT_ORDER"
         }
 
         self.stat = {
@@ -31,17 +38,22 @@ class OpenPositions():
         }
 
     def create_open_market_order(self, amount, side_type, order_type):
+        mapped_state = self.state_mapping.get(side_type)
+        trade_side = "LONG" if "long" in mapped_state else "SHORT" if "short" in mapped_state else None
         new_order = {
             "symbol": self.symbol,
             "strategy_id": self.strategy_id,
+            "grouped_id": self.grouped_id,
             "trigger_type": "MARKET_OPEN_POSITION",
             "strategy_name": self.strategy_name,
+            "strategy_side": self.strategy_side,
             "order_id": "pending",
             "order_id_closing": "empty",
             "orderType": order_type,
             "amount": amount,
             "size": "pending",
-            "type": self.state_mapping.get(side_type),
+            "type": mapped_state,
+            "trade_side": trade_side,
             "buying_price": "pending",
             "selling_price": "pending",
             "trade_status": "pending"
@@ -51,12 +63,13 @@ class OpenPositions():
     def validate_open_market_order(self, lst_order):
         for order in lst_order:
             if order["symbol"] in [self.symbol] \
-                    and order["strategy_id"] == self.strategy_id \
+                    and (order["strategy_id"] == self.strategy_id
+                         or order["grouped_id"] == self.grouped_id) \
                     and order["trigger_type"] == "MARKET_OPEN_POSITION"\
-                    and order["trade_status"] == "SUCCESS":
-                order["symbol"] = order["symbol"]
+                    and order["trade_status"] == "SUCCESS"\
+                    and order["trade_side"] in self.strategy_side:
+                order["strategy_id"] = self.strategy_id
                 self.open_position.loc[len(self.open_position)] = order
-
                 self.stat["nb_open_position"] = len(self.open_position)
 
     def create_close_market_order(self, order_type):
@@ -67,12 +80,16 @@ class OpenPositions():
             (self.open_position['trade_status'] == "SUCCESS")
             ]
         if not filtered_order.empty:
+            mapped_state = self.state_mapping.get(order_type)
+            trade_side = "LONG" if "long" in mapped_state.lower() else "SHORT" if "short" in mapped_state.lower() else None
+
             row = filtered_order.iloc[0]
 
             # Create the dictionary using the values from the row
             new_order = {
                 "symbol": row['symbol'],
                 "strategy_id": row['strategy_id'],
+                "grouped_id": row['grouped_id'],
                 "trigger_type": "MARKET_CLOSE_POSITION",
                 "strategy_name": row['strategy_name'],
                 "order_id": row['order_id'],
@@ -80,7 +97,8 @@ class OpenPositions():
                 "orderType": order_type,
                 "amount": row['amount'],
                 "size": row['size'],
-                "type": self.state_mapping.get(order_type),
+                "type": mapped_state,
+                "trade_side": trade_side,
                 "buying_price": row['buying_price'],
                 "selling_price": "pending",
                 "trade_status": "pending"
@@ -93,9 +111,11 @@ class OpenPositions():
     def validate_close_market_order(self, lst_order):
         for order in lst_order:
             if order["symbol"] in [self.symbol] \
-                    and order["strategy_id"] == self.strategy_id \
+                    and (order["strategy_id"] == self.strategy_id
+                         or order["grouped_id"] == self.grouped_id)\
                     and order["trigger_type"] == "MARKET_CLOSE_POSITION"\
-                    and order["trade_status"] == "SUCCESS":
+                    and order["trade_status"] == "SUCCESS"\
+                    and order["trade_side"] in self.strategy_side:
                 order_id = order["order_id"]
                 side = order["type"]
                 diff_price = order["selling_price"] - order["buying_price"]

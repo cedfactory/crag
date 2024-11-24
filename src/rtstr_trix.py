@@ -14,6 +14,7 @@ class StrategyTrix(rtstr.RealTimeStrategy):
         self.df_current_data = pd.DataFrame()
 
         self.side = ""
+        self.grouped = False
         self.id = ""
         self.symbol = ""
         self.margin = 0
@@ -29,6 +30,7 @@ class StrategyTrix(rtstr.RealTimeStrategy):
             self.symbol = params.get("strategy_symbol", self.symbol)
             self.margin = params.get("margin", self.margin)
             self.side = params.get("side", self.side)
+            self.grouped_id = params.get("grouped_id")
             self.strategy_str_interval = params.get("interval", self.strategy_str_interval)
             self.trix_length = params.get("trix_length", self.trix_length)
             self.trix_signal_length = params.get("trix_signal_length", self.trix_signal_length)
@@ -38,13 +40,13 @@ class StrategyTrix(rtstr.RealTimeStrategy):
         else:
             exit(5)
 
-        self.positions = open_positions.OpenPositions(self.symbol, self.strategy_id, self.get_info())
-        self.zero_print = True
-
         if self.side in ["long", "short"]:
             self.side = [self.side.upper()]
         elif self.side in ["both", ""]:
             self.side = ["LONG", "SHORT"]
+
+        self.positions = open_positions.OpenPositions(self.symbol, self.strategy_id, self.grouped_id, self.get_info(), self.side)
+        self.zero_print = True
 
         self.mutiple_strategy = False
 

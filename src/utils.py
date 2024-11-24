@@ -13,6 +13,31 @@ import random
 import string
 import math
 
+def filtered_grouped_orders(order_list):
+    # Filter items where "grouped_id" is None
+    result = [order for order in order_list if order.get("grouped_id") is None]
+
+    # Group orders with a "grouped_id" not None
+    grouped_items = {}
+    for order in order_list:
+        grouped_id = order.get("grouped_id")
+        if grouped_id is not None:
+            # Keep only the first occurrence of each "grouped_id"
+            if grouped_id not in grouped_items:
+                grouped_items[grouped_id] = order
+
+    # Add the first occurrences of each "grouped_id" to the result
+    result.extend(grouped_items.values())
+
+    return result
+
+def assign_grouped_id(group):
+    if group['grouped'].any():  # Check if any row in the group has grouped=True
+        grouped_id = generate_random_id(4)
+        group['grouped_id'] = group['grouped'].apply(lambda x: grouped_id if x else None)
+    else:
+        group['grouped_id'] = None
+    return group
 
 def to_unix_millis(dt):
     return int(dt.timestamp() * 1000)
