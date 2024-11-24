@@ -545,8 +545,8 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     '''
     marginCoin: Deposit currency
     size: It is quantity when the price is limited. The market price is the limit. The sales is the quantity
-    side \in {open_long, open_short, close_long, close_short}
-    orderType \in {limit(fixed price), market(market price)}
+    side \\in {open_long, open_short, close_long, close_short}
+    orderType \\in {limit(fixed price), market(market price)}
     returns :
     - transaction_id
     - transaction_price

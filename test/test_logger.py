@@ -63,9 +63,9 @@ class TestLoggerFile:
 
     def test_logger_file_log_new_file(self):
         # context
-        filename = "../test/log"
-        expected_filename0 = "../test/log0000.log"
-        expected_filename1 = "../test/log0001.log"
+        filename = "./test/log"
+        expected_filename0 = "./test/log0000.log"
+        expected_filename1 = "./test/log0001.log"
         if os.path.isfile(expected_filename0):
             os.remove(expected_filename0)
         if os.path.isfile(expected_filename1):
