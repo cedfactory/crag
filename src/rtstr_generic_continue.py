@@ -37,7 +37,8 @@ class StrategyContinueGeneric(rtstr.RealTimeStrategy):
                     "percent_per_grid": row["percent_per_grid"],
                     "nb_grid": row["nb_grid"],
                     "grid_margin": row["grid_margin"],
-                    "nb_position_limits": row["nb_position_limits"]
+                    "nb_position_limits": row["nb_position_limits"],
+                    "amount": row["amount"]
                 })
                 self.lst_symbols.append(row["symbol"])
 
