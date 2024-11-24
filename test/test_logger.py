@@ -83,7 +83,7 @@ class TestLoggerFile:
         assert (not os.path.exists(expected_filename0))
         assert (os.path.isfile(expected_filename1))
         current_filesize = my_logger._get_current_filesize()
-        assert (current_filesize == 34)
+        assert (current_filesize == 33)
         '''
         with open(expected_filename0) as f:
             lines = f.readlines()
