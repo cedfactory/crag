@@ -1,4 +1,5 @@
-id,name,symbol,type,grid_high,grid_low,percent_per_grid,nb_grid,nb_position_limits,grid_margin,amount
-long_1,StrategyReversedGridTradingGenericV3,PEPE,long,0.000025,0.000023,0,3,2,200,5365000
+id,name,symbol,type,grid_high,grid_low,percent_per_grid,nb_grid,nb_position_limits,grid_margin,amount,offload,percent_trade_per_grid
+long_1,StrategyReversedGridTradingGenericV3,PEPE,long,0.00004,0.0000098,2,20,0,200,4871000,False,2
+short_1,StrategyReversedGridTradingGenericV3,PEPE,short,0.00004,0.0000098,2,20,0,200,4871000,True,2
 
 
