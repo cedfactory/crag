@@ -6,6 +6,8 @@ from rich import inspect,print
 
 from . import utils,chronos
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 default_symbols = []
 default_features = ["open", "close", "high", "low", "volume"]
 
@@ -63,7 +65,8 @@ class RealTimeDataProvider(IRealTimeDataProvider):
 
     def get_lst_current_data(self, lst_data_description, fdp_url_id):
         lst_ds_result = []
-        for data_description in lst_data_description:
+
+        def process_data_description(data_description):
             symbols = ','.join(data_description.symbols)
             symbols = symbols.replace('/', '_')
 
@@ -76,7 +79,8 @@ class RealTimeDataProvider(IRealTimeDataProvider):
                 "interval": interval,
                 "candle_stick": data_description.candle_stick,
                 "start": None,
-                "indicators": data_description.fdp_features}
+                "indicators": data_description.fdp_features
+            }
 
             response_json = utils.fdp_request_post("last", params, fdp_url_id)
 
@@ -102,10 +106,22 @@ class RealTimeDataProvider(IRealTimeDataProvider):
                             print("FDP MISSING FEATURE VALUE")
                             return None
 
-            df_result = pd.DataFrame(data)
-            df_result.set_index("symbol", inplace=True)
-            data_description.current_data = df_result.copy()
-            lst_ds_result.append(data_description)
+                df_result = pd.DataFrame(data)
+                df_result.set_index("symbol", inplace=True)
+                data_description.current_data = df_result.copy()
+                return data_description
+            else:
+                print("Response status not OK")
+                return None
+
+        with ThreadPoolExecutor() as executor:
+            futures = {executor.submit(process_data_description, dd): dd for dd in lst_data_description}
+            for future in as_completed(futures):
+                result = future.result()
+                if result is not None:
+                    lst_ds_result.append(result)
+                else:
+                    print(f"Failed to process data description: {futures[future]}")
 
         return lst_ds_result
 
