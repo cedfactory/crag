@@ -8,6 +8,7 @@ from .bitget.mix import plan_api as plan
 from .bitget.spot import public_api as public
 from .bitget import exceptions
 from .bitget.mix_v2 import order_api as orderV2
+from .bitget.mix_v2 import account_api as accountV2
 
 from .bitget_ws.bitget_ws import BitgetWsClient
 
@@ -32,6 +33,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         self.orderApi = None
         self.publicApi = None
         self.planApi = None
+        self.positionV2Api = None
         self.orderV2Api = None
 
         self.failure = 0
@@ -80,6 +82,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             self.orderApi = order.OrderApi(api_key, api_secret, api_password, use_server_time=False, first=False)
             self.planApi = plan.PlanApi(api_key, api_secret, api_password, use_server_time=False, first=False)
             self.orderV2Api = orderV2.OrderApi(api_key, api_secret, api_password, use_server_time=False, first=False)
+            self.accountV2Api = accountV2.AccountApi(api_key, api_secret, api_password, use_server_time=False, first=False)
 
         # initialize the public api
         self.publicApi = public.PublicApi(api_key, api_secret, api_password, use_server_time=False, first=False)
@@ -226,6 +229,36 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         del n_attempts
         if self.get_cache_status():
             self.requests_cache_set("get_open_position", res.copy())
+        return res
+
+    def get_open_position_v2(self):
+        if self.get_cache_status():
+            df_from_cache = self.requests_cache_get("get_open_position_v2")
+            if isinstance(df_from_cache, pd.DataFrame):
+                return df_from_cache.copy()
+        res = pd.DataFrame()
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                all_positions = self.accountV2Api.allPosition(
+                    {
+                        "productType":"USDT-FUTURES",
+                        "marginCoin":"USDT"
+                    })
+                lst_all_positions = [data for data in all_positions["data"] if float(data["total"]) != 0.]
+                res = self._build_df_open_positions_v2(lst_all_positions)
+                del all_positions["data"]
+                del all_positions
+                del lst_all_positions
+                self.success += 1
+                break
+            except (exceptions.BitgetAPIException, Exception) as e:
+                self.log_api_failure("positionApi.all_position_v2", e, n_attempts)
+                time.sleep(0.2)
+                n_attempts = n_attempts - 1
+        del n_attempts
+        if self.get_cache_status():
+            self.requests_cache_set("get_open_position_v2", res.copy())
         return res
 
     # @authentication_required

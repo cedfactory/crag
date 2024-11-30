@@ -86,14 +86,16 @@ class PanelPositions(wx.Panel):
             self, size=(570, 200),
             style=wx.LC_REPORT | wx.BORDER_SUNKEN
         )
-        self.positions.InsertColumn(0, 'Symbol', width=130)
-        self.positions.InsertColumn(1, 'USDT Equity', width=100)
-        self.positions.InsertColumn(2, 'Side', width=50)
-        self.positions.InsertColumn(3, 'Leverage', width=70)
-        self.positions.InsertColumn(4, 'uPL', width=70)
-        self.positions.InsertColumn(5, 'Total', width=70)
-        self.positions.InsertColumn(6, 'Value', width=70)
-        self.positions.InsertColumn(7, 'Avg Open Price', width=70)
+        self.positions.InsertColumn(0, 'Symbol', width=120)
+        self.positions.InsertColumn(1, 'Position USDT', width=100)
+        self.positions.InsertColumn(2, 'Position Size', width=70)
+        self.positions.InsertColumn(3, 'Margin USDT', width=70)
+        self.positions.InsertColumn(4, 'Side', width=50)
+        self.positions.InsertColumn(5, 'Leverage', width=70)
+        self.positions.InsertColumn(6, 'uPL', width=70)
+        self.positions.InsertColumn(7, 'Achieved Profits', width=70)
+        self.positions.InsertColumn(8, 'Total Fee', width=70)
+        self.positions.InsertColumn(9, 'Avg Open Price', width=70)
         main_sizer.Add(self.positions, 0, wx.ALL | wx.EXPAND, 5)
 
         hsizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -281,6 +283,10 @@ class MainPanel(wx.Panel):
         self.staticTextUsdtEquity = wx.StaticText(self, label="USDT Equity : ", style=wx.ALIGN_LEFT)
         main_sizer.Add(self.staticTextUsdtEquity, 0, wx.ALL | wx.EXPAND, 5)
 
+        # usdt equity
+        self.staticTextUsdtCash = wx.StaticText(self, label="USDT Cash : ", style=wx.ALIGN_LEFT)
+        main_sizer.Add(self.staticTextUsdtCash, 0, wx.ALL | wx.EXPAND, 5)
+
         sl1 = wx.StaticLine(self, size=(200, 1))
         main_sizer.Add(sl1, 0, wx.ALL | wx.EXPAND, 5)
 
@@ -365,21 +371,37 @@ class MainPanel(wx.Panel):
         positions = []
         available = 0
         if my_broker:
-            positions = my_broker.get_open_position()
+            positions = my_broker.get_open_position_v2()
 
             available, cross_max_available, fixed_max_available = my_broker.get_available_cash()
+            print("available : ", available)
+            print("cross_max_available : ", cross_max_available)
+            print("fixed_max_available : ", fixed_max_available)
 
         # update positions
+        usdt_available = available
         print("positions : ", positions)
         self.panel_positions.positions.DeleteAllItems()
         self.panel_positions.positions.Append(["USDT", utils.KeepNDecimals(available), "-", "-", "-"])
         if isinstance(positions, pd.DataFrame):
             for index, row in positions.iterrows():
-                uPL = my_broker.get_symbol_unrealizedPL(row["symbol"])
+                uPL = row["unrealizedPL"]
                 total = row["total"]
-                value = row["total"] * row["marketPrice"]
                 avgOpenPrice = row["averageOpenPrice"]
-                self.panel_positions.positions.Append([row["symbol"], utils.KeepNDecimals(row["total"]*row["marketPrice"]), row["holdSide"], row["leverage"], utils.KeepNDecimals(uPL), utils.KeepNDecimals(total), utils.KeepNDecimals(value), utils.KeepNDecimals(avgOpenPrice)])
+                self.panel_positions.positions.Append([row["symbol"],
+                                                       utils.KeepNDecimals(row["total"]*row["marketPrice"]),
+                                                       utils.KeepNDecimals(total),
+                                                       utils.KeepNDecimals(row["usdtEquity"]),
+                                                       row["holdSide"], row["leverage"],
+                                                       utils.KeepNDecimals(uPL),
+                                                       utils.KeepNDecimals(row["achievedProfits"]),
+                                                       utils.KeepNDecimals(row["totalFee"]),
+                                                       utils.KeepNDecimals(avgOpenPrice)])
+                usdt_available -= row["usdtEquity"]
+
+        # update usdt cash
+        self.staticTextUsdtCash.SetLabel("USDT Cash : " + str(utils.KeepNDecimals(usdt_available)))
+
 
     def update_orders(self, my_broker):
         orders = []
@@ -594,7 +616,7 @@ class MainPanel(wx.Panel):
 class CragFrame(wx.Frame):
 
     def __init__(self):
-        wx.Frame.__init__(self, parent=None, title='Miguel',pos=wx.DefaultPosition,size=(700, 750), style= wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX)
+        wx.Frame.__init__(self, parent=None, title='Miguel',pos=wx.DefaultPosition,size=(700, 800), style= wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX)
         self.panel = MainPanel(self)
         self.create_menu()
         self.Show()

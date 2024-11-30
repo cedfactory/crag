@@ -1164,6 +1164,31 @@ class BrokerBitGet(broker.Broker):
                                                   })
         return df_open_positions
 
+    def _build_df_open_positions_v2(self, open_positions):
+        df_open_positions = pd.DataFrame(columns=["symbol", "holdSide", "leverage", "marginCoin",
+                                                  "available", "total", "usdtEquity",
+                                                  "marketPrice", "averageOpenPrice",
+                                                  "achievedProfits", "unrealizedPL", "liquidationPrice",
+                                                  "totalFee"])
+        for i in range(len(open_positions)):
+            data = open_positions[i]
+            df_open_positions.loc[i] = pd.Series({"symbol": data["symbol"],
+                                                  "holdSide": data["holdSide"],
+                                                  "leverage": data["leverage"],
+                                                  "marginCoin": data["marginCoin"],
+                                                  "available": float(data["available"]),
+                                                  "total": float(data["total"]),
+                                                  "usdtEquity": float(data["marginSize"]),  # probably wrong
+                                                  "marketPrice": float(data["markPrice"]),
+                                                  "averageOpenPrice": float(data["openPriceAvg"]),
+                                                  "achievedProfits": float(data["achievedProfits"]),
+                                                  "unrealizedPL": float(data["unrealizedPL"]),
+                                                  "liquidationPrice": float(data["liquidationPrice"]),
+                                                  "totalFee": float(data["totalFee"])
+                                                  })
+        return df_open_positions
+
+
     def _build_df_open_orders(self, open_orders):
         df_open_orders = pd.DataFrame(columns=["symbol", "price", "side", "size", "leverage", "marginCoin", "marginMode", "reduceOnly", "clientOid", "orderId"])
         for i in range(len(open_orders)):
