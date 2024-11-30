@@ -284,8 +284,8 @@ class MainPanel(wx.Panel):
         main_sizer.Add(self.staticTextUsdtEquity, 0, wx.ALL | wx.EXPAND, 5)
 
         # usdt equity
-        self.staticTextUsdtAvailable = wx.StaticText(self, label="USDT Available : ", style=wx.ALIGN_LEFT)
-        main_sizer.Add(self.staticTextUsdtAvailable, 0, wx.ALL | wx.EXPAND, 5)
+        self.staticTextUsdtCash = wx.StaticText(self, label="USDT Cash : ", style=wx.ALIGN_LEFT)
+        main_sizer.Add(self.staticTextUsdtCash, 0, wx.ALL | wx.EXPAND, 5)
 
         sl1 = wx.StaticLine(self, size=(200, 1))
         main_sizer.Add(sl1, 0, wx.ALL | wx.EXPAND, 5)
@@ -399,8 +399,8 @@ class MainPanel(wx.Panel):
                                                        utils.KeepNDecimals(avgOpenPrice)])
                 usdt_available -= row["usdtEquity"]
 
-        # update usdt available
-        self.staticTextUsdtAvailable.SetLabel("USDT Available : " + str(utils.KeepNDecimals(usdt_available)))
+        # update usdt cash
+        self.staticTextUsdtCash.SetLabel("USDT Cash : " + str(utils.KeepNDecimals(usdt_available)))
 
 
     def update_orders(self, my_broker):
