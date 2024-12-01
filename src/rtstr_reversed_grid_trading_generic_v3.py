@@ -380,7 +380,7 @@ class GridPosition():
         # differences = df['position'].diff().dropna()
         # diff = differences.mean() / 2
 
-        diff = self.step_size / 2
+        diff = self.step_size / 5
         # diff = 0   # CEDE DEBUG
         df.loc[(df['position'] >= self.current_price - abs(diff))
                & (df['position'] <= self.current_price + abs(diff)), 'side'] = "on_edge"
