@@ -301,22 +301,22 @@ class GridPosition():
         self.offload = offload
 
         # Calculate the step size
-        step_size = self.grid_low * (self.percent_per_grid / 100)
+        self.step_size = self.grid_low * (self.percent_per_grid / 100)
 
         # Generate the main grid values
-        self.lst_grid_values = list(np.arange(self.grid_low, self.grid_high + step_size, step_size))
+        self.lst_grid_values = list(np.arange(self.grid_low, self.grid_high + self.step_size, self.step_size))
         if self.lst_grid_values[-1] != self.grid_high:
             self.lst_grid_values[-1] = self.grid_high
 
         if self.grid_side == "long":
             # Generate the shifted grid values
-            self.lst_shifted_grid_values = [value - step_size for value in self.lst_grid_values]
-            # Ensure the first value starts at grid_low - step_size
-            self.lst_shifted_grid_values[0] = self.grid_low - step_size
+            self.lst_shifted_grid_values = [value - self.step_size for value in self.lst_grid_values]
+            # Ensure the first value starts at grid_low - self.step_size
+            self.lst_shifted_grid_values[0] = self.grid_low - self.step_size
         elif self.grid_side == "short":
             # Generate the shifted grid values
-            self.lst_shifted_grid_values = [value + step_size for value in self.lst_grid_values]
-            # self.lst_shifted_grid_values[len(self.lst_shifted_grid_values)] = self.grid_high + step_size
+            self.lst_shifted_grid_values = [value + self.step_size for value in self.lst_grid_values]
+            # self.lst_shifted_grid_values[len(self.lst_shifted_grid_values)] = self.grid_high + self.step_size
 
         self.columns = ["grid_id",
                         "position", "open_position",
@@ -377,9 +377,11 @@ class GridPosition():
 
         df.loc[df['position'] == self.current_price, 'side'] = "on_edge"
 
-        differences = df['position'].diff().dropna()
+        # differences = df['position'].diff().dropna()
+        # diff = differences.mean() / 2
 
-        diff = differences.mean() / 5
+        diff = self.step_size / 2
+        # diff = 0   # CEDE DEBUG
         df.loc[(df['position'] >= self.current_price - abs(diff))
                & (df['position'] <= self.current_price + abs(diff)), 'side'] = "on_edge"
 
@@ -391,6 +393,21 @@ class GridPosition():
         self.grid['planType'] = "empty"
 
         df_open_triggers_original = df_open_triggers.copy()
+
+
+        df_debug = df_open_triggers.copy()
+        condition_open_executed = df_debug['planStatus'] == 'executed'
+        # condition_side_sltp = df_debug['side'] == self.side_mapping_sltp.get(self.grid_side, None)
+
+        df_open_debug = df_debug[condition_open_executed]
+
+        if False and len(df_open_debug) > 0: # CEDE DEBUG
+            print('titi')
+            print(df_open_debug.to_string())
+
+
+
+
 
         self.current_state = {}
         self.current_state[self.grid_side] = {}
@@ -486,15 +503,19 @@ class GridPosition():
             # Get the difference: items in order_id_list_TP but not in list_orderId_TP
             difference = set_list_orderId_TP - set_order_id_list_TP
             difference_list = list(difference)
+            if False and len(difference_list) > 0: # CEDE DEBUG
+                print("toto")
+                print(difference_list)
 
             self.grid['status_TP'] = np.where(self.grid['orderId_TP'].isin(difference_list),
                                               'triggered',
                                               'empty')
-            self.grid['orderId_TP'] = np.where((self.grid['orderId_TP'] == 'triggered')
-                                               | (self.grid['cancel_status'] == 'CANCELED'),
-                                               'empty',
-                                               self.grid['orderId_TP']
-                                               )
+            self.grid['orderId_TP'] = np.where(self.grid['orderId_TP'].isin(difference_list),
+                                              'empty',
+                                              self.grid['orderId_TP'])
+            self.grid['orderId_TP'] = np.where(self.grid['cancel_status'].isin(['CANCELED']),
+                                              'empty',
+                                               self.grid['orderId_TP'])
 
             for orderId in order_id_list_TP:
                 if orderId in df_open_triggers_side["orderId"].to_list():
@@ -588,10 +609,15 @@ class GridPosition():
         # Update status
         if row['status_TP'] == "engaged" or row['status_open_order'] == "engaged":
             row['status'] = "engaged"
-        elif (row['status_TP'] == "empty" and row['status_open_order'] == "empty") or (
-                "triggered" in [row['status_TP'], row['status_open_order']]
-                and "empty" in [row['status_TP'], row['status_open_order']])\
+        elif (row['status_TP'] == "empty" and row['status_open_order'] == "empty") \
+                or ("triggered" in [row['status_TP'], row['status_open_order']]
+                    and "empty" in [row['status_TP'], row['status_open_order']]) \
                 and self.engaged_count < self.nb_grid:
+            row['status'] = "missing_order"
+
+        if (row['status_TP'] == "triggered" or row['status_open_order'] == "triggered") \
+                and row['status_TP'] == "empty" \
+                and row['status_open_order'] == "empty":
             row['status'] = "missing_order"
 
         if row['status'] == "missing_order" and row['side'] != self.str_close:
@@ -664,6 +690,9 @@ class GridPosition():
                     order_to_execute["trade_status"] = "pending"
                     # order_to_execute["range_rate"] = self.percent_per_grid
                     lst_orders.append(order_to_execute)
+                    if False: # CEDE DEBUG
+                        print("tutu")
+                        print(order_to_execute)
                 del order_to_execute
             elif order['grid_id'] in lst_missing_TP_grid_id:
                 order_to_execute = {}
