@@ -322,7 +322,8 @@ class GridPosition():
                         "position", "open_position",
                         "side", "size", "planType",
                         "status", "status_TP", "status_open_order",
-                        "orderId_TP", "orderId_open_order"
+                        "orderId_TP", "orderId_open_order",
+                        "cancel_status"
                         ]
 
         # self.grid = {key: pd.DataFrame(columns=self.columns) for key in self.lst_symbols}
@@ -340,6 +341,7 @@ class GridPosition():
         self.grid["status"] = "empty"
         self.grid["status_TP"] = "empty"
         self.grid["status_open_order"] = "empty"
+        self.grid["cancel_status"] = "empty"
 
         self.stats = {
             "startegy": strategy_name,
@@ -489,7 +491,7 @@ class GridPosition():
                                               'triggered',
                                               'empty')
             self.grid['orderId_TP'] = np.where((self.grid['orderId_TP'] == 'triggered')
-                                               & (self.grid['cancel_status'] == 'CANCELED'),
+                                               | (self.grid['cancel_status'] == 'CANCELED'),
                                                'empty',
                                                self.grid['orderId_TP']
                                                )
