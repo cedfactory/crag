@@ -168,9 +168,12 @@ class StrategyContinueGeneric(rtstr.RealTimeStrategy):
             futures = [executor.submit(strategy.update_executed_trade_status,lst_orders) for strategy in self.lst_strategy]
             wait(futures, timeout=1000, return_when=ALL_COMPLETED)
 
+        if False: # CEDE ACTIVE FOR DEBUG TRACES
+            self.print_grid()
+
     def print_grid(self):
         for strategy in self.lst_strategy:
-            strategy.print_grid()
+            strategy.print_debug_grid()
 
     def save_grid_scenario(self, path, cpt):
         for strategy in self.lst_strategy:

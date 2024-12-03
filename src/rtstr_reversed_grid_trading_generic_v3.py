@@ -5,6 +5,9 @@ import numpy as np
 
 import copy
 
+import os
+import glob
+
 from . import utils
 from src import logger
 
@@ -106,6 +109,9 @@ class StrategyReversedGridTradingGenericV3(rtstr.RealTimeStrategy):
         self.previous_stats = {}
         self.self_execute_trade_recorder_not_active = True
 
+        self.backup_grid = None          # DEBUG CEDE
+        self.backup_df = pd.DataFrame()  # DEBUG CEDE
+
     def get_data_description(self):
         return {}
 
@@ -193,9 +199,6 @@ class StrategyReversedGridTradingGenericV3(rtstr.RealTimeStrategy):
     def print_grid(self):
         self.grid.print_grid()
 
-    def save_grid_scenario(self, path, cpt):
-        self.grid.save_grid_scenario(self.symbol, path, cpt)
-
     def set_normalized_grid_price(self, lst_symbol_plc_endstp):
         return
 
@@ -263,6 +266,108 @@ class StrategyReversedGridTradingGenericV3(rtstr.RealTimeStrategy):
 
         return self.df_grid_buying_size
 
+    def initialize_backup(self):
+        """Initialize backups for the grid-related data."""
+        self.backup_grid = copy.deepcopy(self.grid.grid)
+        self.backup_grid_intermediat = copy.deepcopy(self.grid.grid_intermediat)
+        self.backup_orders_to_cancel_df = copy.deepcopy(self.grid.orders_to_cancel_df)
+        self.backup_missing_TP_df = copy.deepcopy(self.grid.missing_TP_df)
+        self.backup_missing_open_orders_df = copy.deepcopy(self.grid.missing_open_orders_df)
+        self.backup_df_open_triggers_original = copy.deepcopy(self.grid.df_open_triggers_original)
+
+    def print_debug_grid(self):
+        backup_dir = 'debug_backup_grid'
+        backup_file = f'debug_backup_grid/{self.side}.txt'
+
+        def clean_backup_directory():
+            """Clean or create the backup directory."""
+            if os.path.exists(backup_dir):
+                for file in glob.glob(os.path.join(backup_dir, "*.txt")):
+                    os.remove(file)
+            else:
+                os.makedirs(backup_dir)
+
+        def write_backup_file(dataframes, file_path):
+            """Write the provided dataframes to the backup file."""
+            # Ensure the directory exists
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
+            # Write data to the file
+            with open(file_path, 'a') as f:
+                f.write("\n---------------------\n")
+                for label, df in dataframes.items():
+                    f.write(f"\n{label}\n")  # Add a separator for each section
+                    f.write(df.to_string() + "\n")
+                f.write("\n---------------------\n")
+
+        # Initialize backup if not already done
+        if self.backup_grid is None:
+            self.initialize_backup()
+            clean_backup_directory()
+
+            # Columns to check for "empty"
+            columns_to_check = [
+                'planType', 'status', 'status_TP', 'status_open_order',
+                'orderId_TP', 'orderId_open_order', 'cancel_status'
+            ]
+
+            # Filter rows in backup_grid_intermediat where all specified columns are "empty"
+            self.backup_grid_intermediat = self.backup_grid_intermediat[
+                ~self.backup_grid_intermediat[columns_to_check].eq('empty').all(axis=1)
+            ]
+
+            # Write initial backup
+            write_backup_file(
+                {
+                    "backup_grid_intermediat": self.backup_grid_intermediat,
+                    "backup_grid": self.backup_grid,
+                },
+                backup_file
+            )
+            return
+
+        # Compare the current and backup open triggers
+        current_df = self.grid.df_open_triggers_original.copy()
+        backup_df = self.backup_df.copy()
+
+        self.initialize_backup()
+        # If there are changes, update the backups and log differences
+        if not current_df.equals(backup_df) \
+                or len(self.backup_missing_TP_df) > 0 \
+                or len(self.backup_missing_open_orders_df) > 0 \
+                or len(self.backup_orders_to_cancel_df) > 0:
+            # Columns to check for "empty"
+            columns_to_check = [
+                'planType', 'status', 'status_TP', 'status_open_order',
+                'orderId_TP', 'orderId_open_order', 'cancel_status'
+            ]
+
+            # Filter rows in backup_grid_intermediat where all specified columns are "empty"
+            self.backup_grid_intermediat = self.backup_grid_intermediat[
+                ~self.backup_grid_intermediat[columns_to_check].eq('empty').all(axis=1)
+            ]
+
+            # Filter rows in backup_grid where all specified columns are "empty"
+            self.backup_grid = self.backup_grid[
+                ~self.backup_grid[columns_to_check].eq('empty').all(axis=1)
+            ]
+
+            write_backup_file(
+                {
+                    "backup_orders_to_cancel_df": self.backup_orders_to_cancel_df,
+                    "backup_missing_TP_df": self.backup_missing_TP_df,
+                    "backup_missing_open_orders_df": self.backup_missing_open_orders_df,
+                    "backup_df_open_triggers_original": self.backup_df_open_triggers_original,
+                    "backup_grid_intermediat": self.backup_grid_intermediat,
+                    "backup_grid": self.backup_grid,
+                },
+                backup_file
+            )
+
+        # Update the main backup after processing
+        self.backup_df = copy.deepcopy(current_df)
+
+        return
 
 class GridPosition():
     def __init__(self, strategy_name, side, symbol, grid_high, grid_low, nb_grid, percent_per_grid,
@@ -380,8 +485,10 @@ class GridPosition():
         # differences = df['position'].diff().dropna()
         # diff = differences.mean() / 2
 
-        diff = self.step_size / 5
-        # diff = 0   # CEDE DEBUG
+        if True:
+            diff = self.step_size / 4
+        else:
+            diff = 0   # CEDE DEBUG
         df.loc[(df['position'] >= self.current_price - abs(diff))
                & (df['position'] <= self.current_price + abs(diff)), 'side'] = "on_edge"
 
@@ -392,41 +499,19 @@ class GridPosition():
         self.grid['status'] = "empty"
         self.grid['planType'] = "empty"
 
-        df_open_triggers_original = df_open_triggers.copy()
+        self.df_open_triggers_original = df_open_triggers.copy()
 
-
-        df_debug = df_open_triggers.copy()
-        condition_open_executed = df_debug['planStatus'] == 'executed'
-        # condition_side_sltp = df_debug['side'] == self.side_mapping_sltp.get(self.grid_side, None)
-
-        df_open_debug = df_debug[condition_open_executed]
-
-        if False and len(df_open_debug) > 0: # CEDE DEBUG
-            print('titi')
-            print(df_open_debug.to_string())
-
-
-
-
+        if False:
+            df_debug = df_open_triggers.copy()
+            condition_open_executed = df_debug['planStatus'] == 'executed'
+            # condition_side_sltp = df_debug['side'] == self.side_mapping_sltp.get(self.grid_side, None)
+            df_open_debug = df_debug[condition_open_executed]
+            if len(df_open_debug) > 0: # CEDE DEBUG
+                print('titi')
+                print(df_open_debug.to_string())
 
         self.current_state = {}
         self.current_state[self.grid_side] = {}
-        if not df_current_state.empty:
-            df_current_state = df_current_state[df_current_state['symbol'] == symbol]
-            df_current_state = df_current_state[df_current_state['strategyId'] == self.strategy_id]
-
-            condition_side = df_current_state['side'] == "open_" + self.grid_side
-            df_current_state_side = df_current_state[condition_side]
-
-            self.current_state[self.grid_side]["lst_open_orders_order_id_all"] = df_current_state["orderId"].to_list()
-            self.current_state[self.grid_side]["lst_open_orders_order_id_side"] = df_current_state_side["orderId"].to_list()
-
-            order_id_list = self.current_state[self.grid_side]["lst_open_orders_order_id_side"]
-            self.grid['orderId_open_order'] = self.grid['orderId_open_order'].apply(lambda x: "empty" if x not in order_id_list else x)
-        else:
-            self.current_state[self.grid_side]["lst_open_orders_order_id_all"] = []
-            self.current_state[self.grid_side]["lst_open_orders_order_id_side"] = []
-            self.grid['orderId_open_order'] = "empty"
 
         df_open_triggers_open_order = df_open_triggers[df_open_triggers['planType'] == 'normal_plan']
         if not df_open_triggers_open_order.empty:
@@ -457,15 +542,23 @@ class GridPosition():
             difference_list = list(difference)
 
             self.grid['status_open_order'] = np.where(self.grid['orderId_open_order'].isin(difference_list),
-                                                      'triggered',
-                                                      'empty'
+                                                      'engaged',
+                                                      self.grid['status_open_order']
                                                       )
+            self.grid['status_TP'] = np.where(self.grid['orderId_open_order'].isin(difference_list),
+                                              'empty',
+                                              self.grid['status_TP']
+                                              )
             for orderId in order_id_list_open_order:
                 if orderId in df_open_triggers_side["orderId"].to_list():
                     # Retrieve the corresponding gridId
                     grid_id = float(df_open_triggers_side.loc[df_open_triggers_side["orderId"] == orderId, 'gridId'].values[0])
+                    plan_type = df_open_triggers_side.loc[df_open_triggers_side["orderId"] == orderId, 'planType'].values[0]
                     if not self.grid.loc[self.grid['grid_id'] == grid_id].empty:
                         self.grid.loc[self.grid['grid_id'] == grid_id, 'orderId_open_order'] = orderId
+                        self.grid.loc[self.grid['grid_id'] == grid_id, 'planType'] = plan_type
+                        self.grid.loc[self.grid['grid_id'] == grid_id, 'status_open_order'] = 'engaged'
+                        self.grid.loc[self.grid['grid_id'] == grid_id, 'status_TP'] = "empty"
 
             self.grid["orderId_open_order"] = self.grid["orderId_open_order"].apply(lambda x: "empty" if x not in order_id_list_open_order else x)
         else:
@@ -474,8 +567,13 @@ class GridPosition():
             self.grid["orderId_open_order"] = "empty"
 
 
-        df_open_triggers = df_open_triggers_original.copy()
-        # df_open_triggers_TP = df_open_triggers[df_open_triggers['planType'] == 'profit_plan']
+        df_open_triggers = self.df_open_triggers_original.copy()
+
+        if False: # CEDE DEBUG
+            df_open_triggers_TP = df_open_triggers[df_open_triggers['planType'] == 'profit_loss']
+            if len(df_open_triggers_TP) > 0:
+                print("titi titi")
+
         df_open_triggers_TP = df_open_triggers[df_open_triggers['planType'].isin(['profit_plan', 'profit_loss'])]
         if not df_open_triggers_TP.empty:
             df_open_triggers = df_open_triggers[df_open_triggers["symbol"] == symbol]
@@ -509,7 +607,7 @@ class GridPosition():
 
             self.grid['status_TP'] = np.where(self.grid['orderId_TP'].isin(difference_list),
                                               'triggered',
-                                              'empty')
+                                              self.grid['status_TP'])
             self.grid['orderId_TP'] = np.where(self.grid['orderId_TP'].isin(difference_list),
                                               'empty',
                                               self.grid['orderId_TP'])
@@ -525,6 +623,7 @@ class GridPosition():
                     if not self.grid.loc[self.grid['grid_id'] == grid_id].empty:
                         self.grid.loc[self.grid['grid_id'] == grid_id, 'orderId_TP'] = orderId
                         self.grid.loc[self.grid['grid_id'] == grid_id, 'planType'] = plan_type
+                        self.grid.loc[self.grid['grid_id'] == grid_id, 'status_TP'] = "engaged"
 
             self.grid["orderId_TP"] = self.grid["orderId_TP"].apply(lambda x: "empty" if x not in order_id_list_TP else x)
         else:
@@ -537,28 +636,11 @@ class GridPosition():
         # In order to update status
         self.grid = self.grid.apply(self.update_status, axis=1)
 
-        self.engaged_count = self.grid['status'].value_counts().get('engaged', 0)
-        nb_position_to_keep = self.nb_grid - self.engaged_count
-        if nb_position_to_keep == 0:
-            self.grid.loc[self.grid['status'] == 'missing_order', 'status'] = 'empty'
-        else:
-            missing_order_indices = self.grid[self.grid['status'] == 'missing_order'].index
-            # Set the starting index
-            if self.grid_side == "long":
-                start_index = min(missing_order_indices)
-                # Find the position of the start_index in the missing_order_indices
-                start_position = list(missing_order_indices).index(start_index)
-                # Determine the range of indices to keep
-                keep_indices = missing_order_indices[start_position:start_position + nb_position_to_keep]
-            elif self.grid_side == "short":
-                keep_indices = missing_order_indices[ - nb_position_to_keep:]
-
-            # Update the 'status' for all 'missing_order' rows not in the range
-            update_indices = missing_order_indices.difference(keep_indices)
-            self.grid.loc[update_indices, 'status'] = 'empty'
+        self.filter_status()
 
         self.engaged_count = self.grid['status'].value_counts().get('engaged', 0)
-        self.missing_count = self.grid['status'].value_counts().get('missing_order', 0)
+        self.missing_count = self.grid['status'].value_counts().get('missing_open_order', 0) \
+                             + self.grid['status'].value_counts().get('missing_order_TP', 0)
         self.TP_count = self.grid[self.grid['orderId_TP'] != "empty"].shape[0]
 
         if self.grid_side == "long":
@@ -593,37 +675,62 @@ class GridPosition():
                 and self.TP_count > 0:
             self.nb_rows_to_cancel = min(num_rows_free, self.TP_count)
 
-    def update_status(self, row):
-        # Update status_TP
-        if row['orderId_TP'] == "empty" and row['status_TP'] != "triggered":
-            row['status_TP'] = "empty"
-        elif row['orderId_TP'] != "empty":
-            row['status_TP'] = "engaged"
+        self.grid_intermediat = self.grid.copy()
 
-        # Update status_open_order
-        if row['orderId_open_order'] == "empty" and row['status_open_order'] != "triggered":
-            row['status_open_order'] = "empty"
-        elif row['orderId_open_order'] != "empty":
+    def update_status(self, row):
+        if row['orderId_TP'] != "empty":
+            row['status_TP'] = "engaged"
+        if row['orderId_open_order'] != "empty":
             row['status_open_order'] = "engaged"
 
-        # Update status
         if row['status_TP'] == "engaged" or row['status_open_order'] == "engaged":
             row['status'] = "engaged"
-        elif (row['status_TP'] == "empty" and row['status_open_order'] == "empty") \
-                or ("triggered" in [row['status_TP'], row['status_open_order']]
-                    and "empty" in [row['status_TP'], row['status_open_order']]) \
-                and self.engaged_count < self.nb_grid:
-            row['status'] = "missing_order"
 
-        if (row['status_TP'] == "triggered" or row['status_open_order'] == "triggered") \
-                and row['status_TP'] == "empty" \
-                and row['status_open_order'] == "empty":
-            row['status'] = "missing_order"
+        elif row['orderId_TP'] != "empty" or row['orderId_open_order'] != "empty":
+            row['status'] = "engaged"
 
-        if row['status'] == "missing_order" and row['side'] != self.str_close:
+        elif row['status_TP'] == "triggered":
+            row['status'] = "missing_open_order"
+
+        elif row['status_open_order'] == "triggered":
+            row['status'] = "missing_order_TP"
+
+        elif row['orderId_TP'] == "empty" and row['orderId_open_order'] == "empty":
+            row['status'] = "missing_order_TP"
+
+        if row['side'] != self.str_close and row['status_TP'] == "empty" and row['orderId_open_order'] == "empty":
             row['status'] = "empty"
-
         return row
+
+    def filter_status(self):
+        df_missing_order_TP = self.grid[self.grid['status'] == "missing_order_TP"]
+
+        df_missing_open_order = self.grid[self.grid['status'] == "missing_open_order"]
+
+        df_engaged = self.grid[self.grid['status'] == "engaged"]
+
+        nb_engaged = len(df_engaged)
+        nb_missing_order_TP = len(df_missing_order_TP)
+        nb_missing_open_order = len(df_missing_open_order)
+
+        nb_missing_order_to_keep = self.nb_grid - nb_engaged - nb_missing_open_order
+        nb_missing_order_to_drop = nb_missing_order_TP - nb_missing_order_to_keep
+
+        if nb_missing_order_to_drop > 0:
+            # Get indices of rows with 'missing_order_TP'
+            missing_order_TP_indices = df_missing_order_TP.index
+
+            if self.grid_side == "long":
+                # Keep the nb_missing_order_to_keep with the lower index
+                # indices_to_keep = missing_order_TP_indices[:nb_missing_order_to_keep]
+                indices_to_empty = missing_order_TP_indices[nb_missing_order_to_keep:]
+            elif self.grid_side == "short":
+                # Keep the nb_missing_order_to_keep with the greater index
+                # indices_to_keep = missing_order_TP_indices[-nb_missing_order_to_keep:]
+                indices_to_empty = missing_order_TP_indices[:-nb_missing_order_to_keep]
+
+            # Update the 'status' column for rows to be emptied
+            self.grid.loc[indices_to_empty, 'status'] = "empty"
 
     def set_current_price(self, price):
         self.current_price = price
@@ -640,19 +747,18 @@ class GridPosition():
         }
         """
         # Filter rows where 'status' is "missing_order"
-        missing_TP_df = self.grid[(self.grid['status'] == "missing_order")
-                                  & (self.grid['status_TP'] == "empty")]
+        self.missing_TP_df = self.grid[(self.grid['status'] == "missing_order_TP")]
 
-        missing_open_orders_df = self.grid[(self.grid['status'] == "missing_order")
-                                           & (self.grid['status_TP'] == "triggered")]
-        if self.offload and not missing_open_orders_df.empty:
-            missing_open_orders_df = missing_open_orders_df[0:0]
+        self.missing_open_orders_df = self.grid[(self.grid['status'] == "missing_open_order")]
 
-        missing_orders_df = self.grid[self.grid['status'] == "missing_order"]
+        if self.offload and not self.missing_open_orders_df.empty:
+            self.missing_open_orders_df = self.missing_open_orders_df[0:0]
+
+        missing_orders_df = pd.concat([self.missing_TP_df, self.missing_open_orders_df], ignore_index=True)
 
         # Select relevant columns and convert the result to a list of dictionaries
-        lst_missing_open_orders_grid_id = missing_open_orders_df['grid_id'].to_list()
-        lst_missing_TP_grid_id = missing_TP_df['grid_id'].to_list()
+        lst_missing_open_orders_grid_id = self.missing_open_orders_df['grid_id'].to_list()
+        lst_missing_TP_grid_id = self.missing_TP_df['grid_id'].to_list()
         lst_missing_order = missing_orders_df[['grid_id', 'position', 'open_position', 'size', 'side']].to_dict(orient='records')
 
         lst_orders_to_cancel = []
@@ -665,10 +771,12 @@ class GridPosition():
                 (self.grid['orderId_TP'] != 'profit_plan')
                 ]
             # Get the self.nb_rows_to_cancel rows with the highest indices
-            orders_to_cancel_df = filtered_orders.iloc[-self.nb_rows_to_cancel:]
+            self.orders_to_cancel_df = filtered_orders.iloc[-self.nb_rows_to_cancel:]
             # Extract the grid_id values as a list
-            lst_grid_ids_to_cancel = orders_to_cancel_df['grid_id'].tolist()
+            lst_grid_ids_to_cancel = self.orders_to_cancel_df['grid_id'].tolist()
             lst_orders_to_cancel = filtered_orders[['grid_id', 'position', "orderId_TP", 'open_position', 'size', 'side', "planType"]].to_dict(orient='records')
+        else:
+            self.orders_to_cancel_df = pd.DataFrame()
 
         lst_missing_order += lst_orders_to_cancel
 
@@ -690,9 +798,6 @@ class GridPosition():
                     order_to_execute["trade_status"] = "pending"
                     # order_to_execute["range_rate"] = self.percent_per_grid
                     lst_orders.append(order_to_execute)
-                    if False: # CEDE DEBUG
-                        print("tutu")
-                        print(order_to_execute)
                 del order_to_execute
             elif order['grid_id'] in lst_missing_TP_grid_id:
                 order_to_execute = {}
@@ -733,20 +838,25 @@ class GridPosition():
                 grid_id = order["grid_id"]
                 if order["trade_status"] == "SUCCESS":
                     if order["trigger_type"] == "OPEN_SL_TP":
+                        df_grid.loc[df_grid["grid_id"] == grid_id, "status"] = "engaged"
                         df_grid.loc[df_grid["grid_id"] == grid_id, "status_TP"] = "engaged"
                         df_grid.loc[df_grid["grid_id"] == grid_id, "orderId_TP"] = order["orderId"]
                     elif order["trigger_type"] == "TRIGGER":
+                        df_grid.loc[df_grid["grid_id"] == grid_id, "status"] = "engaged"
                         df_grid.loc[df_grid["grid_id"] == grid_id, "status_open_order"] = "engaged"
                         df_grid.loc[df_grid["grid_id"] == grid_id, "orderId_open_order"] = order["orderId"]
                     elif order["trigger_type"] == "CANCEL_SLTP":
+                        df_grid.loc[df_grid["grid_id"] == grid_id, "status"] = "empty"
                         df_grid.loc[df_grid["grid_id"] == grid_id, "status_TP"] = "empty"
                         df_grid.loc[df_grid["grid_id"] == grid_id, "orderId_TP"] = "empty"
                         df_grid.loc[df_grid["grid_id"] == grid_id, "cancel_status"] = "CANCELED"
                 else:
                     if order["trigger_type"] == "OPEN_SL_TP":
+                        df_grid.loc[df_grid["grid_id"] == grid_id, "status"] = "empty"
                         df_grid.loc[df_grid["grid_id"] == grid_id, "status_TP"] = "empty"
                         df_grid.loc[df_grid["grid_id"] == grid_id, "orderId_TP"] = order["empty"]
                     elif order["trigger_type"] == "TRIGGER":
+                        df_grid.loc[df_grid["grid_id"] == grid_id, "status"] = "empty"
                         df_grid.loc[df_grid["grid_id"] == grid_id, "status_open_order"] = "empty"
                         df_grid.loc[df_grid["grid_id"] == grid_id, "orderId_open_order"] = order["orderId"]
 
@@ -834,44 +944,4 @@ class GridPosition():
         df = df[["values"]]
         return df
 
-    def save_grid_scenario(self, symbol, path, cpt):
-        if cpt >= 30:
-            cpt += 1
-            df = self.grid
-            filename = path + "/grid_" + str(cpt) + ".csv"
-            df.to_csv(filename)
 
-            df_filtered = df[df["status"] == "engaged"]
-            df_current_state = df_filtered.copy()
-            df_current_state.rename(columns={'grid_id': 'gridId'}, inplace=True)
-            df_current_state.rename(columns={'lst_orderId': 'orderId'}, inplace=True)
-            df_current_state.rename(columns={'nb_position': 'leverage'}, inplace=True)
-            df_current_state.rename(columns={'position': 'price'}, inplace=True)
-
-            columns_to_drop = ['close_grid_id', 'triggered_by', 'previous_side', 'previous_status', 'changes', 'cross_checked', 'on_edge']
-            df_current_state.drop(columns=columns_to_drop, inplace=True)
-
-            df_exploded = df_current_state.explode('orderId').reset_index(drop=True)
-            df_exploded['leverage'] = 1
-            df_exploded['symbol'] = 'XRP'
-
-            filename = path + "/data_" + str(cpt) + "_df_current_states.csv"
-            df_exploded.reset_index(drop=True, inplace=True)
-            df_reversed = df_exploded.iloc[::-1].reset_index(drop=True)
-            columns = df_reversed.columns.tolist()
-            columns = [columns[-1]] + columns[1:-1] + [columns[0]]
-            df_reversed = df_reversed[columns]
-            df_reversed.to_csv(filename)
-
-            df_filtered = df_filtered[df_filtered["side"] == "close_long"]
-            nb_pos = len(df_filtered)
-
-            lst_columns = ["symbol", "holdSide", "leverage", "marginCoin", "available", "total", "usdtEquity", "marketPrice", "averageOpenPrice", "achievedProfits", "unrealizedPL", "liquidationPrice"]
-            lst_data = ["XRP", "long", 2, "USDT", 10.0, 40.0, 5.86875, 0.58664, 0.586875, 0.0, -0.0047, 0.0]
-
-            df = pd.DataFrame([lst_data], columns=lst_columns)
-            df.loc[0, 'total'] = 10 * nb_pos
-
-            filename = path + "/data_" + str(cpt) + "_df_open_positions.csv"
-            df.reset_index(drop=True, inplace=True)
-            df.to_csv(filename)
