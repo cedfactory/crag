@@ -486,7 +486,7 @@ class GridPosition():
         # diff = differences.mean() / 2
 
         if True:
-            diff = self.step_size / 4
+            diff = self.step_size / 3
         else:
             diff = 0   # CEDE DEBUG
         df.loc[(df['position'] >= self.current_price - abs(diff))
@@ -720,14 +720,17 @@ class GridPosition():
             # Get indices of rows with 'missing_order_TP'
             missing_order_TP_indices = df_missing_order_TP.index
 
-            if self.grid_side == "long":
-                # Keep the nb_missing_order_to_keep with the lower index
-                # indices_to_keep = missing_order_TP_indices[:nb_missing_order_to_keep]
-                indices_to_empty = missing_order_TP_indices[nb_missing_order_to_keep:]
-            elif self.grid_side == "short":
-                # Keep the nb_missing_order_to_keep with the greater index
-                # indices_to_keep = missing_order_TP_indices[-nb_missing_order_to_keep:]
-                indices_to_empty = missing_order_TP_indices[:-nb_missing_order_to_keep]
+            if nb_missing_order_to_keep == 0:
+                indices_to_empty = missing_order_TP_indices
+            else:
+                if self.grid_side == "long":
+                    # Keep the nb_missing_order_to_keep with the lower index
+                    # indices_to_keep = missing_order_TP_indices[:nb_missing_order_to_keep]
+                    indices_to_empty = missing_order_TP_indices[nb_missing_order_to_keep:]
+                elif self.grid_side == "short":
+                    # Keep the nb_missing_order_to_keep with the greater index
+                    # indices_to_keep = missing_order_TP_indices[-nb_missing_order_to_keep:]
+                    indices_to_empty = missing_order_TP_indices[:-nb_missing_order_to_keep]
 
             # Update the 'status' column for rows to be emptied
             self.grid.loc[indices_to_empty, 'status'] = "empty"
