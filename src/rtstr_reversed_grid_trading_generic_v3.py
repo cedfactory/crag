@@ -315,6 +315,9 @@ class StrategyReversedGridTradingGenericV3(rtstr.RealTimeStrategy):
             self.backup_grid_intermediat = self.backup_grid_intermediat[
                 ~self.backup_grid_intermediat[columns_to_check].eq('empty').all(axis=1)
             ]
+            self.backup_grid = self.backup_grid[
+                ~self.backup_grid[columns_to_check].eq('empty').all(axis=1)
+            ]
 
             # Write initial backup
             write_backup_file(
@@ -738,6 +741,13 @@ class GridPosition():
     def set_current_price(self, price):
         self.current_price = price
 
+    def clear_grid(self, df):
+        # List of columns to be set to "empty"
+        columns_to_clear = ['planType', 'status', 'status_TP', 'status_open_order', 'orderId_TP', 'orderId_open_order']
+
+        # Update the original self.grid for the rows in the input dataframe
+        self.grid.loc[df.index, columns_to_clear] = "empty"
+
     def get_order_list(self, symbol):
         """
         order_to_execute = {
@@ -755,6 +765,7 @@ class GridPosition():
         self.missing_open_orders_df = self.grid[(self.grid['status'] == "missing_open_order")]
 
         if self.offload and not self.missing_open_orders_df.empty:
+            self.clear_grid(self.missing_open_orders_df)
             self.missing_open_orders_df = self.missing_open_orders_df[0:0]
 
         missing_orders_df = pd.concat([self.missing_TP_df, self.missing_open_orders_df], ignore_index=True)
