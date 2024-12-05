@@ -28,21 +28,11 @@ class StrategyIntervalsGeneric(rtstr.RealTimeStrategy):
         self.lst_symbols = []
         if isinstance(df_strategy_param, pd.DataFrame):
             for index, row in df_strategy_param.iterrows():
-                lst_param_strategy.append({
-                    "id": row["id"],
-                    "strategy_symbol": row["symbol"],
-                    "name": row["name"],
-                    "margin": row["margin"],
-                    "interval": row["interval"],
-                    "side": row["side"],
-                    "grouped": row["grouped"],
-                    "grouped_id": row["grouped_id"],
-                    "trix_length": row["trix_length"],
-                    "trix_signal_length": row["trix_signal_length"],
-                    "trix_signal_type": row["trix_signal_type"],
-                    "long_ma_length": row["long_ma_length"],
-                    "window_size": row["window_size"]
-                })
+                # Dynamically create a dictionary for each row
+                params = {col: row[col] for col in df_strategy_param.columns}
+                params["strategy_symbol"] = params.pop("symbol", None)  # Rename 'symbol' to 'strategy_symbol'
+
+                lst_param_strategy.append(params)
                 self.lst_symbols.append(row["symbol"])
 
         self.lst_symbols = list(set(self.lst_symbols))

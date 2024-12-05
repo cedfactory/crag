@@ -27,21 +27,11 @@ class StrategyContinueGeneric(rtstr.RealTimeStrategy):
         self.lst_symbols = []
         if isinstance(df_strategy_param, pd.DataFrame):
             for index, row in df_strategy_param.iterrows():
-                lst_param_strategy.append({
-                    "id": row["id"],
-                    "strategy_symbol": row["symbol"],
-                    "name": row["name"],
-                    "type": row["type"],
-                    "grid_high": row["grid_high"],
-                    "grid_low": row["grid_low"],
-                    "percent_per_grid": row["percent_per_grid"],
-                    "nb_grid": row["nb_grid"],
-                    "grid_margin": row["grid_margin"],
-                    "nb_position_limits": row["nb_position_limits"],
-                    "amount": row["amount"],
-                    "percent_trade_per_grid": row["percent_trade_per_grid"],
-                    "offload": row["offload"]
-                })
+                # Dynamically create a dictionary for each row
+                params = {col: row[col] for col in df_strategy_param.columns}
+                params["strategy_symbol"] = params.pop("symbol", None)  # Rename 'symbol' to 'strategy_symbol'
+
+                lst_param_strategy.append(params)
                 self.lst_symbols.append(row["symbol"])
 
         self.lst_symbols = list(set(self.lst_symbols))
