@@ -1,0 +1,2 @@
+id,name,symbol,type,grid_high,grid_low,percent_per_grid,nb_grid,nb_position_limits,grid_margin,amount,offload,percent_trade_per_grid
+long_1,StrategyReversedGridTradingGenericV3,PEPE,long,0,0000520463,0,0000224463,1,10,0,200,348100000,False,5
