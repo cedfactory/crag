@@ -42,6 +42,16 @@ def launch_strategy(xml_file):
 		print("command : ", command)
 		subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
 
+def launch_simon():
+	if g_os_platform == "Windows":
+		command = "start /B python simon > simon.log"
+		print("command : ", command)
+		os.system(command)
+	elif g_os_platform == "Linux":
+		command = "nohup python simon.py > simon.log &"
+		print("command : ", command)
+		subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
+
 #
 def select_strategy_to_start():
 	directory = os.getcwd()
@@ -184,6 +194,7 @@ if __name__ == "__main__":
 	- 'running' to display the running python processes
 	- 'stop' to stop a running strategy
 	- 'stats' to display large files and memory info
+	- 'simon' to run simon
 	- 'quit' to quit''')
 	action = input("> ").strip().lower()
 	print("\n")
@@ -201,6 +212,9 @@ if __name__ == "__main__":
 
 	elif action == "stats":
 		display_os_stats()
+
+	elif action == "simon":
+		launch_simon()
 
 	elif action == "quit":
 		pass

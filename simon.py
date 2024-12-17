@@ -3,17 +3,25 @@ from discord.ext import commands
 from datetime import datetime
 from dotenv import load_dotenv
 import pika
-import json
 import pandas as pd
 from src import broker_helper,broker_bitget_api,utils
 from src.toolbox import monitoring_helper,settings_helper
+
+
+async def Send(ctx, embed):
+    try:
+        await ctx.channel.send(embed=embed)
+    except Exception as e:
+        print("!!!!!!! EXCEPTION RAISED !!!!!!!")
+        print(e)
 
 class BotSimon(commands.Bot):
     def __init__(self):
         intents = discord.Intents.default()
         intents.message_content = True
         super().__init__(command_prefix="/", intents=intents)
-        
+
+
         @self.command(name="hello")
         async def custom_command(ctx):
             print("hello")
@@ -41,8 +49,9 @@ class BotSimon(commands.Bot):
             msg = '```' + df.to_string(index=False) + '```'
             msg += '```Total : $ ' + str(utils.KeepNDecimals(df["USDT_Equity"].sum())) + '```'
 
-            embed=discord.Embed(title="accounts", description=msg, color=0xFF5733)
-            await ctx.channel.send(embed=embed)
+            embed = discord.Embed(title="accounts", description=msg, color=0xFF5733)
+            await Send(ctx, embed)
+            #await ctx.channel.send(embed=embed)
 
         @self.command(name="open_positions")
         async def custom_command(ctx, *args):
@@ -85,7 +94,7 @@ class BotSimon(commands.Bot):
             # convert dataframe to string to display
             msg = "Cash : {:2f}".format(cash)
 
-            embed=discord.Embed(title=account, description=msg, color=0xFF5733)
+            embed = discord.Embed(title=account, description=msg, color=0xFF5733)
             await ctx.channel.send(embed=embed)
 
         @self.command(name="reset")
