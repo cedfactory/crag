@@ -1,0 +1,2 @@
+﻿id,name,symbol,type,grid_high,grid_low,percent_per_grid,nb_grid,nb_position_limits,grid_margin
+long_1,StrategyGridTradingGenericV3,BTC,long,110000,86000,0,102,1,10000

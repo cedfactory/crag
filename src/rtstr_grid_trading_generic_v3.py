@@ -225,24 +225,50 @@ class StrategyGridTradingGenericV3(rtstr.RealTimeStrategy):
         self.df_grid_buying_size = pd.concat([self.df_grid_buying_size, df_symbol_size])
         self.df_grid_buying_size['margin'] = None
 
-        dol_per_grid = self.grid_margin / (self.nb_grid + 1)
-        size = dol_per_grid / ((self.grid_high + self.grid_low )/2)
-        size_high = dol_per_grid / self.grid_high
-        size_low = dol_per_grid / self.grid_low
-        size_high = utils.normalize_size(size_high,
-                                         self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == self.symbol,
-                                                                      "sizeMultiplier"].values[0])
-        size_low = utils.normalize_size(size_low,
-                                        self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == self.symbol,
-                                                                     "sizeMultiplier"].values[0])
-        if (self.get_grid_buying_min_size(self.symbol) <= size_high) \
-                and (self.get_grid_buying_min_size(self.symbol) <= size_low) \
+        i = 0
+        min_amount_requested = self.grid_margin
+        while True:
+            # Step 1: Generate the 'position' column
+            positions = np.linspace(self.grid_low, self.grid_high, self.nb_grid)
+
+            # Step 2: Retrieve 'pricePlace' and 'priceEndStep' values
+            symbol_data = self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == self.symbol]
+            price_place = symbol_data['pricePlace'].values[0]
+            price_end_step = symbol_data['priceEndStep'].values[0]
+
+            # Step 3: Normalize 'position' values
+            normalized_positions = [utils.normalize_price(pos, price_place, price_end_step) for pos in positions]
+
+            # Step 4: Set the 'size' column
+            size_value = symbol_data['minBuyingSize'].values[0] + symbol_data['sizeMultiplier'].values[0] * i
+            sizes = [size_value] * self.nb_grid
+
+            # Step 5: Compute the 'val' column
+            vals = [size * pos for size, pos in zip(sizes, normalized_positions)]
+
+            # Create the DataFrame
+            df = pd.DataFrame({
+                'position': normalized_positions,
+                'size': sizes,
+                'val': vals
+            })
+
+            if df["val"].sum() < self.grid_margin:
+                min_amount_requested = df["val"].sum()
+                dol_per_grid = df["val"].min()
+                size = size_value
+                size = utils.normalize_size(size,
+                                            self.df_grid_buying_size.loc[
+                                                self.df_grid_buying_size['symbol'] == self.symbol,
+                                                "sizeMultiplier"].values[0])
+                i += 1
+            else:
+                break  # Exit the loop when the condition is met
+
+        if (min_amount_requested < self.grid_margin) \
                 and (dol_per_grid > 5) \
                 and (cash >= self.grid_margin):
-            size = (size_high + size_low) / 2
-            size = utils.normalize_size(size,
-                                       self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == self.symbol,
-                                                                    "sizeMultiplier"].values[0])
+
             self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == self.symbol, "strategy_id"] = self.strategy_id
             self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == self.symbol, "buyingSize"] = size    # CEDE: Average size
             self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == self.symbol, "margin"] = self.grid_margin
@@ -602,16 +628,13 @@ class GridPosition:
 
         # Calculate dol_per_grid for the symbol, dividing grid_margin by the number of rows (cells) in grid
         grid_margin = self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == self.symbol, "margin"].values[0]
+        minBuyingSize = self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == self.symbol, "minBuyingSize"].values[0]
         pricePlace = self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == self.symbol, "pricePlace"].values[0]
         priceEndStep = self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == self.symbol, "priceEndStep"].values[0]
+        size = self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == self.symbol, "buyingSize"].values[0]
         self.grid['position'] = self.grid['position'].apply(lambda x: utils.normalize_price(x, pricePlace, priceEndStep))
         self.grid['close_position'] = self.grid['close_position'].apply(lambda x: utils.normalize_price(x, pricePlace, priceEndStep))
-
-        num_cells = len(self.grid)
-        self.grid["dol_per_grid"] = grid_margin / num_cells
-
-        # Calculate size by dividing dol_per_grid by the position column
-        self.grid["size"] = self.grid["dol_per_grid"] / self.grid["position"]
+        self.grid["size"] = size
 
         # Get the sizeMultiplier for the symbol
         sizeMultiplier = self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == self.symbol, "sizeMultiplier"].values[0]
@@ -620,13 +643,10 @@ class GridPosition:
         self.grid["size"] = self.grid["size"].apply(
             lambda size: utils.normalize_size(size, sizeMultiplier))
 
-        # Fill NaN values in case there are any undefined cells
-        self.grid["size"].fillna(0, inplace=True)
-        self.grid["dol_per_grid"].fillna(0, inplace=True)
         self.grid["dol_per_grid_verif"] = self.grid["size"] * self.grid["position"]
 
         # Check if any value in dol_per_grid_verif is less than 5
-        if (self.grid["dol_per_grid_verif"] < 5).any():
+        if (self.grid["dol_per_grid_verif"] < 5).any() and (self.grid["size"] < minBuyingSize).any():
             print(f"Exiting because dol_per_grid_verif for {self.symbol} has a value less than $5.")
             exit(33)
         self.grid = self.grid.drop(columns=["dol_per_grid_verif"])
