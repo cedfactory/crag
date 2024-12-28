@@ -16,16 +16,21 @@ df = pd.read_csv(datafile)
 pairs = df["pair"].unique()
 print(pairs)
 
+g_result = {}
 for pair in pairs:
     dict_max_scores = {}
     dict_centroids = {}
     for timeframe in ["1h", "2h", "4h"]:
         for trix_signal_type in ["sma", "ema"]:
+            key_current = trix_signal_type + "_" + timeframe
 
             df_current = df[(df["timeframe"] == timeframe) &
                             (df["trix_signal_type"] == trix_signal_type) &
                             (df["pair"] == pair)]
             #print(df_current)
+            if df_current.empty:
+                print('DataFrame is empty!')
+                continue
 
             max_rank = df_current["weighted_score"].max()
             #df_current["weighted_rank"] = df_current["weighted_rank"].apply(lambda x: (max_rank - x))
@@ -48,7 +53,8 @@ for pair in pairs:
             
             filename = "{}_{}_{}.png".format(pair.replace("/", "_"), trix_signal_type, timeframe)
             plt.savefig(filename, dpi=300, bbox_inches='tight')
-            print("filename : ", filename)
+            #print("filename : ", filename)
+            print("=> {} / {} / {}".format(pair, timeframe, trix_signal_type))
 
             # Afficher le graphe
             #plt.show()
@@ -65,7 +71,7 @@ for pair in pairs:
             #row_min = df_current.loc[df_current["weighted_rank"].idxmin()]
 
             # store to display later
-            dict_max_scores[trix_signal_type+"_"+timeframe] = [row_max["trix_length"], row_max["trix_signal_length"], row_max["long_ma_length"]]
+            dict_max_scores[key_current] = [row_max["trix_length"], row_max["trix_signal_length"], row_max["long_ma_length"]]
 
             columns_to_keep = ["trix_length", "trix_signal_length", "long_ma_length", "weighted_score"]
             df_current = df_current[columns_to_keep]
@@ -78,14 +84,15 @@ for pair in pairs:
             kmeans = KMeans(n_clusters=1)
             kmeans.fit(coords)
             centroids = kmeans.cluster_centers_
-            print(centroids)
+            print("KMeans :", centroids)
 
             # store to display later
-            dict_centroids[trix_signal_type + "_" + timeframe] = [
+            dict_centroids[key_current] = [
                 "{:.2f}".format(centroids[0][0]),
                 "{:.2f}".format(centroids[0][1]),
                 "{:.2f}".format(centroids[0][2])]
 
+            g_result[pair] = {"max": dict_max_scores, "kmeans": dict_centroids}
 
     #
     # Output
@@ -101,9 +108,60 @@ for pair in pairs:
             file1 = "{}_{}_{}.png".format(pair_renamed, "sma", tf)
             file2 = "{}_{}_{}.png".format(pair_renamed, "ema", tf)
             file.write("<tr>")
-            file.write("<td><img width=200 src=\"{}\"/><small><p>max = {}<p>centroid = {}</small></td>".format(file1, dict_max_scores["sma_"+tf], dict_centroids["sma_"+tf]))
-            file.write("<td><img width=200 src=\"{}\"/><small><p>max = {}<p>centroid = {}</small></td>".format(file2, dict_max_scores["ema_"+tf], dict_centroids["ema_"+tf]))
+            if "sma_"+tf in dict_max_scores and "sma_"+tf in dict_centroids:
+                file.write("<td><img width=200 src=\"{}\"/><small><p>max = {}<p>centroid = {}</small></td>".format(file1, dict_max_scores["sma_"+tf], dict_centroids["sma_"+tf]))
+            if "ema_"+tf in dict_max_scores and "ema_"+tf in dict_centroids:
+                file.write("<td><img width=200 src=\"{}\"/><small><p>max = {}<p>centroid = {}</small></td>".format(file2, dict_max_scores["ema_"+tf], dict_centroids["ema_"+tf]))
             file.write("</tr>")
             file.write("</table>")
             file.write("</center>")
         file.write("</body></html>\n")
+
+with open('_trix_synthesis.xml', 'w') as file:
+    file.write("<trix>\n")
+    for pair in g_result:
+        file.write("<symbol name=\"{}\">\n".format(pair))
+        for timeframe in ["1h", "2h", "4h"]:
+            for trix_signal_type in ["sma", "ema"]:
+                file.write("<config trix_signal_type=\"{}\" timeframe=\"{}\">".format(trix_signal_type, timeframe))
+                key_current = trix_signal_type + "_" + timeframe
+                if "max" in g_result[pair] and key_current in g_result[pair]['max']:
+                    max_values = g_result[pair]['max'][key_current]
+                    file.write("<max trix_length=\"{}\" trix_signal_length=\"{}\" long_ma_length=\"{}\" />".format(
+                        max_values[0], max_values[1], max_values[2]))
+                if "kmeans" in g_result[pair] and key_current in g_result[pair]['kmeans']:
+                    kmeans_values = g_result[pair]['kmeans'][key_current]
+                    file.write("<kmeans trix_length=\"{}\" trix_signal_length=\"{}\" long_ma_length=\"{}\" />".format(
+                        kmeans_values[0], kmeans_values[1], kmeans_values[2]))
+                file.write("</config>\n")
+        file.write("</symbol>\n")
+    file.write("</trix>\n")
+
+# read the file
+import xml.etree.ElementTree as ET
+g_configs = {}
+tree = ET.parse('_trix_synthesis.xml')
+root = tree.getroot()
+for symbol in root.findall('symbol'):
+    symbol_name = symbol.get('name')
+    g_configs[symbol_name] = []  # Chaque symbol aura une liste de configurations
+
+    # Parcourir chaque configuration
+    for config in symbol.findall('config'):
+        config_data = {
+            'trix_signal_type': config.get('trix_signal_type'),
+            'timeframe': config.get('timeframe'),
+            'max': {},
+            'kmeans': {}
+        }
+
+        # Extraire les sous-éléments max et kmeans
+        for sub_config in config:
+            config_data[sub_config.tag] = {
+                'trix_length': float(sub_config.get('trix_length')),
+                'trix_signal_length': float(sub_config.get('trix_signal_length')),
+                'long_ma_length': float(sub_config.get('long_ma_length'))
+            }
+
+        # Ajouter cette configuration à la liste du symbole
+        g_configs[symbol_name].append(config_data)
