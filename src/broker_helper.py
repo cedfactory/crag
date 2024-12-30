@@ -22,3 +22,14 @@ def get_usdt_equity_all_accounts():
     df = pd.DataFrame({"Accounts": lst_accounts, "USDT_Equity": lst_usdt_equities},
                       index=range(len(lst_accounts)))
     return df
+
+def reset_all_accounts():
+    accounts_info = settings_helper.get_accounts_info()
+    for key, value in accounts_info.items():
+        account_id = value.get("id", "")
+        broker_name = value.get("broker", "")
+        if broker_name == "bitget":
+            my_broker = broker_bitget_api.BrokerBitGetApi({"account": account_id, "reset_account": False})
+            if my_broker:
+                print("reset_account")
+                #my_broker.reset_account()
