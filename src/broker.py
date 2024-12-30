@@ -46,7 +46,7 @@ class Broker(metaclass = ABCMeta):
 
             symbols = params.get("symbols", None)
             if symbols and isinstance(symbols, str) and path.exists("./symbols/"+symbols):
-                    self.df_symbols = pd.read_csv("./symbols/"+symbols)
+               self.df_symbols = pd.read_csv("./symbols/"+symbols)
             elif isinstance(symbols, dict):
                 self.df_symbols = pd.DataFrame(symbols)
 
