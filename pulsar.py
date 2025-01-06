@@ -368,9 +368,13 @@ if __name__ == '__main__':
 
             current_state = agent.broker.get_current_state(agent.symbols)
 
-            start_time = datetime(2024, 10, 28, 0, 0)  # October 29, 2024 at 18:00
-            end_time = datetime.now()
-            pnl, net_profit, num_positions, df_positions = agent.broker.get_position_history("PEPE", start_time, end_time)
+            pnl, net_profit, num_positions, df_positions = None, None, None, None
+            if len(agent.symbols) > 0 and agent.start_date != "":
+                symbol = agent.symbols[0]
+                start_time = datetime.strptime(agent.start_date, '%Y-%m-%d %H:%M')
+                #start_time = datetime(2024, 10, 28, 0, 0)
+                end_time = datetime.now()
+                pnl, net_profit, num_positions, df_positions = agent.broker.get_position_history("BTC", start_time, end_time)
 
             # save new data
             str_limit_orders = ""

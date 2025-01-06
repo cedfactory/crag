@@ -52,6 +52,16 @@ def launch_simon():
 		print("command : ", command)
 		subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
 
+def launch_pulsar():
+	if g_os_platform == "Windows":
+		command = "start /B python pulsar conf/pulsar.csv > pulsar.log"
+		print("command : ", command)
+		os.system(command)
+	elif g_os_platform == "Linux":
+		command = "nohup python pulsar.py conf/pulsar.csv > pulsar.log &"
+		print("command : ", command)
+		subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
+
 #
 def select_strategy_to_start():
 	directory = os.getcwd()
@@ -82,7 +92,7 @@ def select_strategy_to_start():
 			print("! Error: The input type is invalid, cannot convert to integer.")
 		if id < 0 or id >= len(strategies):
 			print(f"! Error: select a valid strategy by its index.")
-	
+
 	return strategies[id]
 
 def get_python_processes():
@@ -188,17 +198,18 @@ if __name__ == "__main__":
 	g_python_executable = sys.executable
 	print("# Python executable :", g_python_executable)
 	print("\n")
-	
+
 	print('''Available actions :
 	- 'start' to start a strategy
 	- 'running' to display the running python processes
 	- 'stop' to stop a running strategy
 	- 'stats' to display large files and memory info
 	- 'simon' to run simon
+	- 'pulsar' to run pulsar
 	- 'quit' to quit''')
 	action = input("> ").strip().lower()
 	print("\n")
-	
+
 	if action == "start":
 		xmlfile = select_strategy_to_start()
 		if xmlfile != "":
@@ -215,6 +226,9 @@ if __name__ == "__main__":
 
 	elif action == "simon":
 		launch_simon()
+
+	elif action == "pulsar":
+		launch_pulsar()
 
 	elif action == "quit":
 		pass
