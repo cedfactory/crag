@@ -376,6 +376,12 @@ if __name__ == '__main__':
                 end_time = datetime.now()
                 pnl, net_profit, num_positions, df_positions = agent.broker.get_position_history("BTC", start_time, end_time)
 
+            unrealizedPL = 0
+            for symbol in agent.symbols:
+                resp = agent.broker.single_position(symbol)
+                if "data" in resp and len(resp["data"]) == 1:
+                    unrealizedPL += float(resp["data"][0]["unrealizedPL"])
+
             # save new data
             str_limit_orders = ""
             if not current_state["open_orders"].empty:
@@ -408,7 +414,9 @@ if __name__ == '__main__':
             if pnl and net_profit and num_positions:
                 message += "👉 pnl : " + str(utils.KeepNDecimals(pnl, 2)) + "\n"
                 message += "👉 net profit : " + str(utils.KeepNDecimals(net_profit, 2)) + "\n"
-                message += "👉 # positions : " + str(num_positions)
+                message += "👉 # positions : " + str(num_positions) + "\n"
+            if unrealizedPL:
+                message += "👉 unrealizedPL : " + str(utils.KeepNDecimals(unrealizedPL, 2)) + "\n"
 
             response = agent.bot.log(message, extra=extra)
 
