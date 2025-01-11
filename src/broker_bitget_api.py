@@ -200,7 +200,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         return symbol.split("USDT_UMCBL")[0]
 
     def single_position(self, symbol, marginCoin = "USDT"):
-        single_position = self.positionApi.single_position(symbol, marginCoin='USDT')
+        single_position = self.positionApi.single_position(self._get_symbol(symbol), marginCoin='USDT')
         return single_position
 
 
