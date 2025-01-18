@@ -267,7 +267,8 @@ class StrategyGridTradingGenericV3(rtstr.RealTimeStrategy):
 
         if (min_amount_requested < self.grid_margin) \
                 and (dol_per_grid > 5) \
-                and (cash >= self.grid_margin):
+                and ((cash >= self.grid_margin)
+                     or (cash >= min_amount_requested)):
 
             self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == self.symbol, "strategy_id"] = self.strategy_id
             self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == self.symbol, "buyingSize"] = size    # CEDE: Average size
