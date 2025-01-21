@@ -5,6 +5,8 @@ import numpy as np
 
 import copy
 
+import json
+
 from . import utils
 from src import logger
 
@@ -598,6 +600,7 @@ class GridPosition:
                         or order["trade_status"] == "UNKNOWN":
                     df_grid.loc[df_grid["grid_id"] == grid_id, "status"] = "empty"
                     df_grid.loc[df_grid["grid_id"] == grid_id, "orderId"] = "empty"
+                    self.log(json.dumps(order), "update_executed_trade_status")
 
     def print_grid(self):
         if self.zero_print:
