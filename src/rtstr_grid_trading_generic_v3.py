@@ -594,6 +594,10 @@ class GridPosition:
                 if order["trade_status"] == "SUCCESS":
                     df_grid.loc[df_grid["grid_id"] == grid_id, "status"] = "engaged"
                     df_grid.loc[df_grid["grid_id"] == grid_id, "orderId"] = order["orderId"]
+                if order["trade_status"] == "FAILED" \
+                        or order["trade_status"] == "UNKNOWN":
+                    df_grid.loc[df_grid["grid_id"] == grid_id, "status"] = "empty"
+                    df_grid.loc[df_grid["grid_id"] == grid_id, "orderId"] = "empty"
 
     def print_grid(self):
         if self.zero_print:
