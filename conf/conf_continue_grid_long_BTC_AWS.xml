@@ -24,7 +24,7 @@
                 loggers="file=log"
         />
     </broker>
-    <crag id="grid_long"
+    <crag id="grid_long_btc"
           botId="subfortest1"
           loggers="console"
     />

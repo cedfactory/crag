@@ -5,6 +5,8 @@ import numpy as np
 
 import copy
 
+import json
+
 from . import utils
 from src import logger
 
@@ -267,7 +269,8 @@ class StrategyGridTradingGenericV3(rtstr.RealTimeStrategy):
 
         if (min_amount_requested < self.grid_margin) \
                 and (dol_per_grid > 5) \
-                and (cash >= self.grid_margin):
+                and ((cash >= self.grid_margin)
+                     or (cash >= min_amount_requested)):
 
             self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == self.symbol, "strategy_id"] = self.strategy_id
             self.df_grid_buying_size.loc[self.df_grid_buying_size['symbol'] == self.symbol, "buyingSize"] = size    # CEDE: Average size
@@ -593,6 +596,11 @@ class GridPosition:
                 if order["trade_status"] == "SUCCESS":
                     df_grid.loc[df_grid["grid_id"] == grid_id, "status"] = "engaged"
                     df_grid.loc[df_grid["grid_id"] == grid_id, "orderId"] = order["orderId"]
+                if order["trade_status"] == "FAILED" \
+                        or order["trade_status"] == "UNKNOWN":
+                    df_grid.loc[df_grid["grid_id"] == grid_id, "status"] = "empty"
+                    df_grid.loc[df_grid["grid_id"] == grid_id, "orderId"] = "empty"
+                    self.log(json.dumps(order), "update_executed_trade_status")
 
     def print_grid(self):
         if self.zero_print:
