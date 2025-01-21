@@ -1,13 +1,13 @@
 import pandas as pd
 from sklearn.cluster import KMeans
 
-datafile = "batch_stats_df_merged.csv"
+datafile = "scored_results.csv"
 df = pd.read_csv(datafile)
 
 #SYMBOL,TIMEFRAME,MA_TYPE,HIGH_OFFSET,LOW_OFFSET,ZEMA_LEN_BUY,ZEMA_LEN_SELL,SSL_ATR_PERIOD
 
 parameters_columns = ["HIGH_OFFSET", "LOW_OFFSET", "ZEMA_LEN_BUY", "ZEMA_LEN_SELL", "SSL_ATR_PERIOD"]
-eval_column = "SHARPE RATIO" #"TOTAL RETURN [%]"
+eval_column = "WIN RATE [%]" # "TOTAL RETURN [%]" # "SHARPE RATIO"
 
 pairs = df["SYMBOL"].unique()
 print(pairs)
@@ -19,6 +19,7 @@ for pair in pairs:
     for timeframe in ["1m", "5m", "15m", "1h"]:
         for ma_type in ["ZLEMA", "TEMA", "DEMA", "ALMA", "HMA"]:
             key_current = ma_type + "_" + timeframe
+            print("{} key_current : {}".format(pair, key_current))
 
             df_current = df[(df["TIMEFRAME"] == timeframe) &
                             (df["MA_TYPE"] == ma_type) &
@@ -33,8 +34,12 @@ for pair in pairs:
 
             # filter interest
             #df_current = df_current[df_current[eval_column] > max_rank - .2]
-            df_current = df_current[df_current[eval_column] > 1.2]
-
+            #df_current = df_current[df_current[eval_column] > 1.] # sharp ratio & total return
+            #df_current[eval_column].clip(upper=20000, inplace=True) # total return
+            if df_current.empty:
+                print('DataFrame is empty!')
+                continue
+        
             #
             # Analysis
             #
@@ -52,7 +57,8 @@ for pair in pairs:
             columns.extend([eval_column])
             df_current = df_current[columns]
 
-            df_current[eval_column] = df_current[eval_column].apply(lambda x: 40 * int(float(x)))
+            df_current = df_current.dropna(subset=[eval_column])
+            df_current[eval_column] = df_current[eval_column].apply(lambda x: int(float(x)))
             df_repeated = df_current.loc[df_current.index.repeat(df_current[eval_column])].reset_index(drop=True)
 
             # columns as coordinates
@@ -82,6 +88,7 @@ with open('_obelix_synthesis.xml', 'w') as file:
                     #file.write("<max trix_length=\"{}\" trix_signal_length=\"{}\" long_ma_length=\"{}\" />".format(
                     #    max_values[0], max_values[1], max_values[2]))
                     file.write("<max ")
+                    file.write("value=\"{}\" ".format(max_values[eval_column]))
                     for i, parameter in enumerate(parameters_columns):
                         file.write("{}=\"{}\" ".format(parameter, max_values[parameter]))
                     file.write("/>")
