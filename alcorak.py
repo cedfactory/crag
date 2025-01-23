@@ -49,8 +49,7 @@ def start_strategy(strategy_configuration_file):
 
     params_broker = configuration["broker"]
     my_broker = broker_bitget_api.BrokerBitGetApi(params_broker)
-    my_broker.cancel_all_orders(["XRP"])
-    my_broker.execute_reset_account()
+    my_broker.execute_reset_account(open_orders=False, triggers=True, positions=True)
 
 
 def stop_strategy(strategy_config_file):
