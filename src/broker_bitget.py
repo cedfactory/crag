@@ -928,7 +928,7 @@ class BrokerBitGet(broker.Broker):
             transaction = self._close_long_position(self._get_symbol(symbol), size, clientOid)
         elif holdSize == 'short':
             clientOid = self.clientOIdprovider.get_name(symbol, "close_short")
-            transaction = self._close_long_position(self._get_symbol(symbol), size, clientOid)
+            transaction = self._close_short_position(self._get_symbol(symbol), size, clientOid)
 
         if "msg" in transaction \
                 and transaction["msg"] == "success" \
@@ -1304,8 +1304,8 @@ class BrokerBitGet(broker.Broker):
     def execute_reset_account(self, open_orders=True, triggers=True, positions=True, lst_symbols=None):
         items_to_clear = [
             (open_orders, 'open_orders'),
-            (triggers, 'open_positions'),
-            (positions, 'triggers')
+            (triggers, 'triggers'),
+            (positions, 'open_positions')
         ]
 
         if lst_symbols is None or len(lst_symbols) == 0:
@@ -1315,7 +1315,7 @@ class BrokerBitGet(broker.Broker):
             current_state = self.get_current_state(lst_symbols)
             if current_state['success']:
                 for condition, key in items_to_clear:
-                    if condition and not current_state[key].empty:
+                    if not condition and not current_state[key].empty:
                         current_state[key] = current_state[key].iloc[0:0]
                 break
 
@@ -1355,7 +1355,7 @@ class BrokerBitGet(broker.Broker):
                 current_state = self.get_current_state(lst_symbols)
                 if current_state['success']:
                     for condition, key in items_to_clear:
-                        if condition and not current_state[key].empty:
+                        if not condition and not current_state[key].empty:
                             current_state[key] = current_state[key].iloc[0:0]
                     break
             if len(current_state['open_orders']) == 0 \
