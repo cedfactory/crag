@@ -928,7 +928,7 @@ class BrokerBitGet(broker.Broker):
             transaction = self._close_long_position(self._get_symbol(symbol), size, clientOid)
         elif holdSize == 'short':
             clientOid = self.clientOIdprovider.get_name(symbol, "close_short")
-            transaction = self._close_long_position(self._get_symbol(symbol), size, clientOid)
+            transaction = self._close_short_position(self._get_symbol(symbol), size, clientOid)
 
         if "msg" in transaction \
                 and transaction["msg"] == "success" \
@@ -1301,13 +1301,22 @@ class BrokerBitGet(broker.Broker):
         return df_orders
 
     @authentication_required
-    def execute_reset_account(self, lst_symbols=None):
+    def execute_reset_account(self, open_orders=True, triggers=True, positions=True, lst_symbols=None):
+        items_to_clear = [
+            (open_orders, 'open_orders'),
+            (triggers, 'triggers'),
+            (positions, 'open_positions')
+        ]
+
         if lst_symbols is None or len(lst_symbols) == 0:
             lst_symbols = self.df_symbols["symbol"].tolist()
             lst_symbols = [symbol.split('USDT')[0] for symbol in lst_symbols]
         while True:
             current_state = self.get_current_state(lst_symbols)
             if current_state['success']:
+                for condition, key in items_to_clear:
+                    if not condition and not current_state[key].empty:
+                        current_state[key] = current_state[key].iloc[0:0]
                 break
 
         while True:
@@ -1345,6 +1354,9 @@ class BrokerBitGet(broker.Broker):
             while True:
                 current_state = self.get_current_state(lst_symbols)
                 if current_state['success']:
+                    for condition, key in items_to_clear:
+                        if not condition and not current_state[key].empty:
+                            current_state[key] = current_state[key].iloc[0:0]
                     break
             if len(current_state['open_orders']) == 0 \
                     and len(current_state['triggers']) == 0 \

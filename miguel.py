@@ -465,7 +465,7 @@ class MainPanel(wx.Panel):
     def on_close_all_positions(self, event):
         my_broker = self.get_broker_from_selected_account()
         if my_broker:
-            my_broker.execute_reset_account()
+            my_broker.execute_reset_account(open_orders=False, triggers=False, positions=True)
 
     def on_open_position(self, event):
         my_broker = self.get_broker_from_selected_account()
