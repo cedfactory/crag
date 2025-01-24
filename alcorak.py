@@ -51,15 +51,9 @@ def start_strategy(strategy_configuration_file):
     my_broker = broker_bitget_api.BrokerBitGetApi(params_broker)
     my_broker.execute_reset_account(open_orders=False, triggers=True, positions=True)
 
-
-def stop_strategy(strategy_config_file):
-    print("Stopping {}... TODO !!!".format(strategy_config_file))
-
-
 _usage_str = '''
 Options:
     --start <StrategyConfigFile>
-    --stop <StrategyConfigFile>
 '''
 
 def _usage():
@@ -85,10 +79,6 @@ if __name__ == '__main__':
         strategy_configuration_file = sys.argv[2]
         start_strategy(strategy_configuration_file)
         print("launching {}...".format(strategy_configuration_file))
-    elif len(sys.argv) > 1 and (sys.argv[1] == "--stop"):
-        strategy_configuration_file = sys.argv[2]
-        stop_strategy(strategy_configuration_file)
-
 
     else:
         _usage()
