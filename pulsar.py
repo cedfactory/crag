@@ -1,4 +1,5 @@
 import os, sys, platform
+from io import StringIO
 from src import broker_bitget_api, logger, utils
 from src.toolbox import graph_helper
 from rich import print
@@ -77,6 +78,21 @@ def generate_figure_usdt_equity(agent, filename):
         ax.plot(datenums, y, label=column_label)
         plt.fill_between(datenums, y, alpha=0.3)
 
+    def get_num_positions(row):
+        try:
+            json_data = json.loads(row[1:-1])
+            df_triggers = pd.read_json(StringIO(json_data), precise_float=True)
+            return df_triggers.shape[0]
+        except Exception as e:
+            print(f"Erreur pour la ligne : {row[1:-1]}\n{e}")
+            return 0
+
+    df["num_positions"] = df['triggers'].apply(get_num_positions)
+    ax3 = ax.twinx()
+    ax3.step(datenums, df["num_positions"], color="orange", where="post")
+    ax3.tick_params(axis='y', labelcolor="orange", direction="in", pad=-22) # display yticks inside the plot area
+    ax3.set_ylim([0, 4 * df["num_positions"].max()])
+    ax3.set_ylabel("num_positions", color="orange")
 
     y_min = min(ymin)
     y_max = max(ymax)
