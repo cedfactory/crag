@@ -122,7 +122,11 @@ def display_python_processes():
 		print("{} : Command {}".format(index, process["command"]))
 
 def select_strategy_to_stop():
-	processes = get_python_processes()
+	all_processes = get_python_processes()
+
+	# keep only alcorak processes
+	processes = [process for process in all_processes if 'toto' in process['command']]
+
 	if len(processes) == 0:
 		print("No python process to kill. Bye.")
 		return
