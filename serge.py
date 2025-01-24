@@ -125,7 +125,7 @@ def select_strategy_to_stop():
 	all_processes = get_python_processes()
 
 	# keep only alcorak processes
-	processes = [process for process in all_processes if 'toto' in process['command']]
+	processes = [process for process in all_processes if 'main.py' not in process['command']]
 
 	if len(processes) == 0:
 		print("No python process to kill. Bye.")
