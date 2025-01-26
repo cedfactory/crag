@@ -62,9 +62,9 @@ def start_strategy(strategy_configuration_file):
         # manage ignore option
         reset_account_stop_ignore = params_broker.get("reset_account_stop_ignore", "")
         reset_account_stop_ignore = reset_account_stop_ignore.split(",")
-        open_orders = "open_orders" in reset_account_stop_ignore
-        triggers = "triggers" in reset_account_stop_ignore
-        positions = "positions" in reset_account_stop_ignore
+        open_orders = "open_orders" not in reset_account_stop_ignore
+        triggers = "triggers" not in reset_account_stop_ignore
+        positions = "positions" not in reset_account_stop_ignore
 
         # reset account
         my_broker.execute_reset_account(open_orders=open_orders, triggers=triggers, positions=positions)
