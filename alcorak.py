@@ -48,8 +48,26 @@ def start_strategy(strategy_configuration_file):
     print("[alcorak] backup exists : ", os.path.exists(backup_file))
 
     params_broker = configuration["broker"]
-    my_broker = broker_bitget_api.BrokerBitGetApi(params_broker)
-    my_broker.execute_reset_account(open_orders=False, triggers=True, positions=True)
+    reset_account_stop = params_broker.get("reset_account_stop", False)
+    if isinstance(reset_account_stop, str):
+        reset_account_stop = reset_account_stop == "True"  # convert string to boolean
+    if reset_account_stop:
+        # don't call reset_account when instantiating the broker
+        params_broker["reset_account"] = False
+        params_broker["reset_account_start"] = False
+
+        # get the broker
+        my_broker = broker_bitget_api.BrokerBitGetApi(params_broker)
+
+        # manage ignore option
+        reset_account_stop_ignore = params_broker.get("reset_account_stop_ignore", "")
+        reset_account_stop_ignore = reset_account_stop_ignore.split(",")
+        open_orders = "open_orders" in reset_account_stop_ignore
+        triggers = "triggers" in reset_account_stop_ignore
+        positions = "positions" in reset_account_stop_ignore
+
+        # reset account
+        my_broker.execute_reset_account(open_orders=open_orders, triggers=triggers, positions=positions)
 
 _usage_str = '''
 Options:
