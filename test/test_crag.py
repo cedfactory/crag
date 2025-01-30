@@ -79,7 +79,7 @@ class TestCrag:
                 <params symbols="BTC/USD" grid_df_params="../test/data/multigrid_df_params.csv"/>
             </strategy>
             <broker name="simulator">
-                <params exchange="simulator" account="test_bot" reset_account="False" />
+                <params exchange="simulator" account="test_bot" reset_account_start="False" />
             </broker>
             <crag interval="20" />
         </configuration>''')

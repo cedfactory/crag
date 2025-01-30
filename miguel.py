@@ -341,7 +341,7 @@ class MainPanel(wx.Panel):
                 "leverage_short": [0, 0, 0, 0, 0]
             }
             my_broker = broker_bitget_api.BrokerBitGetApi(
-                {"account": selected_account, "symbols": symbols, "reset_account": "False"})
+                {"account": selected_account, "symbols": symbols, "reset_account_start": "False"})
         return my_broker
 
     def update_usdt_equity(self, my_broker):

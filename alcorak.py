@@ -8,6 +8,33 @@ import platform
 g_os_platform = platform.system()
 g_python_executable = ""
 
+def reset_account(configuration, start=True):
+    params_alcorak = configuration["alcorak"]
+    if start:
+        reset_account_parameter = "reset_account_start"
+        reset_account_ignore_parameter = "reset_account_start_ignore"
+    else:
+        reset_account_parameter = "reset_account_stop"
+        reset_account_ignore_parameter = "reset_account_stop_ignore"
+
+    reset_account = params_alcorak.get(reset_account_parameter, False)
+    if isinstance(reset_account, str):
+        reset_account = (reset_account.lower() == "true")  # convert string to boolean
+    if reset_account:
+        # get the broker
+        my_broker = broker_bitget_api.BrokerBitGetApi(configuration["broker"])
+
+        # manage ignore option
+        reset_account_ignore = params_alcorak.get(reset_account_ignore_parameter, "")
+        lst_reset_account_ignore = reset_account_ignore.split(",")
+        open_orders = "open_orders" not in lst_reset_account_ignore
+        triggers = "triggers" not in lst_reset_account_ignore
+        positions = "positions" not in lst_reset_account_ignore
+
+        # reset account
+        my_broker.execute_reset_account(open_orders=open_orders, triggers=triggers, positions=positions)
+
+
 def start_strategy(strategy_configuration_file):
 
     print("Launching {}...".format(strategy_configuration_file))
@@ -23,6 +50,8 @@ def start_strategy(strategy_configuration_file):
     # inject safety_step_iterations_max
     safety_step_iterations_max = 3000
     configuration["crag"]["safety_step_iterations_max"] = safety_step_iterations_max
+
+    reset_account(configuration, True)
 
     command = []
     if g_os_platform == "Windows":
@@ -47,27 +76,8 @@ def start_strategy(strategy_configuration_file):
     print("[alcorak] backup_file : ", backup_file)
     print("[alcorak] backup exists : ", os.path.exists(backup_file))
 
-    params_broker = configuration["broker"]
-    reset_account_stop = params_broker.get("reset_account_stop", False)
-    if isinstance(reset_account_stop, str):
-        reset_account_stop = reset_account_stop == "True"  # convert string to boolean
-    if reset_account_stop:
-        # don't call reset_account when instantiating the broker
-        params_broker["reset_account"] = False
-        params_broker["reset_account_start"] = False
+    reset_account(configuration, False)
 
-        # get the broker
-        my_broker = broker_bitget_api.BrokerBitGetApi(params_broker)
-
-        # manage ignore option
-        reset_account_stop_ignore = params_broker.get("reset_account_stop_ignore", "")
-        reset_account_stop_ignore = reset_account_stop_ignore.split(",")
-        open_orders = "open_orders" not in reset_account_stop_ignore
-        triggers = "triggers" not in reset_account_stop_ignore
-        positions = "positions" not in reset_account_stop_ignore
-
-        # reset account
-        my_broker.execute_reset_account(open_orders=open_orders, triggers=triggers, positions=positions)
 
 _usage_str = '''
 Options:

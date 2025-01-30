@@ -129,7 +129,7 @@ class TestRTSTRGridTradingLong:
                 grid_high="130" grid_low="100" percent_per_grid="0.4" nb_grid="5" grid_margin="500"/>
             </strategy>
             <broker name="mock">
-                <params exchange="broker" account="test_bot" reset_account="False" />
+                <params exchange="broker" account="test_bot" reset_account_start="False" />
             </broker>
             <crag interval="20" />
         </configuration>''')

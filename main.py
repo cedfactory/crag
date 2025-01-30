@@ -88,9 +88,9 @@ def crag_live(configuration_file, ForceDoNotResetAccount = False):
     # if configuration needs to be overriden, that's where it can be done
     if ForceDoNotResetAccount:
         broker_params = configuration.get("broker", None)
-        reset_account = broker_params.get("reset_account", False)
-        if reset_account:
-            broker_params["reset_account"] = False
+        reset_account_start = broker_params.get("reset_account_start", False)
+        if reset_account_start:
+            broker_params["reset_account_start"] = False
 
     params = crag_helper.get_crag_params_from_configuration(configuration)
     if not params:
@@ -137,7 +137,7 @@ def check_broker():
               "account": "bitget_cl1",
               "symbols": symbols,
               #"loggers": "file=console",
-              "reset_account": False}
+              "reset_account_start": False}
 
     my_logger.log_time_start("constructor")
     my_broker = broker_bitget_api.BrokerBitGetApi(params)
@@ -181,7 +181,7 @@ def check_crag():
             <params symbols="XRP" grid_df_params="./test/data/multigrid_df_params.csv"/>
         </strategy>
         <broker name="bitget">
-            <params exchange="bitget" account="bitget_ayato" leverage="2" reset_account="False" reset_account_orders="False"/>
+            <params exchange="bitget" account="bitget_ayato" leverage="2" reset_account_start="False"/>
         </broker>
         <crag interval="20" />
     </configuration>''')

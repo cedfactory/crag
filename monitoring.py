@@ -204,7 +204,7 @@ def update_history():
         broker_name = value.get("broker", "")
         account_id = value.get("id", "")
         if broker_name == "bitget":
-            my_broker = broker_bitget_api.BrokerBitGetApi({"account": account_id, "reset_account": False})
+            my_broker = broker_bitget_api.BrokerBitGetApi({"account": account_id, "reset_account_start": False})
 
         if my_broker:
             usdt_equity = my_broker.get_usdt_equity()

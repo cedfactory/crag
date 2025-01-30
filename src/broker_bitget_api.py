@@ -97,15 +97,11 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             exit(2956)
 
         # reset account
-        if self.reset_account:
+        if self.reset_account_start:
             self.log('reset account requested')
             self.execute_reset_account()
             self.clear_broker_reset_data()
             self.set_boot_status_to_reseted()
-            positions_check = self.get_open_position()
-            if len(positions_check) > 0:
-                self.log("WARNING: " + str(positions_check))
-                exit(10)
         else:
             self.log('reset account not requested')
             self.log('resume strategy')

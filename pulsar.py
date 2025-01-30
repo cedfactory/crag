@@ -303,7 +303,7 @@ if __name__ == '__main__':
 
         account_id = agent.account_id
         params = {"exchange": "bitget", "account": account_id,
-                  "reset_account": False, "reset_account_orders": False, "zero_print": False}
+                  "reset_account_start": False, "zero_print": False}
         agent.broker = broker_bitget_api.BrokerBitGetApi(params)
         if agent.broker is None:
             console.log("💥 Broker {} failed".format(account_id))

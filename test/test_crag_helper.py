@@ -72,7 +72,7 @@ class TestCrag:
         configuration_file = utils.write_file("./test/generated/crag.xml", '''<configuration>
             <strategy name="StrategyDummyTest" />
             <broker name="simulator">
-                <params account="test_bot" reset_account="False" reset_account_orders="False"/>
+                <params account="test_bot" reset_account_start="False" />
             </broker>
             <crag interval="20" loggers="console;file=output.log;discordBot=botId"/>
         </configuration>''')
@@ -97,7 +97,7 @@ class TestCrag:
                 <params symbols="BTC/USD" grid_df_params="../test/data/multigrid_df_params.csv"/>
             </strategy>
             <broker name="bitget">
-                <params exchange="bitget" account="test_bot" leverage="3" reset_account="False"/>
+                <params exchange="bitget" account="test_bot" leverage="3" reset_account_start="False"/>
             </broker>
             <crag interval="20" />
         </configuration>''')
@@ -132,7 +132,7 @@ class TestCrag:
                 <params symbols="BTC/USD" grid_df_params="../test/data/multigrid_df_params.csv"/>
             </strategy>
             <broker name="simulator">
-                <params cash="100" start_date="2022-01-01" end_date="2022-02-01" intervals="1d" reset_account="False"/>
+                <params cash="100" start_date="2022-01-01" end_date="2022-02-01" intervals="1d" reset_account_start="False"/>
             </broker>
             <crag interval="20" />
         </configuration>''')

@@ -12,7 +12,7 @@ def get_usdt_equity_all_accounts():
         my_broker = None
         broker_name = value.get("broker", "")
         if broker_name == "bitget":
-            my_broker = broker_bitget_api.BrokerBitGetApi({"account": account_id, "reset_account": False})
+            my_broker = broker_bitget_api.BrokerBitGetApi({"account": account_id, "reset_account_start": False})
             if my_broker:
                 usdt_equity = my_broker.get_usdt_equity()
 
@@ -29,7 +29,7 @@ def reset_all_accounts():
         account_id = value.get("id", "")
         broker_name = value.get("broker", "")
         if broker_name == "bitget":
-            my_broker = broker_bitget_api.BrokerBitGetApi({"account": account_id, "reset_account": False})
+            my_broker = broker_bitget_api.BrokerBitGetApi({"account": account_id, "reset_account_start": False})
             if my_broker:
                 print("reset_account")
                 #my_broker.reset_account()

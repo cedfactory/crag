@@ -30,7 +30,7 @@ class Broker(metaclass = ABCMeta):
         self.df_symbols = None
         self.cash = 10
         self.fdp_url_id = "localhost:5000"
-        self.reset_account = True  # Reset account default behavior
+        self.reset_account_start = False
         if params:
             loggers = params.get("loggers", self.loggers)
             if isinstance(loggers, str):
@@ -40,9 +40,9 @@ class Broker(metaclass = ABCMeta):
 
             self.cash = params.get("cash", self.cash)
             self.fdp_url_id = params.get("fdp_url_id", self.fdp_url_id)
-            self.reset_account = params.get("reset_account", self.reset_account)
-            if isinstance(self.reset_account, str):
-                self.reset_account = self.reset_account.lower() == "true"
+            self.reset_account_start = params.get("reset_account_start", self.reset_account_start)
+            if isinstance(self.reset_account_start, str):
+                self.reset_account_start = self.reset_account_start.lower() == "true"
 
             symbols = params.get("symbols", None)
             if symbols and isinstance(symbols, str) and path.exists("./symbols/"+symbols):
@@ -60,10 +60,10 @@ class Broker(metaclass = ABCMeta):
                 self.log("⚠ account {} not found".format(account_id))
 
     def resume_strategy(self):
-        return not self.reset_account
+        return not self.reset_account_start
 
     def is_reset_account(self):
-        return self.reset_account
+        return self.reset_account_start
 
     def ready(self):
         return False

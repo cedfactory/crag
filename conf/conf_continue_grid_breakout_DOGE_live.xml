@@ -20,7 +20,6 @@
                 fdp_url_id="gc1"
                 account="subfortest1"
                 symbols="./symbols_PEPE_XRP_DOGE.csv"
-                reset_account="False"
                 loggers="file=log"
         />
     </broker>

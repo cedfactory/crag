@@ -103,7 +103,19 @@ def load_configuration_file(configuration_file, config_path = './conf'):
         "loggers": crag_node.get("loggers", "")
     }
 
-    return {'broker': params_broker, 'strategy': params_strategy, "crag": params_crag}
+    alcorak_node = root.find("alcorak")
+    params_alcorak = {
+        "reset_account_start": alcorak_node.get("reset_account_start", ""),
+        "reset_account_start_ignore": alcorak_node.get("reset_account_start_ignore", ""),
+        "reset_account_stop": alcorak_node.get("reset_account_stop", ""),
+        "reset_account_stop_ignore": alcorak_node.get("reset_account_stop_ignore", "")
+    }
+
+    return {"broker": params_broker,
+            "strategy": params_strategy,
+            "crag": params_crag,
+            "alcorak": params_alcorak,
+            }
 
 def get_crag_params_from_configuration(configuration):
     params_crag = configuration["crag"]

@@ -63,7 +63,7 @@ class BotSimon(commands.Bot):
             account_id = args[0]
 
             # get open positions from the broker
-            my_broker = broker_bitget_api.BrokerBitGetApi({"account": account_id, "reset_account": False})
+            my_broker = broker_bitget_api.BrokerBitGetApi({"account": account_id, "reset_account_start": False})
             if not my_broker:
                 embed = discord.Embed(title="open_positions", description="! can't connect on this account !", color=0xFF5733)
                 await ctx.channel.send(embed=embed)
@@ -105,7 +105,7 @@ class BotSimon(commands.Bot):
                 return
 
             account_id = args[0]
-            broker_bitget_api.BrokerBitGetApi({"account": account_id, "reset_account": True})
+            broker_bitget_api.BrokerBitGetApi({"account": account_id, "reset_account_start": True})
 
             embed = discord.Embed(title="reset".format(account_id), description="reset done on {}".format(account_id),
                                   color=0xFF5733)
