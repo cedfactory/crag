@@ -78,20 +78,10 @@ def generate_figure_usdt_equity(agent, filename):
         ax.plot(datenums, y, label=column_label)
         plt.fill_between(datenums, y, alpha=0.3)
 
-    def get_num_positions(row):
-        try:
-            json_data = json.loads(row[1:-1])
-            df_triggers = pd.read_json(StringIO(json_data), precise_float=True)
-            return df_triggers.shape[0]
-        except Exception as e:
-            print(f"Erreur pour la ligne : {row[1:-1]}\n{e}")
-            return 0
-
-    df["num_positions"] = df['triggers'].apply(get_num_positions)
     ax3 = ax.twinx()
     ax3.step(datenums, df["num_positions"], color="orange", where="post")
     ax3.tick_params(axis='y', labelcolor="orange", direction="in", pad=-22) # display yticks inside the plot area
-    ax3.set_ylim([0, 4 * df["num_positions"].max()])
+    ax3.set_ylim([0, 2 * df["num_positions"].max()])
     ax3.set_ylabel("num_positions", color="orange")
 
     y_min = min(ymin)
@@ -409,12 +399,16 @@ if __name__ == '__main__':
 
                 num_positions = len(current_state["triggers"])
 
+            # temporary
+            agent.df_account["num_positions"] = [len(pd.read_json(json.loads(x[1:-1]), precise_float=True)) if x != "" else 0 for x in agent.df_account["triggers"]]
+
             agent.df_account.loc[len(agent.df_account)] = [
                 agent.account_id,
                 float(current_timestamp),
                 float(usdt_equity),
                 str_limit_orders,
-                str_triggers]
+                str_triggers,
+                num_positions]
 
             # filter to avoid to store too many data
             now = get_now()
@@ -422,6 +416,7 @@ if __name__ == '__main__':
             agent.df_account.loc[agent.df_account["timestamp"] < timestamp_begin, "limit_orders"] = ""
             agent.df_account.loc[agent.df_account["timestamp"] < timestamp_begin, "triggers"] = ""
 
+            # save csv
             agent.df_account.to_csv(agent.datafile, index=False)
 
             extra = {}
