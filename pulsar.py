@@ -301,7 +301,7 @@ if __name__ == '__main__':
         console.log("Account {} initialized".format(account_id))
 
         agent.datafile = "pulsar_" + account_id + "_data.csv"
-        agent.df_account = pd.DataFrame(columns=["account", "timestamp", "usdt_equity", "limit_orders", "triggers"])
+        agent.df_account = pd.DataFrame(columns=["account", "timestamp", "usdt_equity", "limit_orders", "triggers", "num_positions"])
         if os.path.exists(agent.datafile):
             agent.df_account = pd.read_csv(agent.datafile, sep=",")
             agent.df_account['timestamp'] = agent.df_account['timestamp'].astype(float)
@@ -376,7 +376,7 @@ if __name__ == '__main__':
 
             current_state = agent.broker.get_current_state(agent.symbols)
 
-            pnl, net_profit, num_positions, df_positions = None, None, None, None
+            pnl, net_profit, num_positions, df_positions = None, None, 0, None
             if len(agent.symbols) > 0 and agent.start_date != "":
                 symbol = agent.symbols[0]
                 start_time = datetime.strptime(agent.start_date, '%Y-%m-%d %H:%M')
