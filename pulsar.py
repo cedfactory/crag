@@ -309,6 +309,8 @@ if __name__ == '__main__':
             #agent.df_account["usdt_equity"] = agent.df_account.to_numeric(agent.df_account["usdt_equity"], errors='coerce')
             agent.df_account["limit_orders"] = agent.df_account["limit_orders"].fillna("")
             agent.df_account["triggers"] = agent.df_account["triggers"].fillna("")
+            agent.df_account["num_positions"] = agent.df_account["num_positions"].astype(int)
+
 
         update_csv = False
         if agent.message1_id == "-1":
@@ -400,7 +402,7 @@ if __name__ == '__main__':
                 num_positions = len(current_state["triggers"])
 
             # temporary
-            agent.df_account["num_positions"] = [len(pd.read_json(json.loads(x[1:-1]), precise_float=True)) if x != "" else 0 for x in agent.df_account["triggers"]]
+            #agent.df_account["num_positions"] = [len(pd.read_json(json.loads(x[1:-1]), precise_float=True)) if x != "" else 0 for x in agent.df_account["triggers"]]
 
             agent.df_account.loc[len(agent.df_account)] = [
                 agent.account_id,
