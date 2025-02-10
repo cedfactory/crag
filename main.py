@@ -1,4 +1,4 @@
-from src import rtdp,rtdp_simulation,broker_simulation,broker_bitget,broker_bitget_api
+from src import rtdp,rtdp_simulation,broker_simulation,broker_bitget,broker_bitget_api,broker_bitget_spot
 from src import rtstr,strategies
 from src import crag,crag_helper,logger
 from src.toolbox import settings_helper
@@ -128,14 +128,18 @@ def check_broker():
     my_logger = logger.LoggerConsole()
     my_logger.log("CHECK BROKER")
 
-    symbols = {
+    future_symbols = {
         "symbol": ["BTC", "XRP", "ETH", "SOL", "PEPE"],
         "leverage_long": [0, 0, 0, 0, 0],
         "leverage_short": [0, 0, 0, 0, 0]
     }
+
+    spot_symbols = {
+        "symbol": ["BTC", "XRP", "ETH", "SOL", "PEPE"]
+    }
     params = {"exchange": "bitget",
               "account": "bitget_cl1",
-              "symbols": symbols,
+              "symbols": spot_symbols,
               #"loggers": "file=console",
               "reset_account_start": False}
 

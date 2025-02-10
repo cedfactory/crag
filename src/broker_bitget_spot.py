@@ -32,9 +32,6 @@ class BrokerBitGetSpot(broker.Broker):
     def get_commission(self, symbol):
         return None
 
-    def get_value(self, symbol):
-        return None
-
     def _authentification(self):
         return self.spotAccountV2Api
 
@@ -67,10 +64,26 @@ class BrokerBitGetSpot(broker.Broker):
 
             self.log("content: " + json.dumps(dict_content_as_str))
 
-
-    def get_usdt_equity(self):
+    def get_value(self, symbol):
+        value = None
         try:
-            toto = self.spotAccountV2Api.assets(params={"coin": "USDT"})
-            print(toto)
+            response = self.spotAccountV2Api.assets(params={"coin": symbol})
+            if "msg" in response and response["msg"] == "success":
+                if "data" in response and len(response["data"]) == 1:
+                    value = float(response["data"][0]["available"])
         except (exceptions.BitgetAPIException, Exception) as e:
             self.log_api_failure("positionApi.all_position", e)
+
+        return value
+
+    def get_usdt_equity(self):
+        value = None
+        try:
+            response = self.spotAccountV2Api.assets(params={"coin": "USDT"})
+            if "msg" in response and response["msg"] == "success":
+                if "data" in response and len(response["data"]) == 1:
+                    value = float(response["data"][0]["available"])
+        except (exceptions.BitgetAPIException, Exception) as e:
+            self.log_api_failure("positionApi.all_position", e)
+
+        return value
