@@ -165,10 +165,6 @@ class StrategyContinueGeneric(rtstr.RealTimeStrategy):
         for strategy in self.lst_strategy:
             strategy.print_debug_grid()
 
-    def save_grid_scenario(self, path, cpt):
-        for strategy in self.lst_strategy:
-            strategy.save_grid_scenario(path, cpt)
-
     def set_df_buying_size(self, df_symbol_size, cash):
         df_concat = pd.DataFrame()
         for strategy in self.lst_strategy:

@@ -179,9 +179,6 @@ class StrategyGridTradingGenericV3(rtstr.RealTimeStrategy):
     def print_grid(self):
         self.grid.print_grid()
 
-    def save_grid_scenario(self, path, cpt):
-        self.grid.save_grid_scenario(self.symbol, path, cpt)
-
     def set_normalized_grid_price(self, lst_symbol_plc_endstp):
         return
 
@@ -694,45 +691,3 @@ class GridPosition:
         df.set_index('position', inplace=True)
         df = df[["values"]]
         return df
-
-    def save_grid_scenario(self, symbol, path, cpt):
-        if cpt >= 30:
-            cpt += 1
-            df = self.grid
-            filename = path + "/grid_" + str(cpt) + ".csv"
-            df.to_csv(filename)
-
-            df_filtered = df[df["status"] == "engaged"]
-            df_current_state = df_filtered.copy()
-            df_current_state.rename(columns={'grid_id': 'gridId'}, inplace=True)
-            df_current_state.rename(columns={'lst_orderId': 'orderId'}, inplace=True)
-            df_current_state.rename(columns={'nb_position': 'leverage'}, inplace=True)
-            df_current_state.rename(columns={'position': 'price'}, inplace=True)
-
-            columns_to_drop = ['close_grid_id', 'triggered_by', 'previous_side', 'previous_status', 'changes', 'cross_checked', 'on_edge']
-            df_current_state.drop(columns=columns_to_drop, inplace=True)
-
-            df_exploded = df_current_state.explode('orderId').reset_index(drop=True)
-            df_exploded['leverage'] = 1
-            df_exploded['symbol'] = 'XRP'
-
-            filename = path + "/data_" + str(cpt) + "_df_current_states.csv"
-            df_exploded.reset_index(drop=True, inplace=True)
-            df_reversed = df_exploded.iloc[::-1].reset_index(drop=True)
-            columns = df_reversed.columns.tolist()
-            columns = [columns[-1]] + columns[1:-1] + [columns[0]]
-            df_reversed = df_reversed[columns]
-            df_reversed.to_csv(filename)
-
-            df_filtered = df_filtered[df_filtered["side"] == "close_long"]
-            nb_pos = len(df_filtered)
-
-            lst_columns = ["symbol", "holdSide", "leverage", "marginCoin", "available", "total", "usdtEquity", "marketPrice", "averageOpenPrice", "achievedProfits", "unrealizedPL", "liquidationPrice"]
-            lst_data = ["XRP", "long", 2, "USDT", 10.0, 40.0, 5.86875, 0.58664, 0.586875, 0.0, -0.0047, 0.0]
-
-            df = pd.DataFrame([lst_data], columns=lst_columns)
-            df.loc[0, 'total'] = 10 * nb_pos
-
-            filename = path + "/data_" + str(cpt) + "_df_open_positions.csv"
-            df.reset_index(drop=True, inplace=True)
-            df.to_csv(filename)

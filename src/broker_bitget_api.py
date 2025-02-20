@@ -583,20 +583,33 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     - transaction_fee
     '''
     @authentication_required
-    def _place_order_api(self, symbol, marginCoin, size, side, orderType, clientOId, price=''):
+    def _place_order_api(self, symbol, marginCoin, size, side, orderType, clientOId, price='',
+                         presetTakeProfitPrice='',
+                         presetStopLossPrice=''):
         result = {}
-        n_attempts = 3
+        n_attempts = 10
         while n_attempts > 0:
             try:
-                result = self.orderApi.place_order(symbol, marginCoin, size, side, orderType,
-                                                 price=price,
-                                                 clientOrderId=clientOId, timeInForceValue='normal',
-                                                 presetTakeProfitPrice='', presetStopLossPrice='')
+                if isinstance(size, str):
+                    size_order = float(size)
+                else:
+                    size_order = size
+                result = self.orderApi.place_order(symbol, marginCoin, size_order, side, orderType,
+                                                   price=price,
+                                                   clientOrderId=clientOId, timeInForceValue='normal',
+                                                   presetTakeProfitPrice=presetTakeProfitPrice,
+                                                   presetStopLossPrice=presetStopLossPrice)
                 self.success += 1
                 break
             except (exceptions.BitgetAPIException, Exception) as e:
                 self.log_api_failure("orderApi.place_order", e, n_attempts)
-                time.sleep(0.2)
+                if getattr(e, 'code', None) == '40762':
+                    print("########## err: 40762 ##########")
+                    if isinstance(size, str):
+                        size = float(size)
+                    size = size - size * 0.1 / 100
+                    size = utils.normalize_size(size, self.get_sizeMultiplier(symbol))
+                time.sleep(0.1)
                 n_attempts = n_attempts - 1
         n_attempts = False
         locals().clear()
@@ -648,6 +661,11 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             self.log_api_failure("planApi.place_tpsl", e)
         locals().clear()
         return result
+
+    @authentication_required
+    def get_order_detail_status(self, params):
+        return self.orderApi.detail(self._get_symbol(params["symbol"]),
+                                    params["orderId"])
 
     @authentication_required
     def _place_TPSL_Order_v2(self, symbol, marginCoin, planType, triggerPrice,
@@ -922,17 +940,32 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     def get_info(self):
         return None, None, None
 
+    def _get_open_order_detail(self, symbol, orderId):
+        return self.orderApi.detail(symbol, orderId)
+
     @authentication_required
-    def _open_long_position(self, symbol, amount, clientoid):
-        return self._place_order_api(symbol, marginCoin="USDT", size=amount, side='open_long', orderType='market', clientOId=clientoid)
+    def _open_long_position(self, symbol, amount, clientoid,
+                            presetTakeProfitPrice="",
+                            presetStopLossPrice=""):
+        return self._place_order_api(symbol, marginCoin="USDT", size=amount, side='open_long', orderType='market',
+                                     clientOId=clientoid,
+                                     presetTakeProfitPrice=presetTakeProfitPrice,
+                                     presetStopLossPrice=presetStopLossPrice
+                                     )
 
     @authentication_required
     def _close_long_position(self, symbol, amount, clientoid):
         return self._place_order_api(symbol, marginCoin="USDT", size=amount, side='close_long', orderType='market', clientOId=clientoid)
 
     @authentication_required
-    def _open_short_position(self, symbol, amount, clientoid):
-        return self._place_order_api(symbol, marginCoin="USDT", size=amount, side='open_short', orderType='market', clientOId=clientoid)
+    def _open_short_position(self, symbol, amount, clientoid,
+                             presetTakeProfitPrice = "",
+                             presetStopLossPrice = ""):
+        return self._place_order_api(symbol, marginCoin="USDT", size=amount, side='open_short', orderType='market',
+                                     clientOId=clientoid,
+                                     presetTakeProfitPrice=presetTakeProfitPrice,
+                                     presetStopLossPrice=presetStopLossPrice
+                                     )
 
     @authentication_required
     def _close_short_position(self, symbol, amount, clientoid):
@@ -989,6 +1022,26 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 time.sleep(0.2)
                 n_attempts = n_attempts - 1
         return self.df_account_assets['usdtEquity'].sum()
+
+    @authentication_required
+    def get_usdt_equity_available(self):
+        self.df_account_assets = None  # reset self.df_account_assets
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                self.get_list_of_account_assets()
+                self.success += 1
+                break
+            except (exceptions.BitgetAPIException, Exception) as e:
+                self.log_api_failure("get_list_of_account_assets", e, n_attempts)
+                time.sleep(0.2)
+                n_attempts = n_attempts - 1
+        if isinstance(self.df_account_assets, pd.DataFrame):
+            cell_usdtEquity = self.df_account_assets.loc[(self.df_account_assets['baseCoin'] == 'USDT') & (self.df_market['quoteCoin'] == 'USDT'), "usdtEquity"]
+            cell_avaialable = self.df_account_assets.loc[(self.df_account_assets['baseCoin'] == 'USDT') & (self.df_market['quoteCoin'] == 'USDT'), "available"]
+            if len(cell_usdtEquity.values) > 0 and len(cell_avaialable.values) > 0:
+                return cell_usdtEquity.values[0], cell_avaialable.values[0]
+        return None, None
 
     @authentication_required
     def get_usdt_equity(self):
@@ -1185,34 +1238,40 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         return df
 
     def _account_results_to_df(self, markets):
-        lst_columns = ['symbol', 'marginCoin', 'available', 'crossMaxAvailable', 'fixedMaxAvailable',
-                       'equity', 'usdtEquity', 'locked', 'btcEquity',
-                       'unrealizedPL',
-                       "size", "actualPrice", 'quoteCoin', 'baseCoin', 'symbolType',
-                       'makerFeeRate', 'takerFeeRate',
-                       'minTradeNum', 'priceEndStep', 'volumePlace', 'pricePlace', 'sizeMultiplier']
-        df = pd.DataFrame(columns=lst_columns)
+        columns = [
+            'symbol', 'marginCoin', 'available', 'crossMaxAvailable', 'fixedMaxAvailable',
+            'equity', 'usdtEquity', 'locked', 'btcEquity', 'unrealizedPL',
+            'size', 'actualPrice', 'quoteCoin', 'baseCoin', 'symbolType',
+            'makerFeeRate', 'takerFeeRate', 'minTradeNum', 'priceEndStep',
+            'volumePlace', 'pricePlace', 'sizeMultiplier'
+        ]
+
+        rows = []
         for market in markets['data']:
-            if float(market['equity']) > 0 \
-                    and float(market['usdtEquity']) > 0 \
-                    and float(market['btcEquity']) > 0:
-                if market['unrealizedPL'] == None:
-                    unrealizedPL = 0
-                else:
-                    unrealizedPL = float(market['unrealizedPL'])
-                lst_info_symbol = [ market['marginCoin'], # USDT
-                                    market['marginCoin'], # USDT
-                                    float(market['available']),
-                                    float(market['crossMaxAvailable']),
-                                    float(market['fixedMaxAvailable']),
-                                    float(market['equity']),
-                                    float(market['usdtEquity']),
-                                    float(market['locked']),
-                                    float(market['btcEquity']),
-                                    unrealizedPL,
-                                    0., 0., "", "", "", 0., 0., 0., 0., 0., 0., 0.]
-                df.loc[len(df)] = lst_info_symbol
-        return df
+            equity = float(market['equity'])
+            usdt_equity = float(market['usdtEquity'])
+            btc_equity = float(market['btcEquity'])
+
+            if equity > 0 and usdt_equity > 0 and btc_equity > 0:
+                # Ensure the behavior matches the original: check for None explicitly.
+                unrealized_pl = 0.0 if market['unrealizedPL'] is None else float(market['unrealizedPL'])
+
+                row = [
+                    market['marginCoin'],  # symbol
+                    market['marginCoin'],  # marginCoin (same as symbol, as in the original code)
+                    float(market['available']),
+                    float(market['crossMaxAvailable']),
+                    float(market['fixedMaxAvailable']),
+                    equity,
+                    usdt_equity,
+                    float(market['locked']),
+                    btc_equity,
+                    unrealized_pl,
+                    0.0, 0.0, "", "", "", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+                ]
+                rows.append(row)
+
+        return pd.DataFrame(rows, columns=columns)
 
     def get_future_market(self):
         """
@@ -1235,6 +1294,16 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         except (exceptions.BitgetAPIException, Exception) as e:
             self.log_api_failure("accountApi.accounts", e)
             return None
+
+    def _account_available(self, markets):
+        for market in markets['data']:
+            if market['marginCoin'] == "USDT":
+                return float(market['available'])
+        return None
+
+    def _get_usdt_availbale(self, acc_type='umcbl'):
+        dct_account = self.accountApi.accounts(acc_type)
+        return self._account_available(dct_account)
 
     def _get_df_account(self):
         # update market

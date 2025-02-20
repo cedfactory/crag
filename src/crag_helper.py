@@ -103,13 +103,15 @@ def load_configuration_file(configuration_file, config_path = './conf'):
         "loggers": crag_node.get("loggers", "")
     }
 
+    params_alcorak = {}
     alcorak_node = root.find("alcorak")
-    params_alcorak = {
-        "reset_account_start": alcorak_node.get("reset_account_start", ""),
-        "reset_account_start_ignore": alcorak_node.get("reset_account_start_ignore", ""),
-        "reset_account_stop": alcorak_node.get("reset_account_stop", ""),
-        "reset_account_stop_ignore": alcorak_node.get("reset_account_stop_ignore", "")
-    }
+    if alcorak_node:
+        params_alcorak = {
+            "reset_account_start": alcorak_node.get("reset_account_start", ""),
+            "reset_account_start_ignore": alcorak_node.get("reset_account_start_ignore", ""),
+            "reset_account_stop": alcorak_node.get("reset_account_stop", ""),
+            "reset_account_stop_ignore": alcorak_node.get("reset_account_stop_ignore", "")
+        }
 
     return {"broker": params_broker,
             "strategy": params_strategy,

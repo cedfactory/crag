@@ -37,7 +37,7 @@ class TestRTSTRBigWill:
         ds = strategy.get_data_description()
         df_current_data = pd.DataFrame(data=data)
         df_current_data.set_index("symbol", inplace=True)
-        strategy.set_current_data(df_current_data)
+        strategy.set_current_data(df_current_data, price)
         return strategy
 
     ''' deprecated

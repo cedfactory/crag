@@ -245,9 +245,6 @@ class StrategyBreakoutTradingGenericV3(rtstr.RealTimeStrategy):
     def print_grid(self):
         self.grid.print_grid()
 
-    def save_grid_scenario(self, path, cpt):
-        self.grid.save_grid_scenario(self.symbol, path, cpt)
-
     def set_normalized_grid_price(self, lst_symbol_plc_endstp):
         for price_plc in lst_symbol_plc_endstp:
             if price_plc['symbol'] in [self.symbol]:

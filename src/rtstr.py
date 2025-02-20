@@ -174,7 +174,7 @@ class RealTimeStrategy(metaclass=ABCMeta):
     def get_data_description(self):
         pass
 
-    def set_current_data(self, current_data):
+    def set_current_data(self, current_data, current_prices):
         self.df_current_data = current_data
 
     def get_feature_from_fdp_features(self, fdp_features):

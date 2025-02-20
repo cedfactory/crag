@@ -89,6 +89,7 @@ class Crag:
         self.usdt_equity = 0
         self.usdt_equity_previous = 0
         self.usdt_equity_thread = 0
+        self.usdt_available_thread = 0
 
         self.resume = False
         self.safety_step_iterration = 0
@@ -229,7 +230,7 @@ class Crag:
             del msg
             self.reboot_iter += 1
 
-        self.usdt_equity_thread = self.broker.get_usdt_equity()
+        self.usdt_equity_thread, self.usdt_available_thread = self.broker.get_usdt_equity_available()
         # get usdt_euqity to run_in_background
         t = threading.Thread(target=self.update_status_for_TPSL, daemon=True)
         t.start()
@@ -299,29 +300,31 @@ class Crag:
                 if lst_interval:
                     print("############################ ", lst_interval, " ############################")
                     self.step(lst_interval)
-                if '5m' in lst_interval:
-                    print("usdt_equity: ", self.usdt_equity)
 
     def step(self, lst_interval):
         self.usdt_equity = self.usdt_equity_thread
+        self.usdt_available = self.usdt_available_thread
         self.send_alive_notification()
         stop = self.monitoring.get_strategy_stop(self.rtstr.id)
         if stop:
             self.monitoring.send_strategy_stopped(self.rtstr.id)
             os._exit(100)
-        prices_symbols, lst_ds = self.get_ds_and_price_symbols()
+        # prices_symbols, lst_ds = self.get_ds_and_price_symbols(lst_interval)
+
+        lst_ds = self.get_ds(lst_interval)
+        self.update_sltp_status()
 
         measure_time_fdp_start = datetime.now()
 
-        lst_current_data = self.broker.get_lst_current_data(lst_ds)
+        lst_current_data = self.deduplicate_and_get_current_data(lst_ds)
 
         measure_time_fdp_end = datetime.now()
         self.log("measure time fdp: {}".format(measure_time_fdp_end - measure_time_fdp_start))
-
         self.log("[Crag] ⌛")
         self.log("[Execute Trade - Crag] ⌛")
 
-        self.rtstr.set_current_data(lst_current_data)
+        df_current_prices_symbols = self.get_price_symbols()
+        self.rtstr.set_current_data(lst_current_data, df_current_prices_symbols, self.usdt_available)
 
         # execute strategy trades
         lst_trades_to_execute = self.rtstr.get_lst_trade(lst_interval)
@@ -335,40 +338,17 @@ class Crag:
                     stat = stat.replace('_', ' ').replace(',', '').replace('{', '').replace('}', '').replace('"', '').strip()
                     self.log_discord(stat.upper(), "STRATEGY STAT:")
 
-            msg = ""
-            msg += "current cash = ${}\n".format(utils.KeepNDecimals(self.broker.get_cash(), 2))
-            msg += "original value : ${}\n".format(utils.KeepNDecimals(self.original_portfolio_value, 2))
-            variation_percent = utils.get_variation(self.original_portfolio_value, self.usdt_equity)
-            msg += "account equity = ${}".format(utils.KeepNDecimals(self.usdt_equity, 2))
-            msg += "variation = ${}".format(utils.KeepNDecimals(variation_percent, 2))
-
-            portfolio_value = self.usdt_equity
-            current_date = self.broker.get_current_datetime("%Y/%m/%d %H:%M:%S")
-            if portfolio_value < self.minimal_portfolio_value:
-                self.minimal_portfolio_value = portfolio_value
-                self.minimal_portfolio_date = current_date
-                self.minimal_portfolio_variation = utils.get_variation(self.original_portfolio_value, self.minimal_portfolio_value)
-            if portfolio_value > self.maximal_portfolio_value:
-                self.maximal_portfolio_value = portfolio_value
-                self.maximal_portfolio_date = current_date
-                self.maximal_portfolio_variation = utils.get_variation(self.original_portfolio_value, self.maximal_portfolio_value)
-
-            self.rtstr.log_current_info()
-
-            unrealised_PL_long = 0
-            unrealised_PL_short = 0
-
             df_open_positions = self.broker.get_open_position()
-            df_open_positions['symbol'] = df_open_positions['symbol'].str.replace('_UMCBL', '')
-            df_open_positions.rename(columns={'holdSide': 'side'}, inplace=True)
-            df_open_positions.rename(columns={'leverage': 'lev'}, inplace=True)
-            df_open_positions.rename(columns={'total': 'tot'}, inplace=True)
-            df_open_positions.rename(columns={'usdtEquity': 'equ'}, inplace=True)
-            df_open_positions.rename(columns={'marketPrice': 'price'}, inplace=True)
-            df_open_positions.rename(columns={'unrealizedPL': 'PL'}, inplace=True)
-            df_open_positions.rename(columns={'liquidationPrice': 'liq'}, inplace=True)
+            if not df_open_positions.empty:
+                df_open_positions['symbol'] = df_open_positions['symbol'].str.replace('_UMCBL', '')
+                df_open_positions.rename(columns={'holdSide': 'side'}, inplace=True)
+                df_open_positions.rename(columns={'leverage': 'lev'}, inplace=True)
+                df_open_positions.rename(columns={'total': 'tot'}, inplace=True)
+                df_open_positions.rename(columns={'usdtEquity': 'equ'}, inplace=True)
+                df_open_positions.rename(columns={'marketPrice': 'price'}, inplace=True)
+                df_open_positions.rename(columns={'unrealizedPL': 'PL'}, inplace=True)
+                df_open_positions.rename(columns={'liquidationPrice': 'liq'}, inplace=True)
 
-            if len(df_open_positions) > 0:
                 msg = "end step with {} open position\n".format(len(df_open_positions))
                 df_open_positions = df_open_positions.drop(columns=['marginCoin', 'achievedProfits'])
                 df = df_open_positions.copy()
@@ -388,30 +368,6 @@ class Crag:
             else:
                 msg = "no open position\n"
                 self.log_discord(msg.upper(), "no open position".upper())
-
-            current_date = self.broker.get_current_datetime("%Y/%m/%d %H:%M:%S")
-            msg = "current time : {}\n".format(current_date)
-            msg += "equity at start : $ {} \n".format(utils.KeepNDecimals(self.original_portfolio_value, 2))
-            msg += "start date : {}\n".format(self.start_date)
-            msg += "unrealized PL LONG : ${}\n".format(utils.KeepNDecimals(unrealised_PL_long, 2))
-            msg += "unrealized PL SHORT : ${}\n".format(utils.KeepNDecimals(unrealised_PL_short, 2))
-            msg += "global unrealized PL : ${} / %{}\n".format(utils.KeepNDecimals(self.broker.get_global_unrealizedPL(), 2),
-                                                               utils.KeepNDecimals(self.broker.get_global_unrealizedPL() * 100 / self.original_portfolio_value, 2))
-            usdt_equity = self.usdt_equity
-            variation_percent = utils.get_variation(self.original_portfolio_value, usdt_equity)
-            msg += "total SL TP: ${} / %{}\n".format(utils.KeepNDecimals(self.total_SL_TP, 2),
-                                                     utils.KeepNDecimals(self.total_SL_TP_percent, 2))
-            msg += "max drawdown: ${} / %{}\n".format(utils.KeepNDecimals(self.drawdown, 2),
-                                                      utils.KeepNDecimals(self.actual_drawdown_percent, 2))
-            msg += "account equity : ${} / %{}\n".format(utils.KeepNDecimals(usdt_equity, 2),
-                                                       utils.KeepNDecimals(variation_percent, 2))
-        else:
-            msg = "no trade completed" + "\n"
-            msg += "account equity = ${}".format(utils.KeepNDecimals(self.usdt_equity, 2))
-            msg += "original value : ${}\n".format(utils.KeepNDecimals(self.original_portfolio_value, 2))
-            variation_percent = utils.get_variation(self.original_portfolio_value, self.usdt_equity)
-            msg += "variation = ${}".format(utils.KeepNDecimals(variation_percent, 2))
-        self.log_discord(msg.upper(), "end step".upper())
 
     def export_history(self, target=None):
         self.broker.export_history(target)
@@ -597,96 +553,6 @@ class Crag:
         }
         return broker_current_state
 
-    def udpate_strategy_with_broker_current_state_scenario(self, scenario_id):
-        self.reboot_iter = 0
-        # self.execute_timer = execute_time_recoder.ExecuteTimeRecorder(self.reboot_iter, self.dump_perf_dir)
-        self.reset_iteration_timers()
-        cpt = 0
-        input_dir = "./grid_test/" + str(scenario_id) + "_scenario_test"
-        df_scenario_results_global = pd.DataFrame()
-        df_grid_record = pd.DataFrame()
-        df_grid_global = df_grid_record
-        while True:
-            self.start_time_grid_strategy = time.time()
-            if self.start_time_grid_strategy_init == None:
-                symbols = ["XRP"]
-                self.start_time_grid_strategy_init = self.start_time_grid_strategy
-                self.grid_iteration = 1
-                df_symbol_minsize = self.broker.get_df_minimum_size(symbols)
-                df_buying_size = self.rtstr.set_df_buying_size_scenario(df_symbol_minsize, self.broker.get_usdt_equity())
-                df_symbol_minsize = None
-                df_buying_size_normalise = self.broker.normalize_grid_df_buying_size_size(df_buying_size)
-                self.rtstr.set_df_normalize_buying_size(df_buying_size_normalise)
-                self.rtstr.set_normalized_grid_price(self.broker.get_price_place_endstep(symbols))
-            else:
-                self.grid_iteration += 1
-
-            break_pt = 16
-            if cpt == break_pt:
-                self.log("toto")
-                pass
-            self.log("cpt start: {}".format(cpt))
-            self.start_time_grid_strategy = time.time()
-            broker_current_state = self.get_current_state_from_csv(input_dir, cpt, df_scenario_results_global, df_grid_global)
-            lst_orders_to_execute = self.rtstr.set_broker_current_state(broker_current_state)
-            lst_orders_to_execute = self.broker.execute_trades_scenario(lst_orders_to_execute)
-            self.rtstr.update_executed_trade_status(lst_orders_to_execute)
-            self.rtstr.print_grid()
-            self.rtstr.save_grid_scenario(input_dir, cpt)
-
-            if len(lst_orders_to_execute) > 0:
-                df_scenario_results = pd.DataFrame(lst_orders_to_execute)
-                df_scenario_results["round"] = cpt
-                column_to_move = 'round'
-                first_column = df_scenario_results.pop(column_to_move)  # Remove column 'C' from DataFrame
-                df_scenario_results.insert(0, column_to_move, first_column)
-                if len(df_scenario_results_global) == 0:
-                    df_scenario_results_global = df_scenario_results
-                else:
-                    df_scenario_results_global = pd.concat([df_scenario_results_global, df_scenario_results], ignore_index=True)
-            df_grid_record = self.rtstr.get_grid(cpt)
-            df_grid_global = pd.concat([df_grid_global, df_grid_record], ignore_index=True)
-
-            memory_used_bytes = utils.get_memory_usage()
-            if self.memory_used_mb == 0:
-                self.init_memory_used_mb = memory_used_bytes / (1024 * 1024)
-                self.memory_used_mb = self.init_memory_used_mb
-            else:
-                self.memory_used_mb = memory_used_bytes / (1024 * 1024)  # Convert bytes to megabytes
-            self.log("output lst_orders_to_execute: {}".format(lst_orders_to_execute))
-            msg = self.rtstr.get_info_msg_status()
-            if msg != None:
-                current_datetime = datetime.today().strftime("%Y/%m/%d - %H:%M:%S")
-                msg = current_datetime + "\n" + msg
-                msg += "CPT: " + str(cpt) + "\n"
-                usdt_equity = self.broker.get_usdt_equity()
-                msg += "- USDT EQUITY: " + str(round(usdt_equity, 2)) + " - PNL: " + str(round(self.broker.get_global_unrealizedPL(), 2)) + "\n"
-                msg += "AVERAGE RUN TIME: " + str(self.average_time_grid_strategy) + "s\n"
-                end_time = time.time()
-                msg += "DURATION: " + utils.format_duration(round((end_time - self.start_time_grid_strategy_init), 2)) + "\n"
-                delta_memory = self.memory_used_mb - self.init_memory_used_mb
-                if delta_memory >= 0:
-                    msg += f"MEMORY: {self.memory_used_mb:.1f}MB" + " (+" + str(round(delta_memory, 1)) + ")\n"
-                else:
-                    msg += f"MEMORY: {self.memory_used_mb:.1f}MB" + " (-" + str(round(abs(delta_memory), 1)) + ")\n"
-                self.log_discord(msg, "GRID STATUS")
-            end_time = time.time()
-            self.iteration_times_grid_strategy.append(end_time - self.start_time_grid_strategy)
-            self.iteration_times_grid_strategy = self.iteration_times_grid_strategy[-10:]
-            self.average_time_grid_strategy = round(sum(self.iteration_times_grid_strategy) / len(self.iteration_times_grid_strategy), 2)
-            self.average_time_grid_strategy_overall = round((end_time - self.start_time_grid_strategy_init) / self.grid_iteration, 2)
-            self.log("GRID ITERATION AVERAGE TIME: " + str(self.average_time_grid_strategy) + " seconds")
-            self.log("CRAG AVERAGE TIME: " + str(self.average_time_grid_strategy_overall) + " seconds")
-            self.log("OVERALL DURATION: {}".format(utils.format_duration(round((end_time - self.start_time_grid_strategy_init), 2))))
-            self.log("ITERATIONS: {}".format(self.grid_iteration))
-            self.log("MEMORY: " + str(round(self.memory_used_mb, 2)) + "MB DELTA: " + str(round(self.memory_used_mb - self.init_memory_used_mb,2)) + " MB" + "\n")
-
-            if cpt == break_pt:
-                # self.log(cpt)
-                pass
-            self.log("cpt end: {}".format(cpt))
-            cpt += 1
-
     def get_memory_usage(self, class_memory):
         memory_usage = {}
         for attr_name, attr_value in vars(class_memory).items():
@@ -705,19 +571,7 @@ class Crag:
                     self.log("MEMORY " + id + " - " + key1 + " VALUE: " + str(value3) + " PREV DIFF: " +  str(value3 - value2) + " INIT DIFF: " + str(value3 - value1))
 
     def udpate_strategy_with_broker_current_state(self):
-        GRID_SCENARIO_ON = False
-        if GRID_SCENARIO_ON:
-            self.rtstr.set_scenario_mode()
-        SCENARIO_ID = 2
-        if GRID_SCENARIO_ON:
-            self.udpate_strategy_with_broker_current_state_scenario(SCENARIO_ID)
-        else:
-            # self.execute_timer.set_start_time("crag", "udpate_strategy_with_broker", "udpate_strategy_with_broker_current_state_live", self.state_live)
-
-            self.udpate_strategy_with_broker_current_state_live()
-
-            # self.execute_timer.set_end_time("crag", "udpate_strategy_with_broker", "udpate_strategy_with_broker_current_state_live", self.state_live)
-            # self.state_live += 1
+        self.udpate_strategy_with_broker_current_state_live()
 
     def udpate_strategy_with_broker_current_state_live(self):
         self.start_time_grid_strategy = time.time()
@@ -741,6 +595,7 @@ class Crag:
 
         # self.execute_timer.set_end_time("crag", "current_state_live", "get_current_state", self.current_state_live)
         self.usdt_equity = self.usdt_equity_thread
+        self.usdt_available = self.usdt_available_thread
         if self.init_grid_position:
             self.init_grid_position = False
             df_symbol_minsize = self.broker.get_df_minimum_size(self.symbols)
@@ -755,11 +610,7 @@ class Crag:
             # del df_buying_size_normalise
             self.rtstr.set_normalized_grid_price(dct_symbol_price_place)
 
-        # self.execute_timer.set_start_time("crag", "current_state_live", "set_broker_current_state", self.current_state_live)
-
         lst_orders_to_execute = self.rtstr.set_broker_current_state(broker_current_state)
-
-        # self.execute_timer.set_end_time("crag", "current_state_live", "set_broker_current_state", self.current_state_live)
 
         broker_current_state.clear()
         del broker_current_state
@@ -806,10 +657,11 @@ class Crag:
 
     def update_status_for_TPSL(self):
         while True:
-            usdt_equity_thread = self.broker.get_usdt_equity()
+            usdt_equity_thread, usdt_available_thread = self.broker.get_usdt_equity_available()
             with self.lock_usdt_equity_thread:
                 try:
                     self.usdt_equity_thread = usdt_equity_thread
+                    self.usdt_available_thread = usdt_available_thread
                 except:
                     exit(628)
             time.sleep(2)
@@ -820,6 +672,7 @@ class Crag:
 
         self.usdt_equity = self.usdt_equity_thread
         self.usdt_equity_previous = self.usdt_equity
+        self.usdt_available = self.usdt_available_thread
 
         self.total_SL_TP = self.usdt_equity - self.original_portfolio_value
         if self.usdt_equity >= self.maximal_portfolio_value:
@@ -935,11 +788,11 @@ class Crag:
 
         self.log_discord(msg, "MEMORY STATUS")
 
-    def get_ds_and_price_symbols(self):
+    def get_ds_and_price_symbols(self, lst_interval):
         # update all the data
         if self.lst_ds is None \
                 or self.lst_symbol is None:
-            self.lst_ds = self.rtstr.get_data_description()
+            self.lst_ds = self.rtstr.get_data_description(lst_interval)
 
             self.lst_symbol = []
             for ds in self.lst_ds:
@@ -951,6 +804,31 @@ class Crag:
         self.prices_symbols = {symbol:self.broker.get_value(symbol) for symbol in self.lst_symbol}
 
         return self.prices_symbols, self.lst_ds
+
+    def update_sltp_status(self):
+        self.lst_sltp = self.rtstr.get_lst_sltp()
+        self.lst_sltp = self.broker.track_TPSL_status(self.lst_sltp)
+        self.rtstr.update_lst_sltp_status(self.lst_sltp)
+
+    def get_ds(self, lst_interval):
+        # update all the data
+        if self.lst_ds is None \
+                or self.lst_symbol is None:
+            self.lst_ds = self.rtstr.get_data_description(lst_interval)
+
+            self.lst_symbol = []
+            for ds in self.lst_ds:
+                self.lst_symbol.extend(ds.symbols)  # Use extend to flatten the list of lists
+
+            # Convert to a set to remove duplicates, then back to a list
+            self.lst_symbol = list(set(self.lst_symbol))
+
+        return self.lst_ds
+
+    def get_price_symbols(self):
+        self.prices_symbols = {symbol:self.broker.get_value(symbol) for symbol in self.lst_symbol}
+
+        return self.prices_symbols
 
     def get_stored_data_list(self):
         return [
@@ -993,3 +871,42 @@ class Crag:
     def __setstate__(self, state):
         self.__dict__.update(state)
         self.lock_usdt_equity_thread = threading.Lock()
+
+    def deduplicate_and_get_current_data(self, lst_ds):
+        """
+        Steps:
+        1) Group items by hash_id.
+        2) Call broker.get_lst_current_data once per unique item (one item per hash_id).
+        3) broker.get_lst_current_data updates each unique item's 'current_data' in place.
+        4) Copy that updated 'current_data' onto all duplicates sharing the same hash_id.
+        5) Return the full list in original order, each item updated.
+        """
+
+        # 1) Group items by hash_id
+        unique_map = {}  # hash_id -> {'unique_item': item, 'duplicates': []}
+        for item in lst_ds:
+            hid = item.hash_id  # If it's an attribute. If it's a dict: hid = item['hash_id']
+
+            if hid not in unique_map:
+                unique_map[hid] = {
+                    'unique_item': item,
+                    'duplicates': []
+                }
+            else:
+                unique_map[hid]['duplicates'].append(item)
+
+        # 2) Collect just the unique items (one per hash_id)
+        unique_items = [info['unique_item'] for info in unique_map.values()]
+
+        # 3) Call get_lst_current_data once for the unique items
+        #    This should update each unique_item.current_data in place
+        unique_items = self.broker.get_lst_current_data(unique_items)
+
+        # 4) Replicate the updated 'current_data' to the duplicates
+        for info in unique_map.values():
+            updated_data = info['unique_item'].current_data  # the in-place updated field
+            for dup_item in info['duplicates']:
+                dup_item.current_data = updated_data
+
+        # 5) Return the original list (same order) with updated current_data
+        return lst_ds

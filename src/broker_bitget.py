@@ -6,6 +6,8 @@ from collections import defaultdict
 from . bitget import exceptions
 from concurrent.futures import wait, ALL_COMPLETED, ThreadPoolExecutor
 import threading
+import math
+import utils
 
 class BrokerBitGet(broker.Broker):
     def __init__(self, params = None):
@@ -303,75 +305,90 @@ class BrokerBitGet(broker.Broker):
 
     @authentication_required
     def execute_open_sltp(self, order):
+        # Retrieve and assign the trading symbol.
         symbol = self.trade_symbol = self._get_symbol(order["symbol"])
         order_side = order["holdSide"].upper()
+
+        # Determine the appropriate leverage based on the order side.
         if "LONG" in order_side:
             leverage = self.get_leverage_long(symbol)
         elif "SHORT" in order_side:
             leverage = self.get_leverage_short(symbol)
-        sizeMultiplier = self.get_sizeMultiplier(symbol)
+        else:
+            leverage = 1  # Fallback leverage
 
-        amount = utils.normalize_size(order["gross_size"] * leverage, sizeMultiplier)
-        # amount = utils.normalize_size(order["gross_size"], sizeMultiplier)            # CEDE Leverage issues
-
+        # Calculate the normalized order amount.
+        size_multiplier = self.get_sizeMultiplier(symbol)
+        amount = utils.normalize_size(order["gross_size"] * leverage, size_multiplier)
         amount = str(amount)
-        trigger_price = order.get("trigger_price", None)
-        if not isinstance(trigger_price, str):
+
+        # Retrieve and normalize the trigger price.
+        trigger_price = order.get("trigger_price") or order.get("triggerPrice")
+        if trigger_price is not None and not isinstance(trigger_price, str):
             trigger_price = str(trigger_price)
-            initial_trigger_price = str(trigger_price)
+
+        # Retrieve and normalize the execute price.
         execute_price = order.get("execute_price", None)
-        if not isinstance(execute_price, str):
+        if execute_price is not None and not isinstance(execute_price, str):
             execute_price = str(execute_price)
-        range_rate = order.get("range_rate", None)
-        if not isinstance(range_rate, str):
-            range_rate = str(range_rate)
+
+        # Get grid id and other order parameters.
         grid_id = str(order.get("grid_id", ""))
-        if not isinstance(grid_id, str):
-            grid_id = str(grid_id)
         strategy_id = str(order["strategy_id"])
         plan_type = str(order["planType"])
         hold_side = str(order["holdSide"])
-        range_rate = str(order["range_rate"])
 
-        clientOid = self.clientOIdprovider.get_name(symbol, hold_side)
+        # Generate a client order identifier.
+        client_oid = self.clientOIdprovider.get_name(symbol, hold_side)
 
-        if symbol and plan_type and trigger_price and execute_price and clientOid and hold_side and amount:
-            msg = "!!!!! EXECUTE TRAILLING TPSL ORDER !!!!!" + "\n"
-            msg += "{} size: {} sltp trailling price: {}".format(order_side, amount, trigger_price) + "\n"
+        msg = ""
+        transaction_failure = True
+        order_id = None
+        transaction = {}
 
-            transaction = self._place_TPSL_Order_v2(symbol,
-                                                    marginCoin="USDT", planType=plan_type,
-                                                    triggerPrice=trigger_price, triggerType="mark_price",
-                                                    executePrice=execute_price, holdSide=hold_side,
-                                                    size=amount, rangeRate='', clientOid=clientOid
-                                                    )
+        # Ensure all required parameters are available before placing the order.
+        if symbol and plan_type and trigger_price and client_oid and hold_side and amount:
+            msg += "!!!!! EXECUTE TRAILLING TPSL ORDER !!!!!\n"
+            msg += "{} size: {} sltp trailling price: {}\n".format(order_side, amount, trigger_price)
+
+            transaction = self._place_TPSL_Order_v2(
+                symbol,
+                marginCoin="USDT",
+                planType=plan_type,
+                triggerPrice=trigger_price,
+                triggerType="mark_price",
+                executePrice=execute_price,
+                holdSide=hold_side,
+                size=amount,
+                rangeRate='',
+                clientOid=client_oid
+            )
+
             try:
-                orderId = transaction['data']['orderId']
-            except:
+                order_id = transaction['data']['orderId']
+            except Exception:
                 print("TPSL: FAILED")
-                pass
 
-        if "msg" in transaction and transaction["msg"] == "success" and "data" in transaction and len(transaction["data"]) > 0:
-            orderId = transaction["data"]["orderId"]
-            self.add_gridId_orderId(grid_id, orderId, strategy_id, trend="")
+        # Validate the transaction response.
+        if transaction.get("msg") == "success" and transaction.get("data") and len(transaction["data"]) > 0:
+            order_id = transaction["data"]["orderId"]
+            self.add_gridId_orderId(grid_id, order_id, strategy_id, trend="")
             transaction_failure = False
         else:
             transaction_failure = True
-            msg += "TRADE FAILED: {} size: {} sltp_trigger_price: {}".format(order_side, amount, trigger_price) + "\n"
-        self.log_trade = self.log_trade + msg.upper()
+            msg += "TRADE FAILED: {} size: {} sltp_trigger_price: {}\n".format(order_side, amount, trigger_price)
 
+        self.log_trade += msg.upper()
+
+        # Update order status based on the transaction result.
         if not transaction_failure:
             order["trade_status"] = "SUCCESS"
-            order["orderId"] = orderId
-        elif transaction_failure:
+            order["orderId"] = order_id
+        else:
             order["trade_status"] = "FAILED"
             order["orderId"] = None
-        else:
-            order["trade_status"] = "UNKNOWN"
-        del msg
 
         return order
-
 
     @authentication_required
     def execute_sltp_trailling(self, order):
@@ -940,57 +957,201 @@ class BrokerBitGet(broker.Broker):
 
         return close_position
 
+    def _open_TPSL_order(self, presetTakeProfitPrice, presetStopLossPrice, trade):
+        def create_order(price, plan_type):
+            # If the price is empty, just return an empty string.
+            if not price:
+                return ""
+            order = {
+                "marginCoin": "USDT",
+                "productType": "usdt-futures",
+                "symbol": trade["symbol"],
+                'strategy_id': trade['strategy_id'],
+                "planType": plan_type,
+                "triggerPrice": price,
+                "triggerType": "mark_price",
+                "holdSide": trade["trade_side"],
+                "gross_size": trade["size"],
+                "execute_price": "",
+                "clientOid": trade["clientOid"]
+            }
+            response = self.execute_open_sltp(order)
+            return response["orderId"] if response["trade_status"] == "SUCCESS" else ""
+
+        orderId_TPSL = {
+            "takeProfiId": create_order(presetTakeProfitPrice, "profit_plan"),
+            "stopLossId": create_order(presetStopLossPrice, "loss_plan")
+        }
+
+        return orderId_TPSL
+
+    def track_TPSL_status(self, orders):
+        return self.track_orders_status(orders)
+
+    def track_orders_status(self, orders):
+        """
+        Given a list of orders (each order is a dict that includes at least:
+          - "orderId"
+          - "status"
+          - "symbol"
+          - "marginCoin"
+          Optionally, each order may include:
+          - "poll_interval" (default 2 seconds)
+          - "timeout" (default 60 seconds)
+
+        This function polls the /order/detail endpoint for each order until its status reaches a final state.
+        Final states are defined here as: "full_fill", "cancelled", or "rejected".
+        It updates the order's "status" field in place and returns the list.
+        """
+        final_statuses = {"full_fill", "cancelled", "rejected"}
+        # orders = [item for item in orders if item != []]
+        orders = utils.flatten_list(orders)
+
+        if not orders:
+            return []
+
+        for order in orders:
+            order_id = order.get("orderId")
+            orderId_status = self.get_tpsl_status(order_id)
+            order["orderId_status"] = orderId_status
+
+        return orders
+
+    def get_order_size(self, order_id, symbol, marginCoin="USDT"):
+        """
+        Retrieves the size of an order by querying the order details.
+
+        Parameters:
+          order_id (str): The ID of the order.
+          symbol (str): The trading pair, e.g. "BTCUSDT".
+          marginCoin (str): The margin coin, e.g. "USDT".
+
+        Returns:
+          The size of the order (as a string), or None if an error occurred.
+        """
+        params = {
+            "symbol": symbol,
+            "marginCoin": marginCoin,
+            "orderId": order_id
+        }
+
+        detail_response = self.get_order_detail_status(params)
+        if detail_response.get("code") == "00000":
+            order_detail = detail_response.get("data", {})
+            order_size = order_detail.get("size")
+            return order_size
+        else:
+            return None
+
+    def get_tpsl_status(self, orderId):
+        df_tpsl = self.get_triggers("profit_loss")
+        if orderId in df_tpsl["orderId"].values:
+            # Locate the row(s) where orderId matches and get the "planStatus" column
+            status_series = df_tpsl.loc[df_tpsl["orderId"] == orderId, "planStatus"]
+            # Return the first matching value (or adjust this if multiple entries are expected)
+            if not status_series.empty:
+                return status_series.iloc[0]
+
+        df_history = self.get_orders_plan_history(orderId, "profit_loss")
+        if orderId in df_history["orderId"].values:
+            status_series = df_history.loc[df_history["orderId"] == orderId, "planStatus"]
+            if not status_series.empty:
+                return status_series.iloc[0]
+
+        return None
+
     def execute_order(self, trade):
-        if trade["type"] in ["open_long", "open_short", "close_long", "close_short"]:
-            symbol = trade["symbol"]
-            clientOid = self.clientOIdprovider.get_name(symbol, trade["type"])
-            trigger_price = self.get_values([trade["symbol"]])
-            value = trigger_price.loc[trigger_price["symbols"] == symbol, "values"].values[0]
-            if trade["type"] == "open_long":
-                leverage = self.get_leverage_long(self._get_symbol(symbol))
-                if leverage is None:
-                    trade["trade_status"] = "FAILED"
-                    return trade
+        order_types = ["open_long", "open_short", "close_long", "close_short"]
+        if trade["type"] not in order_types:
+            return trade
 
-                if trade.get("amount") is None:
-                    size = trade["gross_size"]
-                else:
-                    size = trade["amount"] / value
-                size = size * leverage
-                size = utils.normalize_size(size, self.get_sizeMultiplier(symbol))
-                transaction = self._open_long_position(self._get_symbol(symbol), size, clientOid)
-                trade["size"] = size
-                trade["buying_price"] = value
-            elif trade["type"] == "open_short":
-                leverage = self.get_leverage_short(self._get_symbol(symbol))
-                if leverage is None:
-                    trade["trade_status"] = "FAILED"
-                    return trade
+        symbol = trade["symbol"]
+        trade["clientOid"] = self.clientOIdprovider.get_name(symbol, trade["type"])
 
-                if trade.get("amount") is None:
-                    size = trade["gross_size"]
-                else:
-                    size = trade["amount"] / value
-                size = size * leverage
-                size = utils.normalize_size(size, self.get_sizeMultiplier(symbol))
-                transaction = self._open_short_position(self._get_symbol(symbol), size, clientOid)
-                trade["size"] = size
-                trade["buying_price"] = value
-            elif trade["type"] == "close_long":
-                transaction = self._close_long_position(self._get_symbol(symbol), trade["size"], clientOid)
-                trade["selling_price"] = value
-            elif trade["type"] == "close_short":
-                transaction = self._close_short_position(self._get_symbol(symbol), trade["size"], clientOid)
-                trade["selling_price"] = value
+        # Get the trigger price for the symbol.
+        trigger_price = self.get_values([symbol])
+        value = trigger_price.loc[trigger_price["symbols"] == symbol, "values"].values[0]
 
-            if "msg" in transaction \
-                    and transaction["msg"] == "success" \
-                    and "data" in transaction \
-                    and "orderId" in transaction["data"]:
-                trade["trade_status"] = "SUCCESS"
-                trade["orderId"] = transaction["data"]["orderId"]
+        # Calculate preset take profit and stop loss prices.
+        tp_raw = trade.get("presetTakeProfitPrice", "")
+        sl_raw = trade.get("presetStopLossPrice", "")
+        tp_val = utils.calculate_adjusted_price(tp_raw, value, trade.get("type", ""), True)
+        sl_val = utils.calculate_adjusted_price(sl_raw, value, trade.get("type", ""), False)
+        presetTakeProfitPrice = str(self.normalize_price(symbol, float(tp_val))) if tp_val != "" else ""
+        presetStopLossPrice = str(self.normalize_price(symbol, float(sl_val))) if sl_val != "" else ""
+
+        transaction = {}
+
+        if trade["type"] in ["open_long", "open_short"]:
+            # Determine the order size.
+            # fee_rate = 0.04 / 100 # 0.04% fee rate
+            fee_rate = 0.1 / 100 # 0.04% fee rate
+            size_precision = 0.0001  # Set this to the allowed quantity step size
+
+            if trade.get("amount") is None:
+                size = trade["gross_size"]
             else:
+                # trade["amount"] = trade["amount"] - trade["amount"] * 0.1 / 100
+                # Calculate the raw size using the effective price (price * (1 + fee_rate))
+                raw_size = trade["amount"] / (value * (1 + fee_rate))
+                # Round down to the nearest allowed increment
+                size = math.floor(raw_size / size_precision) * size_precision
+
+            # Fetch the correct leverage for long or short.
+            leverage = (self.get_leverage_long(self._get_symbol(symbol))
+                        if trade["type"] == "open_long"
+                        else self.get_leverage_short(self._get_symbol(symbol)))
+            if leverage is None:
                 trade["trade_status"] = "FAILED"
+                return trade
+
+            size *= leverage
+            size = utils.normalize_size(size, self.get_sizeMultiplier(symbol))
+            trade["size"] = size
+            trade["buying_price"] = value
+
+            # Open the position.
+            if trade["type"] == "open_long":
+                transaction = self._open_long_position(
+                    self._get_symbol(symbol),
+                    size,
+                    trade["clientOid"] # ,
+                    # presetTakeProfitPrice=presetTakeProfitPrice,
+                    # presetStopLossPrice=presetStopLossPrice
+                )
+            else:  # open_short
+                transaction = self._open_short_position(
+                    self._get_symbol(symbol),
+                    size,
+                    trade["clientOid"],
+                    presetTakeProfitPrice=presetTakeProfitPrice,
+                    presetStopLossPrice=presetStopLossPrice
+                )
+
+            if ("msg" in transaction and transaction["msg"] == "success" and
+                    "data" in transaction and "orderId" in transaction["data"]):
+
+                trade["size"] = self.get_order_size(transaction["data"]["orderId"], symbol)
+                # Open the take profit and stop loss orders.
+                # (Assuming that the trade dict contains all needed keys for _open_TPSL_order.)
+                orderId_TPSL = self._open_TPSL_order(presetTakeProfitPrice, presetStopLossPrice, trade)
+                trade["takeProfiId"] = orderId_TPSL.get("takeProfiId")
+                trade["stopLossId"] = orderId_TPSL.get("stopLossId")
+
+        elif trade["type"] == "close_long":
+            transaction = self._close_long_position(self._get_symbol(symbol), str(trade["size"]), trade["clientOid"])
+            trade["selling_price"] = value
+        elif trade["type"] == "close_short":
+            transaction = self._close_short_position(self._get_symbol(symbol), str(trade["size"]), trade["clientOid"])
+            trade["selling_price"] = value
+
+        # Determine the final trade status based on the transaction result.
+        if ("msg" in transaction and transaction["msg"] == "success" and
+                "data" in transaction and "orderId" in transaction["data"]):
+            trade["trade_status"] = "SUCCESS"
+            trade["order_id"] = transaction["data"]["orderId"]
+        else:
+            trade["trade_status"] = "FAILED"
 
         return trade
 
@@ -1283,7 +1444,7 @@ class BrokerBitGet(broker.Broker):
                 "strategyId": strategyId,
                 "trend": trend,
                 "executeOrderId": "",
-                "planStatus": ""
+                "planStatus": data["planStatus"]
             })
         return df_triggers
 

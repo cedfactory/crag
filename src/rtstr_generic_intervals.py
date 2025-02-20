@@ -2,7 +2,7 @@ from . import rtstr, strategies
 import math
 import pandas as pd
 import numpy as np
-from concurrent.futures import wait, ALL_COMPLETED, ThreadPoolExecutor
+from concurrent.futures import wait, ALL_COMPLETED, ThreadPoolExecutor, as_completed
 
 from . import utils
 from src import logger
@@ -51,10 +51,14 @@ class StrategyIntervalsGeneric(rtstr.RealTimeStrategy):
         self.zero_print = False
         self.execute_timer = None
 
+        self.nb_position_max = len(self.lst_strategy)
+        self.nb_not_engaged = self.nb_position_max
+        self.nb_engaged = 0
+
         # Create a mapping of strategy IDs to strategies for faster lookup
         self.strategy_map = {strategy.get_strategy_id(): strategy for strategy in self.lst_strategy}
 
-    def get_data_description(self):
+    def get_data_description(self, lst_interval):
         lst_ds = []
         for strategy in self.lst_strategy:
             ds_strategy = strategy.get_data_description()
@@ -62,9 +66,14 @@ class StrategyIntervalsGeneric(rtstr.RealTimeStrategy):
                 lst_ds.extend(ds_strategy)
             else:
                 lst_ds.append(ds_strategy)
+
+        # Filter lst_ds based on lst_interval
+        lst_ds = [ds for ds in lst_ds if getattr(ds, "str_strategy_interval", None) in lst_interval]
+        # lst_ds = [ds for ds in lst_ds if getattr(ds, "str_interval", None) in lst_interval] # CEDE DEBUG DEV
+
         return lst_ds
 
-    def set_current_data(self, lst_data):
+    def set_current_data(self, lst_data, current_prices, current_available):
         for data in lst_data:
             strategy_id = data.strategy_id
             strategy = self.strategy_map.get(strategy_id)
@@ -72,23 +81,43 @@ class StrategyIntervalsGeneric(rtstr.RealTimeStrategy):
             if strategy:
                 strategy.set_current_data(data.current_data)
 
+        self.nb_engaged = 0
+        for strategy in self.lst_strategy:
+            self.nb_engaged += strategy.get_enganged_position_status()
+
+        self.nb_not_engaged = self.nb_position_max - self.nb_engaged
+        if self.nb_not_engaged == 0:
+            available_shared_per_strategy = 0
+        else:
+            available_shared_per_strategy = current_available / self.nb_not_engaged
+
+        for strategy in self.lst_strategy:
+            strategy.set_current_price(current_prices, available_shared_per_strategy)
+
     def set_multiple_strategy(self):
         for strategy in self.lst_strategy:
             strategy.set_multiple_strategy()
 
     def set_current_state(self, lst_ds):
-        for strategy in self.lst_strategy:
+        def process_strategy(strategy):
             strategy_id = strategy.get_strategy_id()
-            # avoids looping over all lst_ds once a match is found
+            # Find the matching ds for this strategy.
             matching_ds = next((ds for ds in lst_ds if ds.strategy_id == strategy_id), None)
             if matching_ds:
                 strategy.set_current_state(matching_ds)
+
+        with ThreadPoolExecutor() as executor:
+            futures = [executor.submit(process_strategy, strategy) for strategy in self.lst_strategy]
+            # Wait for all tasks to complete (and raise any exceptions if they occurred)
+            for future in as_completed(futures):
+                future.result()
 
     def get_lst_trade(self, lst_intervals):
         lst_trade = []
         for strategy in self.lst_strategy:
             if strategy.get_interval() in lst_intervals:
                 lst_trade.extend(strategy.get_lst_trade())
+        lst_trade = utils.flatten_list(lst_trade)
         return utils.filtered_grouped_orders(lst_trade)
 
     def get_info(self):
@@ -108,33 +137,33 @@ class StrategyIntervalsGeneric(rtstr.RealTimeStrategy):
             futures = [executor.submit(strategy.update_executed_trade_status,lst_orders) for strategy in self.lst_strategy]
             wait(futures, timeout=1000, return_when=ALL_COMPLETED)
 
-    def set_broker_current_state(self, df_current_state):
-        lst_positions = []
-
-        with ThreadPoolExecutor() as executor:
-            futures = []
-            for strategy in self.lst_strategy:
-                futures.append(executor.submit(self._set_broker_current_state_for_strategy, strategy, df_current_state))
-
-            wait(futures, timeout=1000, return_when=ALL_COMPLETED)
-
-            for future in futures:
-                lst_positions.extend(future.result())
-
-        # cleaning
-        del df_current_state["open_orders"]
-        del df_current_state["open_positions"]
-        del df_current_state["prices"]
-        del df_current_state
-
-        return lst_positions
-
     def get_strategy_stats(self, lst_intervals):
         lst_msg_stats = []
         for strategy in self.lst_strategy:
             if strategy.get_interval() in lst_intervals:
                 lst_msg_stats.append(strategy.get_strategy_stat())
         return lst_msg_stats
+
+    def get_lst_sltp(self):
+        with ThreadPoolExecutor() as executor:
+            # executor.map will apply strategy.get_lst_sltp() concurrently
+            lst_sltp_stus = list(executor.map(lambda strategy: strategy.get_lst_sltp(), self.lst_strategy))
+        return lst_sltp_stus
+
+    def update_lst_sltp_status(self, lst_order):
+        def process_strategy(strategy):
+            strategy_id = strategy.get_strategy_id()
+            # Find the first matching order, if any.
+            matching_orders = [order for order in lst_order if order["strategy_id"] == strategy_id]
+            for matching_order in matching_orders:
+                strategy.update_sltp_order_status(matching_order)
+
+        with ThreadPoolExecutor() as executor:
+            # Submit all tasks concurrently.
+            futures = [executor.submit(process_strategy, strategy) for strategy in self.lst_strategy]
+            # Optionally wait for all futures to complete, re-raising any exceptions.
+            for future in as_completed(futures):
+                future.result()
 
 
 

@@ -84,6 +84,7 @@ class StrategyTrix(rtstr.RealTimeStrategy):
         ds.features = self.get_feature_from_fdp_features(ds.fdp_features)
         ds.interval = self.interval_map.get(self.strategy_str_interval, None)
         ds.str_interval = self.strategy_str_interval
+        ds.str_strategy_interval = self.strategy_str_interval
         ds.current_data = pd.DataFrame()
 
         return ds

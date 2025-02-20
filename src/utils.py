@@ -12,6 +12,44 @@ import pandas as pd
 import random
 import string
 import math
+import hashlib
+
+def flatten_list(nested_list):
+    flat = []
+    for element in nested_list:
+        if isinstance(element, list):
+            # Recursively extend the flat list with the flattened version of element
+            flat.extend(flatten_list(element))
+        else:
+            flat.append(element)
+    return flat
+
+def calculate_adjusted_price(percent_str, base_value, trade_type, is_profit):
+    """
+    Returns an adjusted price as a float (or an empty string) based on a percentage value.
+    For take profit (is_profit=True):
+      - open_short: base_value * (1 - pct/100)
+      - open_long:  base_value * (1 + pct/100)
+    For stop loss (is_profit=False):
+      - open_long:  base_value * (1 - pct/100)
+      - open_short: base_value * (1 + pct/100)
+    """
+    if not percent_str:
+        return ""
+    try:
+        pct = float(percent_str)
+    except ValueError:
+        return ""
+    if trade_type == "open_short":
+        factor = (1 - pct / 100) if is_profit else (1 + pct / 100)
+    elif trade_type == "open_long":
+        factor = (1 + pct / 100) if is_profit else (1 - pct / 100)
+    else:
+        return ""
+    return base_value * factor
+
+def chunk_list(lst, chunk_size):
+    return [lst[i: i + chunk_size] for i in range(0, len(lst), chunk_size)]
 
 def filtered_grouped_orders(order_list):
     # Filter items where "grouped_id" is None
@@ -290,7 +328,7 @@ def fdp_request_post(url, params, fdp_id):
 
     fdp_url = settings_helper.get_fdp_url_info(fdp_id).get("url", None)
 
-    if False:
+    if True:
         fdp_url = "http://192.168.1.205:5000/" # CEDE DEBUG
 
     if not fdp_url or fdp_url == "":
@@ -303,6 +341,8 @@ def fdp_request_post(url, params, fdp_id):
         try:
             # response = requests.post(fdp_url+'/'+url, json=params)
             with requests.post(fdp_url+'/'+url, json=params) as response:
+                # print("Sent URL:", response.request.url)                       # CEDE DEBUG
+                # print("Sent JSON params (body):", response.request.body)       # CEDE DEBUG
                 pass
             response.close()
             if response.status_code == 200:
@@ -419,3 +459,53 @@ class ClientOIdProvider():
         del symbol
         del side
         return self.id
+
+def make_hashable(obj):
+    """
+    Recursively convert 'obj' into a hashable representation:
+      - dict      -> tuple of (key, value) pairs (sorted by key)
+      - list/tuple-> tuple of items
+      - set       -> tuple of items (sorted)
+      - DataFrame -> hashed string (via CSV, for example)
+      - anything else -> returned as-is, assuming it's already hashable
+    """
+    if isinstance(obj, dict):
+        # Convert dict to a tuple of (key, hashable(value)), sorted by key
+        return tuple(sorted((k, make_hashable(v)) for k, v in obj.items()))
+
+    elif isinstance(obj, (list, tuple)):
+        # Convert list/tuple to a tuple of hashable items
+        return tuple(make_hashable(x) for x in obj)
+
+    elif isinstance(obj, set):
+        # Convert set to a sorted tuple
+        return tuple(sorted(make_hashable(x) for x in obj))
+
+    elif isinstance(obj, pd.DataFrame):
+        # Example approach: convert DataFrame to CSV string, then hash it
+        # (If you need more sophisticated checks, adapt here.)
+        csv_str = obj.to_csv(index=False)
+        return hashlib.md5(csv_str.encode('utf-8')).hexdigest()
+
+    else:
+        # int, float, str, bool, None, or any other already-hashable object
+        return obj
+
+def make_key(data_desc_obj):
+    """
+    Produce a hashable "key" for each DataDescription object,
+    ignoring 'strategy_id' and converting all fields into hashable forms.
+    """
+    # 1) Extract all fields from the object. Usually, vars(obj) or obj.__dict__.
+    fields = vars(data_desc_obj).copy()  # shallow copy so we don't mutate
+
+    # 2) Remove 'strategy_id' so it doesn't affect the duplicate check
+    fields.pop('strategy_id', None)
+
+    # 3) Recursively convert everything into hashable structures
+    hashable_fields = {}
+    for field_name, field_value in fields.items():
+        hashable_fields[field_name] = make_hashable(field_value)
+
+    # 4) Finally, produce a stable, sorted tuple of (field, value)
+    return tuple(sorted(hashable_fields.items()))
