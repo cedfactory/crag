@@ -141,7 +141,9 @@ class StrategyIntervalsGeneric(rtstr.RealTimeStrategy):
         lst_msg_stats = []
         for strategy in self.lst_strategy:
             if strategy.get_interval() in lst_intervals:
-                lst_msg_stats.append(strategy.get_strategy_stat())
+                stats = strategy.get_strategy_stat()
+                if stats is not None:
+                    lst_msg_stats.append(stats)
         return lst_msg_stats
 
     def get_lst_sltp(self):

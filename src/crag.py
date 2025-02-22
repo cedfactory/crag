@@ -331,7 +331,7 @@ class Crag:
         if len(lst_trades_to_execute) > 0:
             lst_trades_to_execute_result = self.broker.execute_trades(lst_trades_to_execute)
             self.rtstr.update_executed_trade_status(lst_trades_to_execute_result)
-            lst_stat = self.rtstr.get_strategy_stats(["1m"])
+            lst_stat = self.rtstr.get_strategy_stats(lst_interval)
 
             for stat in lst_stat:
                 if isinstance(stat, str):
@@ -340,7 +340,7 @@ class Crag:
 
             df_open_positions = self.broker.get_open_position()
             if not df_open_positions.empty:
-                df_open_positions['symbol'] = df_open_positions['symbol'].str.replace('_UMCBL', '')
+                df_open_positions['symbol'] = df_open_positions['symbol'].str.replace('USDT_UMCBL', '')
                 df_open_positions.rename(columns={'holdSide': 'side'}, inplace=True)
                 df_open_positions.rename(columns={'leverage': 'lev'}, inplace=True)
                 df_open_positions.rename(columns={'total': 'tot'}, inplace=True)
@@ -352,22 +352,16 @@ class Crag:
                 msg = "end step with {} open position\n".format(len(df_open_positions))
                 df_open_positions = df_open_positions.drop(columns=['marginCoin', 'achievedProfits'])
                 df = df_open_positions.copy()
-                df = df[["symbol", "side", "lev", "tot"]]
-                msg_df = df.to_string(index=False) + "\n"
-                df = df_open_positions.copy()
                 df = df[["symbol", "side", "equ"]]
-                msg_df += df.to_string(index=False) + "\n"
+                msg_df = df.to_string(index=False) + "\n" + "\n"
                 df = df_open_positions.copy()
-                df = df[["symbol", "side", "price"]]
-                msg_df += df.to_string(index=False) + "\n"
+                df = df[["symbol", "side", "lev", "tot"]]
+                msg_df += df.to_string(index=False) + "\n" + "\n"
                 df = df_open_positions.copy()
                 df = df[["symbol", "side", "PL", "liq"]]
-                msg_df += df.to_string(index=False) + "\n"
+                msg_df += df.to_string(index=False) + "\n" + "\n"
 
                 self.log_discord(msg_df.upper(), msg)
-            else:
-                msg = "no open position\n"
-                self.log_discord(msg.upper(), "no open position".upper())
 
     def export_history(self, target=None):
         self.broker.export_history(target)

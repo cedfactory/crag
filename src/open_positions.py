@@ -1,4 +1,5 @@
 import pandas as pd
+import hashlib
 
 class OpenPositions():
     def __init__(self, symbol, strategy_id, grouped_id,
@@ -34,14 +35,16 @@ class OpenPositions():
         }
 
         self.stat = {
-            "strategy_name": self.strategy_name,
+            "name": self.strategy_name,
             "symbol": self.symbol,
-            "nb_open_position": 0,
-            "nb_transaction_completed": 0,
-            "nb_transaction_profit": 0,
-            "nb_long_transaction_completed": 0,
-            "nb_short_transaction_completed": 0,
-            "total_PnL": 0
+            "open_position": 0,
+            "trade_completed": 0,
+            "trade_profit": 0,
+            "win_rate": 0,
+            "long_trade_completed": 0,
+            "short_trade_completed": 0,
+            "total_PnL": 0,
+            "hash": 0,
         }
 
     def create_open_market_order(self, amount, side_type, order_type):
@@ -165,20 +168,32 @@ class OpenPositions():
 
                 self.open_position = self.open_position[self.open_position['order_id'] != order_id].copy()
 
-                self.stat["nb_open_position"] = len(self.open_position)
-                self.stat["nb_transaction_completed"] += 1
+                self.stat["open_position"] = len(self.open_position)
+                self.stat["trade_completed"] += 1
                 if diff_price > 0:
-                    self.stat["nb_transaction_profit"] += 1
+                    self.stat["trade_profit"] += 1
+
+                if self.stat["trade_completed"] == 0:
+                    self.stat["win_rate"] = 0
+                else:
+                    self.stat["win_rate"] = round(self.stat["trade_profit"] * 100 / self.stat["trade_completed"], 2)
 
                 if "long" in side:
-                    self.stat["nb_long_transaction_completed"] += 1
+                    self.stat["long_trade_completed"] += 1
                 elif "short" in side:
-                    self.stat["nb_short_transaction_completed"] += 1
+                    self.stat["short_trade_completed"] += 1
 
                 self.stat["total_PnL"] += round(diff_price * 100 / order["buying_price"], 2)
 
+                self.stat["hash"] = hashlib.sha256(str(sorted(self.stat.items())).encode()).hexdigest()
+
     def get_strategy_stat(self):
-        return self.stat
+        stat = self.stat.copy()
+        del stat['hash']
+        return stat
+
+    def get_stat_hash(self):
+        return self.stat["hash"]
 
     def validate_market_order(self, lst_order):
         self.validate_open_market_order(lst_order)

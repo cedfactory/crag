@@ -36,6 +36,7 @@ class StrategyObelix(rtstr.RealTimeStrategy):
         self.df_current_data_zerolag_ma = None
         self.presetTakeProfitPrice = ""
         self.presetStopLossPrice = ""
+        self.previous_stat_hash = 0
         if params:
             self.id = params.get("id", self.id)
             self.lst_symbols = [params.get("strategy_symbol", self.lst_symbols)]
@@ -293,8 +294,13 @@ class StrategyObelix(rtstr.RealTimeStrategy):
         return self.positions.get_nb_open_total_position()
 
     def get_strategy_stat(self):
-        stat_string = json.dumps(self.positions.get_strategy_stat(), indent=4)
-        return stat_string
+        stat_hash = self.positions.get_stat_hash()
+        if self.previous_stat_hash == stat_hash:
+            return None
+        else:
+            self.previous_stat_hash = stat_hash
+            stat_string = json.dumps(self.positions.get_strategy_stat(), indent=4)
+            return stat_string
 
     def get_lst_sltp(self):
         return self.positions.get_lst_sltp_orderId()
