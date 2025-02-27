@@ -3,6 +3,7 @@ import pandas as pd
 from abc import ABCMeta, abstractmethod
 from datetime import datetime, timedelta
 from rich import inspect,print
+from src.fdp.src import fdp_manager
 
 from . import utils,chronos
 
@@ -48,6 +49,7 @@ class RealTimeDataProvider(IRealTimeDataProvider):
     def __init__(self, params = None):
         self.start = None
         self.end = None
+        self.fdp_manager = fdp_manager.FDPManager({"fdps": [{"id": "FDP", "src": "FDP"}]})
 
         if params:
             self.start = params.get("start_date", self.start)
@@ -81,6 +83,8 @@ class RealTimeDataProvider(IRealTimeDataProvider):
                 "start": None,
                 "indicators": data_description.fdp_features
             }
+
+            response = self.fdp_manager.request("FDP", "last", params)
 
             response_json = utils.fdp_request_post("last", params, fdp_url_id)
 
