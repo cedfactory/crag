@@ -30,7 +30,7 @@ class IRealTimeDataProvider(metaclass = ABCMeta):
         pass
 
     @abstractmethod
-    def get_current_data(self, data_description, fdp_url_id):
+    def get_lst_current_data(self, data_description, fdp_url_id):
         return None
 
     @abstractmethod
@@ -84,7 +84,7 @@ class RealTimeDataProvider(IRealTimeDataProvider):
                 "indicators": data_description.fdp_features
             }
 
-            response = self.fdp_manager.request("FDP", "last", params)
+            response = self.fdp_manager.request("last", params)
 
             response_json = utils.fdp_request_post("last", params, fdp_url_id)
 
@@ -129,63 +129,6 @@ class RealTimeDataProvider(IRealTimeDataProvider):
 
         return lst_ds_result
 
-    def get_current_data(self, data_description, fdp_url_id):
-
-        symbols = ','.join(data_description.symbols)
-        symbols = symbols.replace('/','_')
-
-        interval = data_description.interval
-
-        # MODIF CEDE: TEST
-        sim_current_date = self.get_current_datetime()
-        sim_current_date = sim_current_date.replace(second=0, microsecond=0)
-        sim_current_date = None
-        # params = { "service":"last", "exchange":"binance", "symbol":symbols, "interval": interval, "start": str(sim_current_date),"indicators": data_description.fdp_features}
-        params = {"service": "last", "exchange": "bitget", "symbol": symbols, "interval": interval, "candle_stick":data_description.candle_stick, "start": str(sim_current_date), "indicators": data_description.fdp_features}
-        # params = {"service": "last", "exchange": "binance", "symbol": symbols, "interval": interval, "indicators": data_description.fdp_features}
-        # https://fdp-ifxcxetwza-od.a.run.app/history?exchange=bitget&symbol=BTC&start=2023-01-01&indicators=close
-        #
-        response_json = utils.fdp_request_post("last", params, fdp_url_id)
-
-        data = {feature: [] for feature in data_description.features}
-        data["symbol"] = []
-        
-        if response_json["status"] == "ok":
-            for symbol in data_description.symbols:
-                formatted_symbol = symbol.replace('/','_')
-                if response_json["result"][formatted_symbol]["status"] == "ko":
-                    print("[RealTimeDataProvider:get_current_data] !!!! no data for ", symbol)
-                    continue
-                df = pd.read_json(response_json["result"][formatted_symbol]["info"])
-                columns = list(df.columns)
-                data["symbol"].append(symbol)
-                for feature in data_description.features:
-                    if feature not in columns:
-                        print("FDP MISSING FEATURE COLUMN")
-                        return None
-                    if len(df[feature]) > 0:
-                        data[feature].append(df[feature].iloc[-1])
-                    else:
-                        print("FDP MISSING FEATURE VALUE")
-                        return None
-
-        df_result = pd.DataFrame(data)
-        df_result.set_index("symbol", inplace=True)
-        return df_result
-
-    def get_value(self, symbol):
-        if self.start != None and self.end != None:
-            ds = DataDescription()
-            ds.symbols = [
-                symbol,
-            ]
-            ds.features = {"close": None,
-                           }
-            df_price = self.get_current_data(ds)
-            return df_price.loc[df_price.index == symbol, 'close'].iloc[0]
-        else:
-            return None
-
     def get_current_datetime(self, format = None):
         current_datetime = self.scheduler.get_current_time()
         if isinstance(current_datetime, datetime) and format != None:
@@ -201,3 +144,5 @@ class RealTimeDataProvider(IRealTimeDataProvider):
         else:
             return None
 
+    def get_value(self):
+        exit(1234)

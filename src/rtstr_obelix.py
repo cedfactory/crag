@@ -94,7 +94,13 @@ class StrategyObelix(rtstr.RealTimeStrategy):
     def get_data_description(self):
         lst_fdp_features = [
             {
-                "close": {},
+                "close": {
+                    "indicator": "close",
+                    "id": "1",
+                    "window_size": 2,
+                },
+            },
+            {
                 "zerolag_id1": {
                     "indicator": "zerolag_ma",
                     "ma_type": self.ma_type,
@@ -111,7 +117,6 @@ class StrategyObelix(rtstr.RealTimeStrategy):
                 },
             },
             {
-                "close": {},
                 "trend_id1": {
                     "indicator": "trend_indicator",
                     "trend_type": self.trend_type,
@@ -123,7 +128,6 @@ class StrategyObelix(rtstr.RealTimeStrategy):
                 },
             },
             {
-                "close": {},
                 "ichimoku_id1": {
                     "indicator": "ichimoku",
                     "conversion_line_period": self.conversion_line_period,
