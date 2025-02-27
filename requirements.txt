@@ -32,3 +32,6 @@ websocket-client==1.8.0
 python-telegram-bot==21.7
 dill==0.3.9
 #wxPython==4.2.1
+stockstats==0.4.1
+tradingview-ta==3.3.0
+ta-lib==0.6.3

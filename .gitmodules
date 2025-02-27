@@ -1,0 +1,3 @@
+[submodule "src/fdp"]
+	path = src/fdp
+	url = https://github.com/cedfactory/fdp.git
