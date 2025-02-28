@@ -131,6 +131,8 @@ def get_crag_params_from_configuration(configuration):
     available_strategies = rtstr.RealTimeStrategy.get_strategies_list()
     if strategy_name in available_strategies:
         my_strategy = rtstr.RealTimeStrategy.get_strategy_from_name(strategy_name, params_strategy)
+        lst_data_description = my_strategy.get_data_description(["1m", "5m", "15m", "30m", "1h"])
+        lst_ws_params = utils.reduce_data_description(lst_data_description)
     else:
         print("💥 unknown strategy ({})".format(strategy_name))
         print("available strategies : ", available_strategies)
@@ -145,6 +147,7 @@ def get_crag_params_from_configuration(configuration):
         my_broker = None
     else:
         my_broker = broker_bitget_api.BrokerBitGetApi(params_broker)
+        # my_broker.init_fdp_manager(lst_ws_params) # CEDE DEV
     if broker_name != "mock" and (not my_broker or not my_broker.ready()):
         return None
 

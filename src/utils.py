@@ -14,6 +14,20 @@ import string
 import math
 import hashlib
 
+def reduce_data_description(lst_ds):
+    lst_reduced = []
+    for ds in lst_ds:
+        reduced_ds = {
+            "symbol": ds.symbols[0],
+            "timeframe": ds.str_interval
+        }
+        lst_reduced.append(reduced_ds)
+
+    unique_lst = list({(d["symbol"], d["timeframe"]): d for d in lst_reduced}.values())
+
+    return unique_lst
+
+
 def flatten_list(nested_list):
     flat = []
     for element in nested_list:
