@@ -7,7 +7,7 @@ from . bitget import exceptions
 from concurrent.futures import wait, ALL_COMPLETED, ThreadPoolExecutor
 import threading
 import math
-import utils
+#import utils
 
 class BrokerBitGet(broker.Broker):
     def __init__(self, params = None):
