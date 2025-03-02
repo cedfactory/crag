@@ -25,7 +25,6 @@ svglib==1.5.1
 python-binance==1.0.2
 mplfinance==0.12.10b0
 scipy==1.14.1
-scikit-learn=1.6.0
 scikit-learn==1.6.0
 psutil==6.1.0
 Pympler==1.1
