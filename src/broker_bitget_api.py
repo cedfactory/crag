@@ -1073,6 +1073,11 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     @authentication_required
     def get_usdt_equity(self):
+        if self.WS_ON:
+            usdt_equity, _ = self.ws_get_usdt_equity_available()
+            if usdt_equity is not None:
+                return float(usdt_equity)
+
         self.df_account_assets = None  # reset self.df_account_assets
         n_attempts = 3
         while n_attempts > 0:
