@@ -21,7 +21,11 @@ import json
 import pandas as pd
 import numpy as np
 from concurrent.futures import wait, ALL_COMPLETED, ThreadPoolExecutor, as_completed
+import asyncio
 import gc
+
+from client_ws_bitget import BitgetWebSocketClient
+import threading
 
 class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     def __init__(self, params = None):
@@ -68,6 +72,10 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         api_key = self.account.get("api_key", "")
         api_secret = self.account.get("api_secret", "")
         api_password = self.account.get("api_password", "")
+
+        self.WS_ON = True
+        if self.WS_ON:
+            self.start_BitgetWsClient(self.df_symbols , api_key, api_secret, api_password)
 
         self.df_normalize_price = pd.DataFrame(columns=["symbol", "pricePlace", "priceEndStep"])
         self.df_normalize_size = pd.DataFrame(columns=["symbol", "volumePlace", "sizeMultiplier", "minsize"])
@@ -158,6 +166,8 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         return wrapped
 
     def _get_symbol(self, coin, base="USDT"):
+        if not hasattr(self, 'df_market'):
+            self.df_market = self.get_future_market()
         if coin in self.df_market['symbol'].tolist():
             return coin
         if coin.endswith(base):
@@ -202,6 +212,9 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     #@authentication_required
     def get_open_position(self):
+        if self.WS_ON:
+            return self.ws_get_open_position()
+
         if self.get_cache_status():
             df_from_cache = self.requests_cache_get("get_open_position")
             if isinstance(df_from_cache, pd.DataFrame):
@@ -226,6 +239,9 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         if self.get_cache_status():
             self.requests_cache_set("get_open_position", res.copy())
         return res
+
+    def ws_get_open_position(self):
+        return self.df_open_positions
 
     def get_open_position_v2(self):
         if self.get_cache_status():
@@ -358,6 +374,9 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     @authentication_required
     def get_all_triggers(self):
+        if self.WS_ON:
+            self.ws_get_all_triggers()
+
         lst_df_triggers = []
         with ThreadPoolExecutor() as executor:
             futures = []
@@ -518,6 +537,9 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     #@authentication_required
     def get_account_equity(self):
+        if self.WS_ON:
+            return self.ws_get_account_equity()
+
         n_attempts = 3
         while n_attempts > 0:
             try:
@@ -536,6 +558,9 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     #@authentication_required
     def get_account_available(self):
+        if self.WS_ON:
+            return self.ws_get_account_available()
+
         n_attempts = 3
         while n_attempts > 0:
             try:
@@ -548,28 +573,14 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 n_attempts = n_attempts - 1
         return account_equity['data']['available']
 
-    #@authentication_required
-    def get_open_position_unrealizedPL(self, symbol):
-        n_attempts = 3
-        while n_attempts > 0:
-            try:
-                all_positions = self.positionApi.all_position(productType='umcbl',marginCoin='USDT')
-                self.success += 1
-                break
-            except (exceptions.BitgetAPIException, Exception) as e:
+    def ws_get_account_equity(self):
+        return self.ws_current_state["account"]["usdtEquity"]
 
-                self.log_api_failure("positionApi.all_position", e, n_attempts)
-                time.sleep(0.2)
-                n_attempts = n_attempts - 1
-        upl = 0.
-        for data in all_positions["data"]:
-            if data["symbol"] == symbol:
-                if float(data["total"]) != 0.:
-                    upl = float(data["unrealizedPL"])
-                break
-        del all_positions["data"]
-        del all_positions
-        return upl
+    def ws_get_account_available(self):
+        return self.ws_current_state["account"]["available"]
+
+    def ws_get_account_maxOpenPosAvailable(self):
+        return self.ws_current_state["account"]["maxOpenPosAvailable"]
 
     '''
     marginCoin: Deposit currency
@@ -1043,6 +1054,25 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 return cell_usdtEquity.values[0], cell_avaialable.values[0]
         return None, None
 
+    def ws_get_usdt_equity_available(self):
+        self.df_account_assets = None  # reset self.df_account_assets
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                self.get_list_of_account_assets()
+                self.success += 1
+                break
+            except (exceptions.BitgetAPIException, Exception) as e:
+                self.log_api_failure("get_list_of_account_assets", e, n_attempts)
+                time.sleep(0.2)
+                n_attempts = n_attempts - 1
+        if isinstance(self.df_account_assets, pd.DataFrame):
+            cell_usdtEquity = self.df_account_assets.loc[(self.df_account_assets['baseCoin'] == 'USDT') & (self.df_market['quoteCoin'] == 'USDT'), "usdtEquity"]
+            cell_avaialable = self.df_account_assets.loc[(self.df_account_assets['baseCoin'] == 'USDT') & (self.df_market['quoteCoin'] == 'USDT'), "available"]
+            if len(cell_usdtEquity.values) > 0 and len(cell_avaialable.values) > 0:
+                return cell_usdtEquity.values[0], cell_avaialable.values[0]
+        return None, None
+
     @authentication_required
     def get_usdt_equity(self):
         self.df_account_assets = None  # reset self.df_account_assets
@@ -1169,6 +1199,9 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     @authentication_required
     def get_values(self, symbols):
+        if self.WS_ON:
+            return self.ws_get_values(symbols)
+
         values = []
         timestamps = []
         now = datetime.now()
@@ -1185,6 +1218,10 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         })
         del values
         del symbols
+        return self.df_prices
+
+    @authentication_required
+    def ws_get_values(self, symbols):
         return self.df_prices
 
     @authentication_required
@@ -1973,7 +2010,11 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 n_attempts = n_attempts - 1
 
         # Process response
-        if "msg" in response and response["msg"] == "success" and "data" in response and "list" in response["data"]:
+        if "msg" in response \
+                and response["msg"] == "success" \
+                and "data" in response \
+                and "list" in response["data"]:
+
             df = pd.DataFrame(response["data"]["list"])
             if not isinstance(df, pd.DataFrame) or not df.columns.isin(["pnl", "netProfit"]).any():
                 print("[get_position_history] df : ", df)
@@ -1995,3 +2036,99 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         else:
             print(f"Error: {response.status_code}, {response.text}")
             return None, None, None, None
+
+    def start_BitgetWsClient(self, df_ticker_symbols, API_KEY, API_SECRET, API_PASSPHRASE):
+        ticker_symbols = [symbol + "USDT" for symbol in set(df_ticker_symbols["symbol"])]
+        # Create an instance of the client with your credentials
+        self.ws_client = BitgetWebSocketClient(ticker_symbols, API_KEY, API_PASSPHRASE, API_SECRET)
+        # Run the client's asynchronous tasks
+        def run_ws_client():
+            asyncio.run(self.ws_client.run())
+
+        ws_thread = threading.Thread(target=run_ws_client, daemon=True)
+        ws_thread.start()
+        while True:
+            time.sleep(1)
+            self.ws_current_state = self.ws_client.get_state()
+
+            self.df_prices = pd.DataFrame.from_dict(self.ws_current_state["ticker_prices"],
+                                                    orient='index').reset_index(drop=True)
+            print(self.df_prices.to_string())
+
+            self.dct_account = self.ws_current_state["account"]
+            print(self.dct_account)
+
+            self.df_triggers = self.convert_push_list_to_df(self.ws_current_state["orders-algo"])
+            print(self.df_triggers)
+
+            self.df_open_positions = self._build_df_open_positions_ws(self.ws_current_state["positions"],
+                                                                      self.df_prices)
+            print(self.df_open_positions)
+
+    def convert_push_to_pending(self, push_order: dict) -> dict:
+        """
+        Convert a trigger order push message (from the Plan-Order Channel)
+        into a dictionary that mimics the structure of the Get Pending Trigger Order response.
+        """
+        plan_type_map = {
+            "pl": "normal_plan",  # common trigger order
+            "track": "track_plan",  # trailing stop order
+            # add more mappings if needed
+        }
+        converted = {
+            "planType": plan_type_map.get(push_order.get("planType", ""), push_order.get("planType", "")),
+            "symbol": push_order.get("instId", ""),
+            "size": push_order.get("size", ""),
+            "orderId": push_order.get("orderId", ""),
+            "clientOid": push_order.get("clientOid", ""),
+            "price": push_order.get("price", ""),
+            "executePrice": push_order.get("executePrice", ""),
+            "callbackRatio": "",  # not provided by push, defaulting to empty string
+            "triggerPrice": push_order.get("triggerPrice", ""),
+            "triggerType": push_order.get("triggerType", ""),
+            "planStatus": push_order.get("status", ""),  # e.g., "live"
+            "side": push_order.get("side", ""),
+            "posSide": push_order.get("posSide", ""),
+            "marginCoin": push_order.get("marginCoin", "").lower(),
+            "marginMode": "crossed",  # default value
+            "enterPointSource": push_order.get("enterPointSource", ""),
+            "tradeSide": push_order.get("tradeSide", ""),
+            "posMode": push_order.get("posMode", ""),
+            "orderType": push_order.get("orderType", ""),
+            "orderSource": "normal",  # default value
+            "cTime": push_order.get("cTime", ""),
+            "uTime": push_order.get("uTime", ""),
+            # These fields for TP/SL are not provided in the push; set to empty:
+            "stopSurplusExecutePrice": "",
+            "stopSurplusTriggerPrice": "",
+            "stopSurplusTriggerType": push_order.get("stopSurplusTriggerType", ""),
+            "stopLossExecutePrice": "",
+            "stopLossTriggerPrice": "",
+            "stopLossTriggerType": push_order.get("stopLossTriggerType", "")
+        }
+        return converted
+
+    def convert_push_list_to_df(self, lst: list) -> pd.DataFrame:
+        """
+        Convert a list of push parameter dictionaries to a pandas DataFrame using the conversion function.
+
+        If lst is None, return an empty DataFrame with the same columns.
+        """
+        # Define the expected columns (order matters if you want a consistent DataFrame)
+        columns = [
+            "planType", "symbol", "size", "orderId", "clientOid", "price", "executePrice",
+            "callbackRatio", "triggerPrice", "triggerType", "planStatus", "side", "posSide",
+            "marginCoin", "marginMode", "enterPointSource", "tradeSide", "posMode",
+            "orderType", "orderSource", "cTime", "uTime",
+            "stopSurplusExecutePrice", "stopSurplusTriggerPrice", "stopSurplusTriggerType",
+            "stopLossExecutePrice", "stopLossTriggerPrice", "stopLossTriggerType"
+        ]
+
+        if lst is None \
+                or len(lst) == 0:
+            return pd.DataFrame(columns=columns)
+
+        converted_list = [self.convert_push_to_pending(item) for item in lst]
+        return pd.DataFrame(converted_list, columns=columns)
+
+

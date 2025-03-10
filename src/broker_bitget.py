@@ -1349,6 +1349,43 @@ class BrokerBitGet(broker.Broker):
                                                   })
         return df_open_positions
 
+    def _build_df_open_positions_ws(self, df_open_positions, df_price):
+        lst_open_positions_columns = ["symbol", "holdSide", "leverage", "marginCoin",
+                                      "available", "total", "usdtEquity",
+                                      "marketPrice", "averageOpenPrice",
+                                      "achievedProfits", "unrealizedPL", "liquidationPrice"]
+        if df_price.empty \
+                or df_open_positions is None \
+                or df_open_positions.empty:
+            return pd.DataFrame(columns=lst_open_positions_columns)
+
+        df_open_positions.rename(columns={'instId': 'symbol'}, inplace=True)
+        df_open_positions.rename(columns={'openPriceAvg': 'averageOpenPrice'}, inplace=True)
+
+        # Set the 'symbols' column as the index (if it's unique)
+        df_indexed = df_price.set_index('symbols')
+        for symbol in df_open_positions["symbol"].to_list():
+            if symbol in df_indexed.index.to_list():
+                df_open_positions["marketPrice"] = float(df_indexed.loc[symbol, 'values'])
+            else:
+                df_open_positions["marketPrice"] = 0
+        df_open_positions["usdtEquity"] = df_open_positions["marketPrice"] * df_open_positions["total"].astype(float)
+
+        float_columns = ["leverage", "available", "total",
+                         "marketPrice", "averageOpenPrice",
+                         "achievedProfits", "unrealizedPL",
+                         "liquidationPrice", "totalFee"]
+
+        for column in float_columns:
+            df_open_positions[column] = df_open_positions[column].astype(float)
+
+        df_open_positions["leverage"] = df_open_positions["leverage"].astype(int)
+
+        for column in lst_open_positions_columns:
+            if column not in df_open_positions.columns:
+                print("missing column:", column)
+
+        return df_open_positions
 
     def _build_df_open_orders(self, open_orders):
         df_open_orders = pd.DataFrame(columns=["symbol", "price", "side", "size", "leverage", "marginCoin", "marginMode", "reduceOnly", "clientOid", "orderId"])
