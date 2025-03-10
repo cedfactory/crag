@@ -1036,6 +1036,11 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     @authentication_required
     def get_usdt_equity_available(self):
+        if self.WS_ON:
+            usdt_equity, available = self.ws_get_usdt_equity_available()
+            if usdt_equity is not None and available is not None:
+                return float(usdt_equity), float(available)
+
         self.df_account_assets = None  # reset self.df_account_assets
         n_attempts = 3
         while n_attempts > 0:
@@ -1055,22 +1060,15 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         return None, None
 
     def ws_get_usdt_equity_available(self):
-        self.df_account_assets = None  # reset self.df_account_assets
-        n_attempts = 3
-        while n_attempts > 0:
-            try:
-                self.get_list_of_account_assets()
-                self.success += 1
-                break
-            except (exceptions.BitgetAPIException, Exception) as e:
-                self.log_api_failure("get_list_of_account_assets", e, n_attempts)
-                time.sleep(0.2)
-                n_attempts = n_attempts - 1
-        if isinstance(self.df_account_assets, pd.DataFrame):
-            cell_usdtEquity = self.df_account_assets.loc[(self.df_account_assets['baseCoin'] == 'USDT') & (self.df_market['quoteCoin'] == 'USDT'), "usdtEquity"]
-            cell_avaialable = self.df_account_assets.loc[(self.df_account_assets['baseCoin'] == 'USDT') & (self.df_market['quoteCoin'] == 'USDT'), "available"]
-            if len(cell_usdtEquity.values) > 0 and len(cell_avaialable.values) > 0:
-                return cell_usdtEquity.values[0], cell_avaialable.values[0]
+        if hasattr(self, "dct_account") \
+                and self.dct_account is not None \
+                and "usdtEquity" in self.dct_account \
+                and "available" in self.dct_account:
+            available = self.dct_account["available"]
+            max_open_pos_available = self.dct_account["maxOpenPosAvailable"]
+            usdt_equity = self.dct_account["usdtEquity"]
+            return usdt_equity, available
+
         return None, None
 
     @authentication_required
