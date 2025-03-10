@@ -167,6 +167,9 @@ class RealTimeStrategy(metaclass=ABCMeta):
     def get_name(self):
         return type(self).__name__
 
+    def get_strategy_type(self):
+        return ""
+
     def get_rtctrl(self):
         return self.rtctrl
 

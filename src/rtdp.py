@@ -49,11 +49,14 @@ class RealTimeDataProvider(IRealTimeDataProvider):
     def __init__(self, params = None):
         self.start = None
         self.end = None
-        self.fdp_manager = fdp_manager.FDPManager({"fdps": [{"id": "FDP", "src": "FDP"}]})
+        self.fdp_manager = None
 
         if params:
             self.start = params.get("start_date", self.start)
             self.end = params.get("end_date", self.end)
+
+            fdp_sources = params.get("fdp", [])
+            self.fdp_manager = fdp_manager.FDPManager(fdp_sources)
 
         self.scheduler = chronos.Chronos()
         pass
@@ -83,6 +86,11 @@ class RealTimeDataProvider(IRealTimeDataProvider):
                 "start": None,
                 "indicators": data_description.fdp_features
             }
+
+            # To Test
+            #if self.fdp_manager:
+            #    self.fdp_manager.request("last", params)
+
             data_direct_from_bitget = True
             if data_direct_from_bitget:
                 for symbol in data_description.symbols:

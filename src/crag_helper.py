@@ -95,6 +95,14 @@ def load_configuration_file(configuration_file, config_path = './conf'):
         for name, value in params_node[0].attrib.items():
             params_broker[name] = value
 
+    fdp_node = broker_node.find("fdp")
+    fdp_source_nodes = fdp_node.findall(".//source")
+    fdp_source_list = [
+        {attr: source.get(attr) for attr in source.attrib}
+        for source in fdp_source_nodes
+    ]
+    params_broker["fdp"] = fdp_source_list
+
     crag_node = root.find("crag")
     params_crag = {
         "id": crag_node.get("id", ""),
@@ -148,7 +156,6 @@ def get_crag_params_from_configuration(configuration):
         my_broker = None
     else:
         my_broker = broker_bitget_api.BrokerBitGetApi(params_broker)
-        # my_broker.init_fdp_manager(lst_ws_params) # CEDE DEV
     if broker_name != "mock" and (not my_broker or not my_broker.ready()):
         return None
 
