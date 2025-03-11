@@ -9,6 +9,7 @@ from .bitget.spot import public_api as public
 from .bitget import exceptions
 from .bitget.mix_v2 import order_api as orderV2
 from .bitget.mix_v2 import account_api as accountV2
+from .fdp.src import bitget_ws_positions
 
 from .bitget_ws.bitget_ws import BitgetWsClient
 
@@ -39,6 +40,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         self.planApi = None
         self.positionV2Api = None
         self.orderV2Api = None
+        self.ws_positions = None
 
         self.failure = 0
         self.success = 0
@@ -91,6 +93,10 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             self.planApi = plan.PlanApi(api_key, api_secret, api_password, use_server_time=False, first=False)
             self.orderV2Api = orderV2.OrderApi(api_key, api_secret, api_password, use_server_time=False, first=False)
             self.accountV2Api = accountV2.AccountApi(api_key, api_secret, api_password, use_server_time=False, first=False)
+            params["api_key"] = api_key
+            params["api_secret"] = api_secret
+            params["api_passphrase"] = api_password
+            self.ws_positions = bitget_ws_positions.FDPWSPositions(params)
 
         # initialize the public api
         self.publicApi = public.PublicApi(api_key, api_secret, api_password, use_server_time=False, first=False)
@@ -121,17 +127,13 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             self.df_symbols["symbol"] = self.df_symbols.apply(lambda row: self._get_symbol(row["symbol"]), axis=1)
             self.set_margin_mode_and_leverages()
 
-        return
-        # initialize the websocket client
-        def handle_error(message):
-            self.log("[handle_error] {}".format(message))
-        self.ws_client = BitgetWsClient() \
-            .error_listener(handle_error) \
-            .build()
+    def stop(self):
+        if hasattr(self, "ws_positions") and self.ws_positions:
+            self.ws_positions.stop()
 
     def __del__(self):
-        if hasattr(self, "ws_client") and self.ws_client:
-            self.ws_client.close()
+        if hasattr(self, "ws_positions") and self.ws_positions:
+            self.ws_positions.stop()
 
     def log_api_failure(self, function, e, n_attempts=0):
         self.failure += 1
@@ -1073,6 +1075,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     @authentication_required
     def get_usdt_equity(self):
+    	toto = self.ws_positions.request("usdt_equity")
         if self.WS_ON:
             usdt_equity, _ = self.ws_get_usdt_equity_available()
             if usdt_equity is not None:
