@@ -9,7 +9,7 @@ from .bitget.spot import public_api as public
 from .bitget import exceptions
 from .bitget.mix_v2 import order_api as orderV2
 from .bitget.mix_v2 import account_api as accountV2
-from .fdp.src import bitget_ws_positions
+from .fdp.src import bitget_ws_positions, bitget_ws_account_tickers
 
 from .bitget_ws.bitget_ws import BitgetWsClient
 
@@ -2190,6 +2190,17 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         ticker_symbols = [symbol + "USDT" for symbol in set(df_ticker_symbols["symbol"])]
         # Create an instance of the client with your credentials
         self.ws_client = BitgetWebSocketClient(ticker_symbols, API_KEY, API_PASSPHRASE, API_SECRET)
+
+        #ced
+        '''
+        params = { "tickers": ticker_symbols,
+                   "api_key": API_KEY,
+                   "api_secret": API_SECRET,
+                   "api_passphrase": API_PASSPHRASE,
+                   }
+        self.ws_client = bitget_ws_account_tickers.FDPWSAccountTickers(params)
+        '''
+
         # Run the client's asynchronous tasks
         def run_ws_client():
             asyncio.run(self.ws_client.run())
