@@ -1359,6 +1359,7 @@ class BrokerBitGet(broker.Broker):
                 or df_open_positions.empty:
             return pd.DataFrame(columns=lst_open_positions_columns)
 
+        df_open_positions = df_open_positions.copy()
         df_open_positions.rename(columns={'instId': 'symbol'}, inplace=True)
         df_open_positions.rename(columns={'openPriceAvg': 'averageOpenPrice'}, inplace=True)
 

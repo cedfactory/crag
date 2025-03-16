@@ -24,7 +24,7 @@ import numpy as np
 from concurrent.futures import wait, ALL_COMPLETED, ThreadPoolExecutor, as_completed
 import asyncio
 import gc
-
+from bitget_ws_data import ws_Data, convert_open_orders_push_list_to_df, convert_triggers_convert_df_to_df
 from client_ws_bitget import BitgetWebSocketClient
 import threading
 
@@ -75,10 +75,6 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         api_secret = self.account.get("api_secret", "")
         api_password = self.account.get("api_password", "")
 
-        self.WS_ON = True
-        if self.WS_ON:
-            self.start_BitgetWsClient(self.df_symbols , api_key, api_secret, api_password)
-
         self.df_normalize_price = pd.DataFrame(columns=["symbol", "pricePlace", "priceEndStep"])
         self.df_normalize_size = pd.DataFrame(columns=["symbol", "volumePlace", "sizeMultiplier", "minsize"])
 
@@ -126,6 +122,10 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             self.df_symbols["symbol_original"] = self.df_symbols["symbol"]
             self.df_symbols["symbol"] = self.df_symbols.apply(lambda row: self._get_symbol(row["symbol"]), axis=1)
             self.set_margin_mode_and_leverages()
+
+        self.WS_ON = True
+        if self.WS_ON:
+            self.trigger_BitgetWsClient(self.df_symbols , api_key, api_secret, api_password)
 
     def stop(self):
         if hasattr(self, "ws_positions") and self.ws_positions:
@@ -214,8 +214,9 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     #@authentication_required
     def get_open_position(self):
-        if self.WS_ON:
-            return self.ws_get_open_position()
+        # CEDE TO BE FIXED
+        # if self.WS_ON:
+        #     return self.ws_get_open_position()
 
         if self.get_cache_status():
             df_from_cache = self.requests_cache_get("get_open_position")
@@ -376,8 +377,9 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     @authentication_required
     def get_all_triggers(self):
-        if self.WS_ON:
-            self.ws_get_all_triggers()
+        # CEDE TO BE FIXED
+        # if self.WS_ON:
+        #     self.ws_get_all_triggers()
 
         lst_df_triggers = []
         with ThreadPoolExecutor() as executor:
@@ -1075,7 +1077,6 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     @authentication_required
     def get_usdt_equity(self):
-    	toto = self.ws_positions.request("usdt_equity")
         if self.WS_ON:
             usdt_equity, _ = self.ws_get_usdt_equity_available()
             if usdt_equity is not None:
@@ -2043,188 +2044,42 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             print(f"Error: {response.status_code}, {response.text}")
             return None, None, None, None
 
-    def convert_triggers_push_to_pending(self, push_order: dict) -> dict:
-        """
-        Convert a trigger order push message (from the Plan-Order Channel)
-        into a dictionary that mimics the structure of the Get Pending Trigger Order response.
-        """
-        plan_type_map = {
-            "pl": "normal_plan",  # common trigger order
-            "track": "track_plan",  # trailing stop order
-            # add more mappings if needed
-        }
-        converted = {
-            "planType": plan_type_map.get(push_order.get("planType", ""), push_order.get("planType", "")),
-            "symbol": push_order.get("instId", ""),
-            "size": push_order.get("size", ""),
-            "orderId": push_order.get("orderId", ""),
-            "clientOid": push_order.get("clientOid", ""),
-            "price": push_order.get("price", ""),
-            "executePrice": push_order.get("executePrice", ""),
-            "callbackRatio": "",  # not provided by push, defaulting to empty string
-            "triggerPrice": push_order.get("triggerPrice", ""),
-            "triggerType": push_order.get("triggerType", ""),
-            "planStatus": push_order.get("status", ""),  # e.g., "live"
-            "side": push_order.get("side", ""),
-            "posSide": push_order.get("posSide", ""),
-            "marginCoin": push_order.get("marginCoin", "").lower(),
-            "marginMode": "crossed",  # default value
-            "enterPointSource": push_order.get("enterPointSource", ""),
-            "tradeSide": push_order.get("tradeSide", ""),
-            "posMode": push_order.get("posMode", ""),
-            "orderType": push_order.get("orderType", ""),
-            "orderSource": "normal",  # default value
-            "cTime": push_order.get("cTime", ""),
-            "uTime": push_order.get("uTime", ""),
-            # These fields for TP/SL are not provided in the push; set to empty:
-            "stopSurplusExecutePrice": "",
-            "stopSurplusTriggerPrice": "",
-            "stopSurplusTriggerType": push_order.get("stopSurplusTriggerType", ""),
-            "stopLossExecutePrice": "",
-            "stopLossTriggerPrice": "",
-            "stopLossTriggerType": push_order.get("stopLossTriggerType", "")
-        }
-        return converted
+    def trigger_BitgetWsClient(self, df_ticker_symbols, API_KEY, API_SECRET, API_PASSPHRASE):
+        # ticker_symbols = [symbol + "USDT" for symbol in set(df_ticker_symbols["symbol"])]
+        ticker_symbols = [symbol.replace("_UMCBL", "") for symbol in set(df_ticker_symbols["symbol"])] # CEDE DODGY USE GET_SYMBOL
 
-    def convert_triggers_push_list_to_df(self, lst: list) -> pd.DataFrame:
-        """
-        Convert a list of push parameter dictionaries to a pandas DataFrame using the conversion function.
-
-        If lst is None, return an empty DataFrame with the same columns.
-        """
-        # Define the expected columns (order matters if you want a consistent DataFrame)
-        columns = [
-            "planType", "symbol", "size", "orderId", "clientOid", "price", "executePrice",
-            "callbackRatio", "triggerPrice", "triggerType", "planStatus", "side", "posSide",
-            "marginCoin", "marginMode", "enterPointSource", "tradeSide", "posMode",
-            "orderType", "orderSource", "cTime", "uTime",
-            "stopSurplusExecutePrice", "stopSurplusTriggerPrice", "stopSurplusTriggerType",
-            "stopLossExecutePrice", "stopLossTriggerPrice", "stopLossTriggerType"
-        ]
-
-        if lst is None \
-                or len(lst) == 0:
-            return pd.DataFrame(columns=columns)
-
-        converted_list = [self.convert_push_to_pending(item) for item in lst]
-        return pd.DataFrame(converted_list, columns=columns)
-
-    def convert_open_order_push_to_response(self, push_order: dict) -> dict:
-        """
-        Convert a single push order (from the Order Channel) into a dictionary that mimics
-        the structure of the GET /api/mix/v1/order/current response order.
-
-        Mapping details:
-          - push["instId"] -> response "symbol"
-          - push["size"] -> "size"
-          - push["orderId"] -> "orderId"
-          - push["clientOid"] -> "clientOid"
-          - push["notional"] -> "notional"
-          - push["orderType"] -> "orderType"
-          - push["force"] -> "force"
-          - push["side"] -> "side"
-          - push["fillPrice"] -> "fillPrice"
-          - push["tradeId"] -> "tradeId"
-          - push["baseVolume"] -> "baseVolume"
-          - push["accBaseVolume"] -> "accBaseVolume"
-          - push["fillTime"] -> "fillTime"
-          - push["priceAvg"] -> "priceAvg"
-          - push["status"] -> "status"
-          - push["cTime"] -> "cTime"
-          - push["uTime"] -> "uTime"
-          - push["stpMode"] -> "stpMode"
-          - push["feeDetail"] -> "feeDetail"
-          - push["enterPointSource"] -> "enterPointSource"
-          - push["tradeSide"] -> "tradeSide"
-
-        Fields not provided in the push (like "orderSource" and "leverage") are defaulted.
-        """
-        return {
-            "symbol": push_order.get("instId", ""),
-            "size": push_order.get("size", ""),
-            "orderId": push_order.get("orderId", ""),
-            "clientOid": push_order.get("clientOid", ""),
-            "notional": push_order.get("notional", ""),
-            "orderType": push_order.get("orderType", ""),
-            "force": push_order.get("force", ""),
-            "side": push_order.get("side", ""),
-            "fillPrice": push_order.get("fillPrice", ""),
-            "tradeId": push_order.get("tradeId", ""),
-            "baseVolume": push_order.get("baseVolume", ""),
-            "accBaseVolume": push_order.get("accBaseVolume", ""),
-            "fillTime": push_order.get("fillTime", ""),
-            "priceAvg": push_order.get("priceAvg", ""),
-            "status": push_order.get("status", ""),
-            "cTime": push_order.get("cTime", ""),
-            "uTime": push_order.get("uTime", ""),
-            "stpMode": push_order.get("stpMode", ""),
-            "feeDetail": push_order.get("feeDetail", []),
-            "enterPointSource": push_order.get("enterPointSource", ""),
-            "tradeSide": push_order.get("tradeSide", ""),
-            "orderSource": "normal",  # default value (not provided by push)
-            "leverage": push_order.get("leverage", "")  # optional: default to empty if not provided
-        }
-
-
-    def convert_open_orders_push_list_to_df(self, lst: list) -> pd.DataFrame:
-        """
-        Convert a list of push order dictionaries into a pandas DataFrame
-        with columns matching the GET /api/mix/v1/order/current response structure.
-
-        If lst is None, return an empty DataFrame with the same columns.
-        """
-        columns = [
-            "symbol", "size", "orderId", "clientOid", "notional", "orderType", "force", "side",
-            "fillPrice", "tradeId", "baseVolume", "accBaseVolume", "fillTime", "priceAvg", "status",
-            "cTime", "uTime", "stpMode", "feeDetail", "enterPointSource", "tradeSide", "orderSource",
-            "leverage"
-        ]
-
-        if lst is None:
-            return pd.DataFrame(columns=columns)
-
-        converted_list = [self.convert_open_order_push_to_response(item) for item in lst]
-        return pd.DataFrame(converted_list, columns=columns)
-
-    def start_BitgetWsClient(self, df_ticker_symbols, API_KEY, API_SECRET, API_PASSPHRASE):
-        ticker_symbols = [symbol + "USDT" for symbol in set(df_ticker_symbols["symbol"])]
-        # Create an instance of the client with your credentials
-        self.ws_client = BitgetWebSocketClient(ticker_symbols, API_KEY, API_PASSPHRASE, API_SECRET)
-
-        #ced
-        '''
         params = { "tickers": ticker_symbols,
                    "api_key": API_KEY,
                    "api_secret": API_SECRET,
                    "api_passphrase": API_PASSPHRASE,
                    }
         self.ws_client = bitget_ws_account_tickers.FDPWSAccountTickers(params)
-        '''
 
-        # Run the client's asynchronous tasks
-        def run_ws_client():
-            asyncio.run(self.ws_client.run())
+        df_triggers_histo = self.get_all_triggers()
+        df_open_positio_histo = self.get_open_position()
 
-        ws_thread = threading.Thread(target=run_ws_client, daemon=True)
-        ws_thread.start()
+        self.ws_data = ws_Data(df_open_positions=df_open_positio_histo, df_triggers=df_triggers_histo)
+
+
         while True:
             time.sleep(1)
             self.ws_current_state = self.ws_client.get_state()
 
-            self.df_prices = pd.DataFrame.from_dict(self.ws_current_state["ticker_prices"],
-                                                    orient='index').reset_index(drop=True)
-            print(self.df_prices.to_string())
+            self.ws_data.set_ws_prices(
+                self.ws_current_state["ticker_prices"]
+            )
+            self.ws_data.set_ws_account(
+                self.ws_current_state["account"]
+            )
 
-            self.dct_account = self.ws_current_state["account"]
-            print(self.dct_account)
+            df_trigger = convert_triggers_convert_df_to_df(self.ws_current_state["orders-algo"])
+            df_trigger = self.set_open_orders_gridId(df_trigger)
+            self.ws_data.set_ws_triggers(df_trigger)
 
-            self.df_triggers = self.convert_triggers_push_list_to_df(self.ws_current_state["orders-algo"])
-            print(self.df_triggers)
+            df_open_order = convert_open_orders_push_list_to_df(self.ws_current_state["orders"])
+            df_open_order = self.set_open_orders_gridId(df_open_order)
+            self.ws_data.set_ws_open_orders(df_open_order)
 
-            self.df_open_orders = self.convert_open_orders_push_list_to_df(self.ws_current_state["orders-algo"])
-            self.df_open_orders = self.set_open_orders_gridId(self.df_open_orders)
-            print(self.df_open_orders)
-
-            self.df_open_positions = self._build_df_open_positions_ws(self.ws_current_state["positions"],
-                                                                      self.df_prices)
-            print(self.df_open_positions)
+            df_open_position = self._build_df_open_positions_ws(self.ws_current_state["positions"],
+                                                                self.ws_data.get_ws_prices())
+            self.ws_data.set_ws_open_positions(df_open_position)
