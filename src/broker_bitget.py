@@ -1381,6 +1381,7 @@ class BrokerBitGet(broker.Broker):
             df_open_positions[column] = df_open_positions[column].astype(float)
 
         df_open_positions["leverage"] = df_open_positions["leverage"].astype(int)
+        df_open_positions["symbol"] = df_open_positions["symbol"] + "_UMCBL"
 
         for column in lst_open_positions_columns:
             if column not in df_open_positions.columns:

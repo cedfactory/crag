@@ -523,3 +523,34 @@ def make_key(data_desc_obj):
 
     # 4) Finally, produce a stable, sorted tuple of (field, value)
     return tuple(sorted(hashable_fields.items()))
+
+
+def detailed_dataframes_equal(df1, df2):
+    """
+    Check if two pandas DataFrames are totally equal by attempting an assert.
+
+    Returns:
+        bool: True if DataFrames are equal, False otherwise.
+    """
+    try:
+        pd.testing.assert_frame_equal(df1, df2, check_exact=True)
+        return True
+    except AssertionError as e:
+        print("DataFrames are not equal:", e)
+        return False
+
+def are_dataframes_equal(df1, df2):
+    """
+    Check if two pandas DataFrames are totally equal.
+
+    Two DataFrames are considered equal if they have the same data,
+    the same column names, and the same index.
+
+    Parameters:
+        df1 (pd.DataFrame): The first DataFrame.
+        df2 (pd.DataFrame): The second DataFrame.
+
+    Returns:
+        bool: True if the DataFrames are equal, False otherwise.
+    """
+    return df1.equals(df2)

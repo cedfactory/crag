@@ -167,7 +167,7 @@ class ws_Data:
     # Accessor functions (getters)
     def get_ws_open_positions(self):
         """Return the open positions DataFrame."""
-        return self._df_open_positions
+        return self._df_open_positions.drop("timestamp", axis=1)
 
     def get_ws_open_orders(self):
         """Return the open orders DataFrame."""
@@ -175,7 +175,7 @@ class ws_Data:
 
     def get_ws_triggers(self):
         """Return the triggers DataFrame."""
-        return self._df_triggers
+        return self._df_triggers.drop("timestamp", axis=1)
 
     def get_ws_account(self):
         """Return the account dictionary."""
@@ -185,6 +185,34 @@ class ws_Data:
         """Return the prices DataFrame."""
         return self._df_prices
 
+    def get_usdt_equity_available(self):
+        return self._dct_account["usdtEquity"], self._dct_account["available"]
+
+    def get_value(self, symbol):
+        try:
+            matching_rows = self._df_prices[self._df_prices['symbols'] == symbol.replace('_UMCBL', "")]
+        except:
+            print("toto")
+
+        # Check if any rows were found; if not, return None.
+        if matching_rows.empty:
+            return None
+
+        # Return the first matching value from the 'values' column.
+        return float(matching_rows['values'].iloc[0])
+
+    def get_values(self, symbols):
+        df_prices = self._df_prices.copy()
+        df_prices['symbols'] = df_prices['symbols'] + "_UMCBL"
+        available_symbols = set(df_prices['symbols'])
+        # Check for any missing symbols.
+        missing_symbols = set(symbols) - available_symbols
+        if missing_symbols:
+            # Return None if any requested symbol is not found in the DataFrame.
+            return None
+
+        # Return only rows with symbols that are in the provided list.
+        return df_prices[df_prices['symbols'].isin(symbols)]
 
 # DATA UTILS
 # CEDE TO BE MOVED TO UTILS OR NOT...

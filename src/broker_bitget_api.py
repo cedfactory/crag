@@ -211,40 +211,38 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         single_position = self.positionApi.single_position(self._get_symbol(symbol), marginCoin='USDT')
         return single_position
 
-
     #@authentication_required
-    def get_open_position(self):
-        # CEDE TO BE FIXED
-        # if self.WS_ON:
-        #     return self.ws_get_open_position()
-
-        if self.get_cache_status():
-            df_from_cache = self.requests_cache_get("get_open_position")
-            if isinstance(df_from_cache, pd.DataFrame):
-                return df_from_cache.copy()
-        res = pd.DataFrame()
-        n_attempts = 3
-        while n_attempts > 0:
-            try:
-                all_positions = self.positionApi.all_position(productType='umcbl',marginCoin='USDT')
-                lst_all_positions = [data for data in all_positions["data"] if float(data["total"]) != 0.]
-                res = self._build_df_open_positions(lst_all_positions)
-                del all_positions["data"]
-                del all_positions
-                del lst_all_positions
-                self.success += 1
-                break
-            except (exceptions.BitgetAPIException, Exception) as e:
-                self.log_api_failure("positionApi.all_position", e, n_attempts)
-                time.sleep(0.2)
-                n_attempts = n_attempts - 1
-        del n_attempts
-        if self.get_cache_status():
-            self.requests_cache_set("get_open_position", res.copy())
-        return res
+    def get_open_position(self, by_pass=False):
+        if not by_pass and self.WS_ON:
+            return self.ws_get_open_position()
+        else:
+            if self.get_cache_status():
+                df_from_cache = self.requests_cache_get("get_open_position")
+                if isinstance(df_from_cache, pd.DataFrame):
+                    return df_from_cache.copy()
+            res = pd.DataFrame()
+            n_attempts = 3
+            while n_attempts > 0:
+                try:
+                    all_positions = self.positionApi.all_position(productType='umcbl',marginCoin='USDT')
+                    lst_all_positions = [data for data in all_positions["data"] if float(data["total"]) != 0.]
+                    res = self._build_df_open_positions(lst_all_positions)
+                    del all_positions["data"]
+                    del all_positions
+                    del lst_all_positions
+                    self.success += 1
+                    break
+                except (exceptions.BitgetAPIException, Exception) as e:
+                    self.log_api_failure("positionApi.all_position", e, n_attempts)
+                    time.sleep(0.2)
+                    n_attempts = n_attempts - 1
+            del n_attempts
+            if self.get_cache_status():
+                self.requests_cache_set("get_open_position", res.copy())
+            return res
 
     def ws_get_open_position(self):
-        return self.df_open_positions
+        return self.ws_data.get_ws_open_positions()
 
     def get_open_position_v2(self):
         if self.get_cache_status():
@@ -376,67 +374,69 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             self.plan_history_list.append(order_plan_history)
 
     @authentication_required
-    def get_all_triggers(self):
-        # CEDE TO BE FIXED
-        # if self.WS_ON:
-        #     self.ws_get_all_triggers()
-
-        lst_df_triggers = []
-        with ThreadPoolExecutor() as executor:
-            futures = []
-            for plan_type in ["normal_plan", "track_plan", "profit_loss"]:
-                futures.append(executor.submit(self.get_triggers, plan_type))
-
-            wait(futures, timeout=1000, return_when=ALL_COMPLETED)
-
-            for future in futures:
-                lst_df_triggers.append(future.result())
-
-        df_triggers = pd.concat(lst_df_triggers).reset_index(drop=True)
-
-        merged = pd.merge(self.df_triggers_previous, df_triggers, on='orderId', suffixes=('_previous', '_current'),
-                          how='outer', indicator=True)
-
-        previous_columns = [col for col in merged.columns if col.endswith('_previous')]
-        current_columns = [col.replace('_previous', '_current') for col in previous_columns]
-
-        disappeared = merged[merged['_merge'] == 'left_only']
-
-        df_disappeared = disappeared[['orderId'] + previous_columns].rename(
-            columns={col: col.replace('_previous', '') for col in previous_columns})
-
-        # CEDE: df_differences should not happen tbc
-        if len(df_disappeared) > 0:
-            # Replace the values in the 'planType' column based on the mapping dictionary
-            df_disappeared['planType'] = df_disappeared['planType'].replace(self.plan_mapping)
-
-            self.plan_history_list = []
-            self.add_plan_history(df_disappeared)
-
-            if len(self.plan_history_list) == len(df_disappeared):
-                if self.plan_history_list:
-                    df_plan_history = pd.concat(self.plan_history_list, ignore_index=True)
-                    self.plan_history_list = []
-
-                    df_plan_history = df_plan_history.sort_values(by='orderId')
-                    df_disappeared = df_disappeared.sort_values(by='orderId')
-
-                    if 'executeOrderId' in df_plan_history.columns and 'planStatus' in df_plan_history.columns:
-                        df_disappeared['executeOrderId'] = df_plan_history['executeOrderId'].tolist()
-                        df_disappeared['planStatus'] = df_plan_history['planStatus'].tolist()
-
-                    self.df_triggers_previous = df_triggers
-                    df_triggers = pd.concat([df_triggers, df_disappeared], ignore_index=True)
-
-                    df_filtered = df_triggers[(df_triggers['planStatus'] == 'executed') & (df_triggers['executeOrderId'] != '')]
-                    if len(df_filtered) > 0:
-                        df_filtered.apply(self.apply_func, axis=1)
-                else:
-                    self.df_triggers_previous = df_triggers
+    def get_all_triggers(self, by_pass=False):
+        if not by_pass and self.WS_ON:
+            return self.ws_get_all_triggers()
         else:
-            self.df_triggers_previous = df_triggers
+            lst_df_triggers = []
+            with ThreadPoolExecutor() as executor:
+                futures = []
+                for plan_type in ["normal_plan", "track_plan", "profit_loss"]:
+                    futures.append(executor.submit(self.get_triggers, plan_type))
 
-        return df_triggers
+                wait(futures, timeout=1000, return_when=ALL_COMPLETED)
+
+                for future in futures:
+                    lst_df_triggers.append(future.result())
+
+            df_triggers = pd.concat(lst_df_triggers).reset_index(drop=True)
+
+            merged = pd.merge(self.df_triggers_previous, df_triggers, on='orderId', suffixes=('_previous', '_current'),
+                              how='outer', indicator=True)
+
+            previous_columns = [col for col in merged.columns if col.endswith('_previous')]
+            current_columns = [col.replace('_previous', '_current') for col in previous_columns]
+
+            disappeared = merged[merged['_merge'] == 'left_only']
+
+            df_disappeared = disappeared[['orderId'] + previous_columns].rename(
+                columns={col: col.replace('_previous', '') for col in previous_columns})
+
+            # CEDE: df_differences should not happen tbc
+            if len(df_disappeared) > 0:
+                # Replace the values in the 'planType' column based on the mapping dictionary
+                df_disappeared['planType'] = df_disappeared['planType'].replace(self.plan_mapping)
+
+                self.plan_history_list = []
+                self.add_plan_history(df_disappeared)
+
+                if len(self.plan_history_list) == len(df_disappeared):
+                    if self.plan_history_list:
+                        df_plan_history = pd.concat(self.plan_history_list, ignore_index=True)
+                        self.plan_history_list = []
+
+                        df_plan_history = df_plan_history.sort_values(by='orderId')
+                        df_disappeared = df_disappeared.sort_values(by='orderId')
+
+                        if 'executeOrderId' in df_plan_history.columns and 'planStatus' in df_plan_history.columns:
+                            df_disappeared['executeOrderId'] = df_plan_history['executeOrderId'].tolist()
+                            df_disappeared['planStatus'] = df_plan_history['planStatus'].tolist()
+
+                        self.df_triggers_previous = df_triggers
+                        df_triggers = pd.concat([df_triggers, df_disappeared], ignore_index=True)
+
+                        df_filtered = df_triggers[(df_triggers['planStatus'] == 'executed') & (df_triggers['executeOrderId'] != '')]
+                        if len(df_filtered) > 0:
+                            df_filtered.apply(self.apply_func, axis=1)
+                    else:
+                        self.df_triggers_previous = df_triggers
+            else:
+                self.df_triggers_previous = df_triggers
+
+            return df_triggers
+
+    def ws_get_all_triggers(self):
+        return self.ws_data.get_ws_triggers()
 
     def merge_plan_history(self, df):
         df_plan_history = pd.DataFrame()
@@ -1039,8 +1039,8 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         return self.df_account_assets['usdtEquity'].sum()
 
     @authentication_required
-    def get_usdt_equity_available(self):
-        if self.WS_ON:
+    def get_usdt_equity_available(self, by_pass=False):
+        if not by_pass and self.WS_ON:
             usdt_equity, available = self.ws_get_usdt_equity_available()
             if usdt_equity is not None and available is not None:
                 return float(usdt_equity), float(available)
@@ -1064,20 +1064,11 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         return None, None
 
     def ws_get_usdt_equity_available(self):
-        if hasattr(self, "dct_account") \
-                and self.dct_account is not None \
-                and "usdtEquity" in self.dct_account \
-                and "available" in self.dct_account:
-            available = self.dct_account["available"]
-            max_open_pos_available = self.dct_account["maxOpenPosAvailable"]
-            usdt_equity = self.dct_account["usdtEquity"]
-            return usdt_equity, available
-
-        return None, None
+        return self.ws_data.get_usdt_equity_available()
 
     @authentication_required
-    def get_usdt_equity(self):
-        if self.WS_ON:
+    def get_usdt_equity(self, by_pass=False):
+        if not by_pass and self.WS_ON:
             usdt_equity, _ = self.ws_get_usdt_equity_available()
             if usdt_equity is not None:
                 return float(usdt_equity)
@@ -1186,7 +1177,12 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         return df_history
 
     @authentication_required
-    def get_value(self, symbol):
+    def get_value(self, symbol, by_pass=False):
+        if not by_pass and self.WS_ON:
+            ws_value = self.ws_get_value(symbol)
+            if ws_value != None:
+                return ws_value
+
         if not symbol.endswith('USDT_UMCBL'):
             symbol += 'USDT_UMCBL'
         value = 0
@@ -1204,10 +1200,17 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 n_attempts = n_attempts - 1
         exit(123)
 
-    @authentication_required
-    def get_values(self, symbols):
-        if self.WS_ON:
-            return self.ws_get_values(symbols)
+    def ws_get_value(self, symbol):
+        return self.ws_data.get_value(symbol)
+
+    def ws_get_values(self, symbols):
+        return self.ws_data.get_values(symbols)
+
+    def get_values(self, symbols, by_pass=False):
+        if not by_pass and self.WS_ON:
+            self.df_prices = self.ws_get_values(symbols)
+            if self.df_prices is not None:
+                return self.df_prices
 
         values = []
         timestamps = []
@@ -1225,10 +1228,6 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         })
         del values
         del symbols
-        return self.df_prices
-
-    @authentication_required
-    def ws_get_values(self, symbols):
         return self.df_prices
 
     @authentication_required
@@ -2055,11 +2054,10 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                    }
         self.ws_client = bitget_ws_account_tickers.FDPWSAccountTickers(params)
 
-        df_triggers_histo = self.get_all_triggers()
-        df_open_positio_histo = self.get_open_position()
+        df_triggers_histo = self.get_all_triggers(by_pass=True)
+        df_open_position_histo = self.get_open_position(by_pass=True)
 
-        self.ws_data = ws_Data(df_open_positions=df_open_positio_histo, df_triggers=df_triggers_histo)
-
+        self.ws_data = ws_Data(df_open_positions=df_open_position_histo, df_triggers=df_triggers_histo)
 
         while True:
             time.sleep(1)
@@ -2083,3 +2081,24 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             df_open_position = self._build_df_open_positions_ws(self.ws_current_state["positions"],
                                                                 self.ws_data.get_ws_prices())
             self.ws_data.set_ws_open_positions(df_open_position)
+
+            TEST_DEBUG = False    # CEDE TO BE CLEARED WHEN DEBUG OK
+            if TEST_DEBUG:
+                symbols = df_ticker_symbols["symbol"]
+                print("##################################################")
+                if not utils.detailed_dataframes_equal(self.get_all_triggers(by_pass=True), self.get_all_triggers()):
+                    print("titi")
+                if not utils.detailed_dataframes_equal(self.get_open_position(by_pass=True), self.get_open_position()):
+                    print("toto")
+
+                print("##################################################")
+                print(self.get_usdt_equity_available(by_pass=True))
+                print(self.get_usdt_equity_available())
+                print("##################################################")
+                print("self.get_values(symbols, by_pass=True) \n", self.get_values(symbols, by_pass=True))
+                print("self.get_values(symbols) \n", self.get_values(symbols))
+                print("##################################################")
+                for symbol in symbols:
+                    print("self.get_value(symbol, by_pass=True)  ", self.get_value(symbol, by_pass=True))
+                    print("self.get_value(symbol)  ", self.get_value(symbol))
+                print("##################################################")
