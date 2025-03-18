@@ -124,8 +124,15 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             self.set_margin_mode_and_leverages()
 
         self.WS_ON = True
-        if self.WS_ON:
-            self.trigger_BitgetWsClient(self.df_symbols , api_key, api_secret, api_password)
+        if not self.WS_ON:
+            # Create a thread that targets your function and passes the arguments.
+            thread = threading.Thread(
+                target=self.trigger_BitgetWsClient,
+                args=(self.df_symbols, api_key, api_secret, api_password)
+            )
+
+            # Start the thread.
+            thread.start()
 
     def stop(self):
         if hasattr(self, "ws_positions") and self.ws_positions:
@@ -950,7 +957,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     @authentication_required
     def get_portfolio_value(self):
-        return self.get_usdt_equity()
+        return self.get_usdt_equity(by_pass=True)
 
     def get_info(self):
         return None, None, None
@@ -1068,7 +1075,11 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     @authentication_required
     def get_usdt_equity(self, by_pass=False):
-        if not by_pass and self.WS_ON:
+        if not by_pass \
+                and self.WS_ON \
+                and hasattr(self, 'ws_data') \
+                and self.ws_data is not None\
+                and self.ws_data.get_status() == "On":
             usdt_equity, _ = self.ws_get_usdt_equity_available()
             if usdt_equity is not None:
                 return float(usdt_equity)
@@ -2060,7 +2071,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         self.ws_data = ws_Data(df_open_positions=df_open_position_histo, df_triggers=df_triggers_histo)
 
         while True:
-            time.sleep(1)
+            time.sleep(0.5)
             self.ws_current_state = self.ws_client.get_state()
 
             self.ws_data.set_ws_prices(

@@ -77,7 +77,7 @@ class ws_Data:
         self._dct_account = dct_account if dct_account is not None else dct_account
         self._df_prices = dct_prices if dct_prices is not None else pd.DataFrame(columns=columns_prices)
 
-        self.verbose = True
+        self.verbose = False
 
     def set_ws_prices(self, dct_ticker_prices):
         if dct_ticker_prices:

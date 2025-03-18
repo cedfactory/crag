@@ -554,3 +554,22 @@ def are_dataframes_equal(df1, df2):
         bool: True if the DataFrames are equal, False otherwise.
     """
     return df1.equals(df2)
+
+
+def dict_lists_equal(lst1, lst2):
+    normalized_lst1 = [normalize(d) for d in lst1]
+    normalized_lst2 = [normalize(d) for d in lst2]
+    return all(d in normalized_lst2 for d in normalized_lst1) and all(d in normalized_lst1 for d in normalized_lst2)
+
+def normalize(d):
+    # Create a copy so the original dict isn't modified.
+    nd = d.copy()
+    if nd.get("channel") == "account":
+        # For account, map 'param' to 'coin' if present.
+        if "param" in nd:
+            nd["coin"] = nd.pop("param")
+    else:
+        # For non-account channels, map 'param' to 'inst_id' if present.
+        if "param" in nd:
+            nd["inst_id"] = nd.pop("param")
+    return nd
