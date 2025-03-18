@@ -658,7 +658,7 @@ class Crag:
                     self.usdt_available_thread = usdt_available_thread
                 except:
                     exit(628)
-            time.sleep(2)
+            time.sleep(1)
 
     def safety_step(self):
         start_safety_step = time.time()

@@ -220,7 +220,13 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     #@authentication_required
     def get_open_position(self, by_pass=False):
-        if not by_pass and self.WS_ON:
+        if (
+                not by_pass
+                and self.WS_ON
+                and getattr(self, "ws_data", None) is not None
+                and getattr(self, "ws_client", None) is not None
+                and self.ws_client.get_status() == "On"
+        ):
             return self.ws_get_open_position()
         else:
             if self.get_cache_status():
@@ -382,7 +388,13 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     @authentication_required
     def get_all_triggers(self, by_pass=False):
-        if not by_pass and self.WS_ON:
+        if (
+                not by_pass
+                and self.WS_ON
+                and getattr(self, "ws_data", None) is not None
+                and getattr(self, "ws_client", None) is not None
+                and self.ws_client.get_status() == "On"
+        ):
             return self.ws_get_all_triggers()
         else:
             lst_df_triggers = []
@@ -547,8 +559,14 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         return len(current_state["open_orders"])
 
     #@authentication_required
-    def get_account_equity(self):
-        if self.WS_ON:
+    def get_account_equity(self, by_pass=False):
+        if (
+                not by_pass
+                and self.WS_ON
+                and getattr(self, "ws_data", None) is not None
+                and getattr(self, "ws_client", None) is not None
+                and self.ws_client.get_status() == "On"
+        ):
             return self.ws_get_account_equity()
 
         n_attempts = 3
@@ -568,8 +586,14 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         return usdtEquity
 
     #@authentication_required
-    def get_account_available(self):
-        if self.WS_ON:
+    def get_account_available(self, by_pass=False):
+        if (
+                not by_pass
+                and self.WS_ON
+                and getattr(self, "ws_data", None) is not None
+                and getattr(self, "ws_client", None) is not None
+                and self.ws_client.get_status() == "On"
+        ):
             return self.ws_get_account_available()
 
         n_attempts = 3
@@ -1047,7 +1071,13 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     @authentication_required
     def get_usdt_equity_available(self, by_pass=False):
-        if not by_pass and self.WS_ON:
+        if (
+                not by_pass
+                and self.WS_ON
+                and getattr(self, "ws_data", None) is not None
+                and getattr(self, "ws_client", None) is not None
+                and self.ws_client.get_status() == "On"
+        ):
             usdt_equity, available = self.ws_get_usdt_equity_available()
             if usdt_equity is not None and available is not None:
                 return float(usdt_equity), float(available)
@@ -1075,11 +1105,13 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     @authentication_required
     def get_usdt_equity(self, by_pass=False):
-        if not by_pass \
-                and self.WS_ON \
-                and hasattr(self, 'ws_data') \
-                and self.ws_data is not None\
-                and self.ws_data.get_status() == "On":
+        if (
+                not by_pass
+                and self.WS_ON
+                and getattr(self, "ws_data", None) is not None
+                and getattr(self, "ws_client", None) is not None
+                and self.ws_client.get_status() == "On"
+        ):
             usdt_equity, _ = self.ws_get_usdt_equity_available()
             if usdt_equity is not None:
                 return float(usdt_equity)
@@ -1189,7 +1221,13 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
     @authentication_required
     def get_value(self, symbol, by_pass=False):
-        if not by_pass and self.WS_ON:
+        if (
+                not by_pass
+                and self.WS_ON
+                and getattr(self, "ws_data", None) is not None
+                and getattr(self, "ws_client", None) is not None
+                and self.ws_client.get_status() == "On"
+        ):
             ws_value = self.ws_get_value(symbol)
             if ws_value != None:
                 return ws_value
@@ -1218,7 +1256,13 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         return self.ws_data.get_values(symbols)
 
     def get_values(self, symbols, by_pass=False):
-        if not by_pass and self.WS_ON:
+        if (
+                not by_pass
+                and self.WS_ON
+                and getattr(self, "ws_data", None) is not None
+                and getattr(self, "ws_client", None) is not None
+                and self.ws_client.get_status() == "On"
+        ):
             self.df_prices = self.ws_get_values(symbols)
             if self.df_prices is not None:
                 return self.df_prices

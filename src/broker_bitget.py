@@ -81,7 +81,7 @@ class BrokerBitGet(broker.Broker):
     def log_info(self):
         info = ""
         info += "{}".format(type(self).__name__)
-        cash, _, _ = self.get_available_cash()
+        _, cash = self.get_usdt_equity_available()
         info += "\nCash : $ {}".format(utils.KeepNDecimals(cash, 2))
         return info
 
