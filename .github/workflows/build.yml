@@ -27,6 +27,13 @@ jobs:
           pip install -r requirements.txt
           
           sudo apt install -y build-essential libta-lib-dev
+          wget https://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz ta-lib-0.4.0-src.tar.gz
+          cd ta-lib
+          ./configure --prefix=/usr
+          make
+          sudo make install
+          cd ..
+          
           wget https://github.com/ta-lib/ta-lib/releases/download/v0.6.4/ta-lib_0.6.4_amd64.deb
           sudo dpkg -i ta-lib_0.6.4_amd64.deb
           pip install TA-Lib
