@@ -125,8 +125,6 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
         self.WS_ON = True
         if self.WS_ON:
-            self.trigger_BitgetWsClient(self.df_symbols, params["data_description"], api_key, api_secret, api_password)
-            '''
             # Create a thread that targets your function and passes the arguments.
             thread = threading.Thread(
                 target=self.trigger_BitgetWsClient,
@@ -135,7 +133,6 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
             # Start the thread.
             thread.start()
-            '''
 
     def stop(self):
         if hasattr(self, "ws_positions") and self.ws_positions:
