@@ -40,7 +40,7 @@ jobs:
           pip install TA-Lib
           
       - name: Run pytest
-        run: pytest --cov=. --cov-report=xml && coverage xml -i
+        run: pytest --cov=. --cov-report=xml test/ && coverage xml -i
 
       - name: Coverage report
         run: bash <(curl -s https://codecov.io/bash)
