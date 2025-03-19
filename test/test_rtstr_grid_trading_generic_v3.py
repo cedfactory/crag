@@ -46,7 +46,7 @@ class TestRTSTRGridTradingLong:
         assert (strategy.SL == 0)
         assert (strategy.TP == 0)
         assert (strategy.MAX_POSITION == 1)
-        assert (strategy.match_full_position == False)
+        assert (strategy.match_full_position is False)
 
     def test_get_data_description(self, mocker):
         # context
@@ -78,40 +78,6 @@ class TestRTSTRGridTradingLong:
         assert (isinstance(df, pd.DataFrame))
         assert (any(item in df.columns.to_list() for item in ['symbol', 'stimulus', 'size', 'percent', 'gridzone', 'pos_type']))
         assert (len(df) == 0)
-
-    ''' deprecated
-    def test_get_df_buying_symbols_with_rtctrl(self):
-        # context
-        strategy = rtstr_grid_trading_generic_v3.StrategyGridTradingGenericV3(params={"id": "grid1", "grid_low":"1.", "grid_high":"5.", "nb_grid":"5", "type":"long"})
-        data = {"index": [0, 1], "symbol": ["BTC/USD", "ETH/USD"], "ema_10": [50, 50]}
-        strategy = self._initialize_current_data(strategy, data)
-        strategy.rtctrl.init_cash_value = 100
-        test_rtstr.update_rtctrl(strategy)
-
-        # action
-        df = strategy.get_df_buying_symbols()
-
-        # expectations
-        assert (isinstance(df, pd.DataFrame))
-        print(df.columns.to_list())
-        assert (any(item in df.columns.to_list() for item in ['symbol', 'stimulus', 'size', 'percent', 'gridzone', 'pos_type']))
-        assert (len(df) == 0)
-
-    def test_get_df_selling_symbols(self):
-        # context
-        strategy = rtstr_grid_trading_generic_v3.StrategyGridTradingGenericV3(params={"id": "grid1", "grid_low":"1.", "grid_high":"5.", "nb_grid":"5", "type":"long"})
-        lst_symbols = ["BTC/USD", "ETH/USD"]
-        data = {"index": [0, 1], "symbol": lst_symbols, "ema_10": [50, 50]}
-        strategy = self._initialize_current_data(strategy, data)
-
-        # action
-        df = strategy.get_df_selling_symbols(lst_symbols, None)
-
-        # expectations
-        assert (isinstance(df, pd.DataFrame))
-        assert (any(item in df.columns.to_list() for item in ['symbol', 'stimulus']))
-        assert (len(df) == 0)
-    '''
 
     def test_crag_run(self, mocker):
         return

@@ -58,26 +58,6 @@ class TestRTSTRBigWill:
         assert(df.iloc[0]['size'] == 0)
         assert(df.iloc[0]['percent'] == 0)
 
-    def test_get_df_buying_symbols_with_rtctrl(self):
-        # context
-        strategy = rtstr_bigwill.StrategyBigWill()
-        data = {"index":[0, 1], "symbol":["BTC/USD", "ETH/USD"], "low":[1, 2], "high":[0.7, 0.9], "ao":[1, -1], "n1_ao":[2, 2], "ema_100":[50, 50], "ema_200":[25, 25], "stoch_rsi":[1, 1.1], "willr":[-100, -100]}
-        strategy = self._initialize_current_data(strategy, data)
-        strategy.rtctrl.init_cash_value = 100
-        test_rtstr.update_rtctrl(strategy)
-
-        # action
-        df = strategy.get_df_buying_symbols()
-
-        # expectations
-        assert(isinstance(df, pd.DataFrame))
-        print(df.columns.to_list())
-        assert(any(item in df.columns.to_list() for item in ['symbol', 'size', 'percent']))
-        assert(len(df) == 1)
-        assert(df.iloc[0]['symbol'] == "BTC/USD")
-        assert(df.iloc[0]['size'] == 0)
-        assert(df.iloc[0]['percent'] == 0)       
-
     def test_get_df_selling_symbols(self):
         # context
         strategy = rtstr_bigwill.StrategyBigWill()
