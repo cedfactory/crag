@@ -26,7 +26,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           
-          sudo apt install -y build-essential libta-lib-dev
+          sudo apt install -y build-essential
           wget https://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz ta-lib-0.4.0-src.tar.gz
           cd ta-lib
           ./configure --prefix=/usr
