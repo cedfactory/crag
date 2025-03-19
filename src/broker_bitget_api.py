@@ -24,8 +24,8 @@ import numpy as np
 from concurrent.futures import wait, ALL_COMPLETED, ThreadPoolExecutor, as_completed
 import asyncio
 import gc
-from bitget_ws_data import ws_Data, convert_open_orders_push_list_to_df, convert_triggers_convert_df_to_df
-from client_ws_bitget import BitgetWebSocketClient
+from .bitget_ws_data import ws_Data, convert_open_orders_push_list_to_df, convert_triggers_convert_df_to_df
+from .client_ws_bitget import BitgetWebSocketClient
 import threading
 
 class BrokerBitGetApi(broker_bitget.BrokerBitGet):
@@ -124,7 +124,9 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             self.set_margin_mode_and_leverages()
 
         self.WS_ON = True
-        if not self.WS_ON:
+        if self.WS_ON:
+            self.trigger_BitgetWsClient(self.df_symbols, params["data_description"], api_key, api_secret, api_password)
+            '''
             # Create a thread that targets your function and passes the arguments.
             thread = threading.Thread(
                 target=self.trigger_BitgetWsClient,
@@ -133,6 +135,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
             # Start the thread.
             thread.start()
+            '''
 
     def stop(self):
         if hasattr(self, "ws_positions") and self.ws_positions:
@@ -2098,15 +2101,16 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             print(f"Error: {response.status_code}, {response.text}")
             return None, None, None, None
 
-    def trigger_BitgetWsClient(self, df_ticker_symbols, API_KEY, API_SECRET, API_PASSPHRASE):
+    def trigger_BitgetWsClient(self, df_ticker_symbols, data_description, API_KEY, API_SECRET, API_PASSPHRASE):
         # ticker_symbols = [symbol + "USDT" for symbol in set(df_ticker_symbols["symbol"])]
         ticker_symbols = [symbol.replace("_UMCBL", "") for symbol in set(df_ticker_symbols["symbol"])] # CEDE DODGY USE GET_SYMBOL
 
-        params = { "tickers": ticker_symbols,
-                   "api_key": API_KEY,
-                   "api_secret": API_SECRET,
-                   "api_passphrase": API_PASSPHRASE,
-                   }
+        params = {"tickers": ticker_symbols,
+                  "data_description": data_description,
+                  "api_key": API_KEY,
+                  "api_secret": API_SECRET,
+                  "api_passphrase": API_PASSPHRASE,
+                  }
         self.ws_client = bitget_ws_account_tickers.FDPWSAccountTickers(params)
 
         df_triggers_histo = self.get_all_triggers(by_pass=True)

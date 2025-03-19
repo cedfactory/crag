@@ -137,11 +137,12 @@ def get_crag_params_from_configuration(configuration):
     params_strategy = configuration["strategy"]
     strategy_name = params_strategy.get("name", "")
     available_strategies = rtstr.RealTimeStrategy.get_strategies_list()
+    lst_data_description = []
     if strategy_name in available_strategies:
         my_strategy = rtstr.RealTimeStrategy.get_strategy_from_name(strategy_name, params_strategy)
         if my_strategy.get_strategy_type() == "INTERVAL":
             lst_data_description = my_strategy.get_data_description(["1m", "5m", "15m", "30m", "1h"])
-            lst_ws_params = utils.reduce_data_description(lst_data_description)
+            lst_data_description = utils.reduce_data_description(lst_data_description)
     else:
         print("💥 unknown strategy ({})".format(strategy_name))
         print("available strategies : ", available_strategies)
@@ -149,6 +150,7 @@ def get_crag_params_from_configuration(configuration):
 
     my_broker = None
     params_broker = configuration["broker"]
+    params_broker["data_description"] = lst_data_description
     broker_name = params_broker.get("name", "")
     if broker_name == "simulator" or broker_name == "simulation" or broker_name == "simu":
         my_broker = broker_simulation.SimBroker(params_broker)
