@@ -1,7 +1,8 @@
 import pandas as pd
 import time
+import threading
 
-class ws_Data:
+class WS_Account_Data:
     def __init__(self, df_open_positions=None, df_open_orders=None, df_triggers=None, dct_account=None,
                  dct_prices=None):
         """
@@ -79,7 +80,10 @@ class ws_Data:
 
         self.verbose = False
 
+        self.ws_triggers = self.ws_open_orders = self.ws_open_positions = self.ws_account = self.ws_prices = False
+
     def set_ws_prices(self, dct_ticker_prices):
+        self.ws_prices = True
         if dct_ticker_prices:
             self._df_prices = pd.DataFrame.from_dict(dct_ticker_prices,
                                                      orient='index').reset_index(drop=True)
@@ -91,6 +95,7 @@ class ws_Data:
             print("\n")
 
     def set_ws_account(self, dct_account):
+        self.ws_account = True
         self._dct_account = dct_account
         if self.verbose:
             print("\nself.dct_account:")
@@ -98,6 +103,7 @@ class ws_Data:
             print("\n")
 
     def set_ws_open_positions(self, df_open_positions):
+        self.ws_open_positions = True
         if not df_open_positions.empty:
             # 1) Add current timestamp to the incoming rows
             current_timestamp = time.time()
@@ -120,6 +126,7 @@ class ws_Data:
             print("\n")
 
     def set_ws_open_orders(self, df_open_orders):
+        self.ws_open_orders = True
         if not df_open_orders.empty:
             # 1) Add current timestamp to the incoming rows
             current_timestamp = time.time()
@@ -142,6 +149,7 @@ class ws_Data:
             print("\n")
 
     def set_ws_triggers(self, df_triggers):
+        self.ws_triggers = True
         if not df_triggers.empty:
             # 1) Add current timestamp to the incoming rows
             current_timestamp = time.time()
@@ -167,39 +175,53 @@ class ws_Data:
     # Accessor functions (getters)
     def get_ws_open_positions(self):
         """Return the open positions DataFrame."""
-        return self._df_open_positions.drop("timestamp", axis=1)
+        return {"type": "OPEN_POSITIONS", "data": self._df_open_positions.drop("timestamp", axis=1).to_dict()}
 
     def get_ws_open_orders(self):
         """Return the open orders DataFrame."""
-        return self._df_open_orders
+        return {"type": "OPEN_ORDERS", "data": self._df_open_orders.drop("timestamp", axis=1).to_dict()}
 
     def get_ws_triggers(self):
         """Return the triggers DataFrame."""
-        return self._df_triggers.drop("timestamp", axis=1)
+        return {"type": "TRIGGERS", "data": self._df_triggers.drop("timestamp", axis=1).to_dict()}
 
     def get_ws_account(self):
         """Return the account dictionary."""
-        return self._dct_account
+        return {"type": "ACCOUNT",
+                    "data": self._dct_account}
 
     def get_ws_prices(self):
+        """Return the prices DataFrame."""
+        self._df_prices["symbols"] = self._df_prices["symbols"].str.replace("USDT", "", regex=False)
+        return {"type": "PRICES",
+                "data": self._df_prices.to_dict()}
+
+    def get_ws_df_prices(self):
         """Return the prices DataFrame."""
         return self._df_prices
 
     def get_usdt_equity_available(self):
-        return self._dct_account["usdtEquity"], self._dct_account["available"]
+        return {
+            "type": "USDT_EQUITY_AVAILABLE",
+            "usdtEquity": self._dct_account["usdtEquity"],
+            "available": self._dct_account["available"]
+        }
 
     def get_value(self, symbol):
-        try:
-            matching_rows = self._df_prices[self._df_prices['symbols'] == symbol.replace('_UMCBL', "")]
-        except:
-            print("toto")
+        if not symbol.endswith("USDT"):
+            symbol += "USDT"
+        matching_rows = self._df_prices[self._df_prices['symbols'] == symbol.replace('_UMCBL', "")]
 
         # Check if any rows were found; if not, return None.
         if matching_rows.empty:
             return None
 
         # Return the first matching value from the 'values' column.
-        return float(matching_rows['values'].iloc[0])
+        return {
+            "type": "PRICE",
+            "symbol": symbol,
+            "value": float(matching_rows['values'].iloc[0])
+        }
 
     def get_values(self, symbols):
         df_prices = self._df_prices.copy()
@@ -212,7 +234,17 @@ class ws_Data:
             return None
 
         # Return only rows with symbols that are in the provided list.
-        return df_prices[df_prices['symbols'].isin(symbols)]
+        return {
+            "type": "PRICE",
+            "value": df_prices[df_prices['symbols'].isin(symbols)]
+        }
+
+    def get_data_status(self):
+        return self.ws_triggers \
+               and self.ws_open_orders \
+               and self.ws_open_positions \
+               and self.ws_account \
+               and self.ws_prices
 
 # DATA UTILS
 # CEDE TO BE MOVED TO UTILS OR NOT...
@@ -330,6 +362,8 @@ def get_v1_side_and_trade_side(push_order: dict) -> dict:
 
     return {"side": v1_side, "tradeSide": v1_trade_side}
 
+# Order ws: https://www.bitget.com/api-doc/contract/websocket/private/Order-Channel
+# Order API REST: https://bitgetlimited.github.io/apidoc/en/mix/#get-open-order
 def convert_open_order_push_to_response(push_order: dict) -> dict:
     reduce_only = push_order.get("reduceOnly", "")
     mapping_reduce_only = {
@@ -356,25 +390,26 @@ def convert_open_order_push_to_response(push_order: dict) -> dict:
 
     return {
         "symbol": push_order.get("instId", ""),
+        "price": float(push_order.get("price", "")),
+        "side": result_side.get("side", ""),
         "size": float(push_order.get("size", "")),
-        "orderId": push_order.get("orderId", ""),
+        "leverage": float(push_order.get("leverage", "")),
+        "marginCoin": push_order.get("marginCoin", ""),
+        "marginMode": push_order.get("marginMode", ""),
         "clientOid": push_order.get("clientOid", ""),
+        "orderId": push_order.get("orderId", ""),
+
         "filledQty": float(push_order.get("accBaseVolume", "")),
         "fee": float(push_order.get("fillFee", "")),
-        "price": float(push_order.get("price", "")),
         "priceAvg": float(push_order.get("priceAvg", "")),
         "state": push_order.get("status", ""),
         "posSide": push_order.get("posSide", ""),
         "reduceOnly": mapping_reduce_only.get(reduce_only, reduce_only),
         "holdMode": holdMode,
-        "side": result_side.get("side", ""),
         "tradeSide": result_side.get("tradeSide", ""),
         "timeInForce": push_order.get("force", ""),
         "totalProfits": float(push_order.get("totalProfits", "")),
-        "marginCoin": push_order.get("marginCoin", ""),
         "filledAmount": float(push_order.get("fillNotionalUsd", "")),
-        "leverage": float(push_order.get("leverage", "")),
-        "marginMode": push_order.get("marginMode", ""),
         "enterPointSource": push_order.get("enterPointSource", ""),
         "orderType": push_order.get("orderType", ""),
         "orderSource": push_order.get("enterPointSource", ""),
@@ -388,12 +423,36 @@ def convert_open_orders_push_list_to_df(df):
     with columns matching the GET /api/mix/v1/order/current response structure.
 
     If lst is None, return an empty DataFrame with the same columns.
+
+    ws: https://www.bitget.com/api-doc/contract/websocket/private/Order-Channel
+    API REST: GET /api/mix/v1/order/current
     """
-    columns = [
-        "symbol", "size", "orderId", "clientOid", "notional", "orderType", "force", "side",
-        "fillPrice", "tradeId", "baseVolume", "accBaseVolume", "fillTime", "priceAvg", "status",
-        "cTime", "uTime", "stpMode", "feeDetail", "enterPointSource", "tradeSide", "orderSource",
-        "leverage"
+    columns =[
+        "symbol",
+        "price",
+        "side",
+        "size",
+        "leverage",
+        "marginCoin",
+        "marginMode",
+        "clientOid",
+        "orderId",
+        "filledQty",
+        "fee",
+        "priceAvg",
+        "state",
+        "posSide",
+        "reduceOnly",
+        "holdMode",
+        "tradeSide",
+        "timeInForce",
+        "totalProfits",
+        "filledAmount",
+        "enterPointSource",
+        "orderType",
+        "orderSource",
+        "cTime",
+        "uTime"
     ]
 
     if df is None:

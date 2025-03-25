@@ -1,13 +1,13 @@
-from . import broker, rtdp, utils
+import broker, rtdp, utils
 import pandas as pd
 import re
 import json
 from collections import defaultdict
-from . bitget import exceptions
+from bitget import exceptions
 from concurrent.futures import wait, ALL_COMPLETED, ThreadPoolExecutor
 import threading
 import math
-#import utils
+from src import utils
 
 class BrokerBitGet(broker.Broker):
     def __init__(self, params = None):
@@ -1347,46 +1347,6 @@ class BrokerBitGet(broker.Broker):
                                                   "liquidationPrice": float(data["liquidationPrice"]),
                                                   "totalFee": float(data["totalFee"])
                                                   })
-        return df_open_positions
-
-    def _build_df_open_positions_ws(self, df_open_positions, df_price):
-        lst_open_positions_columns = ["symbol", "holdSide", "leverage", "marginCoin",
-                                      "available", "total", "usdtEquity",
-                                      "marketPrice", "averageOpenPrice",
-                                      "achievedProfits", "unrealizedPL", "liquidationPrice"]
-        if df_price.empty \
-                or df_open_positions is None \
-                or df_open_positions.empty:
-            return pd.DataFrame(columns=lst_open_positions_columns)
-
-        df_open_positions = df_open_positions.copy()
-        df_open_positions.rename(columns={'instId': 'symbol'}, inplace=True)
-        df_open_positions.rename(columns={'openPriceAvg': 'averageOpenPrice'}, inplace=True)
-
-        # Set the 'symbols' column as the index (if it's unique)
-        df_indexed = df_price.set_index('symbols')
-        for symbol in df_open_positions["symbol"].to_list():
-            if symbol in df_indexed.index.to_list():
-                df_open_positions["marketPrice"] = float(df_indexed.loc[symbol, 'values'])
-            else:
-                df_open_positions["marketPrice"] = 0
-        df_open_positions["usdtEquity"] = df_open_positions["marketPrice"] * df_open_positions["total"].astype(float)
-
-        float_columns = ["leverage", "available", "total",
-                         "marketPrice", "averageOpenPrice",
-                         "achievedProfits", "unrealizedPL",
-                         "liquidationPrice", "totalFee"]
-
-        for column in float_columns:
-            df_open_positions[column] = df_open_positions[column].astype(float)
-
-        df_open_positions["leverage"] = df_open_positions["leverage"].astype(int)
-        df_open_positions["symbol"] = df_open_positions["symbol"] + "_UMCBL"
-
-        for column in lst_open_positions_columns:
-            if column not in df_open_positions.columns:
-                print("missing column:", column)
-
         return df_open_positions
 
     def _build_df_open_orders(self, open_orders):

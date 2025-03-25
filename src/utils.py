@@ -344,6 +344,8 @@ def fdp_request_post(url, params, fdp_id):
 
     if True:
         fdp_url = "http://192.168.1.205:5000/" # CEDE DEBUG
+        # fdp_url_id = "http://192.168.1.205:5000"
+        fdp_url = "https://fdp-1052915265688.europe-west9.run.app/"
 
     if not fdp_url or fdp_url == "":
         return {"status":"ko", "info":"fdp url not found"}
@@ -355,8 +357,8 @@ def fdp_request_post(url, params, fdp_id):
         try:
             # response = requests.post(fdp_url+'/'+url, json=params)
             with requests.post(fdp_url+'/'+url, json=params) as response:
-                # print("Sent URL:", response.request.url)                       # CEDE DEBUG
-                # print("Sent JSON params (body):", response.request.body)       # CEDE DEBUG
+                print("Sent URL:", response.request.url)                       # CEDE DEBUG
+                print("Sent JSON params (body):", response.request.body)       # CEDE DEBUG
                 pass
             response.close()
             if response.status_code == 200:
@@ -371,11 +373,6 @@ def fdp_request_post(url, params, fdp_id):
             n_attempts = n_attempts - 1
             print('FDP ERROR : ', reason)
             del reason
-    del params
-    del n_attempts
-    del fdp_url
-    del fdp_id
-    del response
     return final_result
 
 def normalize(df):
@@ -573,3 +570,50 @@ def normalize(d):
         if "param" in nd:
             nd["inst_id"] = nd.pop("param")
     return nd
+
+def trim_symbol(symbol: str) -> str:
+    # First check for the longer suffix to avoid partial matches.
+    if symbol.endswith("USDT_UMCBL"):
+        return symbol[:-len("USDT_UMCBL")]
+    elif symbol.endswith("USDT"):
+        return symbol[:-len("USDT")]
+    return symbol
+
+
+def transform_dict_to_dataframe(msg):
+    """
+    Transform a dictionary message back into a pandas DataFrame.
+
+    Expects a message of the format:
+    {
+        'type': 'dict',
+        'content': {
+            'type': 'TRIGGERS',  # or another type identifier
+            'data': {           # dictionary of columns, each containing a dict of index:value
+                'planType': {0: 'normal_plan', 1: 'loss_plan'},
+                'symbol': {0: 'XRPUSDT', 1: 'XRPUSDT'},
+                ...
+            }
+        }
+    }
+
+    Returns:
+        pd.DataFrame: DataFrame constructed from the nested 'data' dictionary.
+    """
+    # Verify the input is a dictionary.
+    if not isinstance(msg, dict):
+        raise ValueError("Input message must be a dictionary.")
+
+    # Extract the 'content' section.
+    content = msg.get("content")
+    if content is None:
+        raise ValueError("Message does not contain a 'content' key.")
+
+    # Extract the 'data' part inside 'content'.
+    data = content.get("data")
+    if data is None:
+        raise ValueError("Content does not contain a 'data' key.")
+
+    # Convert the dictionary to a DataFrame.
+    df = pd.DataFrame(data)
+    return df

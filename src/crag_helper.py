@@ -166,7 +166,7 @@ def get_crag_params_from_configuration(configuration):
 
     my_broker = None
     params_broker = configuration["broker"]
-    params_broker["data_description"] = lst_data_description
+    params_broker["ws_data_description"] = lst_data_description
     broker_name = params_broker.get("name", "")
     if broker_name == "simulator" or broker_name == "simulation" or broker_name == "simu":
         my_broker = broker_simulation.SimBroker(params_broker)

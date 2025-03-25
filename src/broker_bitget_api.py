@@ -1,20 +1,20 @@
 import math
 
-from .bitget.mix import market_api as market
-from .bitget.mix import account_api as account
-from .bitget.mix import position_api as position
-from .bitget.mix import order_api as order
-from .bitget.mix import plan_api as plan
-from .bitget.spot import public_api as public
-from .bitget import exceptions
-from .bitget.mix_v2 import order_api as orderV2
-from .bitget.mix_v2 import account_api as accountV2
-from .fdp.src import bitget_ws_positions, bitget_ws_account_tickers
+from bitget.mix import market_api as market
+from bitget.mix import account_api as account
+from bitget.mix import position_api as position
+from bitget.mix import order_api as order
+from bitget.mix import plan_api as plan
+from bitget.spot import public_api as public
+from bitget import exceptions
+from bitget.mix_v2 import order_api as orderV2
+from bitget.mix_v2 import account_api as accountV2
+from bitget_ws import bitget_ws_account_tickers
 
-from .bitget_ws.bitget_ws import BitgetWsClient
+# from .bitget_ws.bitget_ws import BitgetWsClient
 
-from . import broker_bitget
-from . import utils
+import broker_bitget
+import utils
 from datetime import datetime
 import time
 import os, shutil
@@ -22,11 +22,9 @@ import json
 import pandas as pd
 import numpy as np
 from concurrent.futures import wait, ALL_COMPLETED, ThreadPoolExecutor, as_completed
-import asyncio
-import gc
-from .bitget_ws_data import ws_Data, convert_open_orders_push_list_to_df, convert_triggers_convert_df_to_df
-from .client_ws_bitget import BitgetWebSocketClient
-import threading
+from zed_client import ZMQClient
+
+import ws_utils
 
 class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     def __init__(self, params = None):
@@ -40,7 +38,6 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         self.planApi = None
         self.positionV2Api = None
         self.orderV2Api = None
-        self.ws_positions = None
 
         self.failure = 0
         self.success = 0
@@ -89,10 +86,6 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             self.planApi = plan.PlanApi(api_key, api_secret, api_password, use_server_time=False, first=False)
             self.orderV2Api = orderV2.OrderApi(api_key, api_secret, api_password, use_server_time=False, first=False)
             self.accountV2Api = accountV2.AccountApi(api_key, api_secret, api_password, use_server_time=False, first=False)
-            params["api_key"] = api_key
-            params["api_secret"] = api_secret
-            params["api_passphrase"] = api_password
-            self.ws_positions = bitget_ws_positions.FDPWSPositions(params)
 
         # initialize the public api
         self.publicApi = public.PublicApi(api_key, api_secret, api_password, use_server_time=False, first=False)
@@ -123,24 +116,9 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             self.df_symbols["symbol"] = self.df_symbols.apply(lambda row: self._get_symbol(row["symbol"]), axis=1)
             self.set_margin_mode_and_leverages()
 
-        self.WS_ON = True
-        if self.WS_ON:
-            # Create a thread that targets your function and passes the arguments.
-            thread = threading.Thread(
-                target=self.trigger_BitgetWsClient,
-                args=(self.df_symbols, api_key, api_secret, api_password)
-            )
-
-            # Start the thread.
-            thread.start()
-
-    def stop(self):
-        if hasattr(self, "ws_positions") and self.ws_positions:
-            self.ws_positions.stop()
-
-    def __del__(self):
-        if hasattr(self, "ws_positions") and self.ws_positions:
-            self.ws_positions.stop()
+        self.zed = False
+        print("Client is running...")
+        self.zed_ws_client = ZMQClient(server_address="tcp://localhost:5555", timeout=10)  # using 10ms timeout
 
     def log_api_failure(self, function, e, n_attempts=0):
         self.failure += 1
@@ -222,42 +200,69 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     def get_open_position(self, by_pass=False):
         if (
                 not by_pass
-                and self.WS_ON
-                and getattr(self, "ws_data", None) is not None
-                and getattr(self, "ws_client", None) is not None
-                and self.ws_client.get_status() == "On"
+                and self.get_zed_status()
         ):
-            return self.ws_get_open_position()
-        else:
-            if self.get_cache_status():
-                df_from_cache = self.requests_cache_get("get_open_position")
-                if isinstance(df_from_cache, pd.DataFrame):
-                    return df_from_cache.copy()
-            res = pd.DataFrame()
-            n_attempts = 3
-            while n_attempts > 0:
-                try:
-                    all_positions = self.positionApi.all_position(productType='umcbl',marginCoin='USDT')
-                    lst_all_positions = [data for data in all_positions["data"] if float(data["total"]) != 0.]
-                    res = self._build_df_open_positions(lst_all_positions)
-                    del all_positions["data"]
-                    del all_positions
-                    del lst_all_positions
-                    self.success += 1
-                    break
-                except (exceptions.BitgetAPIException, Exception) as e:
-                    self.log_api_failure("positionApi.all_position", e, n_attempts)
-                    time.sleep(0.2)
-                    n_attempts = n_attempts - 1
-            del n_attempts
-            if self.get_cache_status():
-                self.requests_cache_set("get_open_position", res.copy())
-            return res
+            df_open_position = self.ws_get_open_position()
+            if not (df_open_position is None
+                    and isinstance(df_open_position, pd.DataFrame)):
+                return df_open_position
+
+        if self.get_cache_status():
+            df_from_cache = self.requests_cache_get("get_open_position")
+            if isinstance(df_from_cache, pd.DataFrame):
+                return df_from_cache.copy()
+        res = pd.DataFrame()
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                all_positions = self.positionApi.all_position(productType='umcbl',marginCoin='USDT')
+                lst_all_positions = [data for data in all_positions["data"] if float(data["total"]) != 0.]
+                res = self._build_df_open_positions(lst_all_positions)
+                del all_positions["data"]
+                del all_positions
+                del lst_all_positions
+                self.success += 1
+                break
+            except (exceptions.BitgetAPIException, Exception) as e:
+                self.log_api_failure("positionApi.all_position", e, n_attempts)
+                time.sleep(0.2)
+                n_attempts = n_attempts - 1
+        del n_attempts
+        if self.get_cache_status():
+            self.requests_cache_set("get_open_position", res.copy())
+        return res
 
     def ws_get_open_position(self):
-        return self.ws_data.get_ws_open_positions()
+        df = self.get_zed_ws_data(request="OPEN_POSITIONS")
+        if isinstance(df, pd.DataFrame) \
+                and "averageOpenPrice" in df.columns \
+                and "total" in df.columns \
+                and "marginCoin" in df.columns \
+                and "available" in df.columns:
+            return df
+        return None
 
-    def get_open_position_v2(self):
+    def ws_get_open_position_v2(self):
+        df = self.get_zed_ws_data(request="OPEN_POSITIONS")
+        if isinstance(df, pd.DataFrame) \
+                and "averageOpenPrice" in df.columns \
+                and "total" in df.columns \
+                and "marginCoin" in df.columns \
+                and "available" in df.columns:
+            df["symbol"] = df["symbol"].str.replace("_UMCBL", "", regex=False)
+            return df
+        return None
+
+    def get_open_position_v2(self, by_pass=False):
+        if (
+                not by_pass
+                and self.get_zed_status()
+        ):
+            df_open_position = self.ws_get_open_position_v2()
+            if not (df_open_position is None
+                    and isinstance(df_open_position, pd.DataFrame)):
+                return df_open_position
+
         if self.get_cache_status():
             df_from_cache = self.requests_cache_get("get_open_position_v2")
             if isinstance(df_from_cache, pd.DataFrame):
@@ -287,8 +292,33 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             self.requests_cache_set("get_open_position_v2", res.copy())
         return res
 
+    def ws_get_open_orders(self, symbols):
+        # Fetch the orders data
+        df = self.get_zed_ws_data(request="OPEN_ORDERS")
+
+        # Check if the dataframe is valid and has required columns
+        if (isinstance(df, pd.DataFrame) and
+                all(col in df.columns for col in ["symbol", "size", "orderId", "side"])):
+            # Precompute the trimmed symbols from the input list
+            trimmed_symbols = {ws_utils.trim_symbol(s) for s in symbols}
+
+            # Filter the dataframe by checking if the trimmed symbol of each row is in the trimmed_symbols set
+            filtered_df = df[df["symbol"].apply(lambda s: ws_utils.trim_symbol(s) in trimmed_symbols)]
+
+            return filtered_df
+        return None
+
     # @authentication_required
-    def get_open_orders(self, symbols):
+    def get_open_orders(self, symbols, by_pass=False):
+        if (
+                not by_pass
+                and self.get_zed_status()
+        ):
+            df_open_position = self.ws_get_open_orders(symbols)
+            if not (df_open_position is None
+                    and isinstance(df_open_position, pd.DataFrame)):
+                return df_open_position
+
         res = pd.DataFrame()
         for symbol in symbols:
             n_attempts = 3
@@ -390,72 +420,76 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     def get_all_triggers(self, by_pass=False):
         if (
                 not by_pass
-                and self.WS_ON
-                and getattr(self, "ws_data", None) is not None
-                and getattr(self, "ws_client", None) is not None
-                and self.ws_client.get_status() == "On"
+                and self.get_zed_status()
         ):
-            return self.ws_get_all_triggers()
+            df_triggers = self.ws_get_all_triggers()
+            if not (df_triggers is None
+                    and isinstance(df_triggers, pd.DataFrame)):
+                return df_triggers
+
+        lst_df_triggers = []
+        with ThreadPoolExecutor() as executor:
+            futures = []
+            for plan_type in ["normal_plan", "track_plan", "profit_loss"]:
+                futures.append(executor.submit(self.get_triggers, plan_type))
+
+            wait(futures, timeout=1000, return_when=ALL_COMPLETED)
+
+            for future in futures:
+                lst_df_triggers.append(future.result())
+
+        df_triggers = pd.concat(lst_df_triggers).reset_index(drop=True)
+
+        merged = pd.merge(self.df_triggers_previous, df_triggers, on='orderId', suffixes=('_previous', '_current'),
+                          how='outer', indicator=True)
+
+        previous_columns = [col for col in merged.columns if col.endswith('_previous')]
+        current_columns = [col.replace('_previous', '_current') for col in previous_columns]
+
+        disappeared = merged[merged['_merge'] == 'left_only']
+
+        df_disappeared = disappeared[['orderId'] + previous_columns].rename(
+            columns={col: col.replace('_previous', '') for col in previous_columns})
+
+        # CEDE: df_differences should not happen tbc
+        if len(df_disappeared) > 0:
+            # Replace the values in the 'planType' column based on the mapping dictionary
+            df_disappeared['planType'] = df_disappeared['planType'].replace(self.plan_mapping)
+
+            self.plan_history_list = []
+            self.add_plan_history(df_disappeared)
+
+            if len(self.plan_history_list) == len(df_disappeared):
+                if self.plan_history_list:
+                    df_plan_history = pd.concat(self.plan_history_list, ignore_index=True)
+                    self.plan_history_list = []
+
+                    df_plan_history = df_plan_history.sort_values(by='orderId')
+                    df_disappeared = df_disappeared.sort_values(by='orderId')
+
+                    if 'executeOrderId' in df_plan_history.columns and 'planStatus' in df_plan_history.columns:
+                        df_disappeared['executeOrderId'] = df_plan_history['executeOrderId'].tolist()
+                        df_disappeared['planStatus'] = df_plan_history['planStatus'].tolist()
+
+                    self.df_triggers_previous = df_triggers
+                    df_triggers = pd.concat([df_triggers, df_disappeared], ignore_index=True)
+
+                    df_filtered = df_triggers[(df_triggers['planStatus'] == 'executed') & (df_triggers['executeOrderId'] != '')]
+                    if len(df_filtered) > 0:
+                        df_filtered.apply(self.apply_func, axis=1)
+                else:
+                    self.df_triggers_previous = df_triggers
         else:
-            lst_df_triggers = []
-            with ThreadPoolExecutor() as executor:
-                futures = []
-                for plan_type in ["normal_plan", "track_plan", "profit_loss"]:
-                    futures.append(executor.submit(self.get_triggers, plan_type))
+            self.df_triggers_previous = df_triggers
 
-                wait(futures, timeout=1000, return_when=ALL_COMPLETED)
-
-                for future in futures:
-                    lst_df_triggers.append(future.result())
-
-            df_triggers = pd.concat(lst_df_triggers).reset_index(drop=True)
-
-            merged = pd.merge(self.df_triggers_previous, df_triggers, on='orderId', suffixes=('_previous', '_current'),
-                              how='outer', indicator=True)
-
-            previous_columns = [col for col in merged.columns if col.endswith('_previous')]
-            current_columns = [col.replace('_previous', '_current') for col in previous_columns]
-
-            disappeared = merged[merged['_merge'] == 'left_only']
-
-            df_disappeared = disappeared[['orderId'] + previous_columns].rename(
-                columns={col: col.replace('_previous', '') for col in previous_columns})
-
-            # CEDE: df_differences should not happen tbc
-            if len(df_disappeared) > 0:
-                # Replace the values in the 'planType' column based on the mapping dictionary
-                df_disappeared['planType'] = df_disappeared['planType'].replace(self.plan_mapping)
-
-                self.plan_history_list = []
-                self.add_plan_history(df_disappeared)
-
-                if len(self.plan_history_list) == len(df_disappeared):
-                    if self.plan_history_list:
-                        df_plan_history = pd.concat(self.plan_history_list, ignore_index=True)
-                        self.plan_history_list = []
-
-                        df_plan_history = df_plan_history.sort_values(by='orderId')
-                        df_disappeared = df_disappeared.sort_values(by='orderId')
-
-                        if 'executeOrderId' in df_plan_history.columns and 'planStatus' in df_plan_history.columns:
-                            df_disappeared['executeOrderId'] = df_plan_history['executeOrderId'].tolist()
-                            df_disappeared['planStatus'] = df_plan_history['planStatus'].tolist()
-
-                        self.df_triggers_previous = df_triggers
-                        df_triggers = pd.concat([df_triggers, df_disappeared], ignore_index=True)
-
-                        df_filtered = df_triggers[(df_triggers['planStatus'] == 'executed') & (df_triggers['executeOrderId'] != '')]
-                        if len(df_filtered) > 0:
-                            df_filtered.apply(self.apply_func, axis=1)
-                    else:
-                        self.df_triggers_previous = df_triggers
-            else:
-                self.df_triggers_previous = df_triggers
-
-            return df_triggers
+        return df_triggers
 
     def ws_get_all_triggers(self):
-        return self.ws_data.get_ws_triggers()
+        df = self.get_zed_ws_data(request="TRIGGERS")
+        required_columns = {"planType", "symbol", "orderId", "planStatus"}
+        if isinstance(df, pd.DataFrame) and required_columns.issubset(df.columns):
+            return df
+        return None
 
     def merge_plan_history(self, df):
         df_plan_history = pd.DataFrame()
@@ -558,16 +592,49 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     def get_nb_order_current_state(self, current_state):
         return len(current_state["open_orders"])
 
+    """
+    When you see “maxOpenPosAvailable” in the WebSocket push, it’s giving you the maximum balance you can use to 
+    open new positions. In the REST API Get Single Account response, you get that information split by margin mode. 
+    For cross‐margin mode you have “crossMaxAvailable” (sometimes shown as “crossedMaxAvailable”) and for isolated 
+    (or fixed) margin mode you have “fixedMaxAvailable” (which in some docs is referred to as “isolatedMaxAvailable”).
+    So depending on your margin mode, maxOpenPosAvailable in WebSocket is essentially the same as:
+        “crossMaxAvailable” when using cross margin, or
+        “fixedMaxAvailable” when using isolated/fixed margin.
+    """
+    def get_account_maxOpenPosAvailable(self, by_pass=False):
+        if (
+                not by_pass
+                and self.get_zed_status()
+        ):
+            maxOpenPosAvailable = self.ws_get_account_maxOpenPosAvailable()
+            if maxOpenPosAvailable is not None:
+                return maxOpenPosAvailable
+
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                account_equity = self.positionApi.account(symbol='BTCUSDT_UMCBL',marginCoin='USDT')
+                self.success += 1
+                break
+            except (exceptions.BitgetAPIException, Exception) as e:
+
+                self.log_api_failure("positionApi.account", e, n_attempts)
+                time.sleep(0.2)
+                n_attempts = n_attempts - 1
+        maxOpenPosAvailable = account_equity['data']['crossMaxAvailable']  # MODIF CEDE SEE TEXT ABOVE
+        del account_equity['data']
+        del account_equity
+        return maxOpenPosAvailable
+
     #@authentication_required
     def get_account_equity(self, by_pass=False):
         if (
                 not by_pass
-                and self.WS_ON
-                and getattr(self, "ws_data", None) is not None
-                and getattr(self, "ws_client", None) is not None
-                and self.ws_client.get_status() == "On"
+                and self.get_zed_status()
         ):
-            return self.ws_get_account_equity()
+            account_equity = self.ws_get_account_equity()
+            if account_equity is not None:
+                return account_equity
 
         n_attempts = 3
         while n_attempts > 0:
@@ -589,12 +656,11 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     def get_account_available(self, by_pass=False):
         if (
                 not by_pass
-                and self.WS_ON
-                and getattr(self, "ws_data", None) is not None
-                and getattr(self, "ws_client", None) is not None
-                and self.ws_client.get_status() == "On"
+                and self.get_zed_status()
         ):
-            return self.ws_get_account_available()
+            account_available = self.ws_get_account_available()
+            if account_available is not None:
+                return account_available
 
         n_attempts = 3
         while n_attempts > 0:
@@ -609,25 +675,26 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         return account_equity['data']['available']
 
     def ws_get_account_equity(self):
-        return self.ws_current_state["account"]["usdtEquity"]
+        data = self.get_zed_ws_data(request="ACCOUNT")
+        if isinstance(data, dict) and data.get("type") == "ACCOUNT":
+            usdt_equity = data.get("usdtEquity")
+            return float(usdt_equity) if usdt_equity is not None else None
+        return None
 
     def ws_get_account_available(self):
-        return self.ws_current_state["account"]["available"]
+        data = self.get_zed_ws_data(request="ACCOUNT")
+        if isinstance(data, dict) and data.get("type") == "ACCOUNT":
+            available = data.get("available")
+            return float(available) if available is not None else None
+        return None
 
     def ws_get_account_maxOpenPosAvailable(self):
-        return self.ws_current_state["account"]["maxOpenPosAvailable"]
+        data = self.get_zed_ws_data(request="ACCOUNT")
+        if isinstance(data, dict) and data.get("type") == "ACCOUNT":
+            maxOpenPosAvailable = data.get("maxOpenPosAvailable")
+            return float(maxOpenPosAvailable) if maxOpenPosAvailable is not None else None
+        return None
 
-    '''
-    marginCoin: Deposit currency
-    size: It is quantity when the price is limited. The market price is the limit. The sales is the quantity
-    side \\in {open_long, open_short, close_long, close_short}
-    orderType \\in {limit(fixed price), market(market price)}
-    returns :
-    - transaction_id
-    - transaction_price
-    - transaction_size
-    - transaction_fee
-    '''
     @authentication_required
     def _place_order_api(self, symbol, marginCoin, size, side, orderType, clientOId, price='',
                          presetTakeProfitPrice='',
@@ -1073,14 +1140,11 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     def get_usdt_equity_available(self, by_pass=False):
         if (
                 not by_pass
-                and self.WS_ON
-                and getattr(self, "ws_data", None) is not None
-                and getattr(self, "ws_client", None) is not None
-                and self.ws_client.get_status() == "On"
+                and self.get_zed_status()
         ):
             usdt_equity, available = self.ws_get_usdt_equity_available()
             if usdt_equity is not None and available is not None:
-                return float(usdt_equity), float(available)
+                return usdt_equity, available
 
         self.df_account_assets = None  # reset self.df_account_assets
         n_attempts = 3
@@ -1101,20 +1165,26 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         return None, None
 
     def ws_get_usdt_equity_available(self):
-        return self.ws_data.get_usdt_equity_available()
+        data = self.get_zed_ws_data(request="USDT_EQUITY_AVAILABLE")
+        if isinstance(data, dict) and data.get("type") == "USDT_EQUITY_AVAILABLE":
+            usdt_equity = data.get("usdtEquity")
+            available = data.get("available")
+            if usdt_equity is not None and available is not None:
+                return float(usdt_equity), float(available)
+        return None
 
     @authentication_required
     def get_usdt_equity(self, by_pass=False):
         if (
                 not by_pass
-                and self.WS_ON
-                and getattr(self, "ws_data", None) is not None
-                and getattr(self, "ws_client", None) is not None
-                and self.ws_client.get_status() == "On"
+                and self.get_zed_status()
         ):
-            usdt_equity, _ = self.ws_get_usdt_equity_available()
+            try:
+                usdt_equity, _ = self.ws_get_usdt_equity_available()
+            except:
+                print("toto")
             if usdt_equity is not None:
-                return float(usdt_equity)
+                return usdt_equity
 
         self.df_account_assets = None  # reset self.df_account_assets
         n_attempts = 3
@@ -1223,10 +1293,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     def get_value(self, symbol, by_pass=False):
         if (
                 not by_pass
-                and self.WS_ON
-                and getattr(self, "ws_data", None) is not None
-                and getattr(self, "ws_client", None) is not None
-                and self.ws_client.get_status() == "On"
+                and self.get_zed_status()
         ):
             ws_value = self.ws_get_value(symbol)
             if ws_value != None:
@@ -1250,18 +1317,35 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         exit(123)
 
     def ws_get_value(self, symbol):
-        return self.ws_data.get_value(symbol)
+        return self.get_zed_ws_data(symbol=symbol, request="PRICE_VALUE")
 
     def ws_get_values(self, symbols):
-        return self.ws_data.get_values(symbols)
+        df = self.get_zed_ws_data(request="PRICES")
+
+        if df is None:
+            return None
+
+        df_prices = df.copy()
+        # Clean the provided symbols list.
+        cleaned_symbols = [ws_utils.trim_symbol(s) for s in symbols]
+
+        # Create a new column in df_prices with cleaned symbols.
+        df_prices['cleaned_symbol'] = df_prices['symbols'].apply(ws_utils.trim_symbol)
+
+        # Determine available symbols in the DataFrame.
+        available_symbols = set(df_prices['cleaned_symbol'])
+
+        # Identify missing symbols.
+        missing_symbols = [s for s in cleaned_symbols if s not in available_symbols]
+        if missing_symbols:
+            return None  # Or you could raise an exception if preferred.
+
+        return df
 
     def get_values(self, symbols, by_pass=False):
         if (
                 not by_pass
-                and self.WS_ON
-                and getattr(self, "ws_data", None) is not None
-                and getattr(self, "ws_client", None) is not None
-                and self.ws_client.get_status() == "On"
+                and self.get_zed_status()
         ):
             self.df_prices = self.ws_get_values(symbols)
             if self.df_prices is not None:
@@ -2098,63 +2182,66 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             print(f"Error: {response.status_code}, {response.text}")
             return None, None, None, None
 
-    def trigger_BitgetWsClient(self, df_ticker_symbols, data_description, API_KEY, API_SECRET, API_PASSPHRASE):
-        # ticker_symbols = [symbol + "USDT" for symbol in set(df_ticker_symbols["symbol"])]
-        ticker_symbols = [symbol.replace("_UMCBL", "") for symbol in set(df_ticker_symbols["symbol"])] # CEDE DODGY USE GET_SYMBOL
+    def get_zed_status(self):
+        request_status = {
+            "action": "INFO",
+            "request": "GET_STATUS",
+        }
 
-        params = {"tickers": ticker_symbols,
-                  "data_description": data_description,
-                  "api_key": API_KEY,
-                  "api_secret": API_SECRET,
-                  "api_passphrase": API_PASSPHRASE,
-                  }
-        self.ws_client = bitget_ws_account_tickers.FDPWSAccountTickers(params)
+        for attempt in range(3):
+            reply = self.zed_ws_client.send_request(request_status)
+            if "error" in reply:
+                print("INFO STATUS", reply)
+            else:
+                if reply.get("type") == "dict":
+                    content = reply.get("content", {})
+                    if content.get("status") == "On":
+                        print("INFO STATUS", reply)
+                        return True
+        return False
 
-        df_triggers_histo = self.get_all_triggers(by_pass=True)
-        df_open_position_histo = self.get_open_position(by_pass=True)
+    def get_zed_ws_data(self, symbol="", request=""):
+        lst_request = [
+            "TRIGGERS",
+            "OPEN_POSITIONS",
+            "OPEN_ORDERS",
+            "ACCOUNT",
+            "PRICES",
+            "USDT_EQUITY_AVAILABLE"
+        ]
 
-        self.ws_data = ws_Data(df_open_positions=df_open_position_histo, df_triggers=df_triggers_histo)
+        lst_df_to_be_transformed = ["TRIGGERS", "OPEN_POSITIONS", "PRICES", "OPEN_ORDERS"]
+        lst_dct = ["USDT_EQUITY_AVAILABLE", "ACCOUNT"]
 
-        while True:
-            time.sleep(0.5)
-            self.ws_current_state = self.ws_client.get_state()
-
-            self.ws_data.set_ws_prices(
-                self.ws_current_state["ticker_prices"]
-            )
-            self.ws_data.set_ws_account(
-                self.ws_current_state["account"]
-            )
-
-            df_trigger = convert_triggers_convert_df_to_df(self.ws_current_state["orders-algo"])
-            df_trigger = self.set_open_orders_gridId(df_trigger)
-            self.ws_data.set_ws_triggers(df_trigger)
-
-            df_open_order = convert_open_orders_push_list_to_df(self.ws_current_state["orders"])
-            df_open_order = self.set_open_orders_gridId(df_open_order)
-            self.ws_data.set_ws_open_orders(df_open_order)
-
-            df_open_position = self._build_df_open_positions_ws(self.ws_current_state["positions"],
-                                                                self.ws_data.get_ws_prices())
-            self.ws_data.set_ws_open_positions(df_open_position)
-
-            TEST_DEBUG = False    # CEDE TO BE CLEARED WHEN DEBUG OK
-            if TEST_DEBUG:
-                symbols = df_ticker_symbols["symbol"]
-                print("##################################################")
-                if not utils.detailed_dataframes_equal(self.get_all_triggers(by_pass=True), self.get_all_triggers()):
-                    print("titi")
-                if not utils.detailed_dataframes_equal(self.get_open_position(by_pass=True), self.get_open_position()):
-                    print("toto")
-
-                print("##################################################")
-                print(self.get_usdt_equity_available(by_pass=True))
-                print(self.get_usdt_equity_available())
-                print("##################################################")
-                print("self.get_values(symbols, by_pass=True) \n", self.get_values(symbols, by_pass=True))
-                print("self.get_values(symbols) \n", self.get_values(symbols))
-                print("##################################################")
-                for symbol in symbols:
-                    print("self.get_value(symbol, by_pass=True)  ", self.get_value(symbol, by_pass=True))
-                    print("self.get_value(symbol)  ", self.get_value(symbol))
-                print("##################################################")
+        if request in lst_request:
+            request_data = {"action": "GET", "request": request}
+            reply = self.zed_ws_client.send_request(request_data)
+            if "error" in reply:
+                print("Reply for dict:", reply["error"])
+            elif "type" in reply and "content" in reply and reply["type"] == 'dict':
+                content = reply["content"]
+                if "type" in content \
+                        and content["type"] in lst_df_to_be_transformed:
+                    df = ws_utils.transform_dict_to_dataframe(reply)
+                    print("Reply for dict:", df.to_string())
+                    return df.copy()
+                elif "type" in content \
+                        and content["type"] in lst_dct:
+                    print("Reply for dict:", reply)
+                    return content
+        elif request == "PRICE_VALUE":
+            trim_symbol = ws_utils.trim_symbol(symbol)
+            request_data = {"action": "GET", "request": "PRICE_VALUE", "symbol": trim_symbol}
+            reply = self.zed_ws_client.send_request(request_data)
+            if "error" in reply:
+                print("Reply for dict:", reply["error"])
+                return None
+            elif "type" in reply and "content" in reply and reply["type"] == 'dict':
+                content = reply["content"]
+                if "type" in content and content["type"] == "PRICE" \
+                        and "value" in content and not (content["value"] is None):
+                    print("Reply for dict:", reply)
+                    return float(content["value"])
+                else:
+                    return None
+        return None

@@ -1,4 +1,3 @@
-#!/usr/bin/python
 import json
 import math
 import threading
@@ -13,30 +12,36 @@ import websocket
 from typing import Optional
 
 GET = "GET"
+#CONTRACT_WS_URL = 'wss://ws.bitget.com/mix/v1/stream'
+CONTRACT_WS_URL_PUBLIC = 'wss://ws.bitget.com/v2/ws/public'
+CONTRACT_WS_URL_PRIVATE = 'wss://ws.bitget.com/v2/ws/private'
 REQUEST_PATH = '/user/verify'
 
-CONTRACT_WS_URL = 'wss://ws.bitget.com/mix/v1/stream'
+
+def info(msg):
+    print("Info :", msg)
+
+def warning(msg):
+    print("Warning :", msg)
+
+def debug(msg):
+    print("Debug :", msg)
+
+def error(msg):
+    print("Error :", msg)
+
+
+def handle(message):
+    info(message)
+
+def handel_error(message):
+    error(message)
+
 
 WS_OP_LOGIN = 'login'
 WS_OP_SUBSCRIBE = "subscribe"
 WS_OP_UNSUBSCRIBE = "unsubscribe"
 
-# Websocket planType
-WS_PLAN_TYPES = ['pl', 'tp', 'sl', 'ptp', 'psl']
-
-# Websocket channels type
-WS_PRIVATE_ACCOUNT_CHANNEL = "account"
-WS_PRIVATE_ORDERS_CHANNEL = "orders"
-WS_PRIVATE_POSITIONS_CHANNEL = "positions"
-WS_PRIVATE_PLAN_ORDERS_CHANNEL = "ordersAlgo"
-WS_CHANNEL_INSTTYPE = "UMCBL"
-WS_CHANNEL_INSTID = "default"
-
-def handle(message):
-    print(message)
-
-def handle_error(message):
-    print("Error :", message)
 
 def create_sign(message, secret_key):
     mac = hmac.new(bytes(secret_key, encoding='utf8'), bytes(message, encoding='utf-8'), digestmod='sha256')
@@ -54,7 +59,7 @@ class BitgetWsClient:
                  api_secret: Optional[str] = None,
                  passphrase: Optional[str] = None,
                  ws_url: Optional[str] = None,
-                 verbose: Optional[str] = False,
+                 verbose: Optional[bool] = False,
                  ):
         self.__api_key = api_key
         self.__api_secret_key = api_secret
@@ -64,7 +69,7 @@ class BitgetWsClient:
         self.__reconnect_status = False
         self.__all_suribe = set()
         self.__listener = handle
-        self.__error_listener = handle_error
+        self.__error_listener = handel_error
         self.__scribe_map = {}
         self.__allbooks_map = {}
         self.__ws_client = None
@@ -72,42 +77,10 @@ class BitgetWsClient:
         self.__timer_thread = None
 
         if ws_url is None:
-            self.STREAM_URL = CONTRACT_WS_URL
+            self.STREAM_URL = CONTRACT_WS_URL_PUBLIC
         else:
             self.STREAM_URL = ws_url
         self.verbose = verbose
-
-    def log_info(self, msg):
-        if self.verbose:
-            print("Info :", msg)
-
-    def log_warning(self, msg):
-        if self.verbose:
-            print("Warning :", msg)
-
-    def log_debug(self, msg):
-        if self.verbose:
-            print("Debug :", msg)
-
-    def log_error(self, msg):
-        if self.verbose:
-            print("Error :", msg)
-
-    def build(self):
-        self.__ws_client = self.__init_client()
-        __thread = threading.Thread(target=self.connect)
-        __thread.start()
-
-        while not self.has_connect():
-            self.log_info("start connecting...%s" % self.STREAM_URL)
-            time.sleep(1)
-
-        if self.__api_key is not None and self.__api_secret_key is not None and self.__passphrase is not None:
-            self.__login()
-
-        self.__keep_connected(25)
-
-        return self
 
     def close(self):
         self.__explicit_close = True
@@ -116,6 +89,21 @@ class BitgetWsClient:
         self.__login_status = False
         self.__connection = False
         self.__ws_client.close()
+
+    def build(self):
+        self.__ws_client = self.__init_client()
+        __thread = threading.Thread(target=self.connect)
+        __thread.start()
+        while not self.has_connect():
+            info("start connecting...%s" % self.STREAM_URL)
+            time.sleep(1)
+
+        if self.__api_key is not None and self.__api_secret_key is not None and self.__passphrase is not None:
+            self.__login()
+
+        self.__keep_connected(25)
+
+        return self
 
     def listener(self, listener):
         self.__listener = listener
@@ -137,14 +125,14 @@ class BitgetWsClient:
                                           on_close=self.__on_close)
 
         except Exception as ex:
-            self.log_error(ex)
+            error(ex)
 
     def __login(self):
         timestamp = int(round(time.time()))
         sign = create_sign(pre_hash(timestamp, GET, REQUEST_PATH), self.__api_secret_key)
         ws_login_req = WsLoginReq(self.__api_key, self.__passphrase, str(timestamp), sign)
         self.send_message(WS_OP_LOGIN, [ws_login_req])
-        self.log_info("logging in......")
+        info("logging in......")
         while not self.__login_status:
             time.sleep(1)
 
@@ -152,29 +140,30 @@ class BitgetWsClient:
         try:
             self.__ws_client.run_forever(ping_timeout=10)
         except Exception as ex:
-            self.log_error(ex)
+            error(ex)
 
     def __keep_connected(self, interval):
         if self.__explicit_close:
             return
         try:
-            self.__timer_thread = None
+            print("ping")
             self.__timer_thread = Timer(interval, self.__keep_connected, (interval,))
             self.__timer_thread.start()
             self.__ws_client.send("ping")
         except Exception as ex:
-            self.log_error(ex)
+            error(ex)
 
     def send_message(self, op, args):
         message = json.dumps(BaseWsReq(op, args), default=lambda o: o.__dict__)
-        self.log_debug(message)
+        if self.verbose:
+            debug(message)
         self.__ws_client.send(message)
 
     def subscribe(self, channels, listener=None):
 
         if listener:
             for chanel in channels:
-                chanel.inst_type = str(chanel.inst_type).lower()
+                chanel.inst_type = str(chanel.inst_type)#.lower()
                 self.__scribe_map[chanel] = listener
 
         for channel in channels:
@@ -194,18 +183,18 @@ class BitgetWsClient:
 
             self.send_message(WS_OP_UNSUBSCRIBE, channels)
         except Exception as e:
-            self.log_error(e)
+            error(e)
             pass
 
     def __on_open(self, ws):
-        self.log_info('connection is success....')
+        info('connection is success....')
         self.__connection = True
         self.__reconnect_status = False
 
     def __on_message(self, ws, message):
-
         if message == 'pong':
-            #self.log_info("Keep connected: %s" % message)
+            # if self.verbose:
+            #     info("Keep connected: %s" % message)
             return
         json_obj = json.loads(message)
         if "code" in json_obj and json_obj.get("code") != 0:
@@ -214,7 +203,8 @@ class BitgetWsClient:
                 return
 
         if "event" in json_obj and json_obj.get("event") == "login":
-            self.log_debug("login msg: %s" % message)
+            if self.verbose:
+                debug("login msg: %s" % message)
             self.__login_status = True
             return
         listenner = None
@@ -234,7 +224,25 @@ class BitgetWsClient:
         return BooksInfo(a_dict['asks'], a_dict['bids'], a_dict['checksum'])
 
     def __dict_to_subscribe_req(self, a_dict):
-        return SubscribeReq(a_dict['instType'], a_dict['channel'], a_dict['instId'])
+        if "instId" in a_dict:
+            return SubscribeReq(a_dict['instType'], a_dict['channel'], a_dict['instId'])
+        elif "coin" in a_dict:
+            return SubscribeReqCoin(a_dict['instType'], a_dict['channel'], a_dict['coin'])
+        return None
+
+    def get_subscribed_channels(self):
+        lst = []
+        for channel in self.__all_suribe:
+            d = {
+                "inst_type": channel.inst_type,
+                "channel": channel.channel,
+            }
+            if hasattr(channel, "coin"):
+                d["coin"] = channel.coin
+            else:
+                d["inst_id"] = channel.inst_id
+            lst.append(d)
+        return lst
 
     def get_listener(self, json_obj):
         try:
@@ -243,24 +251,24 @@ class BitgetWsClient:
                 subscribe_req = json.loads(json_str, object_hook=self.__dict_to_subscribe_req)
                 return self.__scribe_map.get(subscribe_req)
         except Exception as e:
-            self.log_error("%s %s " % (json_obj.get('arg'), e))
+            error("%s %s " % (json_obj.get('arg'), e))
             pass
 
     def __on_error(self, ws, msg):
-        self.log_error(msg)
+        error(msg)
         self.__close()
         if not self.__reconnect_status:
             self.__re_connect()
 
     def __on_close(self, ws, close_status_code, close_msg):
-        self.log_info("ws is closeing ......close_status:{},close_msg:{}".format(close_status_code, close_msg))
+        info("ws is closing ......close_status:{},close_msg:{}".format(close_status_code, close_msg))
         self.__close()
         if not self.__explicit_close and not self.__reconnect_status:
             self.__re_connect()
 
     def __re_connect(self):
         self.__reconnect_status = True
-        self.log_info("start reconnection ...")
+        info("start reconnection ...")
         self.build()
         for channel in self.__all_suribe:
             self.subscribe([channel])
@@ -304,7 +312,7 @@ class BitgetWsClient:
                 self.__allbooks_map[subscribe_req] = all_books
         except Exception as e:
             msg = traceback.format_exc()
-            self.log_error("%s %s" % (msg, e))
+            error("%s %s" % (msg, e))
 
         return True
 
@@ -350,7 +358,7 @@ class BooksInfo:
                 crc32str = crc32str + self.asks[x][0] + ":" + self.asks[x][1] + ":"
 
         crc32str = crc32str[0:len(crc32str) - 1]
-        #self.log_debug(crc32str)
+        # logger.debug(crc32str)
         merge_num = crc32(bytes(crc32str, encoding="utf8"))
         # print("start checknum mergeVal:" + str(merge_num) + ",checkVal:" + str(new_check_sum) + ",checkSin:" + str(self.__signed_int(merge_num)))
         return self.__signed_int(merge_num) == new_check_sum
@@ -374,6 +382,20 @@ class SubscribeReq:
 
     def __hash__(self) -> int:
         return hash(self.inst_type + self.channel + self.inst_id)
+
+class SubscribeReqCoin:
+
+    def __init__(self, inst_type, channel, coin):
+        self.inst_type = inst_type
+        self.channel = channel
+        self.coin = coin
+
+    def __eq__(self, other) -> bool:
+        return self.__dict__ == other.__dict__
+
+    def __hash__(self) -> int:
+        return hash(self.inst_type + self.channel + self.coin)
+
 
 
 class BaseWsReq:

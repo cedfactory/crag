@@ -1,11 +1,10 @@
-from . import utils
+# from . import utils
 import pandas as pd
 from abc import ABCMeta, abstractmethod
 from datetime import datetime, timedelta
 from rich import inspect,print
-from src.fdp.src import fdp_manager
 
-from . import utils,chronos
+import utils,chronos
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -49,14 +48,10 @@ class RealTimeDataProvider(IRealTimeDataProvider):
     def __init__(self, params = None):
         self.start = None
         self.end = None
-        self.fdp_manager = None
 
         if params:
             self.start = params.get("start_date", self.start)
             self.end = params.get("end_date", self.end)
-
-            fdp_sources = params.get("fdp", [])
-            self.fdp_manager = fdp_manager.FDPManager(fdp_sources)
 
         self.scheduler = chronos.Chronos()
         pass
@@ -87,51 +82,37 @@ class RealTimeDataProvider(IRealTimeDataProvider):
                 "indicators": data_description.fdp_features
             }
 
-            # To Test
-            #if self.fdp_manager:
-            #    self.fdp_manager.request("last", params)
+            response_json = utils.fdp_request_post("last", params, fdp_url_id)
 
-            data_direct_from_bitget = True
-            if data_direct_from_bitget:
+            data = {feature: [] for feature in data_description.features}
+            data["symbol"] = []
+
+            if response_json["status"] == "ok":
                 for symbol in data_description.symbols:
                     formatted_symbol = symbol.replace('/', '_')
-                    df = self.fdp_manager.request("last", params)
-                    df["symbol"] = formatted_symbol
-                    df.set_index("symbol", inplace=True)
-                    data_description.current_data = df.copy()
-                    return data_description
+                    if response_json["result"][formatted_symbol]["status"] == "ko":
+                        print("[RealTimeDataProvider:get_current_data] !!!! no data for ", symbol)
+                        continue
+                    df = pd.read_json(response_json["result"][formatted_symbol]["info"])
+                    columns = list(df.columns)
+                    data["symbol"].append(symbol)
+                    for feature in data_description.features:
+                        if feature not in columns:
+                            print("FDP MISSING FEATURE COLUMN")
+                            return None
+                        if len(df[feature]) > 0:
+                            data[feature].append(df[feature].iloc[-1])
+                        else:
+                            print("FDP MISSING FEATURE VALUE")
+                            return None
+
+                df_result = pd.DataFrame(data)
+                df_result.set_index("symbol", inplace=True)
+                data_description.current_data = df_result.copy()
+                return data_description
             else:
-                response_json = utils.fdp_request_post("last", params, fdp_url_id)
-
-                data = {feature: [] for feature in data_description.features}
-                data["symbol"] = []
-
-                if response_json["status"] == "ok":
-                    for symbol in data_description.symbols:
-                        formatted_symbol = symbol.replace('/', '_')
-                        if response_json["result"][formatted_symbol]["status"] == "ko":
-                            print("[RealTimeDataProvider:get_current_data] !!!! no data for ", symbol)
-                            continue
-                        df = pd.read_json(response_json["result"][formatted_symbol]["info"])
-                        columns = list(df.columns)
-                        data["symbol"].append(symbol)
-                        for feature in data_description.features:
-                            if feature not in columns:
-                                print("FDP MISSING FEATURE COLUMN")
-                                return None
-                            if len(df[feature]) > 0:
-                                data[feature].append(df[feature].iloc[-1])
-                            else:
-                                print("FDP MISSING FEATURE VALUE")
-                                return None
-
-                    df_result = pd.DataFrame(data)
-                    df_result.set_index("symbol", inplace=True)
-                    data_description.current_data = df_result.copy()
-                    return data_description
-                else:
-                    print("Response status not OK")
-                    return None
+                print("Response status not OK")
+                return None
 
         with ThreadPoolExecutor() as executor:
             futures = {executor.submit(process_data_description, dd): dd for dd in lst_data_description}
