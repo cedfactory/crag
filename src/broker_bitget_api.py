@@ -201,8 +201,8 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 and self.get_zed_status()
         ):
             df_open_position = self.ws_get_open_position()
-            if not (df_open_position is None
-                    and isinstance(df_open_position, pd.DataFrame)):
+            if not (df_open_position is None) \
+                    and isinstance(df_open_position, pd.DataFrame):
                 return df_open_position
 
         if self.get_cache_status():
@@ -257,8 +257,8 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 and self.get_zed_status()
         ):
             df_open_position = self.ws_get_open_position_v2()
-            if not (df_open_position is None
-                    and isinstance(df_open_position, pd.DataFrame)):
+            if not (df_open_position is None) \
+                    and isinstance(df_open_position, pd.DataFrame):
                 return df_open_position
             else:
                 print("df_open_position: ", df_open_position)
@@ -315,8 +315,8 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 and self.get_zed_status()
         ):
             df_open_position = self.ws_get_open_orders(symbols)
-            if not (df_open_position is None
-                    and isinstance(df_open_position, pd.DataFrame)):
+            if not (df_open_position is None) \
+                    and isinstance(df_open_position, pd.DataFrame):
                 return df_open_position
 
         res = pd.DataFrame()
@@ -423,8 +423,8 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 and self.get_zed_status()
         ):
             df_triggers = self.ws_get_all_triggers()
-            if not (df_triggers is None
-                    and isinstance(df_triggers, pd.DataFrame)):
+            if not (df_triggers is None) \
+                    and isinstance(df_triggers, pd.DataFrame):
                 return df_triggers
 
         lst_df_triggers = []
@@ -1171,7 +1171,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             available = data.get("available")
             if usdt_equity is not None and available is not None:
                 return float(usdt_equity), float(available)
-        return None
+        return None, None
 
     @authentication_required
     def get_usdt_equity(self, by_pass=False):
@@ -2229,6 +2229,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                         and content["type"] in lst_dct:
                     print("Reply for dict:", reply)
                     return content
+
         elif request == "PRICE_VALUE":
             trim_symbol = ws_utils.trim_symbol(symbol)
             request_data = {"action": "GET", "request": "PRICE_VALUE", "symbol": trim_symbol}
