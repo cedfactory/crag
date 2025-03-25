@@ -1,15 +1,16 @@
-import os
+import os, sys
+sys.path.append(os.path.abspath("src"))
+
 import pandas as pd
-from zed_server import ZMQServer
-from zed_client import ZMQClient
+from src.bitget_ws.zed_server import ZMQServer
+from src.bitget_ws.zed_client import ZMQClient
+from src import broker_bitget_api
 import xml.etree.ElementTree as ET
 import argparse
 import time
 import threading
 import concurrent.futures
 import pandas as pd
-
-import broker_bitget_api
 
 def read_settings_conf(conf_path, account_id):
     """
