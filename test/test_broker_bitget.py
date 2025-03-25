@@ -1,4 +1,7 @@
 import pytest
+import os, sys
+sys.path.append(os.path.abspath("src"))
+
 from src import broker_bitget_api
 from . import utils
 

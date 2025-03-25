@@ -1,7 +1,7 @@
 import pandas as pd
 
 from src import broker_simulation
-from src import rtstr,strategies
+from src import rtstr
 from src import broker_bitget_api
 from src import logger
 from src import utils

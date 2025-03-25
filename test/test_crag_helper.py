@@ -1,6 +1,8 @@
 import pytest
+import os, sys
+sys.path.append(os.path.abspath("src"))
+
 from src import crag_helper, crag
-import os
 from . import utils
 
 class TestCrag:

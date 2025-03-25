@@ -1,8 +1,8 @@
 import pytest
+
 from src import crag,broker_simulation
 from . import utils
 from src import crag_helper
-import os
 
 class TestCrag:
     '''

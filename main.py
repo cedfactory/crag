@@ -1,10 +1,12 @@
+import os, sys
+sys.path.append(os.path.abspath("src"))
+
 from src import rtdp,rtdp_simulation,broker_simulation,broker_bitget,broker_bitget_api,broker_bitget_spot
 from src import rtstr,strategies
 from src import crag,crag_helper,logger
 from src.toolbox import settings_helper
 import requests
 import pandas as pd
-import os, sys
 import time
 import cProfile,pstats
 from datetime import datetime

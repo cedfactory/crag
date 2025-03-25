@@ -1,11 +1,12 @@
 import pytest
 from unittest.mock import patch
+
 import pandas as pd
 from src import rtstr_grid_trading_generic_v3, rtdp
 from src import crag, crag_helper
 from src import broker
 from . import test_rtstr, utils
-import os
+
 
 class BrokerMock(broker.Broker):
 
