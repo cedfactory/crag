@@ -1,6 +1,6 @@
 import zmq
 import pandas as pd
-import broker_bitget_api
+from src import broker_bitget_api
 # from bitget_ws import bitget_ws_account_tickers
 from bitget_ws_account_data import WS_Account_Data, convert_open_orders_push_list_to_df, convert_triggers_convert_df_to_df
 import bitget_ws_account_tickers
@@ -55,6 +55,7 @@ class ZMQServer:
 
             df_triggers_histo = my_broker.get_all_triggers(by_pass=True)
             df_open_position_histo = my_broker.get_open_position(by_pass=True)
+            del my_broker
 
             self.ws_data = WS_Account_Data(df_open_positions=df_open_position_histo, df_triggers=df_triggers_histo)
 

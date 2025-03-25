@@ -1,8 +1,8 @@
-from . import bitget_ws_client
+from bitget_ws import bitget_ws_client
 import json
 import pandas as pd
 from datetime import datetime
-from .. import utils
+from src import utils
 
 class WSAccountTickers:
 

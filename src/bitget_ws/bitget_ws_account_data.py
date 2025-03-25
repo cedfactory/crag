@@ -15,6 +15,8 @@ class WS_Account_Data:
             dct_account (dict): Dictionary for account info. Defaults to empty dict.
             dct_prices (pd.DataFrame): DataFrame for prices (despite the naming, this is a DataFrame). Defaults to empty DataFrame.
         """
+        self._data_lock = threading.Lock()  # or threading.RLock() if you need re-entrant locking
+
         columns_triggers = [
             "timestamp",
             "planType", "symbol", "size", "orderId", "clientOid", "price", "executePrice",
@@ -175,69 +177,82 @@ class WS_Account_Data:
     # Accessor functions (getters)
     def get_ws_open_positions(self):
         """Return the open positions DataFrame."""
-        return {"type": "OPEN_POSITIONS", "data": self._df_open_positions.drop("timestamp", axis=1).to_dict()}
+        with self._data_lock:
+            return {"type": "OPEN_POSITIONS", "data": self._df_open_positions.drop("timestamp", axis=1).to_dict()}
 
     def get_ws_open_orders(self):
         """Return the open orders DataFrame."""
-        return {"type": "OPEN_ORDERS", "data": self._df_open_orders.drop("timestamp", axis=1).to_dict()}
+        with self._data_lock:
+            return {"type": "OPEN_ORDERS", "data": self._df_open_orders.drop("timestamp", axis=1).to_dict()}
 
     def get_ws_triggers(self):
         """Return the triggers DataFrame."""
-        return {"type": "TRIGGERS", "data": self._df_triggers.drop("timestamp", axis=1).to_dict()}
+        with self._data_lock:
+            return {"type": "TRIGGERS", "data": self._df_triggers.drop("timestamp", axis=1).to_dict()}
 
     def get_ws_account(self):
         """Return the account dictionary."""
-        return {"type": "ACCOUNT",
+        with self._data_lock:
+            return {"type": "ACCOUNT",
                     "data": self._dct_account}
 
     def get_ws_prices(self):
         """Return the prices DataFrame."""
-        self._df_prices["symbols"] = self._df_prices["symbols"].str.replace("USDT", "", regex=False)
-        return {"type": "PRICES",
-                "data": self._df_prices.to_dict()}
+        with self._data_lock:
+            self._df_prices["symbols"] = self._df_prices["symbols"].str.replace("USDT", "", regex=False)
+            return {"type": "PRICES",
+                    "data": self._df_prices.to_dict()}
 
     def get_ws_df_prices(self):
         """Return the prices DataFrame."""
-        return self._df_prices
+        with self._data_lock:
+            return self._df_prices
 
     def get_usdt_equity_available(self):
-        return {
-            "type": "USDT_EQUITY_AVAILABLE",
-            "usdtEquity": self._dct_account["usdtEquity"],
-            "available": self._dct_account["available"]
-        }
+        with self._data_lock:
+            return {
+                "type": "USDT_EQUITY_AVAILABLE",
+                "usdtEquity": self._dct_account["usdtEquity"],
+                "available": self._dct_account["available"]
+            }
 
     def get_value(self, symbol):
-        if not symbol.endswith("USDT"):
-            symbol += "USDT"
-        matching_rows = self._df_prices[self._df_prices['symbols'] == symbol.replace('_UMCBL', "")]
+        with self._data_lock:
+            try:
+                if not symbol.endswith("USDT"):
+                    symbol += "USDT"
+                matching_rows = self._df_prices[self._df_prices['symbols'] == symbol.replace('_UMCBL', "")]
+            except Exception as e:
+                print("Error in get_value:", e)
+                return None
 
-        # Check if any rows were found; if not, return None.
-        if matching_rows.empty:
-            return None
+            # Check if any rows were found; if not, return None.
+            if matching_rows.empty:
+                return None
 
-        # Return the first matching value from the 'values' column.
-        return {
-            "type": "PRICE",
-            "symbol": symbol,
-            "value": float(matching_rows['values'].iloc[0])
-        }
+            # Return the first matching value from the 'values' column.
+            return {
+                "type": "PRICE",
+                "symbol": symbol,
+                "value": float(matching_rows['values'].iloc[0])
+            }
 
     def get_values(self, symbols):
-        df_prices = self._df_prices.copy()
-        df_prices['symbols'] = df_prices['symbols'] + "_UMCBL"
-        available_symbols = set(df_prices['symbols'])
-        # Check for any missing symbols.
-        missing_symbols = set(symbols) - available_symbols
-        if missing_symbols:
-            # Return None if any requested symbol is not found in the DataFrame.
-            return None
+        with self._data_lock:
+            df_prices = self._df_prices.copy()
+            df_prices['symbols'] = df_prices['symbols'] + "_UMCBL"
+            available_symbols = set(df_prices['symbols'])
+            # Check for any missing symbols.
+            missing_symbols = set(symbols) - available_symbols
+            if missing_symbols:
+                # Return None if any requested symbol is not found in the DataFrame.
+                return None
 
-        # Return only rows with symbols that are in the provided list.
-        return {
-            "type": "PRICE",
-            "value": df_prices[df_prices['symbols'].isin(symbols)]
-        }
+            # Return only rows with symbols that are in the provided list.
+            return {
+                "type": "PRICE",
+                "value": df_prices[df_prices['symbols'].isin(symbols)]
+            }
 
     def get_data_status(self):
         return self.ws_triggers \

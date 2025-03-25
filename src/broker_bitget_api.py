@@ -1,19 +1,19 @@
 import math
 
-from .bitget.mix import market_api as market
-from .bitget.mix import account_api as account
-from .bitget.mix import position_api as position
-from .bitget.mix import order_api as order
-from .bitget.mix import plan_api as plan
-from .bitget.spot import public_api as public
-from .bitget import exceptions
-from .bitget.mix_v2 import order_api as orderV2
-from .bitget.mix_v2 import account_api as accountV2
-from .bitget_ws import bitget_ws_account_tickers
+from bitget.mix import market_api as market
+from bitget.mix import account_api as account
+from bitget.mix import position_api as position
+from bitget.mix import order_api as order
+from bitget.mix import plan_api as plan
+from bitget.spot import public_api as public
+from bitget import exceptions
+from bitget.mix_v2 import order_api as orderV2
+from bitget.mix_v2 import account_api as accountV2
+from bitget_ws import bitget_ws_account_tickers
 
 # from .bitget_ws.bitget_ws import BitgetWsClient
 
-from . import broker_bitget, utils
+from src import broker_bitget, utils
 from datetime import datetime
 import time
 import os, shutil
@@ -21,8 +21,8 @@ import json
 import pandas as pd
 import numpy as np
 from concurrent.futures import wait, ALL_COMPLETED, ThreadPoolExecutor, as_completed
-from .bitget_ws.zed_client import ZMQClient
-from .bitget_ws import ws_utils
+from bitget_ws.zed_client import ZMQClient
+from bitget_ws import ws_utils
 
 class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     def __init__(self, params = None):
@@ -260,6 +260,8 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             if not (df_open_position is None
                     and isinstance(df_open_position, pd.DataFrame)):
                 return df_open_position
+            else:
+                print("df_open_position: ", df_open_position)
 
         if self.get_cache_status():
             df_from_cache = self.requests_cache_get("get_open_position_v2")
