@@ -127,6 +127,29 @@ def load_configuration_file(configuration_file, config_path = './conf'):
             "alcorak": params_alcorak,
             }
 
+def get_strategy(params_strategy):
+    strategy_name = params_strategy.get("name", "")
+    available_strategies = rtstr.RealTimeStrategy.get_strategies_list()
+    my_strategy = None
+    if strategy_name in available_strategies:
+        my_strategy = rtstr.RealTimeStrategy.get_strategy_from_name(strategy_name, params_strategy)
+
+    if not my_strategy:
+        print("💥 unknown strategy ({})".format(strategy_name))
+        print("available strategies : ", available_strategies)
+
+    return my_strategy
+
+
+def get_strategy_lst_data_description(my_strategy):
+    lst_data_description = []
+    if my_strategy.get_strategy_type() == "INTERVAL":
+        lst_data_description = my_strategy.get_data_description(["1m", "5m", "15m", "30m", "1h"])
+        lst_data_description = utils.reduce_data_description(lst_data_description)
+
+    return lst_data_description
+
+
 def get_crag_params_from_configuration(configuration):
     params_crag = configuration["crag"]
     crag_id = params_crag.get("id", "")
@@ -135,18 +158,11 @@ def get_crag_params_from_configuration(configuration):
     loggers = logger.get_loggers(str_loggers)
 
     params_strategy = configuration["strategy"]
-    strategy_name = params_strategy.get("name", "")
-    available_strategies = rtstr.RealTimeStrategy.get_strategies_list()
-    lst_data_description = []
-    if strategy_name in available_strategies:
-        my_strategy = rtstr.RealTimeStrategy.get_strategy_from_name(strategy_name, params_strategy)
-        if my_strategy.get_strategy_type() == "INTERVAL":
-            lst_data_description = my_strategy.get_data_description(["1m", "5m", "15m", "30m", "1h"])
-            lst_data_description = utils.reduce_data_description(lst_data_description)
-    else:
-        print("💥 unknown strategy ({})".format(strategy_name))
-        print("available strategies : ", available_strategies)
+    my_strategy = get_strategy(params_strategy)
+    if not my_strategy:
         return None
+
+    lst_data_description = get_strategy_lst_data_description(my_strategy)
 
     my_broker = None
     params_broker = configuration["broker"]

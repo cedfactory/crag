@@ -1,4 +1,5 @@
 import os, sys, platform, subprocess, psutil
+from src.toolbox import os_helper
 
 g_os_platform = platform.system()
 g_python_executable = ""
@@ -95,25 +96,9 @@ def select_strategy_to_start():
 
 	return strategies[id]
 
-def get_python_processes():
-	current_pid = os.getpid()
-	processes = []
-	for process in psutil.process_iter(['pid', 'name', 'cmdline']):
-		if not 'name' in process.info:
-			continue
-		try:
-			if 'python' in process.info['name']:
-				if int(process.info['pid']) != current_pid:
-					processes.append({"pid": process.info['pid'],
-								"command": ' '.join(process.info['cmdline'])})
-		except (psutil.NoSuchProcess, psutil.AccessDenied):
-			# Skip processes that may have terminated or where access is restricted
-			continue
-
-	return processes
 
 def display_python_processes():
-	processes = get_python_processes()
+	processes = os_helper.get_python_processes()
 	if len(processes) == 0:
 		print("No python process")
 		return
@@ -122,7 +107,7 @@ def display_python_processes():
 		print("{} : Command {}".format(index, process["command"]))
 
 def select_strategy_to_stop():
-	all_processes = get_python_processes()
+	all_processes = os_helper.get_python_processes()
 
 	# keep only alcorak processes
 	processes = [process for process in all_processes if 'main.py' not in process['command']]
