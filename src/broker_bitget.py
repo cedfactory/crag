@@ -1,13 +1,12 @@
-import broker, rtdp, utils
+from . import broker, rtdp, utils
 import pandas as pd
 import re
 import json
 from collections import defaultdict
-from bitget import exceptions
+from .bitget import exceptions
 from concurrent.futures import wait, ALL_COMPLETED, ThreadPoolExecutor
 import threading
 import math
-from src import utils
 
 class BrokerBitGet(broker.Broker):
     def __init__(self, params = None):

@@ -1,6 +1,5 @@
 from datetime import datetime
 import pandas as pd
-import utils
 
 class Chronos():
     def __init__(self, start_date=None, end_date=None, interval=None):

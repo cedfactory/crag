@@ -2,9 +2,9 @@
 import pandas as pd
 from abc import ABCMeta, abstractmethod
 from datetime import datetime, timedelta
-from rich import inspect,print
+from rich import inspect, print
 
-import utils,chronos
+from . import utils, chronos
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
