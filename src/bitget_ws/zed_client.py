@@ -24,13 +24,19 @@ class ZMQClient:
             # Serialize the data into a JSON-friendly message format
             msg = self._serialize_message(data)
 
-        # Send the JSON message to the server
-        self.socket.send_json(msg)
+        try:
+            # Send the JSON message to the server
+            self.socket.send_json(msg)
+        except:
+            return None
 
         # Wait for a reply with the specified timeout.
         socks = dict(self.poller.poll(self.timeout))
         if socks.get(self.socket) == zmq.POLLIN:
-            reply = self.socket.recv_json()
+            try:
+                reply = self.socket.recv_json()
+            except:
+                reply = None
             return reply
         else:
             # Reset the socket so that it's ready for the next request.

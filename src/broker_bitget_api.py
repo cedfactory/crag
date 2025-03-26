@@ -117,6 +117,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         self.zed = False
         print("Client is running...")
         self.zed_ws_client = ZMQClient(server_address="tcp://localhost:5555", timeout=100)  # using 10ms timeout
+        self.debug_cpt = utils.debug_cpt()
 
     def log_api_failure(self, function, e, n_attempts=0):
         self.failure += 1
@@ -2188,16 +2189,21 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
             "request": "GET_STATUS",
         }
 
-        for attempt in range(3):
+        for attempt in range(1):
             reply = self.zed_ws_client.send_request(request_status)
-            if "error" in reply:
+            if reply is None:
+                # print("INFO STATUS", " - zmq.error.ZMQError: Operation cannot be accomplished in current state")
+                pass
+            elif "error" in reply:
                 print("INFO STATUS", reply)
             else:
                 if reply.get("type") == "dict":
                     content = reply.get("content", {})
                     if content.get("status") == "On":
-                        print("INFO STATUS", reply)
+                        # print("INFO STATUS", reply)     # CEDE PRINT DEBUG ZED
+                        self.debug_cpt.increment_success()
                         return True
+        self.debug_cpt.increment_failure()
         return False
 
     def get_zed_ws_data(self, symbol="", request=""):
@@ -2216,18 +2222,22 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         if request in lst_request:
             request_data = {"action": "GET", "request": request}
             reply = self.zed_ws_client.send_request(request_data)
+
+            # Check if the reply is None before proceeding
+            if reply is None:
+                print("No reply received from zed_ws_client.")
+                return None
+
             if "error" in reply:
                 print("Reply for dict:", reply["error"])
             elif "type" in reply and "content" in reply and reply["type"] == 'dict':
                 content = reply["content"]
-                if "type" in content \
-                        and content["type"] in lst_df_to_be_transformed:
+                if "type" in content and content["type"] in lst_df_to_be_transformed:
                     df = ws_utils.transform_dict_to_dataframe(reply)
-                    print("Reply for dict:", df.to_string())
+                    # print("Reply for dict:", df.to_string())   # CEDE PRINT DEBUG ZED
                     return df.copy()
-                elif "type" in content \
-                        and content["type"] in lst_dct:
-                    print("Reply for dict:", reply)
+                elif "type" in content and content["type"] in lst_dct:
+                    # print("Reply for dict:", reply)  # CEDE PRINT DEBUG ZED
                     return content
 
         elif request == "PRICE_VALUE":
@@ -2241,7 +2251,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 content = reply["content"]
                 if "type" in content and content["type"] == "PRICE" \
                         and "value" in content and not (content["value"] is None):
-                    print("Reply for dict:", reply)
+                    # print("Reply for dict:", reply)         # CEDE PRINT DEBUG ZED
                     return float(content["value"])
                 else:
                     return None

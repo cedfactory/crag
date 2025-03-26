@@ -342,7 +342,7 @@ def fdp_request_post(url, params, fdp_id):
 
     fdp_url = settings_helper.get_fdp_url_info(fdp_id).get("url", None)
 
-    if True:
+    if False:
         fdp_url = "http://192.168.1.205:5000/" # CEDE DEBUG
         # fdp_url_id = "http://192.168.1.205:5000"
 
@@ -356,8 +356,8 @@ def fdp_request_post(url, params, fdp_id):
         try:
             # response = requests.post(fdp_url+'/'+url, json=params)
             with requests.post(fdp_url+'/'+url, json=params) as response:
-                print("Sent URL:", response.request.url)                       # CEDE DEBUG
-                print("Sent JSON params (body):", response.request.body)       # CEDE DEBUG
+                # print("Sent URL:", response.request.url)                       # CEDE DEBUG URL
+                # print("Sent JSON params (body):", response.request.body)       # CEDE DEBUG URL
                 pass
             response.close()
             if response.status_code == 200:
@@ -616,3 +616,34 @@ def transform_dict_to_dataframe(msg):
     # Convert the dictionary to a DataFrame.
     df = pd.DataFrame(data)
     return df
+
+
+class debug_cpt:
+    def __init__(self):
+        self.success = 0
+        self.failure = 0
+        self.percentage_of_failure = 0.0
+
+    def _update_percentage(self):
+        total = self.success + self.failure
+        self.percentage_of_failure = (self.failure / total * 100) if total > 0 else 0.0
+
+    def _maybe_print(self):
+        total = self.success + self.failure
+        # Check if total count is a multiple of 100
+        if total % 1000 == 0:
+            self.print_stat()
+
+    def increment_success(self):
+        self.success += 1
+        self._update_percentage()
+        self._maybe_print()
+
+    def increment_failure(self):
+        self.failure += 1
+        self._update_percentage()
+        self._maybe_print()
+
+    def print_stat(self):
+        print(f"Success: {self.success}, Failure: {self.failure}, Percentage of Failure: {self.percentage_of_failure:.2f}%")
+
