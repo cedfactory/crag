@@ -1,8 +1,11 @@
+import os, sys
+sys.path.append(os.path.abspath("src/bitget_ws"))
+
 import zmq
 import pandas as pd
 from src import broker_bitget_api
 # from bitget_ws import bitget_ws_account_tickers
-from bitget_ws_account_data import WS_Account_Data, convert_open_orders_push_list_to_df, convert_triggers_convert_df_to_df
+from src.bitget_ws.bitget_ws_account_data import WS_Account_Data, convert_open_orders_push_list_to_df, convert_triggers_convert_df_to_df
 import bitget_ws_account_tickers
 
 import time

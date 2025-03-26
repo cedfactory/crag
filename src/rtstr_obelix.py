@@ -234,6 +234,8 @@ class StrategyObelix(rtstr.RealTimeStrategy):
         return lst_order
 
     def condition_for_opening_long_position(self, symbol):
+        return False
+
         # If both trend and ichimoku data are missing, we cannot open a long position.
         if self.df_current_data_trend is None and self.df_current_data_ichimoku is None:
             return False
@@ -259,6 +261,8 @@ class StrategyObelix(rtstr.RealTimeStrategy):
         return False
 
     def condition_for_opening_short_position(self, symbol):
+        return False
+
         # If both trend and ichimoku data are missing, we cannot open a long position.
         if self.df_current_data_trend is None and self.df_current_data_ichimoku is None:
             return False

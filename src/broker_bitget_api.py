@@ -116,7 +116,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
 
         self.zed = False
         print("Client is running...")
-        self.zed_ws_client = ZMQClient(server_address="tcp://localhost:5555", timeout=10)  # using 10ms timeout
+        self.zed_ws_client = ZMQClient(server_address="tcp://localhost:5555", timeout=100)  # using 10ms timeout
 
     def log_api_failure(self, function, e, n_attempts=0):
         self.failure += 1
