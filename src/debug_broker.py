@@ -15,7 +15,7 @@ def debug_crag_broker():
     load_dotenv()
     exchange_api_key = os.getenv("BITGET_API_KEY")
     exchange_api_secret = os.getenv("BITGET_API_SECRET")
-    exchange_api_password = "orangeelephant"
+    exchange_api_password = "XXX"
 
 
     api_url = "https://api.bitget.com/api/mix/v1/market/contracts?productType=umcbl"

@@ -345,7 +345,6 @@ def fdp_request_post(url, params, fdp_id):
     if True:
         fdp_url = "http://192.168.1.205:5000/" # CEDE DEBUG
         # fdp_url_id = "http://192.168.1.205:5000"
-        fdp_url = "https://fdp-1052915265688.europe-west9.run.app/"
 
     if not fdp_url or fdp_url == "":
         return {"status":"ko", "info":"fdp url not found"}
