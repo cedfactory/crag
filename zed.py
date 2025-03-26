@@ -114,7 +114,7 @@ def run_server(conf_file):
 
 def run_client():
     print("Client is running...")
-    client = ZMQClient(server_address="tcp://localhost:5555", timeout=10)  # using 10ms timeout
+    client = ZMQClient(server_address="tcp://localhost:5555", timeout=100)  # using 10ms timeout
 
     request_status = {
         "action": "INFO",

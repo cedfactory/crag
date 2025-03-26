@@ -98,6 +98,9 @@ class StrategyObelix(rtstr.RealTimeStrategy):
                     "indicator": "close",
                     "id": "1",
                     "window_size": 2,
+                    "output": [
+                        "close"
+                    ]
                 },
             },
             {
