@@ -5,6 +5,8 @@ from src import rtstr
 from src import broker_bitget_api
 from src import logger
 from src import utils
+from src import strategies
+
 
 import xml.etree.cElementTree as ET
 import os
@@ -96,11 +98,13 @@ def load_configuration_file(configuration_file, config_path = './conf'):
             params_broker[name] = value
 
     fdp_node = broker_node.find("fdp")
-    fdp_source_nodes = fdp_node.findall(".//source")
-    fdp_source_list = [
-        {attr: source.get(attr) for attr in source.attrib}
-        for source in fdp_source_nodes
-    ]
+    fdp_source_list = []
+    if fdp_node:
+        fdp_source_nodes = fdp_node.findall(".//source")
+        fdp_source_list = [
+            {attr: source.get(attr) for attr in source.attrib}
+            for source in fdp_source_nodes
+        ]
     params_broker["fdp"] = fdp_source_list
 
     crag_node = root.find("crag")
