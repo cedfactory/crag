@@ -230,10 +230,15 @@ class Crag:
             del msg
             self.reboot_iter += 1
 
-        self.usdt_equity_thread, self.usdt_available_thread = self.broker.get_usdt_equity_available()
+
         # get usdt_euqity to run_in_background
-        t = threading.Thread(target=self.update_status_for_TPSL, daemon=True)
-        t.start()
+        if self.broker.get_ws_activation_status():
+            self.usdt_equity, self.usdt_available = self.broker.get_usdt_equity_available()
+        else:
+            self.usdt_equity_thread, self.usdt_available_thread = self.broker.get_usdt_equity_available()
+
+            t = threading.Thread(target=self.update_status_for_TPSL, daemon=True)
+            t.start()
 
         self.init_master_memory = utils.get_memory_usage()
         self.init_start_time = datetime.now()
@@ -302,8 +307,11 @@ class Crag:
                     self.step(lst_interval)
 
     def step(self, lst_interval):
-        self.usdt_equity = self.usdt_equity_thread
-        self.usdt_available = self.usdt_available_thread
+        if self.broker.get_ws_activation_status():
+            self.usdt_equity, self.usdt_available = self.broker.get_usdt_equity_available()
+        else:
+            self.usdt_equity = self.usdt_equity_thread
+            self.usdt_available = self.usdt_available_thread
         self.send_alive_notification()
         stop = self.monitoring.get_strategy_stop(self.rtstr.id)
         if stop:
@@ -587,9 +595,11 @@ class Crag:
             self.reboot_exception = True
             return
 
-        # self.execute_timer.set_end_time("crag", "current_state_live", "get_current_state", self.current_state_live)
-        self.usdt_equity = self.usdt_equity_thread
-        self.usdt_available = self.usdt_available_thread
+        if self.broker.get_ws_activation_status():
+            self.usdt_equity, self.usdt_available = self.broker.get_usdt_equity_available()
+        else:
+            self.usdt_equity = self.usdt_equity_thread
+            self.usdt_available = self.usdt_available_thread
         if self.init_grid_position:
             self.init_grid_position = False
             df_symbol_minsize = self.broker.get_df_minimum_size(self.symbols)
@@ -664,10 +674,13 @@ class Crag:
         start_safety_step = time.time()
         self.broker.enable_cache()
 
-        self.usdt_equity = self.usdt_equity_thread
-        self.usdt_equity_previous = self.usdt_equity
-        self.usdt_available = self.usdt_available_thread
+        if self.broker.get_ws_activation_status():
+            self.usdt_equity, self.usdt_available = self.broker.get_usdt_equity_available()
+        else:
+            self.usdt_equity = self.usdt_equity_thread
+            self.usdt_available = self.usdt_available_thread
 
+        self.usdt_equity_previous = self.usdt_equity
         self.total_SL_TP = self.usdt_equity - self.original_portfolio_value
         if self.usdt_equity >= self.maximal_portfolio_value:
             self.maximal_portfolio_value = self.usdt_equity

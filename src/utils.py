@@ -631,7 +631,7 @@ class debug_cpt:
     def _maybe_print(self):
         total = self.success + self.failure
         # Check if total count is a multiple of 100
-        if total % 1000 == 0:
+        if total % 10000 == 0:
             self.print_stat()
 
     def increment_success(self):

@@ -248,7 +248,8 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 and "total" in df.columns \
                 and "marginCoin" in df.columns \
                 and "available" in df.columns:
-            df["symbol"] = df["symbol"].str.replace("_UMCBL", "", regex=False)
+            if not df.empty:
+                df["symbol"] = df["symbol"].str.replace("_UMCBL", "", regex=False)
             return df
         return None
 
@@ -2182,6 +2183,9 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         else:
             print(f"Error: {response.status_code}, {response.text}")
             return None, None, None, None
+
+    def get_ws_activation_status(self):
+        return True
 
     def get_zed_status(self):
         request_status = {

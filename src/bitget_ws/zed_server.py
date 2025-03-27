@@ -231,13 +231,14 @@ class ZMQServer:
             return content
 
     def _build_df_open_positions_ws(self, df_open_positions, df_price):
-        lst_open_positions_columns = ["symbol", "holdSide", "leverage", "marginCoin",
+        lst_open_positions_columns = ["timestamp",
+                                      "symbol", "holdSide", "leverage", "marginCoin",
                                       "available", "total", "usdtEquity",
                                       "marketPrice", "averageOpenPrice",
                                       "achievedProfits", "unrealizedPL", "liquidationPrice"]
         if df_open_positions is None \
                 or df_price is None:
-            return None
+            return pd.DataFrame(columns=lst_open_positions_columns)
 
         if df_price.empty \
                 or df_open_positions is None \

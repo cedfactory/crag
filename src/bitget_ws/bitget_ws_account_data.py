@@ -17,15 +17,6 @@ class WS_Account_Data:
         """
         columns_triggers = [
             "timestamp",
-            "planType", "symbol", "size", "orderId", "clientOid", "price", "executePrice",
-            "callbackRatio", "triggerPrice", "triggerType", "planStatus", "side", "posSide",
-            "marginCoin", "marginMode", "enterPointSource", "tradeSide", "posMode",
-            "orderType", "orderSource", "cTime", "uTime",
-            "stopSurplusExecutePrice", "stopSurplusTriggerPrice", "stopSurplusTriggerType",
-            "stopLossExecutePrice", "stopLossTriggerPrice", "stopLossTriggerType"
-        ]
-        columns_triggers = [
-            "timestamp",
             'planType', 'symbol', 'size', 'side', 'orderId', 'orderType',
             'clientOid', 'price', 'triggerPrice', 'triggerType', 'marginMode',
             'gridId', 'strategyId', 'trend', 'executeOrderId', 'planStatus'
@@ -75,6 +66,8 @@ class WS_Account_Data:
         for df in (self._df_open_positions, self._df_open_orders, self._df_triggers):
             if not df.empty:
                 df["timestamp"] = current_timestamp
+            elif 'timestamp' not in df.columns:
+                df['timestamp'] = pd.Series(dtype='datetime64[ns]')
         self._dct_account = dct_account if dct_account is not None else dct_account
         self._df_prices = dct_prices if dct_prices is not None else pd.DataFrame(columns=columns_prices)
 
@@ -175,7 +168,8 @@ class WS_Account_Data:
     # Accessor functions (getters)
     def get_ws_open_positions(self):
         """Return the open positions DataFrame."""
-        return {"type": "OPEN_POSITIONS", "data": self._df_open_positions.drop("timestamp", axis=1).to_dict()}
+        return {"type": "OPEN_POSITIONS",
+                "data": self._df_open_positions.drop("timestamp", axis=1).to_dict()}
 
     def get_ws_open_orders(self):
         """Return the open orders DataFrame."""
@@ -183,7 +177,8 @@ class WS_Account_Data:
 
     def get_ws_triggers(self):
         """Return the triggers DataFrame."""
-        return {"type": "TRIGGERS", "data": self._df_triggers.drop("timestamp", axis=1).to_dict()}
+        return {"type": "TRIGGERS",
+                "data": self._df_triggers.drop("timestamp", axis=1).to_dict()}
 
     def get_ws_account(self):
         """Return the account dictionary."""
