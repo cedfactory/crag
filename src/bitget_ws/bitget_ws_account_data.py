@@ -384,33 +384,19 @@ def convert_open_order_push_to_response(push_order: dict) -> dict:
     holdMode = hold_mode_mapping.get(posMode_v2, "")
 
     return {
-        "symbol": push_order.get("instId", ""),
-        "price": float(push_order.get("price", "")),
-        "side": result_side.get("side", ""),
-        "size": float(push_order.get("size", "")),
-        "leverage": float(push_order.get("leverage", "")),
-        "marginCoin": push_order.get("marginCoin", ""),
-        "marginMode": push_order.get("marginMode", ""),
-        "clientOid": push_order.get("clientOid", ""),
-        "orderId": push_order.get("orderId", ""),
+            "symbol": push_order.get("instId", ""),
+            "price": float(push_order.get("price", "")),
+            "side": result_side.get("side", ""),
+            "size": float(push_order.get("size", "")),
+            "leverage": float(push_order.get("leverage", "")),
+            "marginCoin": push_order.get("marginCoin", ""),
+            "marginMode": push_order.get("marginMode", ""),
+            "clientOid": push_order.get("clientOid", ""),
+            "orderId": push_order.get("orderId", ""),
 
-        "filledQty": float(push_order.get("accBaseVolume", "")),
-        "fee": float(push_order.get("fillFee", "")),
-        "priceAvg": float(push_order.get("priceAvg", "")),
-        "state": push_order.get("status", ""),
-        "posSide": push_order.get("posSide", ""),
-        "reduceOnly": mapping_reduce_only.get(reduce_only, reduce_only),
-        "holdMode": holdMode,
-        "tradeSide": result_side.get("tradeSide", ""),
-        "timeInForce": push_order.get("force", ""),
-        "totalProfits": float(push_order.get("totalProfits", "")),
-        "filledAmount": float(push_order.get("fillNotionalUsd", "")),
-        "enterPointSource": push_order.get("enterPointSource", ""),
-        "orderType": push_order.get("orderType", ""),
-        "orderSource": push_order.get("enterPointSource", ""),
-        "cTime": push_order.get("cTime", ""),
-        "uTime": push_order.get("uTime", "")
-    }
+            "state": push_order.get("status", ""),
+            "fee": float(push_order.get("feeDetail", [{}])[0].get("fee")),
+        }
 
 def convert_open_orders_push_list_to_df(df):
     """
@@ -420,7 +406,7 @@ def convert_open_orders_push_list_to_df(df):
     If lst is None, return an empty DataFrame with the same columns.
 
     ws: https://www.bitget.com/api-doc/contract/websocket/private/Order-Channel
-    API REST: GET /api/mix/v1/order/current
+    API REST: GET /api/mix/v1/order/current     https://bitgetlimited.github.io/apidoc/en/mix/#get-open-order
     """
     columns =[
         "symbol",
@@ -432,22 +418,9 @@ def convert_open_orders_push_list_to_df(df):
         "marginMode",
         "clientOid",
         "orderId",
-        "filledQty",
-        "fee",
-        "priceAvg",
+
         "state",
-        "posSide",
-        "reduceOnly",
-        "holdMode",
-        "tradeSide",
-        "timeInForce",
-        "totalProfits",
-        "filledAmount",
-        "enterPointSource",
-        "orderType",
-        "orderSource",
-        "cTime",
-        "uTime"
+        "fee",
     ]
 
     if df is None:

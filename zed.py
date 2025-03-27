@@ -189,7 +189,7 @@ def run_client_test_vs_broker(conf_file):
     my_broker = broker_bitget_api.BrokerBitGetApi({"account": account_id, "reset_account_start": False})
 
     print("Client is running...")
-    client = ZMQClient(server_address="tcp://localhost:5555", timeout=10)  # using 10ms timeout
+    client = ZMQClient(server_address="tcp://localhost:5555", timeout=500)  # using 10ms timeout
 
     request_status = {
         "action": "INFO",

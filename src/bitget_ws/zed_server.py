@@ -261,13 +261,16 @@ class ZMQServer:
         float_columns = ["leverage", "available", "total",
                          "marketPrice", "averageOpenPrice",
                          "achievedProfits", "unrealizedPL",
-                         "liquidationPrice", "totalFee"]
+                         "liquidationPrice"]
 
         for column in float_columns:
             df_open_positions[column] = df_open_positions[column].astype(float)
 
         df_open_positions["leverage"] = df_open_positions["leverage"].astype(int)
         df_open_positions["symbol"] = df_open_positions["symbol"] + "_UMCBL"
+
+        current_timestamp = time.time()
+        df_open_positions["timestamp"] = current_timestamp
 
         for column in lst_open_positions_columns:
             if column not in df_open_positions.columns:
