@@ -1,5 +1,6 @@
 # from . import utils
 import pandas as pd
+import io
 from abc import ABCMeta, abstractmethod
 from datetime import datetime, timedelta
 from rich import inspect, print
@@ -93,7 +94,9 @@ class RealTimeDataProvider(IRealTimeDataProvider):
                     if response_json["result"][formatted_symbol]["status"] == "ko":
                         print("[RealTimeDataProvider:get_current_data] !!!! no data for ", symbol)
                         continue
-                    df = pd.read_json(response_json["result"][formatted_symbol]["info"])
+                    # df = pd.read_json(response_json["result"][formatted_symbol]["info"])
+                    json_str = response_json["result"][formatted_symbol]["info"]
+                    df = pd.read_json(io.StringIO(json_str))
                     columns = list(df.columns)
                     data["symbol"].append(symbol)
                     for feature in data_description.features:
