@@ -25,12 +25,12 @@ def zed_start(configuration_file):
     g_os_platform = platform.system()
     log_file = "zed.log"
     if g_os_platform == "Windows":
-        command = "start /B python -u zed.py > {}".format(log_file)
+        command = "start /B python -u zed.py server {} > {}".format(configuration_file, log_file)
         print("command : ", command)
         os.system(command)
     elif g_os_platform == "Linux":
         # command = "nohup python zed.py > {} &".format(log_file)
-        command = "nohup python zed.py > {} &".format(log_file)
+        command = "nohup python zed.py server {} > {} &".format(configuration_file, log_file)
         print("command : ", command)
         subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
 
