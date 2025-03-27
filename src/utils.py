@@ -13,6 +13,7 @@ import random
 import string
 import math
 import hashlib
+import time
 
 def reduce_data_description(lst_ds):
     lst_reduced = []
@@ -623,6 +624,7 @@ class debug_cpt:
         self.success = 0
         self.failure = 0
         self.percentage_of_failure = 0.0
+        self.start_time = None  # Time of the first event
 
     def _update_percentage(self):
         total = self.success + self.failure
@@ -630,20 +632,46 @@ class debug_cpt:
 
     def _maybe_print(self):
         total = self.success + self.failure
-        # Check if total count is a multiple of 100
+        # Check if total count is a multiple of 10000
         if total % 10000 == 0:
             self.print_stat()
 
     def increment_success(self):
+        if self.start_time is None:
+            self.start_time = time.time()
         self.success += 1
         self._update_percentage()
         self._maybe_print()
 
     def increment_failure(self):
+        if self.start_time is None:
+            self.start_time = time.time()
         self.failure += 1
         self._update_percentage()
         self._maybe_print()
 
+    def _format_duration(self, seconds):
+        # Calculate days, hours, minutes and seconds
+        days, rem = divmod(seconds, 86400)  # 86400 seconds in a day
+        hours, rem = divmod(rem, 3600)  # 3600 seconds in an hour
+        minutes, seconds = divmod(rem, 60)
+
+        # Build the formatted string based on the available time units
+        if days > 0:
+            return f"{int(days)}d:{int(hours)}h:{int(minutes)}m:{seconds:.2f}s"
+        elif hours > 0:
+            return f"{int(hours)}h:{int(minutes)}m:{seconds:.2f}s"
+        elif minutes > 0:
+            return f"{int(minutes)}m:{seconds:.2f}s"
+        else:
+            return f"{seconds:.2f}s"
+
     def print_stat(self):
-        print(f"Success: {self.success}, Failure: {self.failure}, Percentage of Failure: {self.percentage_of_failure:.2f}%")
+        elapsed = time.time() - self.start_time if self.start_time else 0.0
+        formatted_elapsed = self._format_duration(elapsed)
+        print(
+            f"Success: {self.success}, Failure: {self.failure}, "
+            f"Percentage of Failure: {self.percentage_of_failure:.2f}%, "
+            f"Duration: {formatted_elapsed}"
+        )
 
