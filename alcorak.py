@@ -1,9 +1,9 @@
-import subprocess
-import os, sys, psutil
-from src import crag_helper, broker_bitget_api
-from src.toolbox import settings_helper, os_helper
+import os, sys, subprocess, platform
+sys.path.append(os.path.abspath("src"))
+
 from rich import print
-import platform
+from src import crag_helper, broker_bitget_api
+from src.bitget_ws import zed_utils
 
 g_os_platform = platform.system()
 g_python_executable = ""
@@ -34,46 +34,6 @@ def reset_account(configuration, start=True):
         # reset account
         my_broker.execute_reset_account(open_orders=open_orders, triggers=triggers, positions=positions)
 
-def start_zed(configuration):
-    account_id = configuration["broker"].get("account", "")
-    account = settings_helper.get_account_info(account_id)
-    api_key = account.get("api_key", "")
-    api_secret = account.get("api_secret", "")
-    api_password = account.get("api_password", "")
-
-    params_strategy = configuration["strategy"]
-    my_strategy = crag_helper.get_strategy(params_strategy)
-    if not my_strategy:
-        return None
-
-    lst_data_description = crag_helper.get_strategy_lst_data_description(my_strategy)
-
-    log_file = "zed.log"
-    if g_os_platform == "Windows":
-        command = "start /B python -u zed.py > {}".format(log_file)
-        print("command : ", command)
-        os.system(command)
-    elif g_os_platform == "Linux":
-        # command = "nohup python zed.py > {} &".format(log_file)
-        command = "nohup python zed.py > {} &".format(log_file)
-        print("command : ", command)
-        subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
-
-
-def stop_zed():
-    all_processes = os_helper.get_python_processes()
-    processes = [process for process in all_processes if 'zed.py' in process['command']]
-
-    for process in processes:
-        print(process['pid'])
-        print(process)
-        try:
-            p = psutil.Process(process["pid"])
-            p.terminate()
-            p.wait()
-            print("zed's dead'")
-        except Exception as e:
-            pass
 
 def start_strategy(strategy_configuration_file):
 
