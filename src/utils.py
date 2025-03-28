@@ -15,6 +15,8 @@ import math
 import hashlib
 import time
 
+import xml.etree.ElementTree as ET
+
 def reduce_data_description(lst_ds):
     lst_reduced = []
     for ds in lst_ds:
@@ -343,7 +345,7 @@ def fdp_request_post(url, params, fdp_id):
 
     fdp_url = settings_helper.get_fdp_url_info(fdp_id).get("url", None)
 
-    if False:
+    if True:
         fdp_url = "http://192.168.1.205:5000/" # CEDE DEBUG
         # fdp_url_id = "http://192.168.1.205:5000"
 
@@ -618,6 +620,44 @@ def transform_dict_to_dataframe(msg):
     df = pd.DataFrame(data)
     return df
 
+
+def list_to_xml(data_list, file_path):
+    """
+    Convert a list of {'symbol': ..., 'timeframe': ...} dictionaries into an XML file.
+    The XML is structured with a root <items> element and multiple <item> entries.
+    """
+    # Ensure the directory for the file exists
+    directory = os.path.dirname(file_path)
+    if directory and not os.path.exists(directory):
+        os.makedirs(directory, exist_ok=True)
+
+    # Create the root element <items>
+    root = ET.Element('items')
+
+    for entry in data_list:
+        # Create an <item> element for each dictionary in the list
+        item_elem = ET.SubElement(root, 'item')
+
+        # Create and set the <symbol> element
+        symbol_elem = ET.SubElement(item_elem, 'symbol')
+        symbol_elem.text = str(entry.get('symbol', ''))
+
+        # Create and set the <timeframe> element
+        timeframe_elem = ET.SubElement(item_elem, 'timeframe')
+        timeframe_elem.text = str(entry.get('timeframe', ''))
+
+    # Create an ElementTree from the root element
+    tree = ET.ElementTree(root)
+
+    # Attempt to pretty-print the XML (works in Python 3.9+)
+    try:
+        ET.indent(tree, space="  ", level=0)
+    except AttributeError:
+        # If running on Python version older than 3.9, skip indentation.
+        pass
+
+    # Write the XML to the specified file path with UTF-8 encoding and XML declaration
+    tree.write(file_path, encoding='utf-8', xml_declaration=True)
 
 class debug_cpt:
     def __init__(self):

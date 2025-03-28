@@ -168,6 +168,9 @@ def get_crag_params_from_configuration(configuration):
 
     lst_data_description = get_strategy_lst_data_description(my_strategy)
 
+    file_path = "./conf/fdp_conf_lst_data_description.xml"
+    utils.list_to_xml(lst_data_description, file_path)
+
     my_broker = None
     params_broker = configuration["broker"]
     params_broker["ws_data_description"] = lst_data_description
