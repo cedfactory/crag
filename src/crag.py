@@ -142,6 +142,8 @@ class Crag:
         self.export_filename = os.path.join(self.working_directory, self.export_filename)
         self.backup_filename = os.path.join(self.working_directory, self.backup_filename)
 
+        self.reboot_timer_continue = False
+
         self.lock_usdt_equity_thread = threading.Lock()
 
         self.last_execution = {
@@ -151,7 +153,8 @@ class Crag:
             '30m': None,
             '1h': None,
             '2h': None,
-            '4h': None
+            '4h': None,
+            'reboot': None
         }
 
         # rabbitmq connection
@@ -291,13 +294,13 @@ class Crag:
                     lst_interval = ['1m', '5m', '15m', '30m', '1h']
                     self.last_execution['1h'] = now
 
-                # Check if it's time to execute the 2 hour function at 0h, 2h, 4h, 6h, 8h, etc.
+                # Check if it's time to execute the 2 hour function at 0h, 2h, 4h, 6h, etc.
                 if now.hour % 2 == 0 and now.minute == 0 and now.second == 0 and (
                         self.last_execution['2h'] is None or (now - self.last_execution['2h']).seconds >= 7200):
                     lst_interval = ['1m', '5m', '15m', '30m', '1h', '2h']
                     self.last_execution['2h'] = now
 
-                # Check if it's time to execute the 4 hour function at 0h, 4h, 8h, 12h, 16h, etc.
+                # Check if it's time to execute the 4 hour function at 0h, 4h, 8h, 12h, etc.
                 if now.hour % 4 == 0 and now.minute == 0 and now.second == 0 and (
                         self.last_execution['4h'] is None or (now - self.last_execution['4h']).seconds >= 14400):
                     lst_interval = ['1m', '5m', '15m', '30m', '1h', '2h', '4h']
@@ -305,6 +308,18 @@ class Crag:
                 if lst_interval:
                     print("############################ ", lst_interval, " ############################")
                     self.step(lst_interval)
+
+                # --- Reboot Timer Check ---
+                # Trigger the reboot timer every 2 hours at x:30:20.
+                # Here we use a 'reboot' key in self.last_execution to prevent multiple triggers within the same window.
+                now = datetime.now()
+                if now.minute == 30 and 20 <= now.second <= 25 and (
+                        self.last_execution.get('reboot') is None or (now - self.last_execution['reboot']).seconds >= 7200):
+                    self.reboot_timer_continue = True
+                    self.last_execution['reboot'] = now
+                    print("############################ Reboot Timer triggered at", now, "############################")
+                else:
+                    self.reboot_timer_continue = False
 
     def step(self, lst_interval):
         if self.broker.get_ws_activation_status():
@@ -399,10 +414,10 @@ class Crag:
         if self.safety_step_iterations_max is None:
             return
 
-        delta_memory_used = round((utils.get_memory_usage() - self.init_master_memory) / (1024 * 1024), 2)
         if self.reboot_exception \
-                or (delta_memory_used > 50) \
+                or self.reboot_timer_continue \
                 or (self.safety_step_iterration > self.safety_step_iterations_max):
+            delta_memory_used = round((utils.get_memory_usage() - self.init_master_memory) / (1024 * 1024), 2)
             memory_usage = round(utils.get_memory_usage() / (1024 * 1024), 1)
 
             # Current time
@@ -417,10 +432,8 @@ class Crag:
             print("****************** cycle duration: ", utils.format_duration(time_difference.total_seconds()) ," ******************")
             print("****************** average: ", round(average_seconds, 2)," ******************")
             print("****************** iter : ", self.safety_step_iterration," ******************")
-            if (delta_memory_used > 50):
-                self.msg_backup = "exit condition: delta_memory_used" + "\n"
-            else:
-                self.msg_backup = "exit condition: iterration" + "\n"
+
+            self.msg_backup = "REBOOT TRIGGERED" + "\n"
             start_reboot = current_time
             self.msg_backup += "at: " + start_reboot.strftime("%Y/%m/%d %H:%M:%S") + "\n"
             duration_sec = (start_reboot - self.previous_start_reboot).total_seconds()

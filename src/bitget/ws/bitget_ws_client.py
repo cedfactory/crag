@@ -107,7 +107,7 @@ class BitgetWsClient:
 
     def connect(self):
         try:
-            self.__ws_client.run_forever(ping_timeout=10)
+            self.__ws_client.run_forever(ping_timeout=500)
         except Exception as ex:
             print(ex)
 
