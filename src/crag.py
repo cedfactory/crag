@@ -454,6 +454,9 @@ class Crag:
             duration = int(time.time()) - self.init_start_date
             self.msg_backup += "DURATION: " + utils.format_duration(duration) + "\n"
             del duration
+
+            self.broker.send_zed_shutdown()
+
             self.log_discord(self.msg_backup.upper(), "REBOOT STATUS")
             self.backup()
             raise SystemExit(self.msg_backup)

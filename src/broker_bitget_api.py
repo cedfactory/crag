@@ -2187,6 +2187,9 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
     def get_ws_activation_status(self):
         return True
 
+    def send_zed_shutdown(self):
+        self.zed_ws_client.send_request({"action": "shutdown"})
+
     def get_zed_status(self):
         request_status = {
             "action": "INFO",
