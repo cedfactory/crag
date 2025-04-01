@@ -342,7 +342,16 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         return res
 
     # @authentication_required
-    def get_triggers(self, plan_type="normal_plan"):
+    def get_triggers(self, plan_type="normal_plan", by_pass=False):
+        if (
+            not by_pass
+            and self.get_zed_status()
+        ):
+            df_triggers = self.ws_get_all_triggers()
+            if not (df_triggers is None) \
+                    and isinstance(df_triggers, pd.DataFrame):
+                return df_triggers
+
         params = {
             "planType": plan_type,
             "productType": "USDT-FUTURES"
@@ -490,6 +499,21 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         df = self.get_zed_ws_data(request="TRIGGERS")
         required_columns = {"planType", "symbol", "orderId", "planStatus"}
         if isinstance(df, pd.DataFrame) and required_columns.issubset(df.columns):
+            def process_row(row):
+                # Compute values from orderId using your helper functions
+                grid_id = self.get_gridId_from_orderId(row["orderId"])
+                strategyId = self.get_strategyId_from_orderId(row["orderId"])
+                trend = self.get_trend_from_orderId(row["orderId"])
+
+                # Replace None with empty string, if needed
+                row["grid_id"] = grid_id if grid_id is not None else ""
+                row["strategyId"] = strategyId if strategyId is not None else ""
+                row["trend"] = trend if trend is not None else ""
+
+                return row
+
+            # Apply the processing to each row in the DataFrame
+            df = df.apply(process_row, axis=1)
             return df
         return None
 

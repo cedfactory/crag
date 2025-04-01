@@ -335,7 +335,6 @@ class Crag:
         # prices_symbols, lst_ds = self.get_ds_and_price_symbols(lst_interval)
 
         lst_ds = self.get_ds(lst_interval)
-        self.update_sltp_status()
 
         measure_time_fdp_start = datetime.now()
 
@@ -346,6 +345,7 @@ class Crag:
         self.log("[Crag] ⌛")
         self.log("[Execute Trade - Crag] ⌛")
 
+        self.update_sltp_status()
         df_current_prices_symbols = self.get_price_symbols()
         self.rtstr.set_current_data(lst_current_data, df_current_prices_symbols, self.usdt_available)
 
