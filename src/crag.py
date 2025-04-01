@@ -90,6 +90,7 @@ class Crag:
         self.usdt_equity_previous = 0
         self.usdt_equity_thread = 0
         self.usdt_available_thread = 0
+        self.maxOpenPosAvailable = 0
 
         self.resume = False
         self.safety_step_iterration = 0
@@ -347,7 +348,8 @@ class Crag:
 
         self.update_sltp_status()
         df_current_prices_symbols = self.get_price_symbols()
-        self.rtstr.set_current_data(lst_current_data, df_current_prices_symbols, self.usdt_available)
+        self.maxOpenPosAvailable = self.broker.get_account_maxOpenPosAvailable()
+        self.rtstr.set_current_data(lst_current_data, df_current_prices_symbols, self.maxOpenPosAvailable)
 
         # execute strategy trades
         lst_trades_to_execute = self.rtstr.get_lst_trade(lst_interval)
