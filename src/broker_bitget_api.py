@@ -634,7 +634,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         ):
             maxOpenPosAvailable = self.ws_get_account_maxOpenPosAvailable()
             if maxOpenPosAvailable is not None:
-                return maxOpenPosAvailable
+                return float(maxOpenPosAvailable)
 
         n_attempts = 3
         while n_attempts > 0:
@@ -650,7 +650,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         maxOpenPosAvailable = account_equity['data']['crossMaxAvailable']  # MODIF CEDE SEE TEXT ABOVE
         del account_equity['data']
         del account_equity
-        return maxOpenPosAvailable
+        return float(maxOpenPosAvailable)
 
     #@authentication_required
     def get_account_equity(self, by_pass=False):
