@@ -155,6 +155,8 @@ class WS_Account_Data:
                 ignore_index=True
             )
 
+            self._df_triggers["timestamp"] = pd.to_numeric(self._df_triggers["timestamp"], errors='coerce')
+
             # 3) Keep only the row with the most recent timestamp for each posId
             self._df_triggers = self._df_triggers.loc[
                 self._df_triggers.groupby("orderId")["timestamp"].idxmax()

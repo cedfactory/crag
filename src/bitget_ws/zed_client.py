@@ -4,10 +4,13 @@ import pandas as pd
 class ZMQClient:
     def __init__(self, server_address, timeout=100):  # very short timeout
         self.server_address = server_address
-        self.context = zmq.Context()
-        self._create_socket()
+        self._init_zmq_client()
         self.timeout = timeout  # timeout in milliseconds
         print(f"Client connected to {server_address}")
+
+    def _init_zmq_client(self):
+        self.context = zmq.Context()
+        self._create_socket()
 
     def _create_socket(self):
         # Create and connect the socket, and register it with a new poller.
@@ -75,3 +78,16 @@ class ZMQClient:
         self.socket.close()
         self.context.term()
         print("Client socket closed and context terminated.")
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        # Remove the ZMQ client using pop to avoid pickling issues.
+        state.pop('socket', None)
+        state.pop('context', None)
+        state.pop('poller', None)
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        # Reinitialize the ZMQ client after unpickling.
+        self._init_zmq_client()

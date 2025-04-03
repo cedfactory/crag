@@ -143,7 +143,7 @@ class Crag:
         self.export_filename = os.path.join(self.working_directory, self.export_filename)
         self.backup_filename = os.path.join(self.working_directory, self.backup_filename)
 
-        self.reboot_timer_continue = False
+        self.reboot_timer_interval = False
 
         self.lock_usdt_equity_thread = threading.Lock()
 
@@ -314,13 +314,14 @@ class Crag:
                 # Trigger the reboot timer every 2 hours at x:30:20.
                 # Here we use a 'reboot' key in self.last_execution to prevent multiple triggers within the same window.
                 now = datetime.now()
-                if now.minute == 30 and 20 <= now.second <= 25 and (
+                # if now.minute == 30 and 20 <= now.second <= 25 and (   # CEDE TO RESTORE
+                if 20 <= now.second <= 25 and (
                         self.last_execution.get('reboot') is None or (now - self.last_execution['reboot']).seconds >= 7200):
-                    self.reboot_timer_continue = True
+                    self.reboot_timer_interval = True
                     self.last_execution['reboot'] = now
                     print("############################ Reboot Timer triggered at", now, "############################")
                 else:
-                    self.reboot_timer_continue = False
+                    self.reboot_timer_interval = False
 
     def step(self, lst_interval):
         if self.broker.get_ws_activation_status():
@@ -401,8 +402,9 @@ class Crag:
             self.log("[crag::backup]", self.backup_filename)
             try:
                 pickle.dump(self, file)
-            except:
+            except Exception as e:
                 print("pickle does not exist: ", file)
+                print(e)
                 exit(876)
 
             if os.path.exists(self.backup_filename):
@@ -413,12 +415,20 @@ class Crag:
 
     def request_backup(self):
         self.safety_step_iterration += 1
-        if self.safety_step_iterations_max is None:
+        if self.rtstr.get_strategy_type() == "CONTINUE" \
+                and self.safety_step_iterations_max is None \
+                and not self.reboot_exception:
+            return
+
+        if self.rtstr.get_strategy_type() == "INTERVAL" \
+                and self.reboot_timer_interval is False \
+                and not self.reboot_exception:
             return
 
         if self.reboot_exception \
-                or self.reboot_timer_continue \
+                or self.reboot_timer_interval \
                 or (self.safety_step_iterration > self.safety_step_iterations_max):
+            self.reboot_timer_interval = False
             delta_memory_used = round((utils.get_memory_usage() - self.init_master_memory) / (1024 * 1024), 2)
             memory_usage = round(utils.get_memory_usage() / (1024 * 1024), 1)
 
