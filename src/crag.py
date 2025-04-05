@@ -314,8 +314,8 @@ class Crag:
                 # Trigger the reboot timer every 2 hours at x:30:20.
                 # Here we use a 'reboot' key in self.last_execution to prevent multiple triggers within the same window.
                 now = datetime.now()
-                if now.minute == 30 and 20 <= now.second <= 25 and (   # CEDE TO RESTORE
-                # if 20 <= now.second <= 25 and (
+                # if now.minute == 30 and 20 <= now.second <= 25 and (   # CEDE TO RESTORE
+                if 20 <= now.second <= 25 and (
                         self.last_execution.get('reboot') is None or (now - self.last_execution['reboot']).seconds >= 7200):
                     self.reboot_timer_interval = True
                     self.last_execution['reboot'] = now
