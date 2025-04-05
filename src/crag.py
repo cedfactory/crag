@@ -93,7 +93,7 @@ class Crag:
         self.maxOpenPosAvailable = 0
 
         self.resume = False
-        self.safety_step_iterration = 0
+        self.safety_step_iteration = 0
         self.safety_step_iterations_max = None
         self.sum_duration_safety_step = 0
         self.reboot_iter = 0
@@ -213,7 +213,7 @@ class Crag:
             self.monitoring.send_alive_notification(current_timestamp, self.broker.account.get("id"), self.rtstr.id)
 
     def run(self):
-        self.safety_step_iterration = 0
+        self.safety_step_iteration = 0
 
         if not self.resume:
             self.start_date = self.broker.get_current_datetime("%Y/%m/%d %H:%M:%S")
@@ -229,7 +229,7 @@ class Crag:
             self.previous_start_reboot = start_reboot
             msg += "AT: " + start_reboot.strftime("%Y/%m/%d %H:%M:%S")
             self.log_discord(msg, "born again")
-            self.safety_step_iterration = 0
+            self.safety_step_iteration = 0
             self.sum_duration_safety_step = 0
             del msg
             self.reboot_iter += 1
@@ -695,7 +695,7 @@ class Crag:
         self.duration_time_safety_step = end_safety_step - start_safety_step
         del end_safety_step
         del start_safety_step
-        self.safety_step_iterration += 1
+        self.safety_step_iteration += 1
         return True
 
     def log_memory(self):
