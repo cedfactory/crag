@@ -42,6 +42,9 @@ class SimBroker(broker.Broker):
     def get_lst_current_data(self, lst_data_description):
         return self.rtdp.get_current_data(lst_data_description, self.fdp_url_id)
 
+    def get_fdp_ws_status(self):
+        return self.rtdp.get_fdp_ws_status(self.fdp_url_id)
+
     def get_value(self, symbol):
         return self.rtdp.get_value(symbol)
 

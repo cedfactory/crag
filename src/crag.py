@@ -412,176 +412,90 @@ class Crag:
             else:
                 print("File does not exist: ", self.backup_filename)
 
-
     def request_backup(self):
-        self.safety_step_iterration += 1
-        if self.rtstr.get_strategy_type() == "CONTINUE" \
-                and self.safety_step_iterations_max is None \
-                and not self.reboot_exception:
+        # Increment the safety step iteration counter
+        self.safety_step_iteration += 1
+        strategy = self.rtstr.get_strategy_type()
+
+        # Early return conditions based on the strategy type
+        if strategy == "CONTINUE" and self.safety_step_iterations_max is None and not self.reboot_exception:
             return
 
-        if self.rtstr.get_strategy_type() == "INTERVAL" \
-                and self.reboot_timer_interval is False \
-                and not self.reboot_exception:
+        if strategy == "INTERVAL" and not self.reboot_timer_interval and not self.reboot_exception:
             return
 
-        if self.reboot_exception \
-                or self.reboot_timer_interval \
-                or (self.safety_step_iterration > self.safety_step_iterations_max):
-            self.reboot_timer_interval = False
-            delta_memory_used = round((utils.get_memory_usage() - self.init_master_memory) / (1024 * 1024), 2)
-            memory_usage = round(utils.get_memory_usage() / (1024 * 1024), 1)
+        # Check if reboot conditions are met
+        if not (self.reboot_exception or self.reboot_timer_interval or (
+                self.safety_step_iteration > self.safety_step_iterations_max)):
+            return
 
-            # Current time
-            current_time = datetime.now()
-            time_difference = current_time - self.init_start_time
-            average_time = time_difference / self.safety_step_iterration
-            average_seconds = average_time.total_seconds()
+        # If using the INTERVAL strategy, get the FDP WebSocket status
+        if strategy == "INTERVAL":
+            fdp_status = self.broker.get_fdp_ws_status()
 
-            print("****************** memory: ", memory_usage, " ******************")
-            print("****************** delta memory: ", delta_memory_used, " ******************")
-            # print("****************** Crag size: ", sys.getsizeof(self), " ******************")
-            print("****************** cycle duration: ", utils.format_duration(time_difference.total_seconds()) ," ******************")
-            print("****************** average: ", round(average_seconds, 2)," ******************")
-            print("****************** iter : ", self.safety_step_iterration," ******************")
+        # Reset the reboot timer flag
+        self.reboot_timer_interval = False
 
-            self.msg_backup = "REBOOT TRIGGERED" + "\n"
-            start_reboot = current_time
-            self.msg_backup += "at: " + start_reboot.strftime("%Y/%m/%d %H:%M:%S") + "\n"
-            duration_sec = (start_reboot - self.previous_start_reboot).total_seconds()
-            self.msg_backup += "since reboot: " + utils.format_duration(duration_sec) + "\n"
-            self.total_duration_reboot += duration_sec
-            self.cpt_reboot += 1
+        # Calculate memory usage information
+        memory_usage = round(utils.get_memory_usage() / (1024 * 1024), 1)
+        delta_memory = round((utils.get_memory_usage() - self.init_master_memory) / (1024 * 1024), 2)
+
+        # Get the current time and compute elapsed time details
+        current_time = datetime.now()
+        elapsed_time = current_time - self.init_start_time
+        average_cycle_seconds = elapsed_time.total_seconds() / self.safety_step_iteration
+
+        # Print diagnostic information
+        print("****************** memory:", memory_usage, "******************")
+        print("****************** delta memory:", delta_memory, "******************")
+        print("****************** cycle duration:", utils.format_duration(elapsed_time.total_seconds()),
+              "******************")
+        print("****************** average:", round(average_cycle_seconds, 2), "******************")
+        print("****************** iter:", self.safety_step_iteration, "******************")
+
+        if strategy == "INTERVAL":
+            total_ws = fdp_status["failure"] + fdp_status["success"]
+            print("****************** ws_fdp:", total_ws, "******************")
+            print("****************** ws_fdp failure:", fdp_status["percentage_of_failure"], "******************")
+
+        # Start constructing the backup message
+        self.msg_backup = f"REBOOT TRIGGERED\nTYPE: {strategy}\n"
+        self.msg_backup += f"at: {current_time.strftime('%Y/%m/%d %H:%M:%S')}\n"
+
+        # Update reboot counters and calculate time since last reboot
+        self.cpt_reboot += 1
+        duration_since_last = (current_time - self.previous_start_reboot).total_seconds()
+        self.msg_backup += "since reboot: " + utils.format_duration(duration_since_last) + "\n"
+
+        # For the CONTINUE strategy, update duration statistics
+        if strategy == "CONTINUE":
+            self.total_duration_reboot += duration_since_last
             self.average_duration_reboot = self.total_duration_reboot / self.cpt_reboot
-            self.max_duration_reboot = max(self.max_duration_reboot, duration_sec)
-            if self.min_duration_reboot == 0:
-                self.min_duration_reboot = duration_sec
-            else:
-                self.min_duration_reboot = min(self.min_duration_reboot, duration_sec)
+            self.max_duration_reboot = max(self.max_duration_reboot, duration_since_last)
+            self.min_duration_reboot = (
+                duration_since_last if self.min_duration_reboot == 0 else min(self.min_duration_reboot,
+                                                                              duration_since_last)
+            )
             self.msg_backup += "max: " + utils.format_duration(self.max_duration_reboot) + "\n"
             self.msg_backup += "min: " + utils.format_duration(self.min_duration_reboot) + "\n"
             self.msg_backup += "average: " + utils.format_duration(self.average_duration_reboot) + "\n"
-            self.msg_backup += "reboots: " + str(int(self.cpt_reboot)) + "\n"
 
-            duration = int(time.time()) - self.init_start_date
-            self.msg_backup += "DURATION: " + utils.format_duration(duration) + "\n"
-            del duration
+        # Append total duration and reboot count to the message
+        total_duration = int(time.time()) - self.init_start_date
+        self.msg_backup += "DURATION: " + utils.format_duration(total_duration) + "\n"
+        self.msg_backup += "reboots: " + str(int(self.cpt_reboot)) + "\n"
 
-            self.broker.send_zed_shutdown()
+        # For INTERVAL strategy, include additional WebSocket status information
+        if strategy == "INTERVAL":
+            total_ws_iter = int(fdp_status["failure"]) + int(fdp_status["success"])
+            self.msg_backup += "FDP WS ITER: " + str(total_ws_iter) + "\n"
+            self.msg_backup += "FDP WS %: " + str(round(float(fdp_status["percentage_of_failure"]), 2)) + "\n"
 
-            self.log_discord(self.msg_backup.upper(), "REBOOT STATUS")
-            self.backup()
-            raise SystemExit(self.msg_backup)
-
-    def save_df_csv_broker_current_state(self, output_dir, current_state):
-        utils.create_directory(output_dir)
-        # Get the current date and time
-        current_date = datetime.now()
-
-        # Format the date as a string
-        formatted_date = current_date.strftime("%Y%m%d_%H%M%S")
-
-        df_current_states = current_state["open_orders"]
-        df_open_positions = current_state["open_positions"]
-        df_price = current_state["prices"]
-
-        filename_df_current_states = f"data_{formatted_date}_df_current_states.csv"
-        full_path = os.path.join(output_dir, filename_df_current_states)
-        df_current_states.to_csv(full_path)
-
-        filename_df_open_positions = f"data_{formatted_date}_df_open_positions.csv"
-        full_path = os.path.join(output_dir, filename_df_open_positions)
-        df_open_positions.to_csv(full_path)
-
-        filename_df_price = f"data_{formatted_date}_df_price.csv"
-        full_path = os.path.join(output_dir, filename_df_price)
-        df_price.to_csv(full_path)
-
-    def get_current_state_from_csv(self, input_dir, cpt, df_orders, df_grids):
-        exit_scenario = False
-        str_cpt = str(cpt)
-
-        if False: # CEDE SCENARIOS DATA IF NEEDED - DO NOT REMOVE
-            filename = "_df_open_positions.csv"
-            utils.modify_strategy_data_files(input_dir, filename)
-            exit(1)
-        if False: # CEDE SCENARIOS DATA IF NEEDED - DO NOT REMOVE
-            filename = "_df_current_states.csv"
-            utils.modify_strategy_data_files(input_dir, filename)
-            exit(1)
-
-        full_path = os.path.join(input_dir, "data_" + str_cpt + "_df_current_states.csv")
-        file_path = Path(full_path)
-        if file_path.exists():
-            df_open_orders = pd.read_csv(full_path)
-        else:
-            exit_scenario = True
-
-        full_path = os.path.join(input_dir, "data_" + str_cpt + "_df_open_positions.csv")
-        file_path = Path(full_path)
-        if file_path.exists():
-            df_open_positions = pd.read_csv(full_path)
-        else:
-            exit_scenario = True
-
-        full_path = os.path.join(input_dir, "data_" + str_cpt + "_df_price.csv")
-        file_path = Path(full_path)
-        if file_path.exists():
-            df_prices = pd.read_csv(full_path)
-        else:
-            exit_scenario = True
-
-        if exit_scenario:
-            self.log("SCENARIO COMPLETED AT ROUND {}".format(str_cpt))
-            # if df_orders is None and df_grids is None:
-            #     print("*********** EXIT UT ***********")
-            #     return None
-                # exit(0)
-            full_path = os.path.join(input_dir, "results_scenario_grid_df_current_states.csv")
-            df_orders.to_csv(full_path)
-            full_path = os.path.join(input_dir, "baseline_" + "results_scenario_grid_df_current_states.csv")
-            file_path = Path(full_path)
-            if file_path.exists():
-                df_baseline = pd.read_csv(full_path, index_col=False)
-                df_baseline = df_baseline.loc[:, ~df_baseline.columns.str.match('Unnamed')]
-                # Check if DataFrames are identical
-                identical = df_baseline.equals(df_orders)
-                if identical:
-                    self.log("ORDERS MATCHING 100%")
-                else:
-                    self.log("ORDERS NOT MATCHING")
-            else:
-                self.log("NO ORDER BASELINE AVAILABLE FOR THIS SCENARIO")
-
-            full_path = os.path.join(input_dir, "results_scenario_grid_df_grids.csv")
-            df_grids.to_csv(full_path)
-            full_path = os.path.join(input_dir, "baseline_" + "results_scenario_grid_df_grids.csv")
-            file_path = Path(full_path)
-            if file_path.exists():
-                df_baseline = pd.read_csv(full_path, index_col=False)
-                # df_baseline = df_baseline.drop(columns=df_baseline.columns[0])
-                df_baseline = df_baseline.loc[:, ~df_baseline.columns.str.match('Unnamed')]
-                df_baseline = df_baseline.fillna('')
-                # Check if DataFrames are identical
-                identical = df_baseline.equals(df_grids)
-                if identical:
-                    self.log("GRIDS MATCHING 100%")
-                else:
-                    self.log("GRIDS NOT MATCHING")
-            else:
-                self.log("NO GRID BASELINE AVAILABLE FOR THIS SCENARIO")
-
-            self.execute_timer.set_scenario_directory(input_dir)
-            self.execute_timer.close_grid_scenario()
-            self.execute_timer.plot_all_close_grid_scenario()
-            exit(0)
-
-        broker_current_state = {
-            "open_orders": df_open_orders,
-            "open_positions": df_open_positions,
-            "prices": df_prices
-        }
-        return broker_current_state
+        # Initiate shutdown, log the reboot, perform backup, and exit the system
+        self.broker.send_zed_shutdown()
+        self.log_discord(self.msg_backup.upper(), "REBOOT STATUS")
+        self.backup()
+        raise SystemExit(self.msg_backup)
 
     def get_memory_usage(self, class_memory):
         memory_usage = {}

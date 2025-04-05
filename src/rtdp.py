@@ -34,6 +34,10 @@ class IRealTimeDataProvider(metaclass = ABCMeta):
         return None
 
     @abstractmethod
+    def get_fdp_ws_status(self, fdp_url_id):
+        return None
+
+    @abstractmethod
     def get_value(self, symbol):
         pass
 
@@ -63,6 +67,14 @@ class RealTimeDataProvider(IRealTimeDataProvider):
             pass
         else:
             pass
+
+    def get_fdp_ws_status(self, fdp_url_id):
+        params = {
+            "service": "ws_status"
+        }
+        response_json = utils.fdp_request_post("status", params, fdp_url_id)
+
+        return response_json["result"]
 
     def get_lst_current_data(self, lst_data_description, fdp_url_id):
         lst_ds_result = []

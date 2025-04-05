@@ -105,6 +105,11 @@ class Broker(metaclass = ABCMeta):
             return self.rtdp.get_lst_current_data(data_description, self.fdp_url_id)
         return None
 
+    def get_fdp_ws_status(self):
+        if self.rtdp:
+            return self.rtdp.get_fdp_ws_status(self.fdp_url_id)
+        return None
+
     def get_cash(self):
         return self.cash
 

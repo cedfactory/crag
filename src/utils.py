@@ -665,16 +665,24 @@ class debug_cpt:
         self.failure = 0
         self.percentage_of_failure = 0.0
         self.start_time = None  # Time of the first event
+        self.last_print_time = None  # Time when stats were last printed
 
     def _update_percentage(self):
         total = self.success + self.failure
         self.percentage_of_failure = (self.failure / total * 100) if total > 0 else 0.0
 
     def _maybe_print(self):
+        current_time = time.time()
         total = self.success + self.failure
-        # Check if total count is a multiple of 10000
-        if total % 10000 == 0:
+
+        # Initialize last_print_time if it's not set yet
+        if self.last_print_time is None:
+            self.last_print_time = current_time
+
+        # Check if total is a multiple of 10000 or if an hour has passed since last print
+        if total % 10000 == 0 or (current_time - self.last_print_time >= 3600):
             self.print_stat()
+            self.last_print_time = current_time  # Update the last printed time
 
     def increment_success(self):
         if self.start_time is None:
@@ -691,12 +699,9 @@ class debug_cpt:
         self._maybe_print()
 
     def _format_duration(self, seconds):
-        # Calculate days, hours, minutes and seconds
         days, rem = divmod(seconds, 86400)  # 86400 seconds in a day
         hours, rem = divmod(rem, 3600)  # 3600 seconds in an hour
         minutes, seconds = divmod(rem, 60)
-
-        # Build the formatted string based on the available time units
         if days > 0:
             return f"{int(days)}d:{int(hours)}h:{int(minutes)}m:{seconds:.2f}s"
         elif hours > 0:
