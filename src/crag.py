@@ -453,10 +453,12 @@ class Crag:
         print("****************** average:", round(average_cycle_seconds, 2), "******************")
         print("****************** iter:", self.safety_step_iteration, "******************")
 
-        if strategy == "INTERVAL":
+        if strategy == "INTERVAL" and not fdp_status is None:
             total_ws = fdp_status["failure"] + fdp_status["success"]
             print("****************** ws_fdp:", total_ws, "******************")
             print("****************** ws_fdp failure:", fdp_status["percentage_of_failure"], "******************")
+        elif fdp_status is None:
+            print("****************** ws_fdp: FAILED ******************")
 
         # Start constructing the backup message
         self.msg_backup = f"REBOOT TRIGGERED\nTYPE: {strategy}\n"
@@ -486,10 +488,12 @@ class Crag:
         self.msg_backup += "reboots: " + str(int(self.cpt_reboot)) + "\n"
 
         # For INTERVAL strategy, include additional WebSocket status information
-        if strategy == "INTERVAL":
+        if strategy == "INTERVAL" and not fdp_status is None:
             total_ws_iter = int(fdp_status["failure"]) + int(fdp_status["success"])
             self.msg_backup += "FDP WS ITER: " + str(total_ws_iter) + "\n"
             self.msg_backup += "FDP WS %: " + str(round(float(fdp_status["percentage_of_failure"]), 2)) + "\n"
+        elif fdp_status is None:
+            self.msg_backup += "FDP WS: FAILED" + "\n"
 
         # Initiate shutdown, log the reboot, perform backup, and exit the system
         self.broker.send_zed_shutdown()

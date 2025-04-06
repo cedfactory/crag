@@ -74,6 +74,8 @@ class RealTimeDataProvider(IRealTimeDataProvider):
         }
         response_json = utils.fdp_request_post("status", params, fdp_url_id)
 
+        if response_json["status"] == "ko":
+            return None
         return response_json["result"]
 
     def get_lst_current_data(self, lst_data_description, fdp_url_id):
