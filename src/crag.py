@@ -264,55 +264,41 @@ class Crag:
 
             if self.rtstr.get_strategy_type() == "INTERVAL":
                 now = datetime.now()
-                lst_interval = []
-                # Check if it's time to execute the 1 minute function at exact minutes
-                if now.second == 0 and (
-                        self.last_execution['1m'] is None or (now - self.last_execution['1m']).seconds >= 60):
-                    lst_interval = ['1m']
-                    self.last_execution['1m'] = now
+                triggered_intervals = []
 
-                # Check if it's time to execute the 5 minute function at 0, 5, 10, 15, ..., 55 minutes
-                if now.minute % 5 == 0 and now.second == 0 and (
-                        self.last_execution['5m'] is None or (now - self.last_execution['5m']).seconds >= 300):
-                    lst_interval = ['1m', '5m']
-                    self.last_execution['5m'] = now
+                # Define each interval as a tuple:
+                # (key, condition function, time threshold in seconds, cumulative interval list)
+                intervals = [
+                    ("1m", lambda n: n.second == 0, 60,
+                     ['1m']),
+                    ("5m", lambda n: n.minute % 5 == 0 and n.second == 0, 300,
+                     ['1m', '5m']),
+                    ("15m", lambda n: n.minute % 15 == 0 and n.second == 0, 900,
+                     ['1m', '5m', '15m']),
+                    ("30m", lambda n: n.minute % 30 == 0 and n.second == 0, 1800,
+                     ['1m', '5m', '15m', '30m']),
+                    ("1h", lambda n: n.minute == 0 and n.second == 0, 3600,
+                     ['1m', '5m', '15m', '30m', '1h']),
+                    ("2h", lambda n: n.hour % 2 == 0 and n.minute == 0 and n.second == 0, 7200,
+                     ['1m', '5m', '15m', '30m', '1h', '2h']),
+                    ("4h", lambda n: n.hour % 4 == 0 and n.minute == 0 and n.second == 0, 14400,
+                     ['1m', '5m', '15m', '30m', '1h', '2h', '4h']),
+                ]
 
-                # Check if it's time to execute the 15 minute function at 0, 15, 30, 45 minutes
-                if now.minute % 15 == 0 and now.second == 0 and (
-                        self.last_execution['15m'] is None or (now - self.last_execution['15m']).seconds >= 900):
-                    lst_interval = ['1m', '5m', '15m']
-                    self.last_execution['15m'] = now
+                # Loop through each interval in order.
+                for key, condition, threshold, interval_list in intervals:
+                    if condition(now) and (self.last_execution.get(key) is None or (
+                            now - self.last_execution.get(key)).seconds >= threshold):
+                        triggered_intervals = interval_list
+                        # Update last execution time for all intervals in the current cumulative list.
+                        for interval in interval_list:
+                            self.last_execution[interval] = now
 
-                # Check if it's time to execute the 30 minute function at 0, 30 minutes
-                if now.minute % 30 == 0 and now.second == 0 and (
-                        self.last_execution['30m'] is None or (now - self.last_execution['30m']).seconds >= 1800):
-                    lst_interval = ['1m', '5m', '15m', '30m']
-                    self.last_execution['30m'] = now
-
-                # Check if it's time to execute the 1 hour function at 0 minutes of each hour
-                if now.minute == 0 and now.second == 0 and (
-                        self.last_execution['1h'] is None or (now - self.last_execution['1h']).seconds >= 3600):
-                    lst_interval = ['1m', '5m', '15m', '30m', '1h']
-                    self.last_execution['1h'] = now
-
-                # Check if it's time to execute the 2 hour function at 0h, 2h, 4h, 6h, etc.
-                if now.hour % 2 == 0 and now.minute == 0 and now.second == 0 and (
-                        self.last_execution['2h'] is None or (now - self.last_execution['2h']).seconds >= 7200):
-                    lst_interval = ['1m', '5m', '15m', '30m', '1h', '2h']
-                    self.last_execution['2h'] = now
-
-                # Check if it's time to execute the 4 hour function at 0h, 4h, 8h, 12h, etc.
-                if now.hour % 4 == 0 and now.minute == 0 and now.second == 0 and (
-                        self.last_execution['4h'] is None or (now - self.last_execution['4h']).seconds >= 14400):
-                    lst_interval = ['1m', '5m', '15m', '30m', '1h', '2h', '4h']
-                    self.last_execution['4h'] = now
-                if lst_interval:
-                    print("############################ ", lst_interval, " ############################")
-                    self.step(lst_interval)
+                if triggered_intervals:
+                    print("############################ ", triggered_intervals, " ############################")
+                    self.step(triggered_intervals)
 
                 # --- Reboot Timer Check ---
-                # Trigger the reboot timer every 2 hours at x:30:20.
-                # Here we use a 'reboot' key in self.last_execution to prevent multiple triggers within the same window.
                 now = datetime.now()
                 # if now.minute == 30 and 20 <= now.second <= 25 and (   # CEDE TO RESTORE
                 if 20 <= now.second <= 25 and (
