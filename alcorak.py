@@ -76,12 +76,14 @@ def start_strategy(strategy_configuration_file):
         zed_utils.zed_start(strategy_configuration_file)
 
         print("size of {} : {} bytes".format(backup_file, os.path.getsize(backup_file)))
-        result = subprocess.run(
-            [g_python_executable, "main.py", "--reboot", backup_file, ">", "crag.log"],
-            stdout=subprocess.PIPE)
-        print(result)
 
-        # filtrer les logs de ced
+        if g_os_platform == "Windows":
+            command = ['cmd.exe', '/c', g_python_executable, "main.py", "--reboot", backup_file, ">", "crag.log"]
+        elif g_os_platform == "Linux":
+            command = [g_python_executable, "main.py", "--reboot", backup_file]
+
+        result = subprocess.run(command, stdout=subprocess.PIPE)
+        print(result)
 
     print("[alcorak] result.returncode : ", result.returncode)
     print("[alcorak] backup_file : ", backup_file)
