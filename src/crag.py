@@ -121,6 +121,9 @@ class Crag:
             self.working_directory = params.get("working_directory", self.working_directory)
             self.dump_perf_dir = self.dump_perf_dir + "_" + self.id
             self.safety_step_iterations_max = params.get("safety_step_iterations_max", self.safety_step_iterations_max)
+            if isinstance(self.safety_step_iterations_max, str):
+                self.safety_step_iterations_max = int(self.safety_step_iterations_max)
+            print("#########", self.safety_step_iterations_max)
 
         self.zero_print = False
 

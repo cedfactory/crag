@@ -112,7 +112,8 @@ def load_configuration_file(configuration_file, config_path = './conf'):
         "id": crag_node.get("id", ""),
         "interval": int(crag_node.get("interval", 10)),
         "bot_id": crag_node.get("botId", ""),
-        "loggers": crag_node.get("loggers", "")
+        "loggers": crag_node.get("loggers", ""),
+        "safety_step_iterations_max": crag_node.get("safety_step_iterations_max", None)
     }
 
     params_alcorak = {}
@@ -130,6 +131,42 @@ def load_configuration_file(configuration_file, config_path = './conf'):
             "crag": params_crag,
             "alcorak": params_alcorak,
             }
+
+def save_configuration_file(configuration_file, dict_configuration):
+    print("save configuration file : ", configuration_file)
+
+    root = ET.Element("configuration")
+
+    # strategy
+    strategy = ET.SubElement(root, "strategy")
+    strategy_params = ET.SubElement(strategy, "params")
+    for key, value in dict_configuration["strategy"].items():
+        if key == "id" or key == "name":
+            strategy.set(str(key), str(value))
+        else:
+            strategy_params.set(str(key), str(value))
+
+    # broker
+    broker = ET.SubElement(root, "broker")
+    broker_params = ET.SubElement(broker, "params")
+    for key, value in dict_configuration["broker"].items():
+        if key == "name":
+            broker.set(str(key), str(value))
+        elif key == "fdp":
+            continue
+        else:
+            broker_params.set(str(key), str(value))
+
+    # crag
+    crag = ET.SubElement(root, "crag")
+    for key, val in dict_configuration["crag"].items():
+        crag.set(str(key), str(val))
+
+    tree = ET.ElementTree(root)
+    ET.indent(tree, space="\t", level=0)
+    with open(configuration_file, "wb") as f:
+        tree.write(f, encoding="utf-8", xml_declaration=True)
+
 
 def get_strategy(params_strategy):
     strategy_name = params_strategy.get("name", "")
@@ -158,6 +195,7 @@ def get_crag_params_from_configuration(configuration):
     params_crag = configuration["crag"]
     crag_id = params_crag.get("id", "")
     crag_interval = params_crag.get("interval", "")
+    safety_step_iterations_max = params_crag.get("safety_step_iterations_max", None)
     str_loggers = params_crag.get("loggers", "")
     loggers = logger.get_loggers(str_loggers)
 
@@ -187,7 +225,7 @@ def get_crag_params_from_configuration(configuration):
     bot_id = params_crag.get("bot_id", None)
     crag_discord_bot = logger._initialize_crag_discord_bot(bot_id)
 
-    return {"broker": my_broker, "rtstr": my_strategy, "id": crag_id, "interval": crag_interval, "logger": crag_discord_bot, "loggers": loggers}
+    return {"broker": my_broker, "rtstr": my_strategy, "id": crag_id, "interval": crag_interval, "safety_step_iterations_max": safety_step_iterations_max, "logger": crag_discord_bot, "loggers": loggers}
 
 def initialization_from_pickle(picklefilename):
     bot = None
