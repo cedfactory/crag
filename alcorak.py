@@ -47,7 +47,7 @@ def start_strategy(strategy_configuration_file):
         print("Can't find id for crag")
         return
 
-    #zed_utils.zed_start(strategy_configuration_file)
+    zed_utils.zed_start(strategy_configuration_file)
 
     params_strategy = configuration["strategy"]
     my_strategy = crag_helper.get_strategy(params_strategy)
@@ -72,8 +72,8 @@ def start_strategy(strategy_configuration_file):
 
     backup_file = "./output/" + configuration['crag']['id'] + "_crag_backup.pickle"
     while result.returncode == 1 and os.path.exists(backup_file):
-        #zed_utils.zed_stop()
-        #zed_utils.zed_start(strategy_configuration_file)
+        zed_utils.zed_stop()
+        zed_utils.zed_start(strategy_configuration_file)
 
         print("size of {} : {} bytes".format(backup_file, os.path.getsize(backup_file)))
         result = subprocess.run(
