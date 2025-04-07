@@ -12,12 +12,13 @@ import time
 
 class ZMQServer:
     def __init__(self, conf_data=None, bind_address="tcp://*:5555"):
+        self.log_debug = False
         """Initialize a ZeroMQ server with a REP socket."""
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REP)
         # Bind the REP socket to the specified address (all interfaces on port 5555 by default)
         self.socket.bind(bind_address)
-        print(f"Server bound to {bind_address}")
+        self.info(f"Server bound to {bind_address}")
         if not conf_data is None:
             account_id = conf_data.get("account_id","")
             self.lst_symbols = conf_data.get("symbols", [])
@@ -41,18 +42,18 @@ class ZMQServer:
             start_time = time.time()
             while self.ws_client.get_status() == "Off":
                 if time.time() - start_time > timeout:
-                    print("Timeout waiting for ws_client to start")
+                    self.info("Timeout waiting for ws_client to start")
                     self.ws_client.stop()
                     exit(322)
                 time.sleep(1)
 
             status = self.ws_client.get_status()
             if status == "Failed":
-                print("ws_client failed")
+                self.info("ws_client failed")
                 self.ws_client.stop()
                 exit(321)
             elif status == "On":
-                print("ws_client is On")
+                self.info("ws_client is On")
 
             my_broker = broker_bitget_api.BrokerBitGetApi({"account": account_id, "reset_account_start": False})
 
@@ -61,6 +62,16 @@ class ZMQServer:
             del my_broker
 
             self.ws_data = WS_Account_Data(df_open_positions=df_open_position_histo, df_triggers=df_triggers_histo)
+
+    def log(self, msg):
+        print(msg)
+
+    def debug(self, msg):
+        if self.log_debug:
+            self.log("[DEBUG] : {}".format(msg))
+
+    def info(self, msg):
+        self.log("[INFO] : {}".format(msg))
 
     def start(self):
         """Start the server loop to listen for requests and send replies."""
@@ -91,7 +102,7 @@ class ZMQServer:
 
                 # Wait for the next client request (blocks until a request arrives)
                 message = self.socket.recv_json()  # Receive data in JSON format (deserializes to Python dict)
-                print("Server received message:", message)
+                self.debug("Server received message: {}".format(message))
 
                 # Deserialize the message content to a Python object
                 data = self._deserialize_message(message)
@@ -143,21 +154,21 @@ class ZMQServer:
                 response_msg = self._serialize_message(response_data)
                 # Send the response back to the client
                 self.socket.send_json(response_msg)
-                print("Server sent reply:", response_msg)
+                self.debug("Server sent reply : {}".format(response_msg))
 
                 # Optionally, break out of loop on a certain condition (e.g., a special command)
                 if isinstance(data, dict) and data.get("action") == "shutdown":
-                    print("Shutdown command received. Stopping server.")
+                    self.info("Shutdown command received. Stopping server.")
                     self.ws_client.stop()
                     break
 
         except KeyboardInterrupt:
-            print("Server interrupted by user (KeyboardInterrupt).")
+            self.info("Server interrupted by user (KeyboardInterrupt).")
         finally:
             # Clean up ZeroMQ resources
             self.socket.close()
             self.context.term()
-            print("Server socket closed and context terminated.")
+            self.info("Server socket closed and context terminated.")
 
     def handle_request(self, data):
         """
@@ -274,7 +285,7 @@ class ZMQServer:
 
         for column in lst_open_positions_columns:
             if column not in df_open_positions.columns:
-                print("missing column:", column)
+                self.info("missing column : {}".format(column))
 
         return df_open_positions
 
