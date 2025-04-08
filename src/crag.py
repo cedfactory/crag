@@ -303,9 +303,8 @@ class Crag:
 
                 # --- Reboot Timer Check ---
                 now = datetime.now()
-                # if now.minute == 30 and 20 <= now.second <= 25 and (   # CEDE TO RESTORE
-                if 20 <= now.second <= 25 and (
-                        self.last_execution.get('reboot') is None or (now - self.last_execution['reboot']).seconds >= 7200):
+                if now.minute == 30 and 20 <= now.second <= 25 \
+                        and (self.last_execution.get('reboot') is None or (now - self.last_execution['reboot']).seconds >= 7200):
                     self.reboot_timer_interval = True
                     self.last_execution['reboot'] = now
                     print("############################ Reboot Timer triggered at", now, "############################")
