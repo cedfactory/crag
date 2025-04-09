@@ -303,9 +303,8 @@ class Crag:
 
                 # --- Reboot Timer Check ---
                 now = datetime.now()
-                # if now.minute == 30 and 20 <= now.second <= 25 and (   # CEDE TO RESTORE
-                if 20 <= now.second <= 25 and (
-                        self.last_execution.get('reboot') is None or (now - self.last_execution['reboot']).seconds >= 7200):
+                if now.minute == 30 and 20 <= now.second <= 25 \
+                        and (self.last_execution.get('reboot') is None or (now - self.last_execution['reboot']).seconds >= 7200):
                     self.reboot_timer_interval = True
                     self.last_execution['reboot'] = now
                     print("############################ Reboot Timer triggered at", now, "############################")
@@ -421,6 +420,7 @@ class Crag:
         # If using the INTERVAL strategy, get the FDP WebSocket status
         if strategy == "INTERVAL":
             fdp_status = self.broker.get_fdp_ws_status()
+        zed_status = self.broker.get_zed_data_status()
 
         # Reset the reboot timer flag
         self.reboot_timer_interval = False
@@ -437,8 +437,7 @@ class Crag:
         # Print diagnostic information
         print("****************** memory:", memory_usage, "******************")
         print("****************** delta memory:", delta_memory, "******************")
-        print("****************** cycle duration:", utils.format_duration(elapsed_time.total_seconds()),
-              "******************")
+        print("****************** cycle duration:", utils.format_duration(elapsed_time.total_seconds()), "******************")
         print("****************** average:", round(average_cycle_seconds, 2), "******************")
         print("****************** iter:", self.safety_step_iteration, "******************")
 
@@ -449,8 +448,16 @@ class Crag:
         elif fdp_status is None:
             print("****************** ws_fdp: FAILED ******************")
 
+        if zed_status is None:
+            print("****************** ZED IS DEAD ******************")
+        else:
+            print("****************** ZED:", zed_status["iteration"], "******************")
+            print("****************** ZED failure:", zed_status["percentage_of_failure"], "******************")
+            print("****************** ZED duration:", zed_status["duration"], "******************")
+
         # Start constructing the backup message
-        self.msg_backup = f"REBOOT TRIGGERED\nTYPE: {strategy}\n"
+        self.msg_backup = f"REBOOT TRIGGERED\n"
+        self.msg_backup += f"TYPE: {strategy}\n"
         self.msg_backup += f"at: {current_time.strftime('%Y/%m/%d %H:%M:%S')}\n"
 
         # Update reboot counters and calculate time since last reboot
@@ -483,6 +490,14 @@ class Crag:
             self.msg_backup += "FDP WS %: " + str(round(float(fdp_status["percentage_of_failure"]), 2)) + "\n"
         elif fdp_status is None:
             self.msg_backup += "FDP WS: FAILED" + "\n"
+
+        # For INTERVAL strategy, include additional WebSocket status information
+        if not zed_status is None:
+            self.msg_backup += "ZED ITER: " + str(int(zed_status["iteration"])) + "\n"
+            self.msg_backup += "ZED WS %: " + str(round(float(zed_status["percentage_of_failure"]), 2)) + "\n"
+            self.msg_backup += "ZED DURATION: " + str(zed_status["duration"]) + "\n"
+        elif zed_status is None:
+            self.msg_backup += "ZED: FAILED" + "\n"
 
         # Initiate shutdown, log the reboot, perform backup, and exit the system
         self.broker.send_zed_shutdown()

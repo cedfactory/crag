@@ -2237,6 +2237,9 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         self.debug_cpt.increment_failure()
         return False
 
+    def get_zed_data_status(self):
+        return self.debug_cpt.get_zed_stat()
+
     def get_zed_ws_data(self, symbol="", request=""):
         lst_request = [
             "TRIGGERS",

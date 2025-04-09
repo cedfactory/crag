@@ -720,3 +720,12 @@ class debug_cpt:
             f"Duration: {formatted_elapsed}"
         )
 
+    def get_zed_stat(self):
+        elapsed = time.time() - self.start_time if self.start_time else 0.0
+        formatted_elapsed = self._format_duration(elapsed)
+        return {
+            "iteration": self.success + self.failure,
+            "percentage_of_failure": self.percentage_of_failure,
+            "duration": formatted_elapsed
+        }
+
