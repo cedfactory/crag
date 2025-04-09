@@ -299,15 +299,25 @@ class Crag:
 
                 if triggered_intervals:
                     print("############################ ", triggered_intervals, " ############################")
+                    combined = " ".join(triggered_intervals)
+                    msg_triggered = "triggered_intervals: " + combined + "\n"
+                    self.log_discord(msg_triggered.upper(), "triggered_intervals")
+
                     self.step(triggered_intervals)
 
                 # --- Reboot Timer Check ---
                 now = datetime.now()
-                if now.minute == 30 and 20 <= now.second <= 25 \
-                        and (self.last_execution.get('reboot') is None or (now - self.last_execution['reboot']).seconds >= 7200):
+                if (
+                        now.minute in (0, 10, 20, 30, 40, 50)
+                        and 20 <= now.second <= 25
+                        and (self.last_execution.get('reboot') is None
+                             or (now - self.last_execution['reboot']).seconds >= 7200)
+                ):
                     self.reboot_timer_interval = True
                     self.last_execution['reboot'] = now
-                    print("############################ Reboot Timer triggered at", now, "############################")
+                    print("############################ Reboot Timer triggered at", now.strftime("%Y-%m-%d %H:%M:%S"), "############################")
+                    msg_reboot = "Reboot Timer triggered" + now.strftime("%Y-%m-%d %H:%M:%S") + "\n"
+                    self.log_discord(msg_reboot.upper(), "Reboot Timer Check")
                 else:
                     self.reboot_timer_interval = False
 
@@ -404,6 +414,11 @@ class Crag:
         # Increment the safety step iteration counter
         self.safety_step_iteration += 1
         strategy = self.rtstr.get_strategy_type()
+
+        if self.reboot_timer_interval:
+            msg_reboot_timer = "self.reboot_timer_interval" + str(self.reboot_timer_interval) + "\n"
+            self.log_discord(msg_reboot_timer.upper(), "request_backup")
+
 
         # Early return conditions based on the strategy type
         if strategy == "CONTINUE" and self.safety_step_iterations_max is None and not self.reboot_exception:
