@@ -69,7 +69,7 @@ def start_strategy(strategy_configuration_file):
         command = [g_python_executable, "main.py", "--live", strategy_configuration_file, ">", "crag.log"]
 
     print("command : ", command)
-    result = subprocess.run(command, stdout=subprocess.PIPE)
+    result = subprocess.run(command, stdout=subprocess.PIPE, shell=True)
     print(result)
 
     backup_file = "./output/" + configuration['crag']['id'] + "_crag_backup.pickle"
@@ -84,7 +84,7 @@ def start_strategy(strategy_configuration_file):
         elif g_os_platform == "Linux":
             command = [g_python_executable, "main.py", "--reboot", backup_file, ">", "crag.log"]
 
-        result = subprocess.run(command, stdout=subprocess.PIPE)
+        result = subprocess.run(command, stdout=subprocess.PIPE, shell=True)
         print(result)
 
     print("[alcorak] result.returncode : ", result.returncode)
