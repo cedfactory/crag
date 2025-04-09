@@ -52,6 +52,7 @@ def start_strategy(strategy_configuration_file):
     params_strategy = configuration["strategy"]
     my_strategy = crag_helper.get_strategy(params_strategy)
     if not my_strategy:
+        print("Can't find strategy with the following parameters :", params_strategy)
         return
 
     if my_strategy.get_strategy_type() == "CONTINUE":
@@ -67,6 +68,7 @@ def start_strategy(strategy_configuration_file):
     elif g_os_platform == "Linux":
         command = [g_python_executable, "main.py", "--live", strategy_configuration_file, ">", "crag.log"]
 
+    print("command : ", command)
     result = subprocess.run(command, stdout=subprocess.PIPE)
     print(result)
 
@@ -101,17 +103,7 @@ def _usage():
     print(_usage_str)
 
 if __name__ == '__main__':
-    print('''
-       ______   __                                          __       
-      /      \ |  \                                        |  \      
-     |  $$$$$$\| $$  _______   ______    ______    ______  | $$   __ 
-     | $$__| $$| $$ /       \ /      \  /      \  |      \ | $$  /  \\
-     | $$    $$| $$|  $$$$$$$|  $$$$$$\|  $$$$$$\  \$$$$$$\| $$_/  $$
-     | $$$$$$$$| $$| $$      | $$  | $$| $$   \$$ /      $$| $$   $$ 
-     | $$  | $$| $$| $$_____ | $$__/ $$| $$      |  $$$$$$$| $$$$$$\ 
-     | $$  | $$| $$ \$$     \ \$$    $$| $$       \$$    $$| $$  \$$\\
-      \$$   \$$ \$$  \$$$$$$$  \$$$$$$  \$$        \$$$$$$$ \$$   \$$
-     ''')
+    print("/// Alcorak ///")
     print("Platform :", g_os_platform)
     g_python_executable = sys.executable
     print("Python executable :", g_python_executable)
