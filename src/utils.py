@@ -373,7 +373,7 @@ def fdp_request_post(url, params, fdp_id):
             reason = "exception when requesting POST {}".format(url)
             final_result = {"status":"ko", "info":reason}
             n_attempts = n_attempts - 1
-            print('FDP ERROR : ', reason)
+            print('FDP ERROR {} : {}'.format(fdp_url+'/'+url, reason))
             del reason
     return final_result
 
