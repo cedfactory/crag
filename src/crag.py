@@ -305,11 +305,14 @@ class Crag:
 
                     self.step(triggered_intervals)
 
+                    msg_triggered = "performed at: " + datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    self.log_discord(msg_triggered.upper(), "triggered_intervals performed")
+
                 # --- Reboot Timer Check ---
                 now = datetime.now()
                 if (
                         now.minute in (0, 10, 20, 30, 40, 50)
-                        and 20 <= now.second <= 25
+                        and 15 <= now.second <= 20
                         and (self.last_execution.get('reboot') is None
                              or (now - self.last_execution['reboot']).seconds >= 7200)
                 ):
