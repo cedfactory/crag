@@ -83,7 +83,8 @@ def start_strategy(strategy_configuration_file):
         if g_os_platform == "Windows":
             command = ['cmd.exe', '/c', g_python_executable, "main.py", "--reboot", backup_file, ">", "crag.log"]
         elif g_os_platform == "Linux":
-            command = [g_python_executable, "main.py", "--reboot", backup_file, ">", "crag.log"]
+            #command = [g_python_executable, "main.py", "--reboot", backup_file, ">", "crag.log"]
+            command = "{} main.py --reboot {} > crag.log".format(g_python_executable, backup_file)
 
         result = subprocess.run(command, shell=True)
         print(result)
