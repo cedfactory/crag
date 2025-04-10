@@ -254,11 +254,6 @@ class Crag:
         while True:
 
             step_result = self.safety_step()
-
-            # self.execute_timer.set_end_time("crag", "run", "safety_step", self.main_cycle_safety_step)
-            # self.execute_timer.set_time_to_zero("crag", "run", "step", self.main_cycle_safety_step)
-            # self.main_cycle_safety_step += 1
-
             self.request_backup()
 
             if not step_result:
@@ -299,20 +294,23 @@ class Crag:
 
                 if triggered_intervals:
                     print("############################ ", triggered_intervals, " ############################")
+                    """ DEBUG TRACES CEDE
                     combined = " ".join(triggered_intervals)
                     msg_triggered = "triggered_intervals: " + combined + "\n"
                     self.log_discord(msg_triggered.upper(), "triggered_intervals")
-
+                    """
                     self.step(triggered_intervals)
 
+                    """ DEBUG TRACES CEDE
                     msg_triggered = "performed at: " + datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     self.log_discord(msg_triggered.upper(), "triggered_intervals performed")
+                    """
 
                 # --- Reboot Timer Check ---
                 now = datetime.now()
                 if (
                         now.minute in (0, 10, 20, 30, 40, 50)
-                        and 15 <= now.second <= 20
+                        and 15 <= now.second <= 25
                         and (self.last_execution.get('reboot') is None
                              or (now - self.last_execution['reboot']).seconds >= 7200)
                 ):
@@ -417,11 +415,6 @@ class Crag:
         # Increment the safety step iteration counter
         self.safety_step_iteration += 1
         strategy = self.rtstr.get_strategy_type()
-
-        if self.reboot_timer_interval:
-            msg_reboot_timer = "self.reboot_timer_interval" + str(self.reboot_timer_interval) + "\n"
-            self.log_discord(msg_reboot_timer.upper(), "request_backup")
-
 
         # Early return conditions based on the strategy type
         if strategy == "CONTINUE" and self.safety_step_iterations_max is None and not self.reboot_exception:
@@ -673,10 +666,13 @@ class Crag:
             # GRID TRADING STRATEGY
             self.udpate_strategy_with_broker_current_state()
 
-        if self.rtstr.condition_for_global_SLTP(self.total_SL_TP_percent) \
-                or self.rtstr.condition_for_global_trailer_TP(self.total_SL_TP_percent) \
-                or self.rtstr.condition_for_global_trailer_SL(self.total_SL_TP_percent) \
-                or self.rtstr.condition_for_max_drawdown_SL(self.actual_drawdown_percent):
+        if (
+                False
+                and (self.rtstr.condition_for_global_SLTP(self.total_SL_TP_percent)
+                     or self.rtstr.condition_for_global_trailer_TP(self.total_SL_TP_percent)
+                     or self.rtstr.condition_for_global_trailer_SL(self.total_SL_TP_percent)
+                     or self.rtstr.condition_for_max_drawdown_SL(self.actual_drawdown_percent))
+        ):
             msg = "reset - total SL TP\n"
             msg += "total SL TP: ${} / %{}\n".format(utils.KeepNDecimals(self.total_SL_TP, 2),
                                                      utils.KeepNDecimals(self.total_SL_TP_percent, 2))
@@ -688,7 +684,10 @@ class Crag:
             self.broker.execute_reset_account(lst_active_symbols)
             return False
 
-        if not self.rtstr.get_strategy_type() == "CONTINUE":
+        if (
+                False
+                and not self.rtstr.get_strategy_type() == "CONTINUE"
+        ):
             # NOT AVAILABLE IN GRID TRADING STRATEGY
             lst_symbol_position = self.broker.get_lst_symbol_position()
             lst_symbol_for_closure = []
@@ -704,7 +703,10 @@ class Crag:
                         or self.rtstr.condition_trailer_SL(self.broker._get_coin(symbol), symbol_unrealizedPL_percent):
                     lst_symbol_for_closure.append(symbol)
 
-            if self.rtstr.trigger_high_volatility_protection():
+            if (
+                    False
+                    and self.rtstr.trigger_high_volatility_protection()
+            ):
                 BTC_price = self.broker.get_value('BTC')
                 current_datetime = datetime.now()
                 current_timestamp = datetime.timestamp(current_datetime)
