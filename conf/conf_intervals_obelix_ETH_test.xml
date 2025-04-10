@@ -1,5 +1,5 @@
 <configuration>
-    <strategy id="StrategyContinueGeneric" name="StrategyContinueGeneric">
+    <strategy id="StrategyIntervalsGeneric" name="StrategyIntervalsGeneric">
         <params candle_stick="released"
                 sl="0"
                 tp="0"
@@ -11,7 +11,7 @@
                 trailer_global_delta_tp="0"
                 trailer_sl="0"
                 high_volatility="False"
-                path_strategy_param="./param_continue_grid_breakout_PEPE_live.csv"
+                path_strategy_param="./param_intervals_obelix_ETH_test.csv"
                 loggers="file=log"
         />
     </strategy>
@@ -19,15 +19,21 @@
         <params exchange="bitget"
                 fdp_url_id="gc1"
                 account="subfortest2"
-                symbols="./symbols_PEPE_XRP.csv"
+                symbols="./symbols_ETH_test.csv"
                 reset_account_start="False"
                 loggers="file=log"
         />
+        <fdp>
+            <source type="ws_candle"
+                    exchange="bitget"
+                    api_key=""
+                    api_secret=""
+                    passphrase=""
+                    id="candle_local"/>
+        </fdp>
     </broker>
-    <crag id="breakout_long_short_v2"
+    <crag id="obelix_long"
           botId="subfortest2"
           loggers="console"
     />
 </configuration>
-
-                <!-- path_strategy_param="./param_continue_grid_breakout_PEPE_XRP_test.csv" -->
