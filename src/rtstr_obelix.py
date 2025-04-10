@@ -1,9 +1,45 @@
 import pandas as pd
 import json
 
-from . import rtdp, rtstr
+from src import rtdp, rtstr
 
-from . import utils, open_positions
+from src import utils, open_positions
+
+from src import data_frame_store
+
+from data_frame_store import DataFrameStore
+
+"""
+CEDE INDICATOR NOT USED YET
+            {
+                "close": {
+                    "indicator": "close",
+                    "id": "1",
+                    "window_size": 2,
+                    "output": [
+                        "close"
+                    ]
+                },
+            },
+            {
+               "ichimoku_id1": {
+                   "indicator": "ichimoku",
+                   "conversion_line_period": self.conversion_line_period,
+                   "base_line_periods": self.base_line_periods,
+                   "lagging_span": self.lagging_span,
+                   "displacement": self.displacement,
+                   "ssl_atr_period": self.ssl_atr_period,
+                   "window_size": max(self.base_line_periods, self.lagging_span, self.displacement,
+                                      self.ssl_atr_period),
+                   "id": "1",
+                   "output": [
+                       "ichimoku_valid",
+                       "trend_pulse",
+                       "bear_trend_pulse"
+                   ]
+               },
+            } 
+"""
 
 class StrategyObelix(rtstr.RealTimeStrategy):
 
@@ -73,6 +109,7 @@ class StrategyObelix(rtstr.RealTimeStrategy):
 
         self.df_current_data_zerolag_ma = None
         self.df_current_data_ichimoku = None
+        self.current_close = None
 
         self.positions = open_positions.OpenPositions(self.symbol, self.strategy_id, self.grouped_id, self.get_info(), self.side,
                                                       presetTakeProfitPrice=self.presetTakeProfitPrice,
@@ -91,18 +128,12 @@ class StrategyObelix(rtstr.RealTimeStrategy):
             "4h": 4 * 60 * 60
         }
 
+        """ CEDE DEBUG
+        self.store = data_frame_store.DataFrameStore("obelix_data.csv")
+        """
+
     def get_data_description(self):
         lst_fdp_features = [
-            {
-                "close": {
-                    "indicator": "close",
-                    "id": "1",
-                    "window_size": 2,
-                    "output": [
-                        "close"
-                    ]
-                },
-            },
             {
                 "zerolag_id1": {
                     "indicator": "zerolag_ma",
@@ -114,6 +145,7 @@ class StrategyObelix(rtstr.RealTimeStrategy):
                     "window_size": max(self.zema_len_buy, self.zema_len_sell),
                     "id": "1",
                     "output": [
+                        "close",
                         "zerolag_ma_buy_adj",
                         "zerolag_ma_sell_adj"
                     ]
@@ -130,24 +162,6 @@ class StrategyObelix(rtstr.RealTimeStrategy):
                     ]
                 },
             },
-            {
-                "ichimoku_id1": {
-                    "indicator": "ichimoku",
-                    "conversion_line_period": self.conversion_line_period,
-                    "base_line_periods": self.base_line_periods,
-                    "lagging_span": self.lagging_span,
-                    "displacement": self.displacement,
-                    "ssl_atr_period": self.ssl_atr_period,
-                    "window_size": max(self.base_line_periods, self.lagging_span, self.displacement,
-                                       self.ssl_atr_period),
-                    "id": "1",
-                    "output": [
-                        "ichimoku_valid",
-                        "trend_pulse",
-                        "bear_trend_pulse"
-                    ]
-                },
-            }
         ]
 
         lst_ds = []
@@ -187,14 +201,36 @@ class StrategyObelix(rtstr.RealTimeStrategy):
     def set_current_price(self, current_price, available_margin):
         self.current_price = current_price[self.symbol]
         self.margin = available_margin
+        """ CEDE DEBUG
+        self.store.set_data(symbol=self.symbol, price=current_price[self.symbol])
+        """
 
     def set_current_data(self, current_data):
+        if len([col for col in current_data.columns if col.startswith("close")]) > 0:
+            self.current_close = current_data["close_1"][0]
+            """ CEDE DEBUG
+            self.store.set_data(
+                close=self.current_close
+            )
+            """
         if len([col for col in current_data.columns if col.startswith("zerolag_ma")]) > 0:
             self.df_current_data_zerolag_ma = current_data
+            """ CEDE DEBUG
+            self.store.set_data(
+                zerolag_ma_buy_adj=current_data["zerolag_ma_buy_adj_1"][0],
+                zerolag_ma_sell_adj=current_data["zerolag_ma_sell_adj_1"][0]
+            )
+            """
         if len([col for col in current_data.columns if col.startswith("ichimoku")]) > 0:
             self.df_current_data_ichimoku = current_data
+
         if len([col for col in current_data.columns if col.startswith("trend_signal")]) > 0:
             self.df_current_data_trend = current_data
+            """ CEDE DEBUG
+            self.store.set_data(
+                trend_signal=current_data["trend_signal_1"][0],
+            )
+            """
 
     def set_multiple_strategy(self):
         self.mutiple_strategy = True
@@ -203,14 +239,40 @@ class StrategyObelix(rtstr.RealTimeStrategy):
         return self.positions.get_nb_open_total_position()
 
     def get_lst_trade(self):
-        if (((self.df_current_data_ichimoku is None)
-             and (self.df_current_data_trend is None))
-                or (self.df_current_data_ichimoku.empty
-                    and self.df_current_data_trend.empty)
-                or self.df_current_data_zerolag_ma is None
-                or self.df_current_data_zerolag_ma.empty
-        ):
+        def is_missing(df):
+            return df is None or df.empty
+
+        if is_missing(self.df_current_data_zerolag_ma):
             return []
+        if is_missing(self.df_current_data_ichimoku) \
+                and is_missing(self.df_current_data_trend):
+            return []
+
+        # CEDE DEBUG
+        below_ma = self.current_close < self.df_current_data_zerolag_ma["zerolag_ma_buy_adj_1"][self.symbol]
+        trend_up = (self.df_current_data_trend["trend_signal_1"] == 1)[0]
+        signal_buy = trend_up and below_ma
+        """ CEDE DEBUG
+        self.store.set_data(
+            below_ma = below_ma,
+            trend_up = trend_up,
+            signal_buy = signal_buy
+        )
+        """
+
+        close_price = self.current_price
+        sell_adj = self.df_current_data_zerolag_ma["zerolag_ma_sell_adj_1"][self.symbol]
+        signal_sell = (close_price > sell_adj)
+        """
+        self.store.set_data(
+            sell_adj = sell_adj,
+            signal_sell = signal_sell
+        )
+        """
+
+        """ CEDE DEBUG
+        self.store.save_to_csv()
+        """
 
         open_long = close_long = open_short = close_short = False
 
@@ -234,17 +296,15 @@ class StrategyObelix(rtstr.RealTimeStrategy):
         return lst_order
 
     def condition_for_opening_long_position(self, symbol):
-        return False
-
-        # If both trend and ichimoku data are missing, we cannot open a long position.
-        if self.df_current_data_trend is None and self.df_current_data_ichimoku is None:
-            return False
-
-        # Define the condition to check if the price is below the moving average.
         below_ma = (
-                # self.df_current_data_zerolag_ma["close"][symbol]
-                self.current_price < self.df_current_data_zerolag_ma["zerolag_ma_buy_adj_1"][symbol]
+                # self.current_price < self.df_current_data_zerolag_ma["zerolag_ma_buy_adj_1"][symbol]
+                self.current_close < self.df_current_data_zerolag_ma["zerolag_ma_buy_adj_1"][symbol]
         )
+
+        # Otherwise, if trend data is available, use that.
+        if self.df_current_data_trend is not None:
+            trend_up = self.df_current_data_trend["trend_signal_1"][symbol] == 1
+            return trend_up and below_ma
 
         # If ichimoku data is available, prioritize using it.
         if self.df_current_data_ichimoku is not None:
@@ -252,17 +312,12 @@ class StrategyObelix(rtstr.RealTimeStrategy):
             trend_pulse = self.df_current_data_ichimoku["trend_pulse_1"][symbol] == 0
             return ichimoku_valid and trend_pulse and below_ma
 
-        # Otherwise, if trend data is available, use that.
-        if self.df_current_data_trend is not None:
-            trend_up = self.df_current_data_trend["trend_signal_1"] == 1
-            return trend_up and below_ma
-
         # Fallback to False (this line is mostly for clarity).
         return False
 
     def condition_for_opening_short_position(self, symbol):
+        # CEDE NOT IN USE
         return False
-
         # If both trend and ichimoku data are missing, we cannot open a long position.
         if self.df_current_data_trend is None and self.df_current_data_ichimoku is None:
             return False
@@ -287,12 +342,14 @@ class StrategyObelix(rtstr.RealTimeStrategy):
         return False
 
     def condition_for_closing_long_position(self, symbol):
-        # close_price = self.df_current_data_zerolag_ma["close"][symbol]
-        close_price = self.current_price
+        # close_price = self.current_price
+        close_price = self.current_close
         sell_adj = self.df_current_data_zerolag_ma["zerolag_ma_sell_adj_1"][symbol]
         return close_price > sell_adj
 
     def condition_for_closing_short_position(self, symbol):
+        # CEDE NOT IN USE
+        return False
         # close_price = self.df_current_data_zerolag_ma["close"][symbol]
         close_price = self.current_price
         sell_adj = self.df_current_data_zerolag_ma["zerolag_ma_sell_adj_1"][symbol]

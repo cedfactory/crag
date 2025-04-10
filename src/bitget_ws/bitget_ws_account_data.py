@@ -98,20 +98,30 @@ class WS_Account_Data:
     def set_ws_open_positions(self, df_open_positions):
         self.ws_open_positions = True
         if not df_open_positions.empty:
-            # 1) Add current timestamp to the incoming rows
+            # 1) Add current timestamp (as a float) to the incoming rows.
             current_timestamp = time.time()
             df_open_positions["timestamp"] = current_timestamp
 
-            # 2) Concatenate with the existing DataFrame
+            # 2) Concatenate with the existing DataFrame.
             self._df_open_positions = pd.concat(
                 [self._df_open_positions, df_open_positions],
                 ignore_index=True
             )
 
-            # 3) Keep only the row with the most recent timestamp for each posId
-            self._df_open_positions = self._df_open_positions.loc[
-                self._df_open_positions.groupby("posId")["timestamp"].idxmax()
-            ]
+            # 3) Ensure the "timestamp" column is numeric.
+            self._df_open_positions["timestamp"] = pd.to_numeric(
+                self._df_open_positions["timestamp"],
+                errors="coerce"  # non-convertible values become NaN
+            )
+
+            # 4) Keep only the row with the most recent timestamp for each posId.
+            # Note: NaN values will be ignored by idxmax, but you may want to handle them.
+            try:
+                self._df_open_positions = self._df_open_positions.loc[
+                    self._df_open_positions.groupby("posId")["timestamp"].idxmax()
+                ]
+            except:
+                print('toto')
 
         if self.verbose:
             print("\nself.df_open_positions:")
