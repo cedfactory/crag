@@ -66,10 +66,11 @@ def start_strategy(strategy_configuration_file):
     if g_os_platform == "Windows":
         command = ['cmd.exe', '/c', g_python_executable, "main.py", "--live", strategy_configuration_file, ">", "crag.log"]
     elif g_os_platform == "Linux":
-        command = [g_python_executable, "main.py", "--live", strategy_configuration_file, ">", "crag.log"]
+        #command = [g_python_executable, "main.py", "--live", strategy_configuration_file, ">", "crag.log"]
+        command = "{} main.py --live {} > crag.log".format(g_python_executable, strategy_configuration_file)
 
     print("command : ", command)
-    result = subprocess.run(command, stdout=subprocess.PIPE)
+    result = subprocess.run(command, shell=True)
     print(result)
 
     backup_file = "./output/" + configuration['crag']['id'] + "_crag_backup.pickle"
@@ -82,9 +83,10 @@ def start_strategy(strategy_configuration_file):
         if g_os_platform == "Windows":
             command = ['cmd.exe', '/c', g_python_executable, "main.py", "--reboot", backup_file, ">", "crag.log"]
         elif g_os_platform == "Linux":
-            command = [g_python_executable, "main.py", "--reboot", backup_file, ">", "crag.log"]
+            #command = [g_python_executable, "main.py", "--reboot", backup_file, ">", "crag.log"]
+            command = "{} main.py --reboot {} > crag.log".format(g_python_executable, backup_file)
 
-        result = subprocess.run(command, stdout=subprocess.PIPE)
+        result = subprocess.run(command, shell=True)
         print(result)
 
     print("[alcorak] result.returncode : ", result.returncode)

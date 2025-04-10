@@ -32,7 +32,7 @@ def zed_start(configuration_file):
         # command = "nohup python zed.py > {} &".format(log_file)
         command = "nohup python zed.py server {} > {} &".format(configuration_file, log_file)
         print("command : ", command)
-        subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
+        subprocess.Popen(command, shell=True)
 
 
 def zed_stop():
