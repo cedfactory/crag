@@ -744,6 +744,7 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
                 self.log_api_failure("orderApi.place_order", e, n_attempts)
                 if getattr(e, 'code', None) == '40762':
                     print("########## err: 40762 ##########")
+                    self.log_api_failure("err: 40762: ", e, n_attempts)
                     if isinstance(size, str):
                         size = float(size)
                     size = size - size * 0.1 / 100

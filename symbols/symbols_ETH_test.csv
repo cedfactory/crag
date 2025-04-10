@@ -1,0 +1,3 @@
+symbol,leverage_long,leverage_short,margin_mode
+BTC,1,1,crossed
+ETH,1,1,crossed

@@ -1,0 +1,39 @@
+<configuration>
+    <strategy id="StrategyIntervalsGeneric" name="StrategyIntervalsGeneric">
+        <params candle_stick="released"
+                sl="0"
+                tp="0"
+                global_sl="-50"
+                global_tp="20"
+                trailer_tp="0"
+                trailer_delta_tp="0"
+                trailer_global_tp="0"
+                trailer_global_delta_tp="0"
+                trailer_sl="0"
+                high_volatility="False"
+                path_strategy_param="./param_intervals_obelix_prod_AWS.csv"
+                loggers="file=log"
+        />
+    </strategy>
+    <broker name="bitget">
+        <params exchange="bitget"
+                fdp_url_id="gc1"
+                account="subfortest1"
+                symbols="./symbols_obelix_AWS.csv"
+                reset_account_start="False"
+                loggers="file=log"
+        />
+        <fdp>
+            <source type="ws_candle"
+                    exchange="bitget"
+                    api_key=""
+                    api_secret=""
+                    passphrase=""
+                    id="candle_local"/>
+        </fdp>
+    </broker>
+    <crag id="obelix_long"
+          botId="subfortest1"
+          loggers="console"
+    />
+</configuration>
