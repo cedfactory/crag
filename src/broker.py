@@ -82,14 +82,14 @@ class Broker(metaclass = ABCMeta):
         if attachments is None:
             attachments = []
         for iter_logger in self.loggers:
-            if iter_logger.__class_.__name__ != "LoggerDiscordBot":
+            if iter_logger.__class__.__name__ != "LoggerDiscordBot":
                 iter_logger.log(msg, header=header, author=type(self).__name__, attachments=attachments)
 
     def log_discord(self, msg, header="", attachments=None):
         if attachments is None:
             attachments = []
         for iter_logger in self.loggers:
-            if iter_logger.__class_.__name__ == "LoggerDiscordBot":
+            if iter_logger.__class__.__name__ == "LoggerDiscordBot":
                 iter_logger.log(msg, header=header, author=type(self).__name__, attachments=attachments)
 
     def log_info(self):
