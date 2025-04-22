@@ -7,8 +7,6 @@ from src import utils, open_positions
 
 from src import data_frame_store
 
-from data_frame_store import DataFrameStore
-
 """
 CEDE INDICATOR NOT USED YET
             {
@@ -73,6 +71,7 @@ class StrategyObelix(rtstr.RealTimeStrategy):
         self.presetTakeProfitPrice = ""
         self.presetStopLossPrice = ""
         self.previous_stat_hash = 0
+        self.debug_mode = False
         if params:
             self.id = params.get("id", self.id)
             self.lst_symbols = [params.get("strategy_symbol", self.lst_symbols)]
@@ -99,6 +98,10 @@ class StrategyObelix(rtstr.RealTimeStrategy):
 
             self.presetTakeProfitPrice = str(params.get("TP", self.presetTakeProfitPrice))
             self.presetStopLossPrice = str(params.get("SL", self.presetStopLossPrice))
+
+            self.debug_mode = params.get("debug_mode", self.debug_mode)
+            if isinstance(self.debug_mode, str):
+                self.debug_mode = self.debug_mode.strip().lower() == "true"
         else:
             exit(5)
 
@@ -128,9 +131,10 @@ class StrategyObelix(rtstr.RealTimeStrategy):
             "4h": 4 * 60 * 60
         }
 
-        """ CEDE DEBUG
-        self.store = data_frame_store.DataFrameStore("obelix_data.csv")
-        """
+        if self.debug_mode:
+            filename = self.get_info() + "_" + self.id + "_" + self.symbol + "_" + self.get_strategy_id() + "_" + self.get_interval() + ".csv"
+            self.store = data_frame_store.DataFrameStore(filename)
+
 
     def get_data_description(self):
         lst_fdp_features = [
@@ -201,36 +205,19 @@ class StrategyObelix(rtstr.RealTimeStrategy):
     def set_current_price(self, current_price, available_margin):
         self.current_price = current_price[self.symbol]
         self.margin = available_margin
-        """ CEDE DEBUG
-        self.store.set_data(symbol=self.symbol, price=current_price[self.symbol])
-        """
 
     def set_current_data(self, current_data):
         if len([col for col in current_data.columns if col.startswith("close")]) > 0:
             self.current_close = current_data["close_1"][0]
-            """ CEDE DEBUG
-            self.store.set_data(
-                close=self.current_close
-            )
-            """
+
         if len([col for col in current_data.columns if col.startswith("zerolag_ma")]) > 0:
             self.df_current_data_zerolag_ma = current_data
-            """ CEDE DEBUG
-            self.store.set_data(
-                zerolag_ma_buy_adj=current_data["zerolag_ma_buy_adj_1"][0],
-                zerolag_ma_sell_adj=current_data["zerolag_ma_sell_adj_1"][0]
-            )
-            """
+
         if len([col for col in current_data.columns if col.startswith("ichimoku")]) > 0:
             self.df_current_data_ichimoku = current_data
 
         if len([col for col in current_data.columns if col.startswith("trend_signal")]) > 0:
             self.df_current_data_trend = current_data
-            """ CEDE DEBUG
-            self.store.set_data(
-                trend_signal=current_data["trend_signal_1"][0],
-            )
-            """
 
     def set_multiple_strategy(self):
         self.mutiple_strategy = True
@@ -247,32 +234,6 @@ class StrategyObelix(rtstr.RealTimeStrategy):
         if is_missing(self.df_current_data_ichimoku) \
                 and is_missing(self.df_current_data_trend):
             return []
-
-        # CEDE DEBUG
-        below_ma = self.current_close < self.df_current_data_zerolag_ma["zerolag_ma_buy_adj_1"][self.symbol]
-        trend_up = (self.df_current_data_trend["trend_signal_1"] == 1)[0]
-        signal_buy = trend_up and below_ma
-        """ CEDE DEBUG
-        self.store.set_data(
-            below_ma = below_ma,
-            trend_up = trend_up,
-            signal_buy = signal_buy
-        )
-        """
-
-        close_price = self.current_price
-        sell_adj = self.df_current_data_zerolag_ma["zerolag_ma_sell_adj_1"][self.symbol]
-        signal_sell = (close_price > sell_adj)
-        """
-        self.store.set_data(
-            sell_adj = sell_adj,
-            signal_sell = signal_sell
-        )
-        """
-
-        """ CEDE DEBUG
-        self.store.save_to_csv()
-        """
 
         open_long = close_long = open_short = close_short = False
 
@@ -303,7 +264,9 @@ class StrategyObelix(rtstr.RealTimeStrategy):
 
         # Otherwise, if trend data is available, use that.
         if self.df_current_data_trend is not None:
-            trend_up = self.df_current_data_trend["trend_signal_1"][symbol] == 1
+            # trend_up = self.df_current_data_trend["trend_signal_1"][symbol] == 1
+            # trend_up = (self.df_current_data_trend["trend_signal_1"] == 1).any(0)
+            trend_up = (self.df_current_data_trend["trend_signal_1"] == 1)[0]
             return trend_up and below_ma
 
         # If ichimoku data is available, prioritize using it.
@@ -375,3 +338,30 @@ class StrategyObelix(rtstr.RealTimeStrategy):
 
     def update_sltp_order_status(self, sltp_order):
         self.positions.update_sltp_orderId(sltp_order)
+
+    def debug_traces(self):
+        if self.debug_mode:
+            below_ma = self.current_close < self.df_current_data_zerolag_ma["zerolag_ma_buy_adj_1"][self.symbol]
+            trend_up = (self.df_current_data_trend["trend_signal_1"] == 1)[0]
+            signal_buy = trend_up and below_ma
+
+            close_price = self.current_price
+            sell_adj = self.df_current_data_zerolag_ma["zerolag_ma_sell_adj_1"][self.symbol]
+            signal_sell = (close_price > sell_adj)
+
+            self.store.set_data(
+                symbol=self.symbol,
+                price=self.current_price,
+                close=self.current_close,
+                zerolag_ma_buy_adj=self.df_current_data_zerolag_ma["zerolag_ma_buy_adj_1"][0],
+                zerolag_ma_sell_adj=self.df_current_data_zerolag_ma["zerolag_ma_sell_adj_1"][0],
+                trend_indicator=self.df_current_data_trend["trend_indicator_1"][0],
+                trend_signal=self.df_current_data_trend["trend_signal_1"][0],
+                below_ma=below_ma,
+                trend_up=trend_up,
+                signal_buy=signal_buy,
+                sell_adj = sell_adj,
+                signal_sell = signal_sell
+            )
+
+            self.store.save_to_csv()

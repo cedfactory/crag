@@ -139,12 +139,19 @@ class StrategyIntervalsGeneric(rtstr.RealTimeStrategy):
 
     def get_strategy_stats(self, lst_intervals):
         lst_msg_stats = []
+        self.debug_traces(lst_intervals)
         for strategy in self.lst_strategy:
             if strategy.get_interval() in lst_intervals:
                 stats = strategy.get_strategy_stat()
                 if stats is not None:
                     lst_msg_stats.append(stats)
         return lst_msg_stats
+
+    def debug_traces(self, lst_intervals):
+        lst_msg_stats = []
+        for strategy in self.lst_strategy:
+            if strategy.get_interval() in lst_intervals:
+                strategy.debug_traces()
 
     def get_lst_sltp(self):
         with ThreadPoolExecutor() as executor:

@@ -11,6 +11,7 @@ class DataFrameStore:
             "close",
             "zerolag_ma_buy_adj",
             "zerolag_ma_sell_adj",
+            "trend_indicator",
             "trend_signal",
             "below_ma",
             "trend_up",
@@ -69,5 +70,6 @@ class DataFrameStore:
         """
         Save the current DataFrame to a CSV file using the filename provided at initialization.
         """
+        self.df = self.df.tail(14000) # CEDE 10 days
         self.df.to_csv(self.filename, index=False)
-        print(f"DataFrame saved to {self.filename}")
+        # print(f"DataFrame saved to {self.filename}")

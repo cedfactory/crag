@@ -387,6 +387,8 @@ class Crag:
                 msg_df += df.to_string(index=False) + "\n" + "\n"
 
                 self.log_discord(msg_df.upper(), msg)
+        else:
+            self.rtstr.debug_traces(lst_interval)
 
     def export_history(self, target=None):
         self.broker.export_history(target)

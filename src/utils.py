@@ -375,6 +375,7 @@ def fdp_request_post(url, params, fdp_id):
             n_attempts = n_attempts - 1
             print('FDP ERROR {} : {}'.format(fdp_url+'/'+url, reason))
             del reason
+    # print("final_result", final_result["result"]["BTC"]["info"]) # DEBUG CEDE
     return final_result
 
 def normalize(df):
@@ -680,7 +681,7 @@ class debug_cpt:
             self.last_print_time = current_time
 
         # Check if total is a multiple of 10000 or if an hour has passed since last print
-        if total % 10000 == 0 or (current_time - self.last_print_time >= 3600):
+        if current_time - self.last_print_time >= 3600:
             self.print_stat()
             self.last_print_time = current_time  # Update the last printed time
 
