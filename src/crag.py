@@ -500,7 +500,12 @@ class Crag:
         if strategy == "INTERVAL" and not fdp_status is None:
             total_ws_iter = int(fdp_status["failure"]) + int(fdp_status["success"])
             self.msg_backup += "FDP WS ITER: " + str(total_ws_iter) + "\n"
-            self.msg_backup += "FDP WS %: " + str(round(float(fdp_status["percentage_of_failure"]), 2)) + "\n"
+            self.msg_backup += "FDP WS FAILURE: " + str(fdp_status["failure"]) + "\n"
+            self.msg_backup += "FDP WS FAILURE %: " + str(round(float(fdp_status["percentage_of_failure"]), 2)) + "\n"
+            self.msg_backup += "FDP WS F NOT DF %: " + str(round(float(fdp_status['percentage_of_failure_is_dataframe']), 2)) + "\n"
+            self.msg_backup += "FDP WS NONE %: " + str(round(float(fdp_status['percentage_of_failure_is_not_none']), 2)) + "\n"
+            self.msg_backup += "FDP WS NO TICK %: " + str(round(float(fdp_status['percentage_of_failure_no_tick_in']), 2)) + "\n"
+            self.msg_backup += "FDP WS LIMIT SIZE %: " + str(round(float(fdp_status['percentage_of_failure_under_limit']), 2)) + "\n"
         elif fdp_status is None:
             self.msg_backup += "FDP WS: FAILED" + "\n"
 
