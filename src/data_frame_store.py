@@ -17,7 +17,9 @@ class DataFrameStore:
             "trend_up",
             "signal_buy",
             "sell_adj",
-            "signal_sell"
+            "signal_sell",
+            "fdp_source_trend",
+            "fdp_source_zeroma"
         ]
         # Full list of columns including the auto-generated time column.
         self.columns = self.required_columns + ["time"]

@@ -150,6 +150,7 @@ class StrategyObelix(rtstr.RealTimeStrategy):
                     "id": "1",
                     "output": [
                         "close",
+                        "source",
                         "zerolag_ma_buy_adj",
                         "zerolag_ma_sell_adj"
                     ]
@@ -162,7 +163,8 @@ class StrategyObelix(rtstr.RealTimeStrategy):
                     "id": "1",
                     "window_size": 30,
                     "output": [
-                        "trend_signal"
+                        "trend_signal",
+                        "source"
                     ]
                 },
             },
@@ -360,8 +362,10 @@ class StrategyObelix(rtstr.RealTimeStrategy):
                 below_ma=below_ma,
                 trend_up=trend_up,
                 signal_buy=signal_buy,
-                sell_adj = sell_adj,
-                signal_sell = signal_sell
+                sell_adj=sell_adj,
+                signal_sell=signal_sell,
+                fdp_source_trend=self.df_current_data_trend["source_1"][0],
+                fdp_source_zeroma=self.df_current_data_zerolag_ma["source_1"][0]
             )
 
             self.store.save_to_csv()
