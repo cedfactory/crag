@@ -151,6 +151,8 @@ class StrategyObelix(rtstr.RealTimeStrategy):
                     "output": [
                         "close",
                         "source",
+                        "released_dt",
+                        "index_ws",
                         "zerolag_ma_buy_adj",
                         "zerolag_ma_sell_adj"
                     ]
@@ -163,6 +165,9 @@ class StrategyObelix(rtstr.RealTimeStrategy):
                     "id": "1",
                     "window_size": 30,
                     "output": [
+                        "high_tf_close",
+                        "s_highest_window",
+                        "s_lowest_window",
                         "trend_signal",
                         "source"
                     ]
@@ -358,6 +363,9 @@ class StrategyObelix(rtstr.RealTimeStrategy):
                 zerolag_ma_buy_adj=self.df_current_data_zerolag_ma["zerolag_ma_buy_adj_1"][0],
                 zerolag_ma_sell_adj=self.df_current_data_zerolag_ma["zerolag_ma_sell_adj_1"][0],
                 trend_indicator=self.df_current_data_trend["trend_indicator_1"][0],
+                high_tf_close=self.df_current_data_trend["high_tf_close_1"][0],
+                s_highest_window=self.df_current_data_trend["s_highest_window_1"][0],
+                s_lowest_window=self.df_current_data_trend["s_lowest_window_1"][0],
                 trend_signal=self.df_current_data_trend["trend_signal_1"][0],
                 below_ma=below_ma,
                 trend_up=trend_up,
@@ -365,7 +373,9 @@ class StrategyObelix(rtstr.RealTimeStrategy):
                 sell_adj=sell_adj,
                 signal_sell=signal_sell,
                 fdp_source_trend=self.df_current_data_trend["source_1"][0],
-                fdp_source_zeroma=self.df_current_data_zerolag_ma["source_1"][0]
+                fdp_source_zeroma=self.df_current_data_zerolag_ma["source_1"][0],
+                released_dt=self.df_current_data_zerolag_ma["released_dt_1"][0],
+                index_ws=self.df_current_data_zerolag_ma["index_ws_1"][0]
             )
 
             self.store.save_to_csv()

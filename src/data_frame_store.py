@@ -12,6 +12,9 @@ class DataFrameStore:
             "zerolag_ma_buy_adj",
             "zerolag_ma_sell_adj",
             "trend_indicator",
+            "high_tf_close",
+            "s_highest_window",
+            "s_lowest_window",
             "trend_signal",
             "below_ma",
             "trend_up",
@@ -19,10 +22,13 @@ class DataFrameStore:
             "sell_adj",
             "signal_sell",
             "fdp_source_trend",
-            "fdp_source_zeroma"
+            "fdp_source_zeroma",
+            "released_dt",
+            "index_ws"
         ]
         # Full list of columns including the auto-generated time column.
         self.columns = self.required_columns + ["time"]
+        self.columns = self.required_columns + ["datetime"]
         # Create an empty DataFrame with these columns.
         self.df = pd.DataFrame(columns=self.columns)
         # Temporary storage for a row that's being built.
@@ -60,6 +66,10 @@ class DataFrameStore:
         # Automatically set the time if not provided.
         if "time" not in self.temp_row:
             self.temp_row["time"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        if "datetime" not in self.temp_row:
+            now = datetime.datetime.now().replace(second=0, microsecond=0)
+            self.temp_row["datetime"] = now.strftime("%Y-%m-%d %H:%M:%S")
 
         # Append the new row to the DataFrame.
         new_row = pd.DataFrame([self.temp_row])
