@@ -264,6 +264,7 @@ class StrategyObelix(rtstr.RealTimeStrategy):
         return lst_order
 
     def condition_for_opening_long_position(self, symbol):
+        return False # CEDE FOR DEBUG
         below_ma = (
                 # self.current_price < self.df_current_data_zerolag_ma["zerolag_ma_buy_adj_1"][symbol]
                 self.current_close < self.df_current_data_zerolag_ma["zerolag_ma_buy_adj_1"][symbol]
