@@ -1,5 +1,6 @@
 import os, sys, platform
-from io import StringIO
+sys.path.append(os.path.abspath("src"))
+
 from src import broker_bitget_api, logger, utils
 from src.toolbox import graph_helper
 from rich import print
@@ -114,6 +115,7 @@ def generate_figure_usdt_equity(agent, filename):
     plt.savefig(filename)
     plt.close(fig)
 
+
 def generate_figure_limit_orders(df_account):
     fig = plt.figure(figsize=(10, 15))
 
@@ -155,6 +157,7 @@ def generate_figure_limit_orders(df_account):
 
     plt.savefig("pulsar_limit_orders.png")
     plt.close(fig)
+
 
 def generate_figure_triggers(df_account):
     fig = plt.figure(figsize=(10, 15))
