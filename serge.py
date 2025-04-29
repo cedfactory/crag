@@ -1,5 +1,6 @@
 import os, sys, platform, subprocess, psutil
 from src.toolbox import os_helper
+from src.bitget_ws import zed_utils
 
 g_os_platform = platform.system()
 g_python_executable = ""
@@ -140,6 +141,8 @@ def select_strategy_to_stop():
 	p.terminate()
 	p.wait()
 	print(f"Process terminated.")
+
+	zed_utils.zed_stop()
 
 def display_os_stats():
 
