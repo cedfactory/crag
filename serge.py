@@ -1,4 +1,6 @@
 import os, sys, platform, subprocess, psutil
+sys.path.append(os.path.abspath("src"))
+
 from src.toolbox import os_helper
 from src.bitget_ws import zed_utils
 
