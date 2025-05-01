@@ -34,7 +34,12 @@ class ZMQClient:
             return None
 
         # Wait for a reply with the specified timeout.
-        socks = dict(self.poller.poll(self.timeout))
+        try:
+            socks = dict(self.poller.poll(self.timeout))
+        except zmq.ZMQError as e:
+            print(f"ZMQError detected : {e}")
+            return None
+
         if socks.get(self.socket) == zmq.POLLIN:
             try:
                 reply = self.socket.recv_json()
