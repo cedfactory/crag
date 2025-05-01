@@ -96,7 +96,7 @@ def generate_figure_usdt_equity(agent, filename):
     ax.set_ylim([y_min, y_max])
 
     plt.title(agent.account_id)
-    plt.legend()
+    #plt.legend()
     plt.xticks(rotation=25)
     plt.subplots_adjust(bottom=0.2)
 
