@@ -83,6 +83,7 @@ def generate_figure_usdt_equity(agent, filename):
     ax3.step(datenums, df["num_positions"], color="orange", where="post")
     ax3.tick_params(axis='y', labelcolor="orange", direction="in", pad=-22) # display yticks inside the plot area
     ax3.set_ylim([.8 * df["num_positions"].min(), 1.2 * df["num_positions"].max()])
+    ax3.legend()
     ax3.set_ylabel("num_positions", color="orange")
 
     y_min = min(ymin)
