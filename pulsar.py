@@ -1,5 +1,6 @@
 import os, sys, platform
-from io import StringIO
+sys.path.append(os.path.abspath("src"))
+
 from src import broker_bitget_api, logger, utils
 from src.toolbox import graph_helper
 from rich import print
@@ -82,6 +83,7 @@ def generate_figure_usdt_equity(agent, filename):
     ax3.step(datenums, df["num_positions"], color="orange", where="post")
     ax3.tick_params(axis='y', labelcolor="orange", direction="in", pad=-22) # display yticks inside the plot area
     ax3.set_ylim([.8 * df["num_positions"].min(), 1.2 * df["num_positions"].max()])
+    ax3.legend()
     ax3.set_ylabel("num_positions", color="orange")
 
     y_min = min(ymin)
@@ -94,7 +96,7 @@ def generate_figure_usdt_equity(agent, filename):
     ax.set_ylim([y_min, y_max])
 
     plt.title(agent.account_id)
-    plt.legend()
+    #plt.legend()
     plt.xticks(rotation=25)
     plt.subplots_adjust(bottom=0.2)
 
@@ -113,6 +115,7 @@ def generate_figure_usdt_equity(agent, filename):
 
     plt.savefig(filename)
     plt.close(fig)
+
 
 def generate_figure_limit_orders(df_account):
     fig = plt.figure(figsize=(10, 15))
@@ -155,6 +158,7 @@ def generate_figure_limit_orders(df_account):
 
     plt.savefig("pulsar_limit_orders.png")
     plt.close(fig)
+
 
 def generate_figure_triggers(df_account):
     fig = plt.figure(figsize=(10, 15))

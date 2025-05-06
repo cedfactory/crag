@@ -197,7 +197,19 @@ class BrokerBitGetApi(broker_bitget.BrokerBitGet):
         return symbol.split("USDT_UMCBL")[0]
 
     def single_position(self, symbol, marginCoin = "USDT"):
-        single_position = self.positionApi.single_position(self._get_symbol(symbol), marginCoin='USDT')
+        single_position = None
+
+        n_attempts = 3
+        while n_attempts > 0:
+            try:
+                single_position = self.positionApi.single_position(self._get_symbol(symbol), marginCoin='USDT')
+                self.success += 1
+                break
+            except (exceptions.BitgetAPIException, Exception) as e:
+                self.log_api_failure("positionApi.single_position", e, n_attempts)
+                time.sleep(0.2)
+                n_attempts = n_attempts - 1
+
         return single_position
 
     #@authentication_required
