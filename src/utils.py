@@ -346,8 +346,8 @@ def fdp_request_post(url, params, fdp_id):
     fdp_url = settings_helper.get_fdp_url_info(fdp_id).get("url", None)
 
     if False:
-        fdp_url = "http://192.168.1.205:5000/" # CEDE DEBUG
-        # fdp_url_id = "http://192.168.1.205:5000"
+        fdp_url = "http://192.168.1.205:5000/" # CEDE DEBUG IP LOCAL
+        # fdp_url = "http://192.168.1.39:5000/" # CEDE DEBUG IP RASPBERRY
 
     if not fdp_url or fdp_url == "":
         return {"status":"ko", "info":"fdp url not found"}
