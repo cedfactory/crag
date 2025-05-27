@@ -1,6 +1,7 @@
 import pandas as pd
 import datetime
-
+import os
+import gzip
 
 class DataFrameStore:
     def __init__(self, filename):
@@ -35,6 +36,8 @@ class DataFrameStore:
         self.temp_row = {}
         # Store the CSV filename passed during initialization.
         self.filename = filename
+        self.current_id = 1
+        self.max_size = 10000
 
     def set_data(self, **kwargs):
         """
@@ -78,10 +81,33 @@ class DataFrameStore:
         # Clear the temporary row after appending.
         self.temp_row = {}
 
+    def _get_filename(self):
+        return "{}_{:04d}.csv".format(self.filename, self.current_id)
+
+    def _get_filesize(self, filename):
+        if filename != "" and os.path.isfile(filename):
+            return os.stat(filename).st_size
+        return 0
+
     def save_to_csv(self):
         """
         Save the current DataFrame to a CSV file using the filename provided at initialization.
         """
-        self.df = self.df.tail(14000) # CEDE 10 days
-        self.df.to_csv(self.filename, index=False)
+        #self.df = self.df.tail(14000) # CEDE 10 days
+        current_filename = self._get_filename()
+        self.df.to_csv(current_filename, index=False)
+
+        if self._get_filesize(current_filename) > self.max_size:
+            # gzip current log file
+            with open(current_filename, "rb") as f_in, gzip.open(current_filename+".gz", "wb") as f_out:
+                f_out.writelines(f_in)
+            try:
+                os.remove(current_filename)
+            except Exception as e:
+                print("!!! can't remove", current_filename)
+
+            self.df = pd.DataFrame(columns=self.columns)
+
+            self.current_id += 1
+
         # print(f"DataFrame saved to {self.filename}")
